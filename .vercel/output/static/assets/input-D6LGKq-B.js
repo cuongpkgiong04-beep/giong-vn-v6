@@ -1,0 +1,1 @@
+import{i as e,t}from"./utils-CJXWhUMj.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`input`,{className:t(`h-11 w-full rounded-md bg-surface px-3 text-sm text-ink shadow-[var(--shadow-card)] placeholder:text-faint`,`transition-[box-shadow] duration-150 focus:outline-none focus:ring-2 focus:ring-accent/35`,`disabled:opacity-50`,e),...r})}export{r as t};
