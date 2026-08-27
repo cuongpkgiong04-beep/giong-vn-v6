@@ -13,6 +13,7 @@ import { CENTERS, findEmployeeByLooseText, getEmployeeById, getVisibleCenterCode
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
+import { uploadImage } from "@/routes/api/upload";
 
 export const Route = createFileRoute("/cham-cong")({ component: ChamCongPage });
 
@@ -183,8 +184,21 @@ function ChamCongPage() {
     reader.readAsDataURL(file);
   }
 
-  function confirmPunch() {
-    const rec = clock(punchType, gps === "Đang lấy vị trí..." ? "" : gps, address === "Đang xác định vị trí..." ? "" : address, photoPreview ?? undefined);
+  async function confirmPunch() {
+    // Upload photo to Cloudinary if available
+    let photoUrl: string | undefined;
+    if (photoPreview) {
+      try {
+        const result = await uploadImage({
+          data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
+        });
+        photoUrl = result.url;
+      } catch (err) {
+        console.warn("Cloudinary upload failed, using base64:", err);
+        photoUrl = photoPreview; // Fallback to base64
+      }
+    }
+    const rec = clock(punchType, gps === "Đang lấy vị trí..." ? "" : gps, address === "Đang xác định vị trí..." ? "" : address, photoUrl);
     toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
     setIsDialogOpen(false);
   }
