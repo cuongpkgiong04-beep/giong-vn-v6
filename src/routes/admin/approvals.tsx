@@ -72,7 +72,7 @@ function AdminApprovals() {
   async function handleApprove(request: RegistrationRequest) {
     try {
       setProcessing(true);
-      await approveRegistrationRequest({ requestId: request.id });
+      await approveRegistrationRequest({ data: { requestId: request.id } });
       toast.success(`Đã duyệt đăng ký cho ${request.name}`);
       await loadRequests();
     } catch (error) {
@@ -88,8 +88,10 @@ function AdminApprovals() {
     try {
       setProcessing(true);
       await rejectRegistrationRequest({
-        requestId: selectedRequest.id,
-        reason: rejectReason || undefined,
+        data: {
+          requestId: selectedRequest.id,
+          reason: rejectReason || undefined,
+        },
       });
       toast.success(`Đã từ chối đăng ký của ${selectedRequest.name}`);
       setRejectDialogOpen(false);

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient, authEnabled, signIn, GROK_PROVIDERS } from "@/lib/auth/client";
-import { createRegistrationRequest, isEmailPending, isEmailRejected } from "@/lib/registrations";
+import { checkEmailPending, checkEmailRejected, createRegRequest } from "@/routes/api/registrations";
 
 const REMEMBER_KEY = "giong-vn-login-remember";
 
@@ -62,22 +62,24 @@ function Login() {
     try {
       if (isSignUp) {
         // Check if email already has a pending or rejected request
-        const pending = await isEmailPending(email.trim());
+        const pending = await checkEmailPending({ data: { email: email.trim() } });
         if (pending) {
           toast.error("Email này đã có yêu cầu đăng ký đang chờ duyệt");
           return;
         }
-        const rejected = await isEmailRejected(email.trim());
+        const rejected = await checkEmailRejected({ data: { email: email.trim() } });
         if (rejected) {
           toast.error("Email này đã bị từ chối đăng ký");
           return;
         }
 
         // Create registration request (pending approval)
-        await createRegistrationRequest({
-          name: name.trim() || email.trim().split("@")[0],
-          email: email.trim(),
-          password,
+        await createRegRequest({
+          data: {
+            name: name.trim() || email.trim().split("@")[0],
+            email: email.trim(),
+            password,
+          },
         });
 
         toast.success(
@@ -91,6 +93,22 @@ function Login() {
         setName("");
         return;
       } else {
+        // Pre-check registration status for better error messages
+        try {
+          const pending = await checkEmailPending({ data: { email: email.trim() } });
+          if (pending) {
+            toast.error("Tài khoản đang chờ quản trị viên duyệt. Vui lòng thử lại sau.");
+            return;
+          }
+          const rejected = await checkEmailRejected({ data: { email: email.trim() } });
+          if (rejected) {
+            toast.error("Tài khoản đã bị từ chối. Vui lòng liên hệ quản trị viên.");
+            return;
+          }
+        } catch {
+          // If DB check fails, proceed to normal signIn (may succeed or fail)
+        }
+
         const { error } = await authClient.signIn.email({
           email: email.trim(),
           password,
