@@ -23,7 +23,7 @@ export const loadAttendance = createServerFn({ method: "GET" })
       type: string;
       approved: string;
       workplace: string;
-    }>`SELECT * FROM attendance ORDER BY date DESC, time DESC`;
+    }>`SELECT * FROM attendance ORDER BY date DESC, time DESC LIMIT 500`;
   });
 
 export const insertAttendance = createServerFn({ method: "POST" })
@@ -102,7 +102,7 @@ export const loadTasks = createServerFn({ method: "GET" })
       blocker: string;
       updated: string;
       created_by: string;
-    }>`SELECT *, created_by as "createdBy" FROM tasks ORDER BY created DESC`;
+    }>`SELECT *, created_by as "createdBy" FROM tasks ORDER BY created DESC LIMIT 200`;
   });
 
 export const insertTask = createServerFn({ method: "POST" })
@@ -185,7 +185,7 @@ export const loadCash = createServerFn({ method: "GET" })
       person: string;
       method: string;
       status: string;
-    }>`SELECT * FROM cash_vouchers ORDER BY date DESC`;
+    }>`SELECT * FROM cash_vouchers ORDER BY date DESC LIMIT 200`;
   });
 
 export const insertCash = createServerFn({ method: "POST" })
@@ -263,7 +263,7 @@ export const loadProposals = createServerFn({ method: "GET" })
       detail: string;
       status: string;
       dept: string;
-    }>`SELECT * FROM proposals ORDER BY date DESC`;
+    }>`SELECT * FROM proposals ORDER BY date DESC LIMIT 200`;
   });
 
 export const insertProposal = createServerFn({ method: "POST" })
@@ -313,7 +313,7 @@ export const loadNotes = createServerFn({ method: "GET" })
       support: string;
       dept: string;
       status: string;
-    }>`SELECT * FROM notes ORDER BY date DESC`;
+    }>`SELECT * FROM notes ORDER BY date DESC LIMIT 200`;
   });
 
 export const insertNote = createServerFn({ method: "POST" })
@@ -354,7 +354,7 @@ export const loadMessages = createServerFn({ method: "GET" })
       text: string;
       at: string;
       channel: string;
-    }>`SELECT * FROM messages WHERE channel = ${data.channel} ORDER BY at ASC`;
+    }>`SELECT * FROM messages WHERE channel = ${data.channel} ORDER BY at ASC LIMIT 200`;
   });
 
 export const insertMessage = createServerFn({ method: "POST" })
@@ -413,7 +413,7 @@ export const loadCheckins = createServerFn({ method: "GET" })
       gps: string;
       address: string;
       note: string;
-    }>`SELECT * FROM checkins ORDER BY date DESC, time DESC`;
+    }>`SELECT * FROM checkins ORDER BY date DESC, time DESC LIMIT 200`;
   });
 
 export const insertCheckin = createServerFn({ method: "POST" })
