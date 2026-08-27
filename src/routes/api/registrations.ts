@@ -9,24 +9,30 @@ import {
   createRegistrationRequest,
   isEmailPending,
   isEmailRejected,
+  getRegistrationRequestByEmail,
 } from "@/lib/registrations";
 import { getEmployeeByEmail, isAdminRole } from "@/lib/catalog";
 import { createServerFn } from "@tanstack/react-start";
 
 /**
- * Check if current user is admin
+ * Resolve the current signed-in user from the session.
+ * Returns null when no valid session exists.
  */
-function getCurrentAdmin(): { email: string; name: string } | null {
-  // In production, verify session token and get user info
-  // For now, return a default admin for demo
-  return {
-    email: "cuongpk.giong04@gmail.com",
-    name: "Phạm Kiên Cường",
-  };
+async function getCurrentAdmin(): Promise<{ email: string; name: string } | null> {
+  try {
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const sessionUser = await getSessionUser();
+    if (!sessionUser?.email) return null;
+    const employee = getEmployeeByEmail(sessionUser.email);
+    if (!employee) return null;
+    return { email: sessionUser.email, name: employee.name };
+  } catch {
+    return null;
+  }
 }
 
-function assertAdmin() {
-  const admin = getCurrentAdmin();
+async function assertAdmin() {
+  const admin = await getCurrentAdmin();
   if (!admin) throw new Error("Unauthorized - Admin access required");
   const employee = getEmployeeByEmail(admin.email);
   if (!employee || !isAdminRole(employee.role)) throw new Error("Unauthorized - Admin access required");
@@ -50,7 +56,7 @@ export const getRegistrationRequests = createServerFn({ method: "GET" })
 export const approveRegistrationRequest = createServerFn({ method: "POST" })
   .validator((data: { requestId: string }) => data)
   .handler(async ({ data }) => {
-    const admin = assertAdmin();
+    const admin = await assertAdmin();
 
     const request = await approveRegistration(data.requestId, admin.name);
     if (!request) {
@@ -109,12 +115,49 @@ export const createRegRequest = createServerFn({ method: "POST" })
   });
 
 /**
+ * Auto-approve a pending registration for a catalog employee.
+ * Called during login when the email belongs to an employee in the catalog.
+ * This breaks the deadlock where the admin can't log in to approve themselves.
+ */
+export const autoApproveCatalogEmployee = createServerFn({ method: "POST" })
+  .validator((data: { email: string }) => data)
+  .handler(async ({ data }) => {
+    const employee = getEmployeeByEmail(data.email);
+    if (!employee) return { approved: false };
+
+    const request = await getRegistrationRequestByEmail(data.email);
+    if (!request || request.status !== "pending") return { approved: false };
+
+    // Auto-approve
+    await approveRegistration(request.id, `Auto-duyệt (${employee.name})`);
+
+    // Create Better Auth account so they can sign in with email/password
+    try {
+      const { auth } = await import("@/lib/auth/server");
+      await auth.api.signUpEmail({
+        body: {
+          name: request.name,
+          email: request.email,
+          password: request.password,
+        },
+      });
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      if (!msg.includes("already") && !msg.includes("exists")) {
+        console.error("[auth] Auto-approve: failed to create Better Auth user:", msg);
+      }
+    }
+
+    return { approved: true, name: employee.name };
+  });
+
+/**
  * Reject a registration request (admin only)
  */
 export const rejectRegistrationRequest = createServerFn({ method: "POST" })
   .validator((data: { requestId: string; reason?: string }) => data)
   .handler(async ({ data }) => {
-    const admin = assertAdmin();
+    const admin = await assertAdmin();
 
     const request = rejectRegistration(
       data.requestId,
