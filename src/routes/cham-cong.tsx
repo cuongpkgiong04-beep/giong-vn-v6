@@ -13,7 +13,6 @@ import { CENTERS, findEmployeeByLooseText, getEmployeeById, getVisibleCenterCode
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import { AttendanceMap } from "@/components/attendance-map";
 
 export const Route = createFileRoute("/cham-cong")({ component: ChamCongPage });
 
@@ -209,14 +208,6 @@ function ChamCongPage() {
           </>
         }
       />
-
-      {/* Attendance Map */}
-      <div className="mb-5">
-        <AttendanceMap
-          records={visibleAttendance}
-          selectedCenter={selectedCenter}
-        />
-      </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {centerStats.map((item) => {
