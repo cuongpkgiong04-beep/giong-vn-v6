@@ -1,1 +1,0 @@
-import{i as e,t}from"./utils-CJXWhUMj.js";var n=e();function r({className:e,...r}){return(0,n.jsx)(`label`,{className:t(`text-sm font-medium text-ink`,e),...r})}export{r as t};
