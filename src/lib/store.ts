@@ -432,37 +432,43 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           note: r.note ?? "",
         }));
 
-        // If Neon is empty, seed from localStorage/JSON
+        // If Neon is empty, seed from seed files (JSON)
         const hasNeonData =
           neonAttendance.length > 0 ||
           neonTasks.length > 0 ||
           neonCash.length > 0;
         if (!hasNeonData) {
+          // Seed from seed files — these are always available
           const s = get();
-          // Seed all data to Neon
-          await Promise.all([
-            _neonBulkAttendance(s.attendance),
-            _neonBulkTasks(s.tasks),
-            _neonBulkCash(s.cash),
-            _neonBulkMessages(s.messages),
-            ...s.notes.map((n) => _neonInsertNote(n)),
-            ...s.proposals.map((p) => _neonInsertProposal(p)),
-            ...s.checkins.map((c) => _neonInsertCheckin(c)),
-          ]);
+          try {
+            await Promise.all([
+              _neonBulkAttendance(s.attendance),
+              _neonBulkTasks(s.tasks),
+              _neonBulkCash(s.cash),
+              _neonBulkMessages(s.messages),
+              ...s.notes.map((n) => _neonInsertNote(n)),
+              ...s.proposals.map((p) => _neonInsertProposal(p)),
+              ...s.checkins.map((c) => _neonInsertCheckin(c)),
+            ]);
+            console.log('[store] Seeded Neon with', s.attendance.length, 'attendance,', s.tasks.length, 'tasks');
+          } catch (seedErr) {
+            console.warn('[store] Neon seed failed, using local seed data:', seedErr);
+          }
+          // Always keep seed data in state regardless of seed success
+          set({ _neonReady: true });
         } else {
-          // Use Neon data (merge: Neon is source of truth)
+          // Use Neon data (source of truth)
           set({
-            attendance: neonAttendance.length > 0 ? neonAttendance : get().attendance,
-            tasks: neonTasks.length > 0 ? neonTasks : get().tasks,
-            cash: neonCash.length > 0 ? neonCash : get().cash,
-            proposals: neonProposals.length > 0 ? neonProposals : get().proposals,
-            notes: neonNotes.length > 0 ? neonNotes : get().notes,
-            messages: neonMessages.length > 0 ? neonMessages : get().messages,
-            checkins: neonCheckins.length > 0 ? neonCheckins : get().checkins,
+            attendance: neonAttendance,
+            tasks: neonTasks,
+            cash: neonCash,
+            proposals: neonProposals,
+            notes: neonNotes,
+            messages: neonMessages,
+            checkins: neonCheckins,
             _neonReady: true,
           });
         }
-        set({ _neonReady: true });
       } catch (err) {
         console.warn("[store] Neon sync failed, using localStorage fallback:", err);
         set({ _neonReady: false });
