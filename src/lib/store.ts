@@ -19,7 +19,7 @@ import type {
 import { nowTime, todayIso, weekdayVi } from "@/lib/format";
 import { uid } from "@/lib/utils";
 
-const KEY = "giong-vn-v5";
+const LS_KEY = "giong-vn-v5";
 
 type PersistSlice = {
   tasks: Task[];
@@ -30,6 +30,7 @@ type PersistSlice = {
   messages: ChatMessage[];
   checkins: CheckIn[];
   currentUserId: string;
+  _neonReady: boolean;
 };
 
 type Actions = {
@@ -39,7 +40,12 @@ type Actions = {
   currentName: () => string;
   addTask: (t: Omit<Task, "id" | "created" | "updated">) => void;
   setTaskStatus: (id: string, status: string) => void;
-  clock: (kind: "Điểm danh vào ca" | "Điểm danh tan ca", gps?: string, address?: string, photo?: string) => Attendance;
+  clock: (
+    kind: "Điểm danh vào ca" | "Điểm danh tan ca",
+    gps?: string,
+    address?: string,
+    photo?: string,
+  ) => Attendance;
   addNote: (n: Omit<Note, "id">) => void;
   addCash: (c: Omit<CashVoucher, "id">) => void;
   setCashStatus: (id: string, status: CashVoucher["status"]) => void;
@@ -59,6 +65,7 @@ function slice(s: PersistSlice): PersistSlice {
     messages: s.messages,
     checkins: s.checkins,
     currentUserId: s.currentUserId,
+    _neonReady: false,
   };
 }
 
@@ -71,61 +78,434 @@ const initial: PersistSlice = {
   messages: CHAT_SEED,
   checkins: [],
   currentUserId: CURRENT_USER_ID,
+  _neonReady: false,
 };
+
+/** Save to localStorage as offline fallback. */
+function saveLs(s: PersistSlice) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(slice(s)));
+  } catch {
+    /* quota */
+  }
+}
+
+/** Load from localStorage. */
+function loadLs(): Partial<PersistSlice> | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Partial<PersistSlice>;
+  } catch {
+    return null;
+  }
+}
+
+/** Fire-and-forget Neon sync helpers (imported lazily to avoid SSR issues). */
+async function _neonBulkAttendance(rows: Attendance[]) {
+  const { bulkInsertAttendance } = await import(
+    "@/routes/api/data"
+  );
+  await bulkInsertAttendance({
+    data: {
+      rows: rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        status: r.status,
+        time: r.time,
+        date: r.date,
+        weekday: r.weekday,
+        gps: r.gps,
+        address: r.address,
+        photo: r.photo,
+        type: r.type,
+        approved: r.approved,
+        workplace: r.workplace,
+      })),
+    },
+  });
+}
+
+async function _neonBulkTasks(rows: Task[]) {
+  const { bulkInsertTasks } = await import("@/routes/api/data");
+  await bulkInsertTasks({
+    data: {
+      rows: rows.map((r) => ({
+        id: r.id,
+        assignee: r.assignee,
+        title: r.title,
+        created: r.created,
+        due: r.due,
+        status: r.status,
+        support: r.support,
+        blocker: r.blocker,
+        updated: r.updated,
+        createdBy: r.createdBy,
+      })),
+    },
+  });
+}
+
+async function _neonBulkCash(rows: CashVoucher[]) {
+  const { bulkInsertCash } = await import("@/routes/api/data");
+  await bulkInsertCash({
+    data: {
+      rows: rows.map((r) => ({
+        id: r.id,
+        type: r.type,
+        date: r.date,
+        amount: r.amount,
+        content: r.content,
+        center: r.center,
+        person: r.person,
+        method: r.method,
+        status: r.status,
+      })),
+    },
+  });
+}
+
+async function _neonBulkMessages(rows: ChatMessage[]) {
+  const { bulkInsertMessages } = await import("@/routes/api/data");
+  await bulkInsertMessages({
+    data: {
+      rows: rows.map((r) => ({
+        id: r.id,
+        from: r.from,
+        text: r.text,
+        at: r.at,
+        channel: r.channel,
+      })),
+    },
+  });
+}
+
+async function _neonInsertAttendance(r: Attendance) {
+  const { insertAttendance } = await import("@/routes/api/data");
+  await insertAttendance({
+    data: {
+      id: r.id,
+      name: r.name,
+      status: r.status,
+      time: r.time,
+      date: r.date,
+      weekday: r.weekday,
+      gps: r.gps,
+      address: r.address,
+      photo: r.photo,
+      type: r.type,
+      approved: r.approved,
+      workplace: r.workplace,
+    },
+  });
+}
+
+async function _neonInsertTask(r: Task) {
+  const { insertTask } = await import("@/routes/api/data");
+  await insertTask({
+    data: {
+      id: r.id,
+      assignee: r.assignee,
+      title: r.title,
+      created: r.created,
+      due: r.due,
+      status: r.status,
+      support: r.support,
+      blocker: r.blocker,
+      updated: r.updated,
+      createdBy: r.createdBy,
+    },
+  });
+}
+
+async function _neonInsertCash(r: CashVoucher) {
+  const { insertCash } = await import("@/routes/api/data");
+  await insertCash({
+    data: {
+      id: r.id,
+      type: r.type,
+      date: r.date,
+      amount: r.amount,
+      content: r.content,
+      center: r.center,
+      person: r.person,
+      method: r.method,
+      status: r.status,
+    },
+  });
+}
+
+async function _neonInsertNote(r: Note) {
+  const { insertNote } = await import("@/routes/api/data");
+  await insertNote({
+    data: {
+      id: r.id,
+      stt: String(r.stt ?? ""),
+      date: r.date,
+      content: r.content,
+      author: r.author,
+      deploy: r.deploy,
+      deadline: r.deadline,
+      support: r.support,
+      dept: r.dept,
+      status: r.status,
+    },
+  });
+}
+
+async function _neonInsertProposal(r: Proposal) {
+  const { insertProposal } = await import("@/routes/api/data");
+  await insertProposal({
+    data: {
+      id: r.id,
+      kind: r.kind,
+      title: r.title,
+      requester: r.requester,
+      date: r.date,
+      detail: r.detail,
+      status: r.status,
+      dept: r.dept,
+    },
+  });
+}
+
+async function _neonInsertMessage(r: ChatMessage) {
+  const { insertMessage } = await import("@/routes/api/data");
+  await insertMessage({
+    data: {
+      id: r.id,
+      from: r.from,
+      text: r.text,
+      at: r.at,
+      channel: r.channel,
+    },
+  });
+}
+
+async function _neonInsertCheckin(r: CheckIn) {
+  const { insertCheckin } = await import("@/routes/api/data");
+  await insertCheckin({
+    data: {
+      id: r.id,
+      name: r.name,
+      time: r.time,
+      date: r.date,
+      weekday: r.weekday,
+      gps: r.gps,
+      address: r.address,
+      note: r.note,
+    },
+  });
+}
+
+async function _neonUpdateTaskStatus(id: string, status: string, updated: string) {
+  const { updateTaskStatus } = await import("@/routes/api/data");
+  await updateTaskStatus({ data: { id, status, updated } });
+}
+
+async function _neonUpdateCashStatus(id: string, status: string) {
+  const { updateCashStatus } = await import("@/routes/api/data");
+  await updateCashStatus({ data: { id, status } });
+}
+
+async function _neonUpdateProposalStatus(id: string, status: string) {
+  const { updateProposalStatus } = await import("@/routes/api/data");
+  await updateProposalStatus({ data: { id, status } });
+}
 
 export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   ...initial,
+
   hydrate: () => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<PersistSlice>;
+    // 1. Load from localStorage immediately (fast, offline-capable)
+    const ls = loadLs();
+    if (ls) {
       set({
-        tasks: parsed.tasks ?? initial.tasks,
-        attendance: parsed.attendance ?? initial.attendance,
-        notes: parsed.notes ?? initial.notes,
-        cash: parsed.cash ?? initial.cash,
-        proposals: parsed.proposals ?? initial.proposals,
-        messages: parsed.messages ?? initial.messages,
-        checkins: parsed.checkins ?? initial.checkins,
-        currentUserId: parsed.currentUserId ?? initial.currentUserId,
+        tasks: ls.tasks ?? initial.tasks,
+        attendance: ls.attendance ?? initial.attendance,
+        notes: ls.notes ?? initial.notes,
+        cash: ls.cash ?? initial.cash,
+        proposals: ls.proposals ?? initial.proposals,
+        messages: ls.messages ?? initial.messages,
+        checkins: ls.checkins ?? initial.checkins,
+        currentUserId: ls.currentUserId ?? initial.currentUserId,
       });
-    } catch {
-      /* keep seed */
     }
+
+    // 2. Sync from Neon in background (async, non-blocking)
+    (async () => {
+      try {
+        const { loadAttendance, loadTasks, loadCash, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
+          "@/routes/api/data"
+        );
+        const [att, tsk, csh, prp, nts, msgs, cks] = await Promise.all([
+          loadAttendance(),
+          loadTasks(),
+          loadCash(),
+          loadProposals(),
+          loadNotes(),
+          loadMessages({ data: { channel: "general" } }),
+          loadCheckins(),
+        ]);
+
+        // Map Neon rows to app types
+        const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
+          id: r.id,
+          name: r.name,
+          status: r.status,
+          time: r.time,
+          date: r.date,
+          weekday: r.weekday,
+          gps: r.gps ?? "",
+          address: r.address ?? "",
+          photo: r.photo ?? undefined,
+          type: r.type ?? "Bình thường",
+          approved: r.approved ?? "Chưa",
+          workplace: r.workplace ?? "VP",
+        }));
+
+        const neonTasks: Task[] = (tsk as any[]).map((r) => ({
+          id: r.id,
+          assignee: r.assignee,
+          title: r.title,
+          created: r.created,
+          due: r.due ?? "",
+          status: r.status ?? "Việc cần làm",
+          support: r.support ?? "",
+          blocker: r.blocker ?? "",
+          updated: r.updated,
+          createdBy: r.created_by ?? "",
+        }));
+
+        const neonCash: CashVoucher[] = (csh as any[]).map((r) => ({
+          id: r.id,
+          type: r.type as CashVoucher["type"],
+          date: r.date,
+          amount: Number(r.amount),
+          content: r.content,
+          center: r.center ?? "VP",
+          person: r.person ?? "",
+          method: (r.method ?? "Chuyển khoản") as CashVoucher["method"],
+          status: (r.status ?? "Nháp") as CashVoucher["status"],
+        }));
+
+        const neonProposals: Proposal[] = (prp as any[]).map((r) => ({
+          id: r.id,
+          kind: r.kind as Proposal["kind"],
+          title: r.title,
+          requester: r.requester ?? "",
+          date: r.date,
+          detail: r.detail ?? "",
+          status: (r.status ?? "Chờ duyệt") as Proposal["status"],
+          dept: r.dept ?? "",
+        }));
+
+        const neonNotes: Note[] = (nts as any[]).map((r) => ({
+          id: r.id,
+          stt: r.stt ?? undefined,
+          date: r.date,
+          content: r.content,
+          author: r.author ?? "",
+          deploy: r.deploy ?? "",
+          deadline: r.deadline ?? "",
+          support: r.support ?? "",
+          dept: r.dept ?? "",
+          status: r.status ?? "",
+        }));
+
+        const neonMessages: ChatMessage[] = (msgs as any[]).map((r) => ({
+          id: r.id,
+          from: r.from_name,
+          text: r.text,
+          at: r.at,
+          channel: r.channel,
+        }));
+
+        const neonCheckins: CheckIn[] = (cks as any[]).map((r) => ({
+          id: r.id,
+          name: r.name,
+          time: r.time,
+          date: r.date,
+          weekday: r.weekday,
+          gps: r.gps ?? "",
+          address: r.address ?? "",
+          note: r.note ?? "",
+        }));
+
+        // If Neon is empty, seed from localStorage/JSON
+        const hasNeonData =
+          neonAttendance.length > 0 ||
+          neonTasks.length > 0 ||
+          neonCash.length > 0;
+        if (!hasNeonData) {
+          const s = get();
+          // Seed all data to Neon
+          await Promise.all([
+            _neonBulkAttendance(s.attendance),
+            _neonBulkTasks(s.tasks),
+            _neonBulkCash(s.cash),
+            _neonBulkMessages(s.messages),
+            ...s.notes.map((n) => _neonInsertNote(n)),
+            ...s.proposals.map((p) => _neonInsertProposal(p)),
+            ...s.checkins.map((c) => _neonInsertCheckin(c)),
+          ]);
+        } else {
+          // Use Neon data (merge: Neon is source of truth)
+          set({
+            attendance: neonAttendance.length > 0 ? neonAttendance : get().attendance,
+            tasks: neonTasks.length > 0 ? neonTasks : get().tasks,
+            cash: neonCash.length > 0 ? neonCash : get().cash,
+            proposals: neonProposals.length > 0 ? neonProposals : get().proposals,
+            notes: neonNotes.length > 0 ? neonNotes : get().notes,
+            messages: neonMessages.length > 0 ? neonMessages : get().messages,
+            checkins: neonCheckins.length > 0 ? neonCheckins : get().checkins,
+            _neonReady: true,
+          });
+        }
+        set({ _neonReady: true });
+      } catch (err) {
+        console.warn("[store] Neon sync failed, using localStorage fallback:", err);
+        set({ _neonReady: false });
+      }
+    })();
   },
+
   persist: () => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(slice(get())));
-    } catch {
-      /* quota */
-    }
+    // Always save to localStorage (fast, offline)
+    saveLs(get());
   },
+
   setCurrentUserId: (userId) => {
     set({ currentUserId: userId });
-    get().persist();
+    saveLs(get());
   },
+
   currentName: () => {
     const id = get().currentUserId;
     return EMPLOYEES.find((e) => e.id === id)?.name ?? "Phạm Kiên Cường";
   },
+
   addTask: (t) => {
     const now = `${todayIso()} ${nowTime().slice(0, 5)}`;
-    set((s) => ({
-      tasks: [{ ...t, id: uid("nv"), created: now, updated: now }, ...s.tasks],
-    }));
-    get().persist();
+    const task: Task = { ...t, id: uid("nv"), created: now, updated: now };
+    set((s) => ({ tasks: [task, ...s.tasks] }));
+    saveLs(get());
+    _neonInsertTask(task).catch(console.warn);
   },
+
   setTaskStatus: (id, status) => {
     const now = `${todayIso()} ${nowTime().slice(0, 5)}`;
     set((s) => ({
       tasks: s.tasks.map((x) => (x.id === id ? { ...x, status, updated: now } : x)),
     }));
-    get().persist();
+    saveLs(get());
+    _neonUpdateTaskStatus(id, status, now).catch(console.warn);
   },
+
   clock: (kind, gps = "", address = "", photo = "") => {
     const name = get().currentName();
-    const currentEmployee = EMPLOYEES.find((e) => e.id === get().currentUserId) ?? EMPLOYEES[0];
+    const currentEmployee =
+      EMPLOYEES.find((e) => e.id === get().currentUserId) ?? EMPLOYEES[0];
     const date = todayIso();
     const workplace = currentEmployee.center ?? "VP";
     const rec: Attendance = {
@@ -143,42 +523,65 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       workplace,
     };
     set((s) => ({ attendance: [rec, ...s.attendance] }));
-    get().persist();
+    saveLs(get());
+    _neonInsertAttendance(rec).catch(console.warn);
     return rec;
   },
+
   addNote: (n) => {
-    set((s) => ({ notes: [{ ...n, id: uid("gc") }, ...s.notes] }));
-    get().persist();
+    const note: Note = { ...n, id: uid("gc") };
+    set((s) => ({ notes: [note, ...s.notes] }));
+    saveLs(get());
+    _neonInsertNote(note).catch(console.warn);
   },
+
   addCash: (c) => {
-    set((s) => ({ cash: [{ ...c, id: uid("q") }, ...s.cash] }));
-    get().persist();
+    const voucher: CashVoucher = { ...c, id: uid("q") };
+    set((s) => ({ cash: [voucher, ...s.cash] }));
+    saveLs(get());
+    _neonInsertCash(voucher).catch(console.warn);
   },
+
   setCashStatus: (id, status) => {
-    set((s) => ({ cash: s.cash.map((x) => (x.id === id ? { ...x, status } : x)) }));
-    get().persist();
+    set((s) => ({
+      cash: s.cash.map((x) => (x.id === id ? { ...x, status } : x)),
+    }));
+    saveLs(get());
+    _neonUpdateCashStatus(id, status).catch(console.warn);
   },
+
   addProposal: (p) => {
-    set((s) => ({ proposals: [{ ...p, id: uid("dn") }, ...s.proposals] }));
-    get().persist();
+    const proposal: Proposal = { ...p, id: uid("dn") };
+    set((s) => ({ proposals: [proposal, ...s.proposals] }));
+    saveLs(get());
+    _neonInsertProposal(proposal).catch(console.warn);
   },
+
   setProposalStatus: (id, status) => {
     set((s) => ({
-      proposals: s.proposals.map((x) => (x.id === id ? { ...x, status } : x)),
+      proposals: s.proposals.map((x) =>
+        x.id === id ? { ...x, status } : x,
+      ),
     }));
-    get().persist();
+    saveLs(get());
+    _neonUpdateProposalStatus(id, status).catch(console.warn);
   },
+
   sendMessage: (text, channel) => {
     const msg: ChatMessage = {
       id: uid("m"),
-      from: EMPLOYEES.find((e) => e.id === get().currentUserId)?.username ?? "CườngPK",
+      from:
+        EMPLOYEES.find((e) => e.id === get().currentUserId)?.username ??
+        "CườngPK",
       text,
       at: `${todayIso()} ${nowTime().slice(0, 5)}`,
       channel,
     };
     set((s) => ({ messages: [...s.messages, msg] }));
-    get().persist();
+    saveLs(get());
+    _neonInsertMessage(msg).catch(console.warn);
   },
+
   addCheckin: (gps = "", address = "", note = "") => {
     const date = todayIso();
     const rec: CheckIn = {
@@ -192,7 +595,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       note,
     };
     set((s) => ({ checkins: [rec, ...s.checkins] }));
-    get().persist();
+    saveLs(get());
+    _neonInsertCheckin(rec).catch(console.warn);
     return rec;
   },
 }));

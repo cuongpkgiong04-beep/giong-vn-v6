@@ -1,0 +1,462 @@
+/**
+ * Server functions for all application data CRUD operations.
+ * Replaces localStorage with Neon PostgreSQL.
+ */
+import { getSql } from "@/lib/db";
+import { createServerFn } from "@tanstack/react-start";
+
+/* ─────────────────── Attendance ─────────────────── */
+
+export const loadAttendance = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      name: string;
+      status: string;
+      time: string;
+      date: string;
+      weekday: string;
+      gps: string;
+      address: string;
+      photo: string | null;
+      type: string;
+      approved: string;
+      workplace: string;
+    }>`SELECT * FROM attendance ORDER BY date DESC, time DESC`;
+  });
+
+export const insertAttendance = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      name: string;
+      status: string;
+      time: string;
+      date: string;
+      weekday: string;
+      gps?: string;
+      address?: string;
+      photo?: string;
+      type?: string;
+      approved?: string;
+      workplace?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO attendance (id, name, status, time, date, weekday, gps, address, photo, type, approved, workplace)
+      VALUES (${data.id}, ${data.name}, ${data.status}, ${data.time}, ${data.date}, ${data.weekday},
+              ${data.gps ?? ""}, ${data.address ?? ""}, ${data.photo ?? null},
+              ${data.type ?? "Bình thường"}, ${data.approved ?? "Chưa"}, ${data.workplace ?? "VP"})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+export const bulkInsertAttendance = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      rows: Array<{
+        id: string;
+        name: string;
+        status: string;
+        time: string;
+        date: string;
+        weekday: string;
+        gps?: string;
+        address?: string;
+        photo?: string;
+        type?: string;
+        approved?: string;
+        workplace?: string;
+      }>;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    for (const r of data.rows) {
+      await sql`
+        INSERT INTO attendance (id, name, status, time, date, weekday, gps, address, photo, type, approved, workplace)
+        VALUES (${r.id}, ${r.name}, ${r.status}, ${r.time}, ${r.date}, ${r.weekday},
+                ${r.gps ?? ""}, ${r.address ?? ""}, ${r.photo ?? null},
+                ${r.type ?? "Bình thường"}, ${r.approved ?? "Chưa"}, ${r.workplace ?? "VP"})
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  });
+
+/* ─────────────────── Tasks ─────────────────── */
+
+export const loadTasks = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      assignee: string;
+      title: string;
+      created: string;
+      due: string;
+      status: string;
+      support: string;
+      blocker: string;
+      updated: string;
+      created_by: string;
+    }>`SELECT *, created_by as "createdBy" FROM tasks ORDER BY created DESC`;
+  });
+
+export const insertTask = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      assignee: string;
+      title: string;
+      created: string;
+      due?: string;
+      status?: string;
+      support?: string;
+      blocker?: string;
+      updated: string;
+      createdBy?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by)
+      VALUES (${data.id}, ${data.assignee}, ${data.title}, ${data.created},
+              ${data.due ?? ""}, ${data.status ?? "Việc cần làm"},
+              ${data.support ?? ""}, ${data.blocker ?? ""}, ${data.updated},
+              ${data.createdBy ?? ""})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+export const updateTaskStatus = createServerFn({ method: "POST" })
+  .validator((data: { id: string; status: string; updated: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE tasks SET status = ${data.status}, updated = ${data.updated} WHERE id = ${data.id}`;
+  });
+
+export const bulkInsertTasks = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      rows: Array<{
+        id: string;
+        assignee: string;
+        title: string;
+        created: string;
+        due?: string;
+        status?: string;
+        support?: string;
+        blocker?: string;
+        updated: string;
+        createdBy?: string;
+      }>;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    for (const r of data.rows) {
+      await sql`
+        INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by)
+        VALUES (${r.id}, ${r.assignee}, ${r.title}, ${r.created},
+                ${r.due ?? ""}, ${r.status ?? "Việc cần làm"},
+                ${r.support ?? ""}, ${r.blocker ?? ""}, ${r.updated},
+                ${r.createdBy ?? ""})
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  });
+
+/* ─────────────────── Cash Vouchers ─────────────────── */
+
+export const loadCash = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      type: string;
+      date: string;
+      amount: number;
+      content: string;
+      center: string;
+      person: string;
+      method: string;
+      status: string;
+    }>`SELECT * FROM cash_vouchers ORDER BY date DESC`;
+  });
+
+export const insertCash = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      type: string;
+      date: string;
+      amount: number;
+      content: string;
+      center?: string;
+      person?: string;
+      method?: string;
+      status?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO cash_vouchers (id, type, date, amount, content, center, person, method, status)
+      VALUES (${data.id}, ${data.type}, ${data.date}, ${data.amount}, ${data.content},
+              ${data.center ?? "VP"}, ${data.person ?? ""}, ${data.method ?? "Chuyển khoản"},
+              ${data.status ?? "Nháp"})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+export const updateCashStatus = createServerFn({ method: "POST" })
+  .validator((data: { id: string; status: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE cash_vouchers SET status = ${data.status} WHERE id = ${data.id}`;
+  });
+
+export const bulkInsertCash = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      rows: Array<{
+        id: string;
+        type: string;
+        date: string;
+        amount: number;
+        content: string;
+        center?: string;
+        person?: string;
+        method?: string;
+        status?: string;
+      }>;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    for (const r of data.rows) {
+      await sql`
+        INSERT INTO cash_vouchers (id, type, date, amount, content, center, person, method, status)
+        VALUES (${r.id}, ${r.type}, ${r.date}, ${r.amount}, ${r.content},
+                ${r.center ?? "VP"}, ${r.person ?? ""}, ${r.method ?? "Chuyển khoản"},
+                ${r.status ?? "Nháp"})
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  });
+
+/* ─────────────────── Proposals ─────────────────── */
+
+export const loadProposals = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      kind: string;
+      title: string;
+      requester: string;
+      date: string;
+      detail: string;
+      status: string;
+      dept: string;
+    }>`SELECT * FROM proposals ORDER BY date DESC`;
+  });
+
+export const insertProposal = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      kind: string;
+      title: string;
+      requester?: string;
+      date: string;
+      detail?: string;
+      status?: string;
+      dept?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO proposals (id, kind, title, requester, date, detail, status, dept)
+      VALUES (${data.id}, ${data.kind}, ${data.title}, ${data.requester ?? ""},
+              ${data.date}, ${data.detail ?? ""}, ${data.status ?? "Chờ duyệt"},
+              ${data.dept ?? ""})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+export const updateProposalStatus = createServerFn({ method: "POST" })
+  .validator((data: { id: string; status: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE proposals SET status = ${data.status} WHERE id = ${data.id}`;
+  });
+
+/* ─────────────────── Notes ─────────────────── */
+
+export const loadNotes = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      stt: string | null;
+      date: string;
+      content: string;
+      author: string;
+      deploy: string;
+      deadline: string;
+      support: string;
+      dept: string;
+      status: string;
+    }>`SELECT * FROM notes ORDER BY date DESC`;
+  });
+
+export const insertNote = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      stt?: string;
+      date: string;
+      content: string;
+      author?: string;
+      deploy?: string;
+      deadline?: string;
+      support?: string;
+      dept?: string;
+      status?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO notes (id, stt, date, content, author, deploy, deadline, support, dept, status)
+      VALUES (${data.id}, ${data.stt ?? null}, ${data.date}, ${data.content},
+              ${data.author ?? ""}, ${data.deploy ?? ""}, ${data.deadline ?? ""},
+              ${data.support ?? ""}, ${data.dept ?? ""}, ${data.status ?? ""})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+/* ─────────────────── Messages ─────────────────── */
+
+export const loadMessages = createServerFn({ method: "GET" })
+  .validator((data: { channel: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      from_name: string;
+      text: string;
+      at: string;
+      channel: string;
+    }>`SELECT * FROM messages WHERE channel = ${data.channel} ORDER BY at ASC`;
+  });
+
+export const insertMessage = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      from: string;
+      text: string;
+      at: string;
+      channel: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO messages (id, from_name, text, at, channel)
+      VALUES (${data.id}, ${data.from}, ${data.text}, ${data.at}, ${data.channel})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+export const bulkInsertMessages = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      rows: Array<{
+        id: string;
+        from: string;
+        text: string;
+        at: string;
+        channel: string;
+      }>;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    for (const r of data.rows) {
+      await sql`
+        INSERT INTO messages (id, from_name, text, at, channel)
+        VALUES (${r.id}, ${r.from}, ${r.text}, ${r.at}, ${r.channel})
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  });
+
+/* ─────────────────── Check-ins ─────────────────── */
+
+export const loadCheckins = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      name: string;
+      time: string;
+      date: string;
+      weekday: string;
+      gps: string;
+      address: string;
+      note: string;
+    }>`SELECT * FROM checkins ORDER BY date DESC, time DESC`;
+  });
+
+export const insertCheckin = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      name: string;
+      time: string;
+      date: string;
+      weekday: string;
+      gps?: string;
+      address?: string;
+      note?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO checkins (id, name, time, date, weekday, gps, address, note)
+      VALUES (${data.id}, ${data.name}, ${data.time}, ${data.date}, ${data.weekday},
+              ${data.gps ?? ""}, ${data.address ?? ""}, ${data.note ?? ""})
+      ON CONFLICT (id) DO NOTHING
+    `;
+  });
+
+/* ─────────────────── Seed check ─────────────────── */
+
+export const isTableEmpty = createServerFn({ method: "GET" })
+  .validator((data: { table: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    const allowed = [
+      "attendance",
+      "tasks",
+      "cash_vouchers",
+      "proposals",
+      "notes",
+      "messages",
+      "checkins",
+    ];
+    if (!allowed.includes(data.table)) return true;
+    const rows = await sql.query<{ count: number }>(
+      `SELECT COUNT(*) as count FROM "${data.table}"`,
+    );
+    return Number(rows[0]?.count ?? 0) === 0;
+  });
