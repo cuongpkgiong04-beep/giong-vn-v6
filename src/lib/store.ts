@@ -438,21 +438,26 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           neonTasks.length > 0 ||
           neonCash.length > 0;
         if (!hasNeonData) {
-          // Seed from seed files — these are always available
+          // Seed from seed files — skip if all empty
           const s = get();
-          try {
-            await Promise.all([
-              _neonBulkAttendance(s.attendance),
-              _neonBulkTasks(s.tasks),
-              _neonBulkCash(s.cash),
-              _neonBulkMessages(s.messages),
-              ...s.notes.map((n) => _neonInsertNote(n)),
-              ...s.proposals.map((p) => _neonInsertProposal(p)),
-              ...s.checkins.map((c) => _neonInsertCheckin(c)),
-            ]);
-            console.log('[store] Seeded Neon with', s.attendance.length, 'attendance,', s.tasks.length, 'tasks');
-          } catch (seedErr) {
-            console.warn('[store] Neon seed failed, using local seed data:', seedErr);
+          const hasSeedData = s.attendance.length > 0 || s.tasks.length > 0 || s.cash.length > 0 || s.notes.length > 0 || s.proposals.length > 0 || s.messages.length > 0;
+          if (hasSeedData) {
+            try {
+              await Promise.all([
+                _neonBulkAttendance(s.attendance),
+                _neonBulkTasks(s.tasks),
+                _neonBulkCash(s.cash),
+                _neonBulkMessages(s.messages),
+                ...s.notes.map((n) => _neonInsertNote(n)),
+                ...s.proposals.map((p) => _neonInsertProposal(p)),
+                ...s.checkins.map((c) => _neonInsertCheckin(c)),
+              ]);
+              console.log('[store] Seeded Neon with', s.attendance.length, 'attendance,', s.tasks.length, 'tasks');
+            } catch (seedErr) {
+              console.warn('[store] Neon seed failed, using local seed data:', seedErr);
+            }
+          } else {
+            console.log('[store] No seed data — starting empty');
           }
           // Always keep seed data in state regardless of seed success
           set({ _neonReady: true });
