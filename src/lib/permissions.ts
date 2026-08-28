@@ -7,7 +7,7 @@
  *   - Admin có thể ghi đè quyền cho từng user theo module bằng bảng quản lý phân quyền.
  */
 import type { Employee } from "./types";
-import { isAdminRole, getEmployeeById, getEmployeeByEmail } from "./catalog";
+import { isAdminRole, getEmployeeById } from "./catalog";
 
 export type Permission =
   | "dashboard:view"

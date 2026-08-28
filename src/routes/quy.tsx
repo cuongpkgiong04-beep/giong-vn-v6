@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CENTERS, centerName, getEmployeeById } from "@/lib/catalog";
 import { formatDate, formatVnd, formatVndCompact, todayIso } from "@/lib/format";
-import { canApproveCash, hasPermission } from "@/lib/permissions";
+import { canApproveCash } from "@/lib/permissions";
 import { useAppStore } from "@/lib/store";
 import type { CashVoucher } from "@/lib/types";
 

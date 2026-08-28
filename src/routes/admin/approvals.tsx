@@ -44,15 +44,12 @@ function AdminApprovals() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // Check if user is admin
   const employee = user ? getEmployeeByEmail(user.primaryEmail ?? "") : null;
   const isAdmin = employee ? isAdminRole(employee.role) : false;
-
-  // Redirect if not admin
-  if (!user || !isAdmin) {
-    return <Navigate to="/" />;
-  }
 
   // Load registration requests
   useEffect(() => {
@@ -64,7 +61,7 @@ function AdminApprovals() {
       setLoading(true);
       const data = await getRegistrationRequests();
       setRequests(data);
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải danh sách đăng ký");
     } finally {
       setLoading(false);
@@ -77,7 +74,7 @@ function AdminApprovals() {
       await approveRegistrationRequest({ data: { requestId: request.id } });
       toast.success(`Đã duyệt đăng ký cho ${request.name}`);
       await loadRequests();
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi duyệt đăng ký");
     } finally {
       setProcessing(false);
@@ -100,7 +97,7 @@ function AdminApprovals() {
       setSelectedRequest(null);
       setRejectReason("");
       await loadRequests();
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi từ chối đăng ký");
     } finally {
       setProcessing(false);
@@ -142,13 +139,6 @@ function AdminApprovals() {
     });
   }
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
-  const approvedCount = requests.filter((r) => r.status === "approved").length;
-  const rejectedCount = requests.filter((r) => r.status === "rejected").length;
-
-  const [clearing, setClearing] = useState(false);
-  const [confirmClear, setConfirmClear] = useState(false);
-
   const handleClearAttendance = useCallback(async () => {
     if (!confirmClear) {
       setConfirmClear(true);
@@ -166,6 +156,15 @@ function AdminApprovals() {
       setClearing(false);
     }
   }, [confirmClear]);
+
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const approvedCount = requests.filter((r) => r.status === "approved").length;
+  const rejectedCount = requests.filter((r) => r.status === "rejected").length;
+
+  // Redirect if not admin
+  if (!user || !isAdmin) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <main className="container mx-auto py-6 px-4">

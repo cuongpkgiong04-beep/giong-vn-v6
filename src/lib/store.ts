@@ -135,17 +135,6 @@ function saveLs(s: PersistSlice) {
   }
 }
 
-/** Load from localStorage. */
-function loadLs(): Partial<PersistSlice> | null {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as Partial<PersistSlice>;
-  } catch {
-    return null;
-  }
-}
-
 /** Fire-and-forget Neon sync helpers (imported lazily to avoid SSR issues). */
 async function _neonBulkAttendance(rows: Attendance[]) {
   const { bulkInsertAttendance } = await import(

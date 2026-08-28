@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { EMPLOYEES, getEmployeeById } from "@/lib/catalog";
-import { canCreateTaskForOthers, canEditTask, hasPermission } from "@/lib/permissions";
+import { canCreateTaskForOthers, canEditTask } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 import type { Task } from "@/lib/types";

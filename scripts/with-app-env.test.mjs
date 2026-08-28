@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 import {
   APP_ENV_REL_PATH,
   mergeAppEnv,
+  normalizeCommandForSpawn,
   parseAppEnv,
   projectRoot,
   readAppEnv,

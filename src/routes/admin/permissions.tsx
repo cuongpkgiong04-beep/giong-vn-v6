@@ -29,10 +29,6 @@ function AdminPermissionsPage() {
   const employee = user ? getEmployeeByEmail(user.primaryEmail ?? "") ?? getEmployeeByEmail(user.displayName ?? "") : null;
   const isAdmin = employee ? isAdminRole(employee.role) : false;
 
-  if (!user || !isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-
   const filteredEmployees = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return EMPLOYEES;
@@ -63,6 +59,11 @@ function AdminPermissionsPage() {
 
     setModuleRows(nextRows);
   }, [selectedEmployeeId]);
+
+  // Redirect if not admin
+  if (!user || !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const selectedEmployee = EMPLOYEES.find((person) => person.id === selectedEmployeeId) ?? EMPLOYEES[0];
 
