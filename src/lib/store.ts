@@ -105,6 +105,24 @@ const FALLBACK_EMPLOYEES: Employee[] = [
 const FALLBACK_CENTERS: Center[] = [
   { code: 'VP', name: 'Văn phòng Công ty Gióng Việt Nam', short: 'Văn phòng', city: 'Long Biên, Hà Nội', kind: 'Văn phòng' },
   { code: 'LB', name: 'Trung tâm tiêm chủng Gióng Long Biên', short: 'Long Biên', city: 'Long Biên, Hà Nội', kind: 'Trung tâm' },
+  { code: 'SĐ', name: 'Trung tâm tiêm chủng Gióng Sài Đồng', short: 'Sài Đồng', city: 'Long Biên, Hà Nội', kind: 'Trung tâm' },
+  { code: 'NL', name: 'Trung tâm tiêm chủng Gióng Ngọc Lâm', short: 'Ngọc Lâm', city: 'Long Biên, Hà Nội', kind: 'Trung tâm' },
+  { code: 'TO', name: 'Trung tâm tiêm chủng Gióng Thanh Oai', short: 'Thanh Oai', city: 'Thanh Oai, Hà Nội', kind: 'Trung tâm' },
+  { code: 'QO', name: 'Trung tâm tiêm chủng Gióng Quốc Oai', short: 'Quốc Oai', city: 'Quốc Oai, Hà Nội', kind: 'Trung tâm' },
+  { code: 'BH', name: 'Trung tâm tiêm chủng Gióng Bích Hòa', short: 'Bích Hòa', city: 'Thanh Oai, Hà Nội', kind: 'Trung tâm' },
+  { code: 'ML', name: 'Trung tâm tiêm chủng Gióng Mê Linh', short: 'Mê Linh', city: 'Mê Linh, Hà Nội', kind: 'Trung tâm' },
+  { code: 'TP', name: 'Trung tâm tiêm chủng Gióng Tiền Phong', short: 'Tiền Phong', city: 'Mê Linh, Hà Nội', kind: 'Trung tâm' },
+  { code: 'CĐ', name: 'Trung tâm tiêm chủng Gióng Chi Đông', short: 'Chi Đông', city: 'Mê Linh, Hà Nội', kind: 'Trung tâm' },
+  { code: 'TĐ', name: 'Trung tâm tiêm chủng Gióng Thạch Đà', short: 'Thạch Đà', city: 'Mê Linh, Hà Nội', kind: 'Trung tâm' },
+  { code: 'LM', name: 'Trung tâm tiêm chủng Gióng Liên Mạc', short: 'Liên Mạc', city: 'Bắc Từ Liêm, Hà Nội', kind: 'Trung tâm' },
+  { code: 'TA', name: 'Trung tâm tiêm chủng Gióng Tâm An', short: 'Tâm An', city: 'Hà Nội', kind: 'Trung tâm' },
+  { code: 'PY', name: 'Trung tâm tiêm chủng Gióng Phúc Yên', short: 'Phúc Yên', city: 'Phúc Yên, Vĩnh Phúc', kind: 'Trung tâm' },
+  { code: 'ĐX', name: 'Trung tâm tiêm chủng Gióng Đồng Xuân', short: 'Đồng Xuân', city: 'Vĩnh Phúc', kind: 'Trung tâm' },
+  { code: 'TS', name: 'Trung tâm tiêm chủng Gióng Từ Sơn', short: 'Từ Sơn', city: 'Từ Sơn, Bắc Ninh', kind: 'Trung tâm' },
+  { code: 'HM', name: 'Trung tâm tiêm chủng Gióng Hương Mạc', short: 'Hương Mạc', city: 'Từ Sơn, Bắc Ninh', kind: 'Trung tâm' },
+  { code: 'TD', name: 'Trung tâm tiêm chủng Gióng Tiên Du', short: 'Tiên Du', city: 'Tiên Du, Bắc Ninh', kind: 'Trung tâm' },
+  { code: 'ĐY', name: 'Trung tâm tiêm chủng Gióng Đông Yên', short: 'Đông Yên', city: 'Bắc Ninh', kind: 'Trung tâm' },
+  { code: 'TT', name: 'Trung tâm tiêm chủng Gióng Thanh Thùy', short: 'Thanh Thùy', city: 'Hà Nội', kind: 'Trung tâm' },
 ];
 
 const initial: PersistSlice = {
@@ -417,7 +435,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           name: r.name,
           short: r.short_name,
           city: r.city,
-          kind: 'Trung tâm' as 'Trung tâm' | 'Văn phòng',
+          kind: (r.code === 'VP' ? 'Văn phòng' : 'Trung tâm') as 'Trung tâm' | 'Văn phòng',
         }));
 
         // Merge: start with fallback, overlay DB employees on top.
