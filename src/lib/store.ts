@@ -1,10 +1,6 @@
 import { create } from "zustand";
 import { seedAttendance, seedNotes, seedTasks } from "@/data";
-import {
-  CASH_SEED,
-  CHAT_SEED,
-  PROPOSAL_SEED,
-} from "@/lib/catalog";
+
 import type {
   Attendance,
   CashVoucher,
@@ -91,9 +87,9 @@ const initial: PersistSlice = {
   tasks: seedTasks,
   attendance: seedAttendance,
   notes: seedNotes,
-  cash: CASH_SEED,
-  proposals: PROPOSAL_SEED,
-  messages: CHAT_SEED,
+  cash: [],
+  proposals: [],
+  messages: [],
   checkins: [],
   currentUserId: 'e0000000-0000-0000-0000-000000000003', // Phạm Kiên Cường UUID
   employees: FALLBACK_EMPLOYEES,
