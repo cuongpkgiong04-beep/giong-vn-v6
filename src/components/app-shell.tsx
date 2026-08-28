@@ -1,4 +1,4 @@
-import { Link, Navigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   Bell,
@@ -111,10 +111,19 @@ function NavLink({
   mobile?: boolean;
 }) {
   const Icon = item.icon;
+  const navigate = useNavigate();
   return (
     <Link
       to={item.to}
-      onClick={onClick}
+      onClick={(e) => {
+        if (mobile) {
+          e.preventDefault();
+          onClick?.();
+          navigate({ to: item.to });
+        } else {
+          onClick?.();
+        }
+      }}
       className={cn(
         "flex h-9 items-center gap-2.5 rounded-lg px-2.5 font-medium transition-all duration-200 justify-start",
         mobile ? "text-[16px]" : "text-[13px]",
