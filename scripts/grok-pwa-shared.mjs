@@ -207,6 +207,12 @@ export function readGrokProjectId() {
   return String(fromProcess ?? "").trim();
 }
 
+/** Allow opt-out for loading the grok extensions script in preview/deploys. */
+export function allowGrokExtensions() {
+  const v = typeof process !== "undefined" ? String(process.env?.VITE_ALLOW_GROK_EXT ?? "").trim().toLowerCase() : "";
+  return v === "1" || v === "true";
+}
+
 export function readXCreator() {
   const fromProcess = typeof process !== "undefined" ? process.env?.X_CREATOR : "";
   return String(fromProcess ?? "").trim();
@@ -229,6 +235,7 @@ export function grokXCreatorHeadTags(creator = readXCreator(), creatorId = readX
 
 /** Platform "Created with Grok" banner — injected into every HTML document. */
 export function grokExtensionsHeadTags(projectId = readGrokProjectId()) {
+  if (!allowGrokExtensions()) return [];
   const id = escapeHtml(projectId);
   const tags = [];
   if (projectId) {
