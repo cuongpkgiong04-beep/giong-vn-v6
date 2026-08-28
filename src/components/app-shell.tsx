@@ -92,7 +92,7 @@ const NAV: NavItem[] = [
   { to: "/huong-dan", label: "Hướng dẫn", icon: BookOpen, group: "Hệ thống" },
 ];
 
-const MOBILE_PRIMARY = ["/", "/cham-cong", "/nhiem-vu", "/kho"];
+const MOBILE_PRIMARY = ["/cham-cong", "/", "/nhiem-vu"];
 const ADMIN_ONLY_PATHS = ["/nhan-su", "/trung-tam", "/quy", "/tin-dung", "/bao-cao", "/admin/approvals", "/admin/permissions"];
 
 function NavLink({
@@ -158,7 +158,7 @@ function SidebarNav({ pathname, onNavigate, dark, collapsed = false, mobile = fa
           {group ? (
             <p
               className={cn(
-                "mb-1 px-2 text-[8px] font-semibold tracking-[0.16em] uppercase text-left transition-all duration-200",
+                "mb-1 px-2 text-[10px] font-semibold tracking-[0.16em] uppercase text-left transition-all duration-200",
                 dark ? "text-forest-muted/80" : "text-faint",
                 collapsed ? "hidden" : "block",
               )}
@@ -342,10 +342,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </header>
 
-        <main className="px-4 pt-6 pb-24 sm:px-6 lg:pb-10">{children}</main>
+        <main className="px-4 pt-6 pb-28 sm:px-6 lg:pb-10">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
         {visibleNav.filter((n) => MOBILE_PRIMARY.includes(n.to)).map((item) => {
           const Icon = item.icon;
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
@@ -354,23 +354,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium",
+                "flex min-h-16 flex-col items-center justify-center gap-1 text-[12px] font-medium",
                 active ? "text-accent" : "text-muted",
               )}
             >
-              <Icon className="size-5" />
+              <Icon className="size-6" />
               {item.label}
             </Link>
           );
         })}
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted"
-        >
-          <Menu className="size-5" />
-          Thêm
-        </button>
       </nav>
 
       <Sheet open={open} onOpenChange={setOpen}>
