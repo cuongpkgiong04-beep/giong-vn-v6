@@ -203,7 +203,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const userId = useAppStore((s) => s.currentUserId);
   const pending = useAppStore((s) => s.proposals.filter((p) => p.status === "Chờ duyệt").length);
   const { user: authUser, isPending } = useCurrentUserState();
-  const appVersion = useMemo(() => getVersionValue(), []);
+  const [appVersion, setAppVersion] = useState(DEFAULT_VERSION);
+  useEffect(() => {
+    setAppVersion(getVersionValue());
+  }, []);
   const employee = getEmployeeById(userId) ?? EMPLOYEES[0];
   const currentUserEmployee = authUser
     ? getEmployeeByEmail(authUser.primaryEmail ?? "") ?? getEmployeeByEmail(authUser.displayName ?? "") ?? employee
