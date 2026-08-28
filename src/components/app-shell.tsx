@@ -18,7 +18,6 @@ import {
   StickyNote,
   Timer,
   Users,
-  Wallet,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -77,7 +76,6 @@ const NAV: NavItem[] = [
   { to: "/check-in", label: "Check-in", icon: MapPin, group: "Vận hành" },
   { to: "/nhiem-vu", label: "Nhiệm vụ", icon: ClipboardList, group: "Vận hành" },
 
-  { to: "/quy", label: "Quỹ tiền", icon: Wallet, group: "Nghiệp vụ" },
   { to: "/de-nghi", label: "Đề nghị", icon: FileText, group: "Nghiệp vụ" },
   { to: "/tin-dung", label: "Tín dụng", icon: Landmark, group: "Nghiệp vụ" },
   { to: "/nhan-su", label: "Nhân sự", icon: Users, group: "Danh mục" },

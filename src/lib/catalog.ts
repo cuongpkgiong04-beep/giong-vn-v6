@@ -180,7 +180,6 @@ export const STAFF_BY_CENTER = new Proxy({} as Record<string, number>, {
 
 export const CURRENT_USER_ID = "e0000000-0000-0000-0000-000000000003"; // Phạm Kiên Cường UUID
 
-export const CASH_SEED: import("./types").CashVoucher[] = [];
 export const PROPOSAL_SEED: import("./types").Proposal[] = [];
 export const CREDIT_SEED: import("./types").CreditFacility[] = [];
 export const COLLATERAL_SEED: import("./types").Collateral[] = [];
@@ -190,7 +189,7 @@ export const GUIDES = [
   {
     id: "GT001",
     title: "Giới thiệu phần mềm",
-    body: "GIONG VN là hệ thống điều hành chuỗi trung tâm tiêm chủng Gióng Việt Nam — dùng được trên máy tính, trình duyệt, iPhone và Android. Ứng dụng thay thế bộ AppSheet rời, gom chấm công, quỹ tiền, nhiệm vụ và đề nghị về một dashboard.",
+    body: "GIONG VN là hệ thống điều hành chuỗi trung tâm tiêm chủng Gióng Việt Nam — dùng được trên máy tính, trình duyệt, iPhone và Android. Ứng dụng thay thế bộ AppSheet rời, gom chấm công, nhiệm vụ và đề nghị về một dashboard.",
   },
   {
     id: "GT003",
@@ -233,7 +232,6 @@ export const REPORTS = [
   { id: "bc1", name: "Bảng chấm công", desc: "Công vào/tan ca theo ngày, người, trung tâm", href: "/cham-cong" },
   { id: "bc2", name: "Báo cáo nhiệm vụ", desc: "Tiến độ kế hoạch theo người phụ trách", href: "/nhiem-vu" },
 
-  { id: "bc5", name: "Quỹ tiền", desc: "Thu — chi — số dư theo ngày", href: "/quy" },
   { id: "bc6", name: "Đề nghị chờ duyệt", desc: "Hàng đợi phê duyệt của quản lý", href: "/de-nghi" },
 ];
 

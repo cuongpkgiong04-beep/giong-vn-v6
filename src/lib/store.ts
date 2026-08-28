@@ -3,7 +3,6 @@ import { seedAttendance, seedNotes, seedTasks } from "@/data";
 
 import type {
   Attendance,
-  CashVoucher,
   Center,
   ChatMessage,
   CheckIn,
@@ -21,7 +20,6 @@ type PersistSlice = {
   tasks: Task[];
   attendance: Attendance[];
   notes: Note[];
-  cash: CashVoucher[];
   proposals: Proposal[];
   messages: ChatMessage[];
   checkins: CheckIn[];
@@ -45,8 +43,6 @@ type Actions = {
     photo?: string,
   ) => Attendance;
   addNote: (n: Omit<Note, "id">) => void;
-  addCash: (c: Omit<CashVoucher, "id">) => void;
-  setCashStatus: (id: string, status: CashVoucher["status"]) => void;
   addProposal: (p: Omit<Proposal, "id">) => void;
   setProposalStatus: (id: string, status: Proposal["status"]) => void;
   sendMessage: (text: string, channel: string) => void;
@@ -58,7 +54,6 @@ function slice(s: PersistSlice): PersistSlice {
     tasks: s.tasks,
     attendance: s.attendance,
     notes: s.notes,
-    cash: s.cash,
     proposals: s.proposals,
     messages: s.messages,
     checkins: s.checkins,
@@ -116,7 +111,6 @@ const initial: PersistSlice = {
   tasks: seedTasks,
   attendance: seedAttendance,
   notes: seedNotes,
-  cash: [],
   proposals: [],
   messages: [],
   checkins: [],
@@ -180,25 +174,6 @@ async function _neonBulkTasks(rows: Task[]) {
   });
 }
 
-async function _neonBulkCash(rows: CashVoucher[]) {
-  const { bulkInsertCash } = await import("@/routes/api/data");
-  await bulkInsertCash({
-    data: {
-      rows: rows.map((r) => ({
-        id: r.id,
-        type: r.type,
-        date: r.date,
-        amount: r.amount,
-        content: r.content,
-        center: r.center,
-        person: r.person,
-        method: r.method,
-        status: r.status,
-      })),
-    },
-  });
-}
-
 async function _neonBulkMessages(rows: ChatMessage[]) {
   const { bulkInsertMessages } = await import("@/routes/api/data");
   await bulkInsertMessages({
@@ -248,23 +223,6 @@ async function _neonInsertTask(r: Task) {
       blocker: r.blocker,
       updated: r.updated,
       createdBy: r.createdBy,
-    },
-  });
-}
-
-async function _neonInsertCash(r: CashVoucher) {
-  const { insertCash } = await import("@/routes/api/data");
-  await insertCash({
-    data: {
-      id: r.id,
-      type: r.type,
-      date: r.date,
-      amount: r.amount,
-      content: r.content,
-      center: r.center,
-      person: r.person,
-      method: r.method,
-      status: r.status,
     },
   });
 }
@@ -337,11 +295,6 @@ async function _neonUpdateTaskStatus(id: string, status: string, updated: string
   await updateTaskStatus({ data: { id, status, updated } });
 }
 
-async function _neonUpdateCashStatus(id: string, status: string) {
-  const { updateCashStatus } = await import("@/routes/api/data");
-  await updateCashStatus({ data: { id, status } });
-}
-
 async function _neonUpdateProposalStatus(id: string, status: string) {
   const { updateProposalStatus } = await import("@/routes/api/data");
   await updateProposalStatus({ data: { id, status } });
@@ -354,16 +307,15 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     // Sync from Neon first. Only fall back to localStorage if Neon sync fails.
     (async () => {
       try {
-        const { loadAttendance, loadTasks, loadCash, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
+        const { loadAttendance, loadTasks, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
           "@/routes/api/data"
         );
         const { loadEmployees: loadEmps, loadCenters: loadCtrs } = await import(
           "@/routes/api/catalog-data"
         );
-        const [att, tsk, csh, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
+        const [att, tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
           loadAttendance(),
           loadTasks(),
-          loadCash(),
           loadProposals(),
           loadNotes(),
           loadMessages({ data: { channel: "general" } }),
@@ -399,18 +351,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           blocker: r.blocker ?? "",
           updated: r.updated,
           createdBy: r.created_by ?? "",
-        }));
-
-        const neonCash: CashVoucher[] = (csh as any[]).map((r) => ({
-          id: r.id,
-          type: r.type as CashVoucher["type"],
-          date: r.date,
-          amount: Number(r.amount),
-          content: r.content,
-          center: r.center ?? "VP",
-          person: r.person ?? "",
-          method: (r.method ?? "Chuyển khoản") as CashVoucher["method"],
-          status: (r.status ?? "Nháp") as CashVoucher["status"],
         }));
 
         const neonProposals: Proposal[] = (prp as any[]).map((r) => ({
@@ -483,13 +423,11 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         // If Neon has data, use it as the source of truth.
         const hasNeonData =
           neonAttendance.length > 0 ||
-          neonTasks.length > 0 ||
-          neonCash.length > 0;
+          neonTasks.length > 0;
         if (hasNeonData) {
           set({
             attendance: neonAttendance,
             tasks: neonTasks,
-            cash: neonCash,
             proposals: neonProposals,
             notes: neonNotes,
             messages: neonMessages,
@@ -505,7 +443,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             tasks: [],
             attendance: [],
             notes: [],
-            cash: [],
             proposals: [],
             messages: [],
             checkins: [],
@@ -521,7 +458,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           tasks: [],
           attendance: [],
           notes: [],
-          cash: [],
           proposals: [],
           messages: [],
           checkins: [],
@@ -597,21 +533,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     set((s) => ({ notes: [note, ...s.notes] }));
     saveLs(get());
     _neonInsertNote(note).catch(console.warn);
-  },
-
-  addCash: (c) => {
-    const voucher: CashVoucher = { ...c, id: uid("q") };
-    set((s) => ({ cash: [voucher, ...s.cash] }));
-    saveLs(get());
-    _neonInsertCash(voucher).catch(console.warn);
-  },
-
-  setCashStatus: (id, status) => {
-    set((s) => ({
-      cash: s.cash.map((x) => (x.id === id ? { ...x, status } : x)),
-    }));
-    saveLs(get());
-    _neonUpdateCashStatus(id, status).catch(console.warn);
   },
 
   addProposal: (p) => {

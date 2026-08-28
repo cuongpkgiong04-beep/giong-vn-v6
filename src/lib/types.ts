@@ -65,18 +65,6 @@ export type Center = {
   kind: "Trung tâm" | "Văn phòng";
 };
 
-export type CashVoucher = {
-  id: string;
-  type: "Thu" | "Chi";
-  date: string;
-  amount: number;
-  content: string;
-  center: string;
-  person: string;
-  method: "Tiền mặt" | "Chuyển khoản";
-  status: "Nháp" | "Chờ duyệt" | "Đã duyệt" | "Từ chối";
-};
-
 export type Proposal = {
   id: string;
   kind: "Nhân sự" | "Thu chi" | "Nhập xuất" | "Góp ý";

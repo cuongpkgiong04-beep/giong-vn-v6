@@ -170,85 +170,6 @@ export const bulkInsertTasks = createServerFn({ method: "POST" })
     }
   });
 
-/* ─────────────────── Cash Vouchers ─────────────────── */
-
-export const loadCash = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const sql = await getSql();
-    return sql<{
-      id: string;
-      type: string;
-      date: string;
-      amount: number;
-      content: string;
-      center: string;
-      person: string;
-      method: string;
-      status: string;
-    }>`SELECT * FROM cash_vouchers ORDER BY date DESC LIMIT 200`;
-  });
-
-export const insertCash = createServerFn({ method: "POST" })
-  .validator(
-    (data: {
-      id: string;
-      type: string;
-      date: string;
-      amount: number;
-      content: string;
-      center?: string;
-      person?: string;
-      method?: string;
-      status?: string;
-    }) => data,
-  )
-  .handler(async ({ data }) => {
-    const sql = await getSql();
-    await sql`
-      INSERT INTO cash_vouchers (id, type, date, amount, content, center, person, method, status)
-      VALUES (${data.id}, ${data.type}, ${data.date}, ${data.amount}, ${data.content},
-              ${data.center ?? "VP"}, ${data.person ?? ""}, ${data.method ?? "Chuyển khoản"},
-              ${data.status ?? "Nháp"})
-      ON CONFLICT (id) DO NOTHING
-    `;
-  });
-
-export const updateCashStatus = createServerFn({ method: "POST" })
-  .validator((data: { id: string; status: string }) => data)
-  .handler(async ({ data }) => {
-    const sql = await getSql();
-    await sql`UPDATE cash_vouchers SET status = ${data.status} WHERE id = ${data.id}`;
-  });
-
-export const bulkInsertCash = createServerFn({ method: "POST" })
-  .validator(
-    (data: {
-      rows: Array<{
-        id: string;
-        type: string;
-        date: string;
-        amount: number;
-        content: string;
-        center?: string;
-        person?: string;
-        method?: string;
-        status?: string;
-      }>;
-    }) => data,
-  )
-  .handler(async ({ data }) => {
-    const sql = await getSql();
-    for (const r of data.rows) {
-      await sql`
-        INSERT INTO cash_vouchers (id, type, date, amount, content, center, person, method, status)
-        VALUES (${r.id}, ${r.type}, ${r.date}, ${r.amount}, ${r.content},
-                ${r.center ?? "VP"}, ${r.person ?? ""}, ${r.method ?? "Chuyển khoản"},
-                ${r.status ?? "Nháp"})
-        ON CONFLICT (id) DO NOTHING
-      `;
-    }
-  });
-
 /* ─────────────────── Proposals ─────────────────── */
 
 export const loadProposals = createServerFn({ method: "GET" })
@@ -456,7 +377,6 @@ export const isTableEmpty = createServerFn({ method: "GET" })
     const allowed = [
       "attendance",
       "tasks",
-      "cash_vouchers",
       "proposals",
       "notes",
       "messages",

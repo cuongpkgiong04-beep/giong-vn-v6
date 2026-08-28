@@ -154,7 +154,7 @@ function Login() {
           <p className="text-sm text-muted">
             {isSignUp
               ? "Đăng ký tài khoản mới để truy cập hệ thống."
-              : "Sử dụng email và mật khẩu để truy cập chấm công, nhân sự, quỹ và các module vận hành."}
+              : "Sử dụng email và mật khẩu để truy cập chấm công, nhân sự và các module vận hành."}
           </p>
         </div>
 

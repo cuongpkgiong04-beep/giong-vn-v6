@@ -6,7 +6,6 @@ import {
   FileText,
   Timer,
   Users,
-  Wallet,
 } from "lucide-react";
 import { useMemo } from "react";
 import {
@@ -23,7 +22,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { seedDaily } from "@/data";
 import { CENTERS, EMPLOYEES, findEmployeeByLooseText } from "@/lib/catalog";
-import { formatDate, formatVndCompact, formatLongDate, greetingVi, todayIso } from "@/lib/format";
+import { formatDate, formatLongDate, greetingVi, todayIso } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/")({ component: Dashboard });
@@ -65,7 +64,6 @@ function Kpi({
 function Dashboard() {
   const tasks = useAppStore((s) => s.tasks);
   const attendance = useAppStore((s) => s.attendance);
-  const cash = useAppStore((s) => s.cash);
   const proposals = useAppStore((s) => s.proposals);
   const userName = useAppStore((s) => s.currentName());
   const today = todayIso();
@@ -79,9 +77,6 @@ function Dashboard() {
       .map((a) => findEmployeeByLooseText(a.name)?.id ?? a.name.trim().toLowerCase()),
   );
   const todayIn = todayInPeople.size;
-
-  const thu = cash.filter((c) => c.type === "Thu" && c.status === "Đã duyệt").reduce((s, c) => s + c.amount, 0);
-  const chi = cash.filter((c) => c.type === "Chi" && c.status === "Đã duyệt").reduce((s, c) => s + c.amount, 0);
 
   const attChart = useMemo(() => {
     return seedDaily
@@ -102,7 +97,6 @@ function Dashboard() {
     { to: "/cham-cong", label: "Chấm công", desc: "Vào ca / tan ca", icon: Timer },
     { to: "/nhiem-vu", label: "Nhiệm vụ", desc: `${openTasks.length} việc mở`, icon: ClipboardList },
 
-    { to: "/quy", label: "Quỹ tiền", desc: "Thu chi nội bộ", icon: Wallet },
     { to: "/nhan-su", label: "Nhân sự", desc: `${EMPLOYEES.length} người`, icon: Users },
     { to: "/trung-tam", label: "Trung tâm", desc: `${CENTERS.filter((c) => c.kind === "Trung tâm").length} điểm tiêm`, icon: Building2 },
   ];
@@ -247,23 +241,7 @@ function Dashboard() {
         </Card>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <Card className="p-4">
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">Quỹ đã duyệt</p>
-          <p className="mt-2 text-lg font-semibold tabular text-ok">+ {formatVndCompact(thu)}</p>
-          <p className="text-sm text-muted">Thu</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">Quỹ đã duyệt</p>
-          <p className="mt-2 text-lg font-semibold tabular text-danger">− {formatVndCompact(chi)}</p>
-          <p className="text-sm text-muted">Chi</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium tracking-wide text-muted uppercase">Số dư thuần</p>
-          <p className="mt-2 text-lg font-semibold tabular text-ink">{formatVndCompact(thu - chi)}</p>
-          <p className="text-sm text-muted">Thu trừ chi (mẫu quỹ)</p>
-        </Card>
-      </div>
+
     </div>
   );
 }

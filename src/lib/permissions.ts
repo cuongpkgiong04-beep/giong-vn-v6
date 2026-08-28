@@ -25,10 +25,6 @@ export type Permission =
   | "tasks:edit_any"
   | "tasks:delete"
   | "tasks:change_status"
-  | "cash:view"
-  | "cash:create"
-  | "cash:approve"
-  | "cash:reject"
   | "proposals:view_own"
   | "proposals:view_all"
   | "proposals:create"
@@ -54,7 +50,6 @@ export type ModuleKey =
   | "attendance"
   | "checkin"
   | "tasks"
-  | "cash"
   | "proposals"
   | "credit"
   | "hr"
@@ -76,7 +71,6 @@ export const MODULE_DEFINITIONS = [
   { key: "checkin", label: "Check-in", paths: ["/check-in"], group: "Vận hành" },
   { key: "tasks", label: "Nhiệm vụ", paths: ["/nhiem-vu"], group: "Vận hành" },
 
-  { key: "cash", label: "Quỹ tiền", paths: ["/quy"], group: "Nghiệp vụ" },
   { key: "proposals", label: "Đề nghị", paths: ["/de-nghi"], group: "Nghiệp vụ" },
   { key: "credit", label: "Tín dụng", paths: ["/tin-dung"], group: "Nghiệp vụ" },
   { key: "hr", label: "Nhân sự", paths: ["/nhan-su"], group: "Danh mục" },
@@ -156,9 +150,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       dashboard: true,
       attendance: true,
       checkin: true,
-      tasks: true,
-    cash: true,
-      proposals: true,
+      tasks: true,    proposals: true,
       credit: true,
       hr: true,
       centers: true,
@@ -172,7 +164,6 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
   }
 
   if (["Kế toán", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
-    defaultMap.cash = true;
     defaultMap.credit = true;
   }
 
@@ -237,10 +228,6 @@ export function getPermissions(employee: Employee | null): Permission[] {
       "tasks:edit_any",
       "tasks:delete",
       "tasks:change_status",
-      "cash:view",
-      "cash:create",
-      "cash:approve",
-      "cash:reject",
       "proposals:view_own",
       "proposals:view_all",
       "proposals:create",
@@ -283,9 +270,6 @@ export function getPermissions(employee: Employee | null): Permission[] {
       "tasks:change_status",
     );
   }
-  if (effectiveModules.cash) {
-    mappedPermissions.push("cash:view", "cash:create");
-  }
   if (effectiveModules.proposals) {
     mappedPermissions.push("proposals:view_own", "proposals:create");
   }
@@ -314,10 +298,6 @@ export function canAccessEmployeeData(actor: Employee | null, targetId: string):
   const target = getEmployeeById(targetId);
   if (target && target.center === actor.center) return true;
   return false;
-}
-
-export function canApproveCash(employee: Employee | null): boolean {
-  return hasPermission(employee, "cash:approve");
 }
 
 export function canApproveProposals(employee: Employee | null): boolean {
@@ -370,10 +350,6 @@ export function getPermissionLabel(permission: Permission): string {
     "tasks:edit_any": "Sửa bất kỳ nhiệm vụ nào",
     "tasks:delete": "Xóa nhiệm vụ",
     "tasks:change_status": "Đổi trạng thái nhiệm vụ",
-    "cash:view": "Xem quỹ tiền",
-    "cash:create": "Lập phiếu quỹ",
-    "cash:approve": "Duyệt phiếu quỹ",
-    "cash:reject": "Từ chối phiếu quỹ",
     "proposals:view_own": "Xem đề nghị cá nhân",
     "proposals:view_all": "Xem tất cả đề nghị",
     "proposals:create": "Tạo đề nghị",

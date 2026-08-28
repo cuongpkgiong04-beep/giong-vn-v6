@@ -60,15 +60,15 @@ describe("module permission matrix", () => {
   it("updates explicit user access when admin overrides a module", () => {
     const employee = EMPLOYEES.find((item) => item.id === "e0000000-0000-0000-0000-000000000009")!;
 
-    setUserModuleAccess(employee.id, "cash", false);
-    assert.equal(getEffectiveModuleAccess(employee, "cash"), false);
-    assert.equal(getAllowedNavItems(employee).includes("/quy"), false);
+    setUserModuleAccess(employee.id, "proposals", false);
+    assert.equal(getEffectiveModuleAccess(employee, "proposals"), false);
+    assert.equal(getAllowedNavItems(employee).includes("/de-nghi"), false);
 
-    setUserModuleAccess(employee.id, "cash", true);
-    assert.equal(getEffectiveModuleAccess(employee, "cash"), true);
-    assert.equal(getAllowedNavItems(employee).includes("/quy"), true);
+    setUserModuleAccess(employee.id, "proposals", true);
+    assert.equal(getEffectiveModuleAccess(employee, "proposals"), true);
+    assert.equal(getAllowedNavItems(employee).includes("/de-nghi"), true);
 
     resetUserModuleAccess(employee.id);
-    assert.equal(getEffectiveModuleAccess(employee, "cash"), true);
+    assert.equal(getEffectiveModuleAccess(employee, "proposals"), true);
   });
 });
