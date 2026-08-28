@@ -420,6 +420,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           kind: 'Trung tâm' as 'Trung tâm' | 'Văn phòng',
         }));
 
+        // Use fallback employees/centers when DB returns empty
+        const finalEmployees = dbEmployeeList.length > 0 ? dbEmployeeList : FALLBACK_EMPLOYEES;
+        const finalCenters = dbCenterList.length > 0 ? dbCenterList : FALLBACK_CENTERS;
+
         // If Neon has data, use it as the source of truth.
         const hasNeonData =
           neonAttendance.length > 0 ||
@@ -432,8 +436,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             notes: neonNotes,
             messages: neonMessages,
             checkins: neonCheckins,
-            employees: dbEmployeeList,
-            centers: dbCenterList,
+            employees: finalEmployees,
+            centers: finalCenters,
             _neonReady: true,
           });
         } else {
@@ -446,14 +450,14 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             proposals: [],
             messages: [],
             checkins: [],
-            employees: dbEmployeeList,
-            centers: dbCenterList,
+            employees: finalEmployees,
+            centers: finalCenters,
             currentUserId: initial.currentUserId,
             _neonReady: true,
           });
         }
       } catch (err) {
-        console.error('[store] Neon sync failed — no data will be loaded:', err);
+        console.error('[store] Neon sync failed — loading fallback data:', err);
         set({
           tasks: [],
           attendance: [],
@@ -461,8 +465,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           proposals: [],
           messages: [],
           checkins: [],
-          employees: [],
-          centers: [],
+          employees: FALLBACK_EMPLOYEES,
+          centers: FALLBACK_CENTERS,
           _neonReady: false,
         });
       }
