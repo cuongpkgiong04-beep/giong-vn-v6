@@ -192,18 +192,9 @@ export const CASH_SEED: CashVoucher[] = [];
 
 export const PROPOSAL_SEED: Proposal[] = [];
 
-export const CREDIT_SEED: CreditFacility[] = [
-  { id: "TD1", bank: "VietinBank — CN Long Biên", type: "Vay vốn lưu động", limit: 8_000_000_000, outstanding: 5_250_000_000, due: "2026-12-15", status: "Đang giải ngân" },
-  { id: "TD2", bank: "Vietcombank — CN Hà Nội", type: "Thấu chi tài khoản", limit: 2_000_000_000, outstanding: 420_000_000, due: "2026-09-30", status: "Hạn mức còn" },
-  { id: "TD3", bank: "MB Bank", type: "L/C nhập khẩu vắc xin", limit: 3_500_000_000, outstanding: 1_180_000_000, due: "2026-10-20", status: "Đang mở L/C" },
-];
+export const CREDIT_SEED: CreditFacility[] = [];
 
-export const COLLATERAL_SEED: Collateral[] = [
-  { id: "TS1", name: "Nhà VP 8/61 Nguyễn Sơn, Bồ Đề", type: "Bất động sản", value: 12_500_000_000, location: "Long Biên, Hà Nội", status: "Thế chấp VietinBank" },
-  { id: "TS2", name: "Hệ thống kho lạnh 19 trung tâm", type: "Máy móc thiết bị", value: 4_800_000_000, location: "Toàn hệ thống", status: "Thế chấp MB" },
-  { id: "TS3", name: "Xe tải đông lạnh 2.5 tấn", type: "Phương tiện", value: 980_000_000, location: "Văn phòng", status: "Sở hữu" },
-  { id: "TS4", name: "Phần mềm & dữ liệu vận hành", type: "Tài sản vô hình", value: 350_000_000, location: "Hệ thống", status: "Sở hữu" },
-];
+export const COLLATERAL_SEED: Collateral[] = [];
 
 export const CHAT_SEED: ChatMessage[] = [];
 
