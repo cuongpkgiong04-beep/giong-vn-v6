@@ -435,39 +435,36 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             _neonReady: true,
           });
         } else {
-          // Neon empty — start with initial (seed files) state but do NOT bulk-insert
-          // localStorage data back into Neon. This prevents clients from re-seeding
-          // the database from stale local data.
-          console.log('[store] Neon empty — starting with initial state');
+          // Neon empty — start with no data (empty lists). Do not use seed
+          // files or localStorage to populate Neon automatically.
+          console.log('[store] Neon empty — starting with empty state');
           set({
-            tasks: initial.tasks,
-            attendance: initial.attendance,
-            notes: initial.notes,
-            cash: initial.cash,
-            proposals: initial.proposals,
-            messages: initial.messages,
-            checkins: initial.checkins,
+            tasks: [],
+            attendance: [],
+            notes: [],
+            cash: [],
+            proposals: [],
+            messages: [],
+            checkins: [],
             currentUserId: initial.currentUserId,
             _neonReady: true,
           });
         }
       } catch (err) {
-        // Neon sync failed — fall back to localStorage so offline users keep working.
-        console.warn("[store] Neon sync failed, using localStorage fallback:", err);
-        const ls = loadLs();
-        if (ls) {
-          set({
-            tasks: ls.tasks ?? initial.tasks,
-            attendance: ls.attendance ?? initial.attendance,
-            notes: ls.notes ?? initial.notes,
-            cash: ls.cash ?? initial.cash,
-            proposals: ls.proposals ?? initial.proposals,
-            messages: ls.messages ?? initial.messages,
-            checkins: ls.checkins ?? initial.checkins,
-            currentUserId: ls.currentUserId ?? initial.currentUserId,
-          });
-        }
-        set({ _neonReady: false });
+        // Neon sync failed — report the error and do not load data from
+        // localStorage or seed files. Application remains empty and signals
+        // that Neon is not ready.
+        console.error('[store] Neon sync failed — no data will be loaded:', err);
+        set({
+          tasks: [],
+          attendance: [],
+          notes: [],
+          cash: [],
+          proposals: [],
+          messages: [],
+          checkins: [],
+          _neonReady: false,
+        });
       }
     })();
   },
