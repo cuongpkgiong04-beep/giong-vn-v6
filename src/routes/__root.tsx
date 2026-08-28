@@ -46,7 +46,7 @@ export const Route = createRootRoute({
 function Root() {
   return (
     <html lang="vi" className="antialiased" suppressHydrationWarning>
-      <head>
+      <head suppressHydrationWarning>
         <HeadContent />
       </head>
       <body className="bg-bg text-ink">

@@ -118,8 +118,10 @@ function NavLink({
       onClick={(e) => {
         if (mobile) {
           e.preventDefault();
+          const target = item.to;
           onClick?.();
-          navigate({ to: item.to });
+          // Delay navigate to avoid Radix Dialog close animation interference
+          requestAnimationFrame(() => navigate({ to: target }));
         } else {
           onClick?.();
         }
