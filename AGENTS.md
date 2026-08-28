@@ -73,6 +73,7 @@
 - **HỎI** trước khi hành động nếu chưa chắc
 - **Surgical** — sửa đúng dòng cần sửa, không đụng dòng khác
 - **Minimal Change Policy** — tối thiểu thay đổi cần thiết
+- **AUTO COMMIT + PUSH** — Sau mỗi lần sửa code, em TỰ ĐỘNG commit + push lên GitHub. KHÔNG cần hỏi Đại ca. Chỉ thông báo "Đã push thành công".
 
 ---
 
