@@ -14,8 +14,9 @@ import {
   approveRegistrationRequest,
   rejectRegistrationRequest,
 } from "@/routes/api/registrations";
-import { useCurrentUser } from "@/lib/auth/use-current-user";
-import { isAdminRole, getEmployeeByEmail } from "@/lib/catalog";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useAppStore } from "@/lib/store";
+import { isAdminRole } from "@/lib/catalog";
 import { Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin/approvals")({
@@ -36,7 +37,8 @@ interface RegistrationRequest {
 }
 
 function AdminApprovals() {
-  const user = useCurrentUser();
+  const { user, isPending } = useCurrentUserState();
+  const employees = useAppStore((s) => s.employees);
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] =
@@ -47,8 +49,8 @@ function AdminApprovals() {
   const [clearing, setClearing] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Check if user is admin
-  const employee = user ? getEmployeeByEmail(user.primaryEmail ?? "") : null;
+  // Check if user is admin — wait for session to resolve first
+  const employee = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
   const isAdmin = employee ? isAdminRole(employee.role) : false;
 
   // Load registration requests
@@ -161,7 +163,8 @@ function AdminApprovals() {
   const approvedCount = requests.filter((r) => r.status === "approved").length;
   const rejectedCount = requests.filter((r) => r.status === "rejected").length;
 
-  // Redirect if not admin
+  // Wait for session to resolve before redirecting
+  if (isPending) return null;
   if (!user || !isAdmin) {
     return <Navigate to="/" />;
   }

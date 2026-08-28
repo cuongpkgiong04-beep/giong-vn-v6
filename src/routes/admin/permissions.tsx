@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/lib/store";
 import { isAdminRole } from "@/lib/catalog";
 import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess } from "@/lib/permissions";
-import { useCurrentUser } from "@/lib/auth/use-current-user";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 export const Route = createFileRoute("/admin/permissions")({
   component: AdminPermissionsPage,
@@ -22,7 +22,7 @@ type ModulePermissionRow = {
 };
 
 function AdminPermissionsPage() {
-  const user = useCurrentUser();
+  const { user, isPending } = useCurrentUserState();
   const employees = useAppStore((s) => s.employees);
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
@@ -62,7 +62,8 @@ function AdminPermissionsPage() {
     setModuleRows(nextRows);
   }, [selectedEmployeeId, employees, filteredEmployees]);
 
-  // Redirect if not admin
+  // Wait for session to resolve before redirecting
+  if (isPending) return null;
   if (!user || !isAdmin) {
     return <Navigate to="/" replace />;
   }
