@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { ClientOnly } from "@/components/client-only";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -204,8 +205,9 @@ function ChamCongPage() {
   }
 
   return (
-    <div>
-      <PageHeader
+    <ClientOnly>
+      <div>
+        <PageHeader
         eyebrow="Vận hành"
         title="Chấm công toàn hệ thống"
         desc="Điểm danh vào ca và tan ca ở văn phòng và toàn bộ các trung tâm tiêm chủng."
