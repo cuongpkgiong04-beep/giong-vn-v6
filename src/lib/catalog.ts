@@ -188,29 +188,9 @@ export function getVisibleCenterCodes(actor: Employee | null) {
 
 export const CURRENT_USER_ID = "U002";
 
-export const CASH_SEED: CashVoucher[] = [
-  { id: "Q001", type: "Thu", date: "2026-08-22", amount: 48500000, content: "Doanh thu tiêm chủng ngày 22/08 — Long Biên", center: "LB", person: "Vương Thị Minh", method: "Tiền mặt", status: "Đã duyệt" },
-  { id: "Q002", type: "Thu", date: "2026-08-22", amount: 39200000, content: "Doanh thu tiêm chủng ngày 22/08 — Ngọc Lâm", center: "NL", person: "Lê Thị Dung", method: "Chuyển khoản", status: "Đã duyệt" },
-  { id: "Q003", type: "Thu", date: "2026-08-23", amount: 51800000, content: "Doanh thu tiêm chủng ngày 23/08 — Từ Sơn", center: "TS", person: "KIỀU MAI ANH", method: "Tiền mặt", status: "Đã duyệt" },
-  { id: "Q004", type: "Chi", date: "2026-08-23", amount: 126000000, content: "Thanh toán nhà cung cấp vắc xin Sanofi — đợt 8", center: "VP", person: "Trần Mạnh Hùng", method: "Chuyển khoản", status: "Đã duyệt" },
-  { id: "Q005", type: "Chi", date: "2026-08-24", amount: 18500000, content: "Chi phí vận hành, điện lạnh kho vắc xin VP", center: "VP", person: "Trần Thị Thanh Thủy", method: "Chuyển khoản", status: "Đã duyệt" },
-  { id: "Q006", type: "Thu", date: "2026-08-24", amount: 27400000, content: "Doanh thu tiêm chủng ngày 24/08 — Sài Đồng", center: "SĐ", person: "Nguyễn Thị Tuyết Lan", method: "Tiền mặt", status: "Đã duyệt" },
-  { id: "Q007", type: "Chi", date: "2026-08-24", amount: 8200000, content: "Chi lương tăng ca tuần 34 — khối tiêm chủng", center: "VP", person: "Nguyễn Thị Mỹ Hạnh", method: "Chuyển khoản", status: "Chờ duyệt" },
-  { id: "Q008", type: "Thu", date: "2026-08-25", amount: 33100000, content: "Doanh thu tiêm chủng sáng 25/08 — Long Biên", center: "LB", person: "Vương Thị Minh", method: "Tiền mặt", status: "Nháp" },
-  { id: "Q009", type: "Chi", date: "2026-08-25", amount: 4500000, content: "Chi xăng xe điều chuyển vắc xin VP → Chi Đông", center: "VP", person: "Trần Thị Thanh Thủy", method: "Tiền mặt", status: "Đã duyệt" },
-  { id: "Q010", type: "Chi", date: "2026-08-21", amount: 72000000, content: "Tạm ứng lương khối văn phòng tháng 8", center: "VP", person: "Trần Mạnh Hùng", method: "Chuyển khoản", status: "Đã duyệt" },
-];
+export const CASH_SEED: CashVoucher[] = [];
 
-export const PROPOSAL_SEED: Proposal[] = [
-  { id: "DN01", kind: "Nhân sự", title: "Xin nghỉ phép 26–27/08", requester: "Nguyễn Thị Dịu", date: "2026-08-24", detail: "Nghỉ phép năm, đã bàn giao sổ quỹ cho chị Hạnh.", dept: "Kế toán", status: "Chờ duyệt" },
-  { id: "DN02", kind: "Nhập xuất", title: "Đề nghị nhập Hexaxim 200 liều", requester: "Trần Thị Thanh Thủy", date: "2026-08-23", detail: "Tồn kho Hexaxim tại NL, LB, TS đang thấp hơn định mức tuần.", dept: "Kho", status: "Chờ duyệt" },
-  { id: "DN03", kind: "Thu chi", title: "Thanh toán GSK đợt 7 — Bexsero", requester: "Trần Mạnh Hùng", date: "2026-08-22", detail: "Hóa đơn 312 triệu, hạn thanh toán 28/08.", dept: "Kế toán", status: "Đã duyệt" },
-  { id: "DN04", kind: "Nhân sự", title: "Đăng ký tăng ca Chủ nhật 30/08", requester: "Lê Thị Bích", date: "2026-08-24", detail: "Ca tiêm dịch vụ Hexaxim + Gardasil 9 tại Long Biên, 8 người.", dept: "Tiêm chủng", status: "Chờ duyệt" },
-  { id: "DN05", kind: "Góp ý", title: "Bổ sung máy phát điện kho lạnh Sài Đồng", requester: "Nguyễn Thị Tuyết Lan", date: "2026-08-20", detail: "Cúp điện 2 lần tuần trước, nhiệt độ kho sát ngưỡng.", dept: "Tiêm chủng", status: "Đã duyệt" },
-  { id: "DN06", kind: "Thu chi", title: "Chi phí sửa điều hòa kho VP", requester: "Trần Thị Thanh Thủy", date: "2026-08-19", detail: "Báo giá 6,8 triệu — cần duyệt trước thứ sáu.", dept: "Kho", status: "Từ chối" },
-  { id: "DN07", kind: "Nhập xuất", title: "Điều chuyển MenQuadfi 40 liều VP → Phúc Yên", requester: "Đinh Thị Hương Trà", date: "2026-08-25", detail: "PY hết lô gần hạn, cần bù từ kho tổng.", dept: "Dược", status: "Chờ duyệt" },
-  { id: "DN08", kind: "Nhân sự", title: "Tuyển 2 điều dưỡng cho Từ Sơn", requester: "Nguyễn Thị Mỹ Hạnh", date: "2026-08-18", detail: "Ca sáng thiếu người từ tháng 7, đề xuất hợp đồng thử việc 2 tháng.", dept: "Hành chính - Nhân sự", status: "Đã duyệt" },
-];
+export const PROPOSAL_SEED: Proposal[] = [];
 
 export const CREDIT_SEED: CreditFacility[] = [
   { id: "TD1", bank: "VietinBank — CN Long Biên", type: "Vay vốn lưu động", limit: 8_000_000_000, outstanding: 5_250_000_000, due: "2026-12-15", status: "Đang giải ngân" },
@@ -225,14 +205,7 @@ export const COLLATERAL_SEED: Collateral[] = [
   { id: "TS4", name: "Phần mềm & dữ liệu vận hành", type: "Tài sản vô hình", value: 350_000_000, location: "Hệ thống", status: "Sở hữu" },
 ];
 
-export const CHAT_SEED: ChatMessage[] = [
-  { id: "m1", from: "Thủy TTT", text: "Sáng nay điều 40 liều MenQuadfi sang Phúc Yên, xe xuất lúc 7h15.", at: "2026-08-25 07:22", channel: "Kho" },
-  { id: "m2", from: "Hạnh NTM", text: "Nhắc cả nhà chấm công vào ca trước 8h. Cuối tháng khóa công ngày 31.", at: "2026-08-25 07:41", channel: "Chung" },
-  { id: "m3", from: "Hùng TM", text: "Hạn thanh toán GSK 28/08. Ai giữ hóa đơn gốc gửi về kế toán giúp.", at: "2026-08-25 09:05", channel: "Kế toán" },
-  { id: "m4", from: "CườngPK", text: "Dashboard GIONG VN bản mới đã lên. Mọi người vào thử chấm công và lập nhiệm vụ trên đây.", at: "2026-08-25 10:18", channel: "Chung" },
-  { id: "m5", from: "DsTra", text: "Hexaxim lô X3C222V tại Đông Yên còn 10, hạn 31/05 — ưu tiên dùng trước.", at: "2026-08-25 11:02", channel: "Dược" },
-  { id: "m6", from: "Thương TTA", text: "Fanpage Long Biên cần 3 ảnh ca tiêm chiều nay cho bài Gardasil 9.", at: "2026-08-25 13:40", channel: "Marketing" },
-];
+export const CHAT_SEED: ChatMessage[] = [];
 
 export const GUIDES = [
   {
