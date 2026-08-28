@@ -101,12 +101,14 @@ function NavLink({
   onClick,
   dark,
   collapsed = false,
+  mobile = false,
 }: {
   item: NavItem;
   active: boolean;
   onClick?: () => void;
   dark?: boolean;
   collapsed?: boolean;
+  mobile?: boolean;
 }) {
   const Icon = item.icon;
   return (
@@ -114,7 +116,8 @@ function NavLink({
       to={item.to}
       onClick={onClick}
       className={cn(
-        "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200 justify-start",
+        "flex h-9 items-center gap-2.5 rounded-lg px-2.5 font-medium transition-all duration-200 justify-start",
+        mobile ? "text-[16px]" : "text-[13px]",
         collapsed ? "px-0" : "",
         dark
           ? active
@@ -138,7 +141,7 @@ function NavLink({
   );
 }
 
-function SidebarNav({ pathname, onNavigate, dark, collapsed = false }: { pathname: string; onNavigate?: () => void; dark?: boolean; collapsed?: boolean }) {
+function SidebarNav({ pathname, onNavigate, dark, collapsed = false, mobile = false }: { pathname: string; onNavigate?: () => void; dark?: boolean; collapsed?: boolean; mobile?: boolean }) {
   const groups = useMemo(() => {
     const map = new Map<string, NavItem[]>();
     for (const item of NAV) {
@@ -172,6 +175,7 @@ function SidebarNav({ pathname, onNavigate, dark, collapsed = false }: { pathnam
                 onClick={onNavigate}
                 dark={dark}
                 collapsed={collapsed}
+                mobile={mobile}
               />
             ))}
           </div>
@@ -383,7 +387,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <X className="size-5" />
             </button>
           </div>
-          <SidebarNav pathname={pathname} onNavigate={() => setOpen(false)} dark />
+          <SidebarNav pathname={pathname} onNavigate={() => setOpen(false)} dark mobile />
         </SheetContent>
       </Sheet>
 
