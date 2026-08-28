@@ -483,6 +483,7 @@ function ChamCongPage() {
           </div>
         </DialogContent>
       </Dialog>
+      </ClientOnly>
     </div>
   );
 }
