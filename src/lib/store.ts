@@ -420,9 +420,18 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           kind: 'Trung tâm' as 'Trung tâm' | 'Văn phòng',
         }));
 
-        // Use fallback employees/centers when DB returns empty
-        const finalEmployees = dbEmployeeList.length > 0 ? dbEmployeeList : FALLBACK_EMPLOYEES;
-        const finalCenters = dbCenterList.length > 0 ? dbCenterList : FALLBACK_CENTERS;
+        // Merge: start with fallback, overlay DB employees on top.
+        // This ensures fallback employees (with known emails) are always available
+        // even if DB has different employees.
+        const employeeMap = new Map<string, Employee>();
+        for (const e of FALLBACK_EMPLOYEES) employeeMap.set(e.id, e);
+        for (const e of dbEmployeeList) employeeMap.set(e.id, e);
+        const finalEmployees = Array.from(employeeMap.values());
+
+        const centerMap = new Map<string, import("@/lib/types").Center>();
+        for (const c of FALLBACK_CENTERS) centerMap.set(c.code, c);
+        for (const c of dbCenterList) centerMap.set(c.code, c);
+        const finalCenters = Array.from(centerMap.values());
 
         // If Neon has data, use it as the source of truth.
         const hasNeonData =
