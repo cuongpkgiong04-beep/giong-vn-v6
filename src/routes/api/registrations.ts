@@ -54,7 +54,7 @@ async function assertAdmin() {
  */
 export const getRegistrationRequests = createServerFn({ method: "GET" })
   .handler(async () => {
-    assertAdmin();
+    await assertAdmin();
     return getAllRegistrationRequests();
   });
 

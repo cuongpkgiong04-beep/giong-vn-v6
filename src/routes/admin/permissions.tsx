@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDesc } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { EMPLOYEES, getEmployeeByEmail, isAdminRole } from "@/lib/catalog";
+import { useAppStore } from "@/lib/store";
+import { isAdminRole } from "@/lib/catalog";
 import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess } from "@/lib/permissions";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 
@@ -22,21 +23,22 @@ type ModulePermissionRow = {
 
 function AdminPermissionsPage() {
   const user = useCurrentUser();
+  const employees = useAppStore((s) => s.employees);
   const [search, setSearch] = useState("");
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState(EMPLOYEES[0]?.id ?? "");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [moduleRows, setModuleRows] = useState<ModulePermissionRow[]>([]);
 
-  const employee = user ? getEmployeeByEmail(user.primaryEmail ?? "") ?? getEmployeeByEmail(user.displayName ?? "") : null;
+  const employee = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) ?? employees.find((e) => e.username === (user.displayName ?? "")) : null;
   const isAdmin = employee ? isAdminRole(employee.role) : false;
 
   const filteredEmployees = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return EMPLOYEES;
-    return EMPLOYEES.filter((person) => {
+    if (!term) return employees;
+    return employees.filter((person) => {
       const haystack = `${person.name} ${person.username} ${person.email} ${person.dept}`.toLowerCase();
       return haystack.includes(term);
     });
-  }, [search]);
+  }, [search, employees]);
 
   useEffect(() => {
     if (!selectedEmployeeId && filteredEmployees[0]) {
@@ -45,7 +47,7 @@ function AdminPermissionsPage() {
   }, [filteredEmployees, selectedEmployeeId]);
 
   useEffect(() => {
-    const selected = EMPLOYEES.find((person) => person.id === selectedEmployeeId) ?? EMPLOYEES[0];
+    const selected = employees.find((person) => person.id === selectedEmployeeId) ?? filteredEmployees[0];
     if (!selected) return;
 
     const defaultMap = getDefaultModuleAccess(selected);
@@ -58,14 +60,14 @@ function AdminPermissionsPage() {
     }));
 
     setModuleRows(nextRows);
-  }, [selectedEmployeeId]);
+  }, [selectedEmployeeId, employees, filteredEmployees]);
 
   // Redirect if not admin
   if (!user || !isAdmin) {
     return <Navigate to="/" replace />;
   }
 
-  const selectedEmployee = EMPLOYEES.find((person) => person.id === selectedEmployeeId) ?? EMPLOYEES[0];
+  const selectedEmployee = employees.find((person) => person.id === selectedEmployeeId) ?? filteredEmployees[0];
 
   const updateModule = (moduleKey: ModuleKey, enabled: boolean) => {
     if (!selectedEmployee) return;
