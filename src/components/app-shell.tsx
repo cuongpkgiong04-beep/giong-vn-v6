@@ -88,7 +88,7 @@ const NAV: NavItem[] = [
 ];
 
 const MOBILE_PRIMARY = ["/cham-cong", "/", "/nhiem-vu"];
-const ADMIN_ONLY_PATHS = ["/nhan-su", "/trung-tam", "/bao-cao", "/admin/approvals", "/admin/permissions"];
+const ADMIN_ONLY_PATHS = ["/bao-cao", "/admin/approvals", "/admin/permissions"];
 
 function NavLink({
   item,
