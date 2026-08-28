@@ -199,7 +199,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const currentUserEmployee = authUser
     ? getEmployeeByEmail(authUser.primaryEmail ?? "") ?? getEmployeeByEmail(authUser.displayName ?? "") ?? employee
     : employee;
-  const isAdmin = currentUserEmployee?.role === "Admin" || currentUserEmployee?.role === "SuperAdmin";
+  const isAdmin = isAdminRole(currentUserEmployee?.role);
 
   useEffect(() => {
     hydrate();
