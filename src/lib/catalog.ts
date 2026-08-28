@@ -33,7 +33,6 @@ export const ROLE_DEFINITIONS = [
   { key: "center_manager", label: "Center Manager", description: "Quản lý trung tâm" },
   { key: "hr", label: "HR", description: "Nhân sự" },
   { key: "accountant", label: "Accountant", description: "Kế toán" },
-  { key: "warehouse", label: "Warehouse", description: "Kho / dược / nhập xuất" },
   { key: "staff", label: "Staff", description: "Nhân viên vận hành" },
 ] as const;
 
@@ -191,7 +190,7 @@ export const GUIDES = [
   {
     id: "GT001",
     title: "Giới thiệu phần mềm",
-    body: "GIONG VN là hệ thống điều hành chuỗi trung tâm tiêm chủng Gióng Việt Nam — dùng được trên máy tính, trình duyệt, iPhone và Android. Ứng dụng thay thế bộ AppSheet rời, gom chấm công, kho vắc xin, quỹ tiền, nhiệm vụ và đề nghị về một dashboard.",
+    body: "GIONG VN là hệ thống điều hành chuỗi trung tâm tiêm chủng Gióng Việt Nam — dùng được trên máy tính, trình duyệt, iPhone và Android. Ứng dụng thay thế bộ AppSheet rời, gom chấm công, quỹ tiền, nhiệm vụ và đề nghị về một dashboard.",
   },
   {
     id: "GT003",
@@ -240,7 +239,6 @@ export const REPORTS = [
 
 export const DOCS = [
   { id: "hs1", name: "Quy chế chấm công & lương", dept: "HCNS", updated: "2026-07-12" },
-  { id: "hs2", name: "Quy trình bảo quản vắc xin GSP", dept: "Dược", updated: "2026-06-03" },
   { id: "hs3", name: "Hồ sơ vay vốn VietinBank", dept: "Tài chính", updated: "2026-02-11" },
 
   { id: "hs5", name: "Nội quy trung tâm tiêm chủng", dept: "Ban giám đốc", updated: "2026-04-18" },

@@ -62,7 +62,7 @@ function CheckInPage() {
       <PageHeader
         eyebrow="Vận hành"
         title="Check-in địa điểm"
-        desc="Ghi nhận vị trí khi đi công tác, giám sát điểm tiêm hoặc giao vắc xin liên trung tâm."
+        desc="Ghi nhận vị trí khi đi công tác, giám sát điểm tiêm hoặc điều phối giữa các trung tâm."
       />
 
       <Card className="mb-5 max-w-xl">
@@ -78,7 +78,7 @@ function CheckInPage() {
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Ghi chú (ví dụ: giám sát kho lạnh Sài Đồng)"
+          placeholder="Ghi chú (ví dụ: giám sát trung tâm Long Biên)"
           className="mb-3"
         />
         <Button onClick={locate} disabled={busy}>

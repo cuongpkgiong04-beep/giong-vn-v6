@@ -67,12 +67,6 @@
       "short_name": "Nhiệm vụ",
       "url": "/nhiem-vu",
       "description": "Quản lý nhiệm vụ"
-    },
-    {
-      "name": "Kho vắc xin",
-      "short_name": "Kho",
-      "url": "/kho",
-      "description": "Quản lý kho vắc xin"
     }
   ]
 }
