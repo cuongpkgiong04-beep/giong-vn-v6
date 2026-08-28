@@ -22,7 +22,7 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { EMPLOYEES, getEmployeeByEmail, getEmployeeById, isAdminRole } from "@/lib/catalog";
+import { isAdminRole } from "@/lib/catalog";
 import { getAllowedNavItems } from "@/lib/permissions";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -204,10 +204,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     setAppVersion(getVersionValue());
   }, []);
-  const employee = getEmployeeById(userId) ?? EMPLOYEES[0];
-  const currentUserEmployee = authUser
-    ? getEmployeeByEmail(authUser.primaryEmail ?? "") ?? getEmployeeByEmail(authUser.displayName ?? "") ?? employee
-    : employee;
+  const employees = useAppStore((s) => s.employees);
+  // Resolve current employee: try auth email → auth name → store userId → first employee
+  const byEmail = authUser ? employees.find((e) => e.email === (authUser.primaryEmail ?? "")) : null;
+  const byName = authUser ? employees.find((e) => e.name === (authUser.displayName ?? "")) : null;
+  const byId = employees.find((e) => e.id === userId) ?? employees[0];
+  const currentUserEmployee = byEmail ?? byName ?? byId;
   const isAdmin = isAdminRole(currentUserEmployee?.role);
 
   useEffect(() => {
@@ -216,9 +218,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!authEnabled || !authUser) return;
-    const mapped = getEmployeeByEmail(authUser.primaryEmail ?? "") ?? getEmployeeByEmail(authUser.displayName ?? "");
+    const mapped = employees.find((e) => e.email === (authUser.primaryEmail ?? "")) ?? employees.find((e) => e.name === (authUser.displayName ?? ""));
     if (mapped) setCurrentUserId(mapped.id);
-  }, [authUser, setCurrentUserId]);
+  }, [authUser, setCurrentUserId, employees]);
 
   const allowedPaths = useMemo(
     () => getAllowedNavItems(currentUserEmployee),
