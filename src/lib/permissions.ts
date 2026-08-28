@@ -30,7 +30,6 @@ export type Permission =
   | "proposals:create"
   | "proposals:approve"
   | "proposals:reject"
-  | "credit:view"
   | "hr:view"
   | "hr:edit"
   | "centers:view"
@@ -51,7 +50,6 @@ export type ModuleKey =
   | "checkin"
   | "tasks"
   | "proposals"
-  | "credit"
   | "hr"
   | "centers"
   | "documents"
@@ -72,7 +70,6 @@ export const MODULE_DEFINITIONS = [
   { key: "tasks", label: "Nhiệm vụ", paths: ["/nhiem-vu"], group: "Vận hành" },
 
   { key: "proposals", label: "Đề nghị", paths: ["/de-nghi"], group: "Nghiệp vụ" },
-  { key: "credit", label: "Tín dụng", paths: ["/tin-dung"], group: "Nghiệp vụ" },
   { key: "hr", label: "Nhân sự", paths: ["/nhan-su"], group: "Danh mục" },
   { key: "centers", label: "Trung tâm", paths: ["/trung-tam"], group: "Danh mục" },
   { key: "documents", label: "Hồ sơ", paths: ["/ho-so"], group: "Danh mục" },
@@ -151,8 +148,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       attendance: true,
       checkin: true,
       tasks: true,    proposals: true,
-      credit: true,
-      hr: true,
+    hr: true,
       centers: true,
       documents: true,
       reports: true,
@@ -161,10 +157,6 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       guide: true,
       admin: true,
     };
-  }
-
-  if (["Kế toán", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
-    defaultMap.credit = true;
   }
 
   if (["Hành chính - Nhân sự", "HCNS", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
@@ -233,7 +225,6 @@ export function getPermissions(employee: Employee | null): Permission[] {
       "proposals:create",
       "proposals:approve",
       "proposals:reject",
-      "credit:view",
       "hr:view",
       "hr:edit",
       "centers:view",
@@ -273,7 +264,6 @@ export function getPermissions(employee: Employee | null): Permission[] {
   if (effectiveModules.proposals) {
     mappedPermissions.push("proposals:view_own", "proposals:create");
   }
-  if (effectiveModules.credit) mappedPermissions.push("credit:view");
   if (effectiveModules.hr) mappedPermissions.push("hr:view");
   if (effectiveModules.centers) mappedPermissions.push("centers:view");
   if (effectiveModules.documents) mappedPermissions.push("docs:view");
@@ -355,7 +345,6 @@ export function getPermissionLabel(permission: Permission): string {
     "proposals:create": "Tạo đề nghị",
     "proposals:approve": "Duyệt đề nghị",
     "proposals:reject": "Từ chối đề nghị",
-    "credit:view": "Xem tín dụng",
     "hr:view": "Xem nhân sự",
     "hr:edit": "Sửa nhân sự",
     "centers:view": "Xem trung tâm",

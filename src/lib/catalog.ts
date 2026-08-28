@@ -181,8 +181,7 @@ export const STAFF_BY_CENTER = new Proxy({} as Record<string, number>, {
 export const CURRENT_USER_ID = "e0000000-0000-0000-0000-000000000003"; // Phạm Kiên Cường UUID
 
 export const PROPOSAL_SEED: import("./types").Proposal[] = [];
-export const CREDIT_SEED: import("./types").CreditFacility[] = [];
-export const COLLATERAL_SEED: import("./types").Collateral[] = [];
+
 export const CHAT_SEED: import("./types").ChatMessage[] = [];
 
 export const GUIDES = [

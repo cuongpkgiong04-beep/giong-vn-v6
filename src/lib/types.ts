@@ -76,25 +76,6 @@ export type Proposal = {
   dept: string;
 };
 
-export type CreditFacility = {
-  id: string;
-  bank: string;
-  type: string;
-  limit: number;
-  outstanding: number;
-  due: string;
-  status: string;
-};
-
-export type Collateral = {
-  id: string;
-  name: string;
-  type: string;
-  value: number;
-  location: string;
-  status: string;
-};
-
 export type ChatMessage = {
   id: string;
   from: string;

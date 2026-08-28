@@ -7,7 +7,6 @@ import {
   ClipboardList,
   FileText,
   FolderOpen,
-  Landmark,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -77,7 +76,6 @@ const NAV: NavItem[] = [
   { to: "/nhiem-vu", label: "Nhiệm vụ", icon: ClipboardList, group: "Vận hành" },
 
   { to: "/de-nghi", label: "Đề nghị", icon: FileText, group: "Nghiệp vụ" },
-  { to: "/tin-dung", label: "Tín dụng", icon: Landmark, group: "Nghiệp vụ" },
   { to: "/nhan-su", label: "Nhân sự", icon: Users, group: "Danh mục" },
   { to: "/trung-tam", label: "Trung tâm", icon: Building2, group: "Danh mục" },
   { to: "/ho-so", label: "Hồ sơ", icon: FolderOpen, group: "Danh mục" },
@@ -90,7 +88,7 @@ const NAV: NavItem[] = [
 ];
 
 const MOBILE_PRIMARY = ["/cham-cong", "/", "/nhiem-vu"];
-const ADMIN_ONLY_PATHS = ["/nhan-su", "/trung-tam", "/quy", "/tin-dung", "/bao-cao", "/admin/approvals", "/admin/permissions"];
+const ADMIN_ONLY_PATHS = ["/nhan-su", "/trung-tam", "/bao-cao", "/admin/approvals", "/admin/permissions"];
 
 function NavLink({
   item,

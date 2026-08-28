@@ -23,7 +23,6 @@ import { Route as HuongDanRouteImport } from './routes/huong-dan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NhanSuRouteImport } from './routes/nhan-su'
 import { Route as NhiemVuRouteImport } from './routes/nhiem-vu'
-import { Route as TinDungRouteImport } from './routes/tin-dung'
 import { Route as TrungTamRouteImport } from './routes/trung-tam'
 import { Route as AdminApprovalsRouteImport } from './routes/admin/approvals'
 import { Route as AdminPermissionsRouteImport } from './routes/admin/permissions'
@@ -99,11 +98,6 @@ const NhiemVuRoute = NhiemVuRouteImport.update({
   path: '/nhiem-vu',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TinDungRoute = TinDungRouteImport.update({
-  id: '/tin-dung',
-  path: '/tin-dung',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TrungTamRoute = TrungTamRouteImport.update({
   id: '/trung-tam',
   path: '/trung-tam',
@@ -140,7 +134,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
-  '/tin-dung': typeof TinDungRoute
   '/trung-tam': typeof TrungTamRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -161,7 +154,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
-  '/tin-dung': typeof TinDungRoute
   '/trung-tam': typeof TrungTamRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -183,7 +175,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
-  '/tin-dung': typeof TinDungRoute
   '/trung-tam': typeof TrungTamRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
@@ -206,7 +197,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
-    | '/tin-dung'
     | '/trung-tam'
     | '/admin/approvals'
     | '/admin/permissions'
@@ -227,7 +217,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
-    | '/tin-dung'
     | '/trung-tam'
     | '/admin/approvals'
     | '/admin/permissions'
@@ -248,7 +237,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
-    | '/tin-dung'
     | '/trung-tam'
     | '/admin/approvals'
     | '/admin/permissions'
@@ -270,7 +258,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NhanSuRoute: typeof NhanSuRoute
   NhiemVuRoute: typeof NhiemVuRoute
-  TinDungRoute: typeof TinDungRoute
   TrungTamRoute: typeof TrungTamRoute
   AdminApprovalsRoute: typeof AdminApprovalsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -377,13 +364,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NhiemVuRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tin-dung': {
-      id: '/tin-dung'
-      path: '/tin-dung'
-      fullPath: '/tin-dung'
-      preLoaderRoute: typeof TinDungRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/trung-tam': {
       id: '/trung-tam'
       path: '/trung-tam'
@@ -430,7 +410,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NhanSuRoute: NhanSuRoute,
   NhiemVuRoute: NhiemVuRoute,
-  TinDungRoute: TinDungRoute,
   TrungTamRoute: TrungTamRoute,
   AdminApprovalsRoute: AdminApprovalsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
