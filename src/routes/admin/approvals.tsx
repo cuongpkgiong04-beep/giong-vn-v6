@@ -15,7 +15,6 @@ import {
   rejectRegistrationRequest,
 } from "@/routes/api/registrations";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { useAppStore } from "@/lib/store";
 import { isAdminRole } from "@/lib/catalog";
 import { Navigate } from "@tanstack/react-router";
 
