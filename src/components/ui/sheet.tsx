@@ -15,10 +15,10 @@ export function SheetContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & { side?: "left" | "right" | "bottom" }) {
   const pos =
     side === "left"
-      ? "inset-y-0 left-0 h-full w-[min(20rem,88vw)]"
+      ? "inset-y-0 left-0 h-full w-[min(20rem,70vw)]"
       : side === "bottom"
         ? "inset-x-0 bottom-0 max-h-[85vh] rounded-t-xl"
-        : "inset-y-0 right-0 h-full w-[min(20rem,88vw)]";
+        : "inset-y-0 right-0 h-full w-[min(20rem,70vw)]";
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ink/40" />
