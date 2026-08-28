@@ -56,9 +56,11 @@ export const changePassword = createServerFn({ method: "POST" })
     const sql = await getSql();
     const { currentPassword, newPassword } = data;
     
-    // Get current user from session (simplified - in production use auth middleware)
-    // For now, we'll use a placeholder - in real app, get userId from session
-    const userId = "p2zXUDUwQf5fr3SaigL0YIpXp79HutVu"; // This should come from session
+    // Get current user from session
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) throw new Error("Vui lòng đăng nhập");
+    const userId = sessionUser.id;
     
     // Get current account
     const accounts = await sql<{ id: string; password: string }>`

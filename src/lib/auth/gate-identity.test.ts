@@ -9,7 +9,7 @@ import {
   verifyGateIdentityToken,
   type GateJwks,
 } from "./gate-identity.server.ts";
-import { isApprovedEmployeeEmail } from "../catalog.ts";
+import { isApprovedEmployeeEmail } from "../employee-data.ts";
 
 const ISSUER = "https://gate.app-builder-testing.com";
 const AUDIENCE = "app:proj-123";

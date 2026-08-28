@@ -36,7 +36,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
-import { EMPLOYEES } from "../catalog";
+import { isApprovedEmployeeEmail } from "../employee-data";
 import { emailAndPasswordEnabled } from "./email-password";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
 import { GROK_PROVIDERS } from "./providers";
@@ -131,13 +131,7 @@ const trustedOrigins: string[] = explicitBaseURL
 
 const databaseUrl = env("DATABASE_URL");
 
-function isApprovedEmployeeEmail(email: string | null | undefined): boolean {
-  const normalized = (email ?? "").trim().toLowerCase();
-  if (!normalized) return false;
-  return EMPLOYEES.some(
-    (employee) => (employee.email ?? "").trim().toLowerCase() === normalized,
-  );
-}
+// isApprovedEmployeeEmail is now async (DB query) — used in databaseHooks below.
 
 // Real Postgres when `DATABASE_URL` is set (deployed apps), else the app's
 // embedded PGLite (preview) via a Kysely dialect — so Better Auth persists to the
@@ -194,7 +188,8 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          if (!isApprovedEmployeeEmail(user.email)) {
+          const approved = isApprovedEmployeeEmail(user.email);
+          if (!approved) {
             return false;
           }
           return;

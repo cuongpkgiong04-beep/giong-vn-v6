@@ -3,15 +3,15 @@ import { seedAttendance, seedNotes, seedTasks } from "@/data";
 import {
   CASH_SEED,
   CHAT_SEED,
-  CURRENT_USER_ID,
-  EMPLOYEES,
   PROPOSAL_SEED,
 } from "@/lib/catalog";
 import type {
   Attendance,
   CashVoucher,
+  Center,
   ChatMessage,
   CheckIn,
+  Employee,
   Note,
   Proposal,
   Task,
@@ -30,6 +30,8 @@ type PersistSlice = {
   messages: ChatMessage[];
   checkins: CheckIn[];
   currentUserId: string;
+  employees: Employee[];
+  centers: Center[];
   _neonReady: boolean;
 };
 
@@ -65,9 +67,25 @@ function slice(s: PersistSlice): PersistSlice {
     messages: s.messages,
     checkins: s.checkins,
     currentUserId: s.currentUserId,
+    employees: s.employees,
+    centers: s.centers,
     _neonReady: false,
   };
 }
+
+// Fallback employees/centers for initial render before DB loads.
+// These match the seed data in migration 0008.
+const FALLBACK_EMPLOYEES: Employee[] = [
+  { id: 'e0000000-0000-0000-0000-000000000001', name: 'Nguyễn Thị Thúy', username: 'GĐ Thúy', gender: 'Nữ', phone: '0902267486', email: 'thuynvy218@gmail.com', dept: 'Ban giám đốc', role: 'Admin', title: 'Giám đốc', center: 'VP', status: 'Đang làm việc' },
+  { id: 'e0000000-0000-0000-0000-000000000002', name: 'Hoàng Minh Châu', username: 'PGĐ_Châu HM', gender: 'Nam', phone: '', email: 'hoangminhchau2631960@gmail.com', dept: 'Ban giám đốc', role: 'Admin', title: 'Phó giám đốc', center: 'VP', status: 'Đang làm việc' },
+  { id: 'e0000000-0000-0000-0000-000000000003', name: 'Phạm Kiên Cường', username: 'CườngPK', gender: 'Nam', phone: '0904075757', email: 'cuongpk.giong04@gmail.com', dept: 'Quản lý', role: 'Admin', title: 'Quản trị hệ thống', center: 'VP', status: 'Đang làm việc' },
+  { id: 'e0000000-0000-0000-0000-000000000004', name: 'Phạm Cường', username: 'Cuongpk.Giong02', gender: 'Nam', phone: '0904075757', email: 'cuongpk.giong02@gmail.com', dept: 'Hệ thống', role: 'Admin', title: 'Chuyên gia lập trình', center: 'VP', status: 'Đang làm việc' },
+];
+
+const FALLBACK_CENTERS: Center[] = [
+  { code: 'VP', name: 'Văn phòng Công ty Gióng Việt Nam', short: 'Văn phòng', city: 'Long Biên, Hà Nội', kind: 'Văn phòng' },
+  { code: 'LB', name: 'Trung tâm tiêm chủng Gióng Long Biên', short: 'Long Biên', city: 'Long Biên, Hà Nội', kind: 'Trung tâm' },
+];
 
 const initial: PersistSlice = {
   tasks: seedTasks,
@@ -77,7 +95,9 @@ const initial: PersistSlice = {
   proposals: PROPOSAL_SEED,
   messages: CHAT_SEED,
   checkins: [],
-  currentUserId: CURRENT_USER_ID,
+  currentUserId: 'e0000000-0000-0000-0000-000000000003', // Phạm Kiên Cường UUID
+  employees: FALLBACK_EMPLOYEES,
+  centers: FALLBACK_CENTERS,
   _neonReady: false,
 };
 
@@ -323,7 +343,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const { loadAttendance, loadTasks, loadCash, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
           "@/routes/api/data"
         );
-        const [att, tsk, csh, prp, nts, msgs, cks] = await Promise.all([
+        const { loadEmployees: loadEmps, loadCenters: loadCtrs } = await import(
+          "@/routes/api/catalog-data"
+        );
+        const [att, tsk, csh, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
           loadAttendance(),
           loadTasks(),
           loadCash(),
@@ -331,6 +354,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadNotes(),
           loadMessages({ data: { channel: "general" } }),
           loadCheckins(),
+          loadEmps(),
+          loadCtrs(),
         ]);
 
         // Map Neon rows to app types
@@ -417,8 +442,31 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           note: r.note ?? "",
         }));
 
-        // If Neon has data, use it as the source of truth. If Neon is empty
-        // that is a valid state (no automatic seeding from localStorage).
+        // Map DB employees to app Employee type
+        const dbEmployeeList: Employee[] = (dbEmps as any[]).map((r) => ({
+          id: r.id,
+          name: r.name,
+          username: r.username,
+          gender: r.gender ?? '',
+          phone: r.phone ?? '',
+          email: r.email ?? '',
+          dept: r.department,
+          role: r.role ?? 'User',
+          title: r.title,
+          center: r.center,
+          status: r.status,
+        }));
+
+        // Map DB centers to app Center type
+        const dbCenterList: Center[] = (dbCtrs as any[]).map((r) => ({
+          code: r.code,
+          name: r.name,
+          short: r.short_name,
+          city: r.city,
+          kind: 'Trung tâm' as 'Trung tâm' | 'Văn phòng',
+        }));
+
+        // If Neon has data, use it as the source of truth.
         const hasNeonData =
           neonAttendance.length > 0 ||
           neonTasks.length > 0 ||
@@ -432,11 +480,12 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             notes: neonNotes,
             messages: neonMessages,
             checkins: neonCheckins,
+            employees: dbEmployeeList,
+            centers: dbCenterList,
             _neonReady: true,
           });
         } else {
-          // Neon empty — start with no data (empty lists). Do not use seed
-          // files or localStorage to populate Neon automatically.
+          // Neon empty — start with no data but still load catalog from DB.
           console.log('[store] Neon empty — starting with empty state');
           set({
             tasks: [],
@@ -446,14 +495,13 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             proposals: [],
             messages: [],
             checkins: [],
+            employees: dbEmployeeList,
+            centers: dbCenterList,
             currentUserId: initial.currentUserId,
             _neonReady: true,
           });
         }
       } catch (err) {
-        // Neon sync failed — report the error and do not load data from
-        // localStorage or seed files. Application remains empty and signals
-        // that Neon is not ready.
         console.error('[store] Neon sync failed — no data will be loaded:', err);
         set({
           tasks: [],
@@ -463,6 +511,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           proposals: [],
           messages: [],
           checkins: [],
+          employees: [],
+          centers: [],
           _neonReady: false,
         });
       }
@@ -481,7 +531,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
 
   currentName: () => {
     const id = get().currentUserId;
-    return EMPLOYEES.find((e) => e.id === id)?.name ?? "Phạm Kiên Cường";
+    return get().employees.find((e) => e.id === id)?.name ?? "Phạm Kiên Cường";
   },
 
   addTask: (t) => {
@@ -503,8 +553,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
 
   clock: (kind, gps = "", address = "", photo = "") => {
     const name = get().currentName();
+    const emps = get().employees;
     const currentEmployee =
-      EMPLOYEES.find((e) => e.id === get().currentUserId) ?? EMPLOYEES[0];
+      emps.find((e) => e.id === get().currentUserId) ?? emps[0] ?? { center: 'VP', title: 'Nhân viên' } as any;
     const date = todayIso();
     const workplace = currentEmployee.center ?? "VP";
     const rec: Attendance = {
@@ -570,7 +621,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     const msg: ChatMessage = {
       id: uid("m"),
       from:
-        EMPLOYEES.find((e) => e.id === get().currentUserId)?.username ??
+        get().employees.find((e) => e.id === get().currentUserId)?.username ??
         "CườngPK",
       text,
       at: `${todayIso()} ${nowTime().slice(0, 5)}`,

@@ -1,12 +1,15 @@
-import type {
-  Center,
-  Employee,
-  CashVoucher,
-  Proposal,
-  CreditFacility,
-  Collateral,
-  ChatMessage,
-} from "./types";
+/**
+ * Catalog module — employee/center lookups now delegate to the Zustand store
+ * (which loads from DB via server functions). Static reference data (guides,
+ * reports, docs) stays here.
+ */
+import type { Employee } from "./types";
+import { useAppStore } from "./store";
+import { isAdminRole as _isAdminRole, isApprovedEmployeeEmail as _isApprovedEmployeeEmail } from "./employee-data";
+
+// Re-export pure functions (no store dependency)
+export const isAdminRole = _isAdminRole;
+export const isApprovedEmployeeEmail = _isApprovedEmployeeEmail;
 
 export const APP_NAME = "GIONG VN";
 export const APP_TAGLINE = "Hệ thống điều hành Gióng Việt Nam";
@@ -34,111 +37,56 @@ export const ROLE_DEFINITIONS = [
   { key: "staff", label: "Staff", description: "Nhân viên vận hành" },
 ] as const;
 
-export const CENTERS: Center[] = [
-  { code: "VP", name: "Văn phòng Công ty Gióng Việt Nam", short: "Văn phòng", city: "Long Biên, Hà Nội", kind: "Văn phòng" },
-  { code: "LB", name: "Trung tâm tiêm chủng Gióng Long Biên", short: "Long Biên", city: "Long Biên, Hà Nội", kind: "Trung tâm" },
-  { code: "SĐ", name: "Trung tâm tiêm chủng Gióng Sài Đồng", short: "Sài Đồng", city: "Long Biên, Hà Nội", kind: "Trung tâm" },
-  { code: "NL", name: "Trung tâm tiêm chủng Gióng Ngọc Lâm", short: "Ngọc Lâm", city: "Long Biên, Hà Nội", kind: "Trung tâm" },
-  { code: "TO", name: "Trung tâm tiêm chủng Gióng Thanh Oai", short: "Thanh Oai", city: "Thanh Oai, Hà Nội", kind: "Trung tâm" },
-  { code: "QO", name: "Trung tâm tiêm chủng Gióng Quốc Oai", short: "Quốc Oai", city: "Quốc Oai, Hà Nội", kind: "Trung tâm" },
-  { code: "BH", name: "Trung tâm tiêm chủng Gióng Bích Hòa", short: "Bích Hòa", city: "Thanh Oai, Hà Nội", kind: "Trung tâm" },
-  { code: "ML", name: "Trung tâm tiêm chủng Gióng Mê Linh", short: "Mê Linh", city: "Mê Linh, Hà Nội", kind: "Trung tâm" },
-  { code: "TP", name: "Trung tâm tiêm chủng Gióng Tiền Phong", short: "Tiền Phong", city: "Mê Linh, Hà Nội", kind: "Trung tâm" },
-  { code: "CĐ", name: "Trung tâm tiêm chủng Gióng Chi Đông", short: "Chi Đông", city: "Mê Linh, Hà Nội", kind: "Trung tâm" },
-  { code: "TĐ", name: "Trung tâm tiêm chủng Gióng Thạch Đà", short: "Thạch Đà", city: "Mê Linh, Hà Nội", kind: "Trung tâm" },
-  { code: "LM", name: "Trung tâm tiêm chủng Gióng Liên Mạc", short: "Liên Mạc", city: "Bắc Từ Liêm, Hà Nội", kind: "Trung tâm" },
-  { code: "TA", name: "Trung tâm tiêm chủng Gióng Tâm An", short: "Tâm An", city: "Hà Nội", kind: "Trung tâm" },
-  { code: "PY", name: "Trung tâm tiêm chủng Gióng Phúc Yên", short: "Phúc Yên", city: "Phúc Yên, Vĩnh Phúc", kind: "Trung tâm" },
-  { code: "ĐX", name: "Trung tâm tiêm chủng Gióng Đồng Xuân", short: "Đồng Xuân", city: "Vĩnh Phúc", kind: "Trung tâm" },
-  { code: "TS", name: "Trung tâm tiêm chủng Gióng Từ Sơn", short: "Từ Sơn", city: "Từ Sơn, Bắc Ninh", kind: "Trung tâm" },
-  { code: "HM", name: "Trung tâm tiêm chủng Gióng Hương Mạc", short: "Hương Mạc", city: "Từ Sơn, Bắc Ninh", kind: "Trung tâm" },
-  { code: "TD", name: "Trung tâm tiêm chủng Gióng Tiên Du", short: "Tiên Du", city: "Tiên Du, Bắc Ninh", kind: "Trung tâm" },
-  { code: "ĐY", name: "Trung tâm tiêm chủng Gióng Đông Yên", short: "Đông Yên", city: "Bắc Ninh", kind: "Trung tâm" },
-  { code: "TT", name: "Trung tâm tiêm chủng Gióng Thanh Thùy", short: "Thanh Thùy", city: "Hà Nội", kind: "Trung tâm" },
-];
+// ── Employee lookups (delegate to store) ──────────────────────────────────────
 
-export const CENTER_MAP = Object.fromEntries(CENTERS.map((c) => [c.code, c]));
-
-export function centerName(code: string) {
-  return CENTER_MAP[code]?.short ?? code;
+/** Get all employees from store. */
+export function getEmployees(): Employee[] {
+  return useAppStore.getState().employees;
 }
 
-export function getCenterByCode(code: string) {
-  return CENTER_MAP[code] ?? null;
+/** Live reference to employees array from store. */
+export const EMPLOYEES: Employee[] = new Proxy([] as Employee[], {
+  get(_, prop) {
+    const emps = useAppStore.getState().employees;
+    if (prop === Symbol.iterator) return emps[Symbol.iterator].bind(emps);
+    if (typeof prop === "string" && !Number.isNaN(Number(prop))) return emps[Number(prop)];
+    return (emps as any)[prop];
+  },
+});
+
+/** Lookup employee by ID (UUID). */
+export function getEmployeeById(id: string): Employee | null {
+  return useAppStore.getState().employees.find((e) => e.id === id) ?? null;
 }
 
-export const EMPLOYEES: Employee[] = [
-  { id: "U007", name: "Nguyễn Thị Thúy", username: "GĐ Thúy", gender: "Nữ", phone: "0902267486", email: "thuynvy218@gmail.com", dept: "Ban giám đốc", role: "Admin", title: "Giám đốc", center: "VP", status: "Đang làm việc" },
-  { id: "U009", name: "Hoàng Minh Châu", username: "PGĐ_Châu HM", gender: "Nam", phone: "", email: "hoangminhchau2631960@gmail.com", dept: "Ban giám đốc", role: "Admin", title: "Phó giám đốc", center: "VP", status: "Đang làm việc" },
-  { id: "U002", name: "Phạm Kiên Cường", username: "CườngPK", gender: "Nam", phone: "0904075757", email: "cuongpk.giong04@gmail.com", dept: "Quản lý", role: "Admin", title: "Quản trị hệ thống", center: "VP", status: "Đang làm việc" },
-  { id: "U031", name: "Phạm Cường", username: "Cuongpk.Giong02", gender: "Nam", phone: "0904075757", email: "cuongpk.giong02@gmail.com", dept: "Hệ thống", role: "Admin", title: "Chuyên gia lập trình", center: "VP", status: "Đang làm việc" },
-  { id: "U003", name: "Trần Mạnh Hùng", username: "Hùng TM", gender: "Nam", phone: "0826861379", email: "ketoangiongvina@gmail.com", dept: "Kế toán", role: "User", title: "Kế toán trưởng", center: "VP", status: "Đang làm việc" },
-  { id: "U005", name: "Nguyễn Thị Mỹ Hạnh", username: "Hạnh NTM", gender: "Nữ", phone: "0327451134", email: "nguyenmyhanh2912@gmail.com", dept: "Hành chính - Nhân sự", role: "User", title: "Trưởng phòng HCNS", center: "VP", status: "Đang làm việc" },
-  { id: "U004", name: "Trần Thị Anh Thương", username: "Thương TTA", gender: "Nữ", phone: "", email: "thuonggvn@gmail.com", dept: "Marketing", role: "User", title: "Nhân viên Marketing", center: "VP", status: "Đang làm việc" },
-  { id: "U010", name: "Nguyễn Thị Hương", username: "Hương NT", gender: "Nữ", phone: "", email: "nguyenhuong.ts2311@gmail.com", dept: "Marketing", role: "User", title: "Trưởng phòng Marketing", center: "VP", status: "Đang làm việc" },
-  { id: "U006", name: "Nguyễn Thị Dịu", username: "Dịu NT", gender: "Nữ", phone: "0388573597", email: "nguyendiuu1912@gmail.com", dept: "Kế toán", role: "User", title: "Kế toán viên", center: "VP", status: "Đang làm việc" },
-  { id: "U030", name: "Trần Thị Thanh Thủy", username: "Thủy TTT", gender: "Nữ", phone: "", email: "tranthuy19750307@gmail.com", dept: "Kho", role: "User", title: "Thủ kho", center: "VP", status: "Đang làm việc" },
-  { id: "U032", name: "Đinh Thị Hương Trà", username: "DsTra", gender: "Nữ", phone: "0327045684", email: "dinhthihuongtra19062002@gmail.com", dept: "Dược", role: "User", title: "Quản lý dược", center: "VP", status: "Đang làm việc" },
-  { id: "U033", name: "Nguyễn Thành Hiếu", username: "Hiếu NT", gender: "Nam", phone: "0336365636", email: "hieubin2106@gmail.com", dept: "Hành chính - Nhân sự", role: "User", title: "Nhân viên HCNS", center: "VP", status: "Đang làm việc" },
-  { id: "U008", name: "Nguyễn Thành Hiếu", username: "Hiếu NT 2", gender: "Nam", phone: "", email: "thanhhieu21061993@gmail.com", dept: "Hành chính - Nhân sự", role: "User", title: "Nhân viên", center: "VP", status: "Đang làm việc" },
-  { id: "S01", name: "Lê Thị Bích", username: "Bích LT", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "LB", status: "Đang làm việc" },
-  { id: "S02", name: "Nguyễn Thị Tuyết Lan", username: "Lan NTT", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "SĐ", status: "Đang làm việc" },
-  { id: "S03", name: "Vương Thị Minh", username: "Minh VT", gender: "Nữ", phone: "", email: "", dept: "Thu ngân", role: "User", title: "Thu ngân", center: "NL", status: "Đang làm việc" },
-  { id: "S04", name: "KIỀU MAI ANH", username: "Anh KM", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "TS", status: "Đang làm việc" },
-  { id: "S05", name: "Nguyễn Quỳnh Vân", username: "Vân NQ", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "TĐ", status: "Đang làm việc" },
-  { id: "S06", name: "Lê Thị Hằng", username: "Hằng LT", gender: "Nữ", phone: "", email: "", dept: "Thu ngân", role: "User", title: "Thu ngân", center: "CĐ", status: "Đang làm việc" },
-  { id: "S07", name: "ĐINH THỊ YẾN", username: "Yến ĐT", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "PY", status: "Đang làm việc" },
-  { id: "S08", name: "Trần Thị Yến", username: "Yến TT", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "ĐX", status: "Đang làm việc" },
-  { id: "S09", name: "Lê Thị Dung", username: "Dung LT", gender: "Nữ", phone: "", email: "", dept: "Thu ngân", role: "User", title: "Thu ngân", center: "LM", status: "Đang làm việc" },
-  { id: "S10", name: "Vũ Thị Ánh Ngọc", username: "Ngọc VTA", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "TO", status: "Đang làm việc" },
-  { id: "S11", name: "Nguyễn Nhật Phương", username: "Phương NN", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "QO", status: "Đang làm việc" },
-  { id: "S12", name: "Nguyễn Đức Năng", username: "Năng NĐ", gender: "Nam", phone: "", email: "", dept: "Hành chính", role: "User", title: "Nhân viên", center: "BH", status: "Đang làm việc" },
-  { id: "S13", name: "Phạm Hồng Phong", username: "Phong PH", gender: "Nam", phone: "", email: "", dept: "Hành chính", role: "User", title: "Nhân viên", center: "ML", status: "Đang làm việc" },
-  { id: "S14", name: "Lỗ Thị Hà", username: "Hà LT", gender: "Nữ", phone: "", email: "", dept: "Thu ngân", role: "User", title: "Thu ngân", center: "TP", status: "Đang làm việc" },
-  { id: "S15", name: "Đặng Thị Mỹ Linh", username: "Linh ĐTM", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "HM", status: "Đang làm việc" },
-  { id: "S16", name: "Nguyễn Phú Đông", username: "Đông NP", gender: "Nam", phone: "", email: "", dept: "Hành chính", role: "User", title: "Nhân viên", center: "TD", status: "Đang làm việc" },
-  { id: "S17", name: "Vũ Thị Thanh Huyền", username: "Huyền VTT", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "ĐY", status: "Đang làm việc" },
-  { id: "S18", name: "Trần Ngọc Anh", username: "Anh TN", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "TT", status: "Đang làm việc" },
-  { id: "S19", name: "Lương Thị Hà Trang", username: "Trang LTH", gender: "Nữ", phone: "", email: "", dept: "Thu ngân", role: "User", title: "Thu ngân", center: "TA", status: "Đang làm việc" },
-  { id: "S20", name: "Khuất Thị Dung", username: "Dung KT", gender: "Nữ", phone: "", email: "", dept: "Tiêm chủng", role: "User", title: "Điều dưỡng", center: "LB", status: "Đang làm việc" },
-];
-
-export const EMPLOYEE_MAP = Object.fromEntries(EMPLOYEES.map((e) => [e.id, e]));
-export const STAFF_BY_CENTER = Object.fromEntries(
-  CENTERS.map((c) => [c.code, EMPLOYEES.filter((e) => e.center === c.code).length]),
-);
-
-export function getEmployeeById(id: string) {
-  return EMPLOYEE_MAP[id] ?? null;
-}
-
-export function getEmployeeByUsername(username: string) {
+/** Lookup employee by username. */
+export function getEmployeeByUsername(username: string): Employee | null {
   const value = username.trim().toLowerCase();
-  return EMPLOYEES.find((e) => e.username.toLowerCase() === value) ?? null;
+  return useAppStore.getState().employees.find((e) => e.username.toLowerCase() === value) ?? null;
 }
 
-export function getEmployeeByName(name: string) {
+/** Lookup employee by name. */
+export function getEmployeeByName(name: string): Employee | null {
   const value = name.trim().toLowerCase();
-  return EMPLOYEES.find((e) => e.name.toLowerCase() === value) ?? null;
+  return useAppStore.getState().employees.find((e) => e.name.toLowerCase() === value) ?? null;
 }
 
-export function getEmployeeByEmail(email: string) {
+/** Lookup employee by email (falls back to username match). */
+export function getEmployeeByEmail(email: string): Employee | null {
   const value = (email ?? "").trim().toLowerCase();
   if (!value) return null;
+  const emps = useAppStore.getState().employees;
   return (
-    EMPLOYEES.find((e) => (e.email ?? "").trim().toLowerCase() === value) ??
-    EMPLOYEES.find((e) => (e.username ?? "").trim().toLowerCase() === value) ??
+    emps.find((e) => (e.email ?? "").trim().toLowerCase() === value) ??
+    emps.find((e) => (e.username ?? "").trim().toLowerCase() === value) ??
     null
   );
 }
 
-export function isApprovedEmployeeEmail(email: string | null | undefined) {
-  const value = (email ?? "").trim().toLowerCase();
-  if (!value) return false;
-  return EMPLOYEES.some((employee) => (employee.email ?? "").trim().toLowerCase() === value);
-}
 
-export function normalizePersonKey(value: string) {
+
+/** Normalize text for fuzzy matching (remove diacritics, lowercase). */
+export function normalizePersonKey(value: string): string {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -147,56 +95,97 @@ export function normalizePersonKey(value: string) {
     .toLowerCase();
 }
 
-export function findEmployeeByLooseText(value: string) {
+/** Fuzzy employee lookup by name/username/email. */
+export function findEmployeeByLooseText(value: string): Employee | null {
   const raw = value ?? "";
   const key = normalizePersonKey(raw);
   if (!key) return null;
 
+  const emps = useAppStore.getState().employees;
   return (
-    EMPLOYEES.find((e) => normalizePersonKey(e.name) === key) ??
-    EMPLOYEES.find((e) => normalizePersonKey(e.username) === key) ??
-    EMPLOYEES.find((e) => normalizePersonKey(e.email) === key) ??
-    EMPLOYEES.find((e) => normalizePersonKey(e.name).includes(key) || key.includes(normalizePersonKey(e.name))) ??
-    EMPLOYEES.find((e) => normalizePersonKey(e.username).includes(key) || key.includes(normalizePersonKey(e.username))) ??
+    emps.find((e) => normalizePersonKey(e.name) === key) ??
+    emps.find((e) => normalizePersonKey(e.username) === key) ??
+    emps.find((e) => normalizePersonKey(e.email) === key) ??
+    emps.find((e) => normalizePersonKey(e.name).includes(key) || key.includes(normalizePersonKey(e.name))) ??
+    emps.find((e) => normalizePersonKey(e.username).includes(key) || key.includes(normalizePersonKey(e.username))) ??
     null
   );
 }
 
-export function isAdminRole(role?: string | null) {
-  const normalized = (role ?? "").trim().toLowerCase();
-  return [
-    "superadmin",
-    "super_admin",
-    "admin",
-    "regional_manager",
-    "center_manager",
-  ].includes(normalized);
-}
 
-export function canViewEmployeeRecords(actor: Employee | null, target: Employee | null) {
+
+/** Can actor view target's records? */
+export function canViewEmployeeRecords(actor: Employee | null, target: Employee | null): boolean {
   if (!actor || !target) return false;
   if (isAdminRole(actor.role)) return true;
   if (actor.id === target.id) return true;
   return actor.center === target.center;
 }
 
-export function getVisibleCenterCodes(actor: Employee | null) {
+/** Get center codes the actor can see. */
+export function getVisibleCenterCodes(actor: Employee | null): string[] {
   if (!actor) return [];
-  if (isAdminRole(actor.role)) return CENTERS.map((center) => center.code);
+  if (isAdminRole(actor.role)) {
+    return useAppStore.getState().centers.map((c) => c.code);
+  }
   return [actor.center];
 }
 
-export const CURRENT_USER_ID = "U002";
+// ── Center lookups (delegate to store) ────────────────────────────────────────
 
-export const CASH_SEED: CashVoucher[] = [];
+/** Get all centers from store. */
+export function getCenters() {
+  return useAppStore.getState().centers;
+}
 
-export const PROPOSAL_SEED: Proposal[] = [];
+/** Live reference to centers array from store. */
+export const CENTERS = new Proxy([] as { code: string; name: string; short: string; city: string; kind: "Trung tâm" | "Văn phòng" }[], {
+  get(_, prop) {
+    const ctrs = useAppStore.getState().centers;
+    if (prop === Symbol.iterator) return ctrs[Symbol.iterator].bind(ctrs);
+    if (typeof prop === "string" && !Number.isNaN(Number(prop))) return ctrs[Number(prop)];
+    return (ctrs as any)[prop];
+  },
+});
 
-export const CREDIT_SEED: CreditFacility[] = [];
+/** Center code → display name. */
+export function centerName(code: string): string {
+  const ctrs = useAppStore.getState().centers;
+  return ctrs.find((c) => c.code === code)?.short ?? code;
+}
 
-export const COLLATERAL_SEED: Collateral[] = [];
+/** Lookup center by code. */
+export function getCenterByCode(code: string) {
+  return useAppStore.getState().centers.find((c) => c.code === code) ?? null;
+}
 
-export const CHAT_SEED: ChatMessage[] = [];
+/** Staff count per center. */
+export function getStaffByCenter(): Record<string, number> {
+  const emps = useAppStore.getState().employees;
+  const result: Record<string, number> = {};
+  for (const e of emps) {
+    result[e.center] = (result[e.center] ?? 0) + 1;
+  }
+  return result;
+}
+
+/** Live staff count per center from store. */
+export const STAFF_BY_CENTER = new Proxy({} as Record<string, number>, {
+  get(_, prop) {
+    if (typeof prop === "string") return getStaffByCenter()[prop] ?? 0;
+    return undefined;
+  },
+});
+
+// ── Static reference data (unchanged) ────────────────────────────────────────
+
+export const CURRENT_USER_ID = "e0000000-0000-0000-0000-000000000003"; // Phạm Kiên Cường UUID
+
+export const CASH_SEED: import("./types").CashVoucher[] = [];
+export const PROPOSAL_SEED: import("./types").Proposal[] = [];
+export const CREDIT_SEED: import("./types").CreditFacility[] = [];
+export const COLLATERAL_SEED: import("./types").Collateral[] = [];
+export const CHAT_SEED: import("./types").ChatMessage[] = [];
 
 export const GUIDES = [
   {
