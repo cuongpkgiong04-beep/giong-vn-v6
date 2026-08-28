@@ -4,7 +4,8 @@ import { LayoutGrid, List, Search } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Card } from "@/components/ui/card";
-import { EMPLOYEES, centerName } from "@/lib/catalog";
+import { centerName } from "@/lib/catalog";
+import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/nhan-su")({ component: NhanSuPage });
@@ -22,12 +23,13 @@ function initials(name: string) {
 type ViewMode = "grid" | "table";
 
 function NhanSuPage() {
+  const employees = useAppStore((s) => s.employees);
   const [q, setQ] = useState("");
   const [dept, setDept] = useState("all");
   const [view, setView] = useState<ViewMode>("grid");
 
-  const depts = useMemo(() => [...new Set(EMPLOYEES.map((e) => e.dept))].sort(), []);
-  const rows = EMPLOYEES.filter((e) => {
+  const depts = useMemo(() => [...new Set(employees.map((e) => e.dept))].sort(), [employees]);
+  const rows = employees.filter((e) => {
     if (dept !== "all" && e.dept !== dept) return false;
     if (q.trim()) {
       const s = q.toLowerCase();
@@ -44,12 +46,12 @@ function NhanSuPage() {
   });
 
   const stats = useMemo(() => {
-    const total = EMPLOYEES.length;
-    const active = EMPLOYEES.filter((e) => e.status === "Đang làm việc").length;
-    const admins = EMPLOYEES.filter((e) => e.role === "Admin" || e.role === "SuperAdmin").length;
-    const centers = new Set(EMPLOYEES.map((e) => e.center)).size;
+    const total = employees.length;
+    const active = employees.filter((e) => e.status === "Đang làm việc").length;
+    const admins = employees.filter((e) => e.role === "Admin" || e.role === "SuperAdmin").length;
+    const centers = new Set(employees.map((e) => e.center)).size;
     return { total, active, admins, centers };
-  }, []);
+  }, [employees]);
 
   return (
     <div>
@@ -90,10 +92,10 @@ function NhanSuPage() {
           onChange={(e) => setDept(e.target.value)}
           className="h-11 rounded-xl border border-line bg-surface/90 px-3 text-sm shadow-[var(--shadow-card)] sm:w-56"
         >
-          <option value="all">Mọi bộ phận ({EMPLOYEES.length})</option>
+          <option value="all">Mọi bộ phận ({employees.length})</option>
           {depts.map((d) => (
             <option key={d} value={d}>
-              {d} ({EMPLOYEES.filter((e) => e.dept === d).length})
+              {d} ({employees.filter((e) => e.dept === d).length})
             </option>
           ))}
         </select>
@@ -124,7 +126,7 @@ function NhanSuPage() {
       </div>
 
       <p className="mb-3 text-sm text-muted">
-        Hiển thị <span className="font-medium text-ink">{rows.length}</span> / {EMPLOYEES.length} nhân sự
+        Hiển thị <span className="font-medium text-ink">{rows.length}</span> / {employees.length} nhân sự
       </p>
 
       {/* Grid view */}

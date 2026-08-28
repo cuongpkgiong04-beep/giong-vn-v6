@@ -21,7 +21,7 @@ import { ClientOnly } from "@/components/client-only";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { seedDaily } from "@/data";
-import { CENTERS, EMPLOYEES, findEmployeeByLooseText } from "@/lib/catalog";
+import { findEmployeeByLooseText } from "@/lib/catalog";
 import { formatDate, formatLongDate, greetingVi, todayIso } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
@@ -65,6 +65,8 @@ function Dashboard() {
   const tasks = useAppStore((s) => s.tasks);
   const attendance = useAppStore((s) => s.attendance);
   const proposals = useAppStore((s) => s.proposals);
+  const employees = useAppStore((s) => s.employees);
+  const centers = useAppStore((s) => s.centers);
   const userName = useAppStore((s) => s.currentName());
   const today = todayIso();
 
@@ -92,13 +94,11 @@ function Dashboard() {
   const firstName = userName.split(" ").slice(-1)[0];
   const pending = proposals.filter((p) => p.status === "Chờ duyệt").length;
 
-
   const shortcuts = [
     { to: "/cham-cong", label: "Chấm công", desc: "Vào ca / tan ca", icon: Timer },
     { to: "/nhiem-vu", label: "Nhiệm vụ", desc: `${openTasks.length} việc mở`, icon: ClipboardList },
-
-    { to: "/nhan-su", label: "Nhân sự", desc: `${EMPLOYEES.length} người`, icon: Users },
-    { to: "/trung-tam", label: "Trung tâm", desc: `${CENTERS.filter((c) => c.kind === "Trung tâm").length} điểm tiêm`, icon: Building2 },
+    { to: "/nhan-su", label: "Nhân sự", desc: `${employees.length} người`, icon: Users },
+    { to: "/trung-tam", label: "Trung tâm", desc: `${centers.filter((c) => c.kind === "Trung tâm").length} điểm tiêm`, icon: Building2 },
   ];
 
   return (
@@ -110,7 +110,7 @@ function Dashboard() {
             {greetingVi()}, {firstName}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Điều hành chuỗi {CENTERS.filter((c) => c.kind === "Trung tâm").length} trung tâm tiêm chủng Gióng
+            Điều hành chuỗi {centers.filter((c) => c.kind === "Trung tâm").length} trung tâm tiêm chủng Gióng
             Việt Nam.
           </p>
         </div>
@@ -122,7 +122,7 @@ function Dashboard() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
           label="Nhân sự"
-          value={String(EMPLOYEES.length)}
+          value={String(employees.length)}
           hint="Đang làm việc"
           to="/nhan-su"
           icon={Users}
@@ -240,8 +240,6 @@ function Dashboard() {
           </ul>
         </Card>
       </div>
-
-
     </div>
   );
 }
