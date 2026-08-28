@@ -24,11 +24,15 @@ type ModulePermissionRow = {
 function AdminPermissionsPage() {
   const { user, isPending } = useCurrentUserState();
   const employees = useAppStore((s) => s.employees);
+  const currentUserId = useAppStore((s) => s.currentUserId);
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [moduleRows, setModuleRows] = useState<ModulePermissionRow[]>([]);
 
-  const employee = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) ?? employees.find((e) => e.username === (user.displayName ?? "")) : null;
+  const byEmail = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
+  const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
+  const byId = employees.find((e) => e.id === currentUserId) ?? employees[0];
+  const employee = byEmail ?? byName ?? byId;
   const isAdmin = employee ? isAdminRole(employee.role) : false;
 
   const filteredEmployees = useMemo(() => {

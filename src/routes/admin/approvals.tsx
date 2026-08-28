@@ -38,6 +38,7 @@ interface RegistrationRequest {
 function AdminApprovals() {
   const { user, isPending } = useCurrentUserState();
   const employees = useAppStore((s) => s.employees);
+  const currentUserId = useAppStore((s) => s.currentUserId);
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] =
@@ -49,7 +50,10 @@ function AdminApprovals() {
   const [confirmClear, setConfirmClear] = useState(false);
 
   // Check if user is admin — wait for session to resolve first
-  const employee = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
+  const byEmail = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
+  const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
+  const byId = employees.find((e) => e.id === currentUserId) ?? employees[0];
+  const employee = byEmail ?? byName ?? byId;
   const isAdmin = employee ? isAdminRole(employee.role) : false;
 
   // Load registration requests
