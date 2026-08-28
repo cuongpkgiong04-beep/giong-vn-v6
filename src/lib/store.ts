@@ -317,22 +317,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   ...initial,
 
   hydrate: () => {
-    // 1. Load from localStorage immediately (fast, offline-capable)
-    const ls = loadLs();
-    if (ls) {
-      set({
-        tasks: ls.tasks ?? initial.tasks,
-        attendance: ls.attendance ?? initial.attendance,
-        notes: ls.notes ?? initial.notes,
-        cash: ls.cash ?? initial.cash,
-        proposals: ls.proposals ?? initial.proposals,
-        messages: ls.messages ?? initial.messages,
-        checkins: ls.checkins ?? initial.checkins,
-        currentUserId: ls.currentUserId ?? initial.currentUserId,
-      });
-    }
-
-    // 2. Sync from Neon in background (async, non-blocking)
+    // Sync from Neon first. Only fall back to localStorage if Neon sync fails.
     (async () => {
       try {
         const { loadAttendance, loadTasks, loadCash, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
@@ -432,37 +417,13 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           note: r.note ?? "",
         }));
 
-        // If Neon is empty, seed from seed files (JSON)
+        // If Neon has data, use it as the source of truth. If Neon is empty
+        // that is a valid state (no automatic seeding from localStorage).
         const hasNeonData =
           neonAttendance.length > 0 ||
           neonTasks.length > 0 ||
           neonCash.length > 0;
-        if (!hasNeonData) {
-          // Seed from seed files — skip if all empty
-          const s = get();
-          const hasSeedData = s.attendance.length > 0 || s.tasks.length > 0 || s.cash.length > 0 || s.notes.length > 0 || s.proposals.length > 0 || s.messages.length > 0;
-          if (hasSeedData) {
-            try {
-              await Promise.all([
-                _neonBulkAttendance(s.attendance),
-                _neonBulkTasks(s.tasks),
-                _neonBulkCash(s.cash),
-                _neonBulkMessages(s.messages),
-                ...s.notes.map((n) => _neonInsertNote(n)),
-                ...s.proposals.map((p) => _neonInsertProposal(p)),
-                ...s.checkins.map((c) => _neonInsertCheckin(c)),
-              ]);
-              console.log('[store] Seeded Neon with', s.attendance.length, 'attendance,', s.tasks.length, 'tasks');
-            } catch (seedErr) {
-              console.warn('[store] Neon seed failed, using local seed data:', seedErr);
-            }
-          } else {
-            console.log('[store] No seed data — starting empty');
-          }
-          // Always keep seed data in state regardless of seed success
-          set({ _neonReady: true });
-        } else {
-          // Use Neon data (source of truth)
+        if (hasNeonData) {
           set({
             attendance: neonAttendance,
             tasks: neonTasks,
@@ -473,9 +434,39 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             checkins: neonCheckins,
             _neonReady: true,
           });
+        } else {
+          // Neon empty — start with initial (seed files) state but do NOT bulk-insert
+          // localStorage data back into Neon. This prevents clients from re-seeding
+          // the database from stale local data.
+          console.log('[store] Neon empty — starting with initial state');
+          set({
+            tasks: initial.tasks,
+            attendance: initial.attendance,
+            notes: initial.notes,
+            cash: initial.cash,
+            proposals: initial.proposals,
+            messages: initial.messages,
+            checkins: initial.checkins,
+            currentUserId: initial.currentUserId,
+            _neonReady: true,
+          });
         }
       } catch (err) {
+        // Neon sync failed — fall back to localStorage so offline users keep working.
         console.warn("[store] Neon sync failed, using localStorage fallback:", err);
+        const ls = loadLs();
+        if (ls) {
+          set({
+            tasks: ls.tasks ?? initial.tasks,
+            attendance: ls.attendance ?? initial.attendance,
+            notes: ls.notes ?? initial.notes,
+            cash: ls.cash ?? initial.cash,
+            proposals: ls.proposals ?? initial.proposals,
+            messages: ls.messages ?? initial.messages,
+            checkins: ls.checkins ?? initial.checkins,
+            currentUserId: ls.currentUserId ?? initial.currentUserId,
+          });
+        }
         set({ _neonReady: false });
       }
     })();
