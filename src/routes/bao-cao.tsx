@@ -3,9 +3,8 @@ import { ArrowUpRight } from "lucide-react";
 import { ClientOnly } from "@/components/client-only";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { seedDaily, seedInventory } from "@/data";
-import { REPORTS, centerName } from "@/lib/catalog";
-import { formatNum } from "@/lib/format";
+import { seedDaily } from "@/data";
+import { REPORTS } from "@/lib/catalog";
 import { useAppStore } from "@/lib/store";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -80,14 +79,7 @@ function BaoCaoPage() {
           </CardHeader>
           <p className="text-3xl font-semibold tabular">{avgIn}</p>
           <p className="mt-1 text-sm text-muted">Lượt vào ca / ngày làm việc đông (mẫu 2026)</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {seedInventory.centers.slice(0, 5).map((c) => (
-              <li key={c.code} className="flex justify-between">
-                <span className="text-muted">{centerName(c.code)}</span>
-                <span className="tabular font-medium">{formatNum(c.skus)} SKU</span>
-              </li>
-            ))}
-          </ul>
+
         </Card>
       </div>
     </div>

@@ -13,7 +13,6 @@ import {
   MapPin,
   Menu,
   MessageSquare,
-  Package,
   Search,
   ShieldCheck,
   StickyNote,
@@ -77,7 +76,7 @@ const NAV: NavItem[] = [
   { to: "/cham-cong", label: "Chấm công", icon: Timer, group: "Vận hành" },
   { to: "/check-in", label: "Check-in", icon: MapPin, group: "Vận hành" },
   { to: "/nhiem-vu", label: "Nhiệm vụ", icon: ClipboardList, group: "Vận hành" },
-  { to: "/kho", label: "Kho vắc xin", icon: Package, group: "Nghiệp vụ" },
+
   { to: "/quy", label: "Quỹ tiền", icon: Wallet, group: "Nghiệp vụ" },
   { to: "/de-nghi", label: "Đề nghị", icon: FileText, group: "Nghiệp vụ" },
   { to: "/tin-dung", label: "Tín dụng", icon: Landmark, group: "Nghiệp vụ" },

@@ -43,47 +43,6 @@ export type Note = {
   status: string;
 };
 
-export type InventoryItem = {
-  center: string;
-  name: string;
-  lot: string;
-  price: number;
-  expiry: string;
-  daysLeft: number | null;
-  mfr: string;
-  qty: number;
-  value: number;
-};
-
-export type InventoryCenter = {
-  code: string;
-  qty: number;
-  value: number;
-  skus: number;
-  expiring: number;
-};
-
-export type VaccineStat = {
-  name: string;
-  qty: number;
-  value: number;
-  lots: number;
-  minDays: number | null;
-  mfr: string;
-};
-
-export type Transfer = {
-  id: string;
-  date: string;
-  author: string;
-  toCenter: string;
-  vaccine: string;
-  lot: string;
-  expiry: string;
-  qty: number;
-  fromCenter: string;
-};
-
 export type Employee = {
   id: string;
   name: string;

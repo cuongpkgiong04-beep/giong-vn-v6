@@ -16,7 +16,7 @@ function HuongDanPage() {
 
       <Card className="mb-5 p-5">
         <p className="text-sm leading-relaxed text-ink">
-          Khi vào ứng dụng, dashboard cho biết nhân sự, chấm công, nhiệm vụ mở và giá trị tồn kho. Việc hàng ngày:
+          Khi vào ứng dụng, dashboard cho biết nhân sự, chấm công, nhiệm vụ mở và đề nghị chờ duyệt. Việc hàng ngày:
           chấm công, kiểm tra kế hoạch, vào module nghiệp vụ, ghi chú và góp ý.
         </p>
         <p className="mt-3 text-sm text-muted">

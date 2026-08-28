@@ -10,7 +10,7 @@ import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/chat")({ component: ChatPage });
 
-const CHANNELS = ["Chung", "Kho", "Kế toán", "Dược", "Marketing"];
+const CHANNELS = ["Chung", "Kế toán", "Dược", "Marketing"];
 
 function ChatPage() {
   const messages = useAppStore((s) => s.messages);

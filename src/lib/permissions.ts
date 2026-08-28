@@ -25,9 +25,6 @@ export type Permission =
   | "tasks:edit_any"
   | "tasks:delete"
   | "tasks:change_status"
-  | "inventory:view"
-  | "inventory:edit"
-  | "inventory:transfer"
   | "cash:view"
   | "cash:create"
   | "cash:approve"
@@ -57,7 +54,6 @@ export type ModuleKey =
   | "attendance"
   | "checkin"
   | "tasks"
-  | "inventory"
   | "cash"
   | "proposals"
   | "credit"
@@ -79,7 +75,7 @@ export const MODULE_DEFINITIONS = [
   { key: "attendance", label: "Chấm công", paths: ["/cham-cong"], group: "Vận hành" },
   { key: "checkin", label: "Check-in", paths: ["/check-in"], group: "Vận hành" },
   { key: "tasks", label: "Nhiệm vụ", paths: ["/nhiem-vu"], group: "Vận hành" },
-  { key: "inventory", label: "Kho vắc xin", paths: ["/kho"], group: "Nghiệp vụ" },
+
   { key: "cash", label: "Quỹ tiền", paths: ["/quy"], group: "Nghiệp vụ" },
   { key: "proposals", label: "Đề nghị", paths: ["/de-nghi"], group: "Nghiệp vụ" },
   { key: "credit", label: "Tín dụng", paths: ["/tin-dung"], group: "Nghiệp vụ" },
@@ -161,8 +157,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       attendance: true,
       checkin: true,
       tasks: true,
-      inventory: true,
-      cash: true,
+    cash: true,
       proposals: true,
       credit: true,
       hr: true,
@@ -179,10 +174,6 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
   if (["Kế toán", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
     defaultMap.cash = true;
     defaultMap.credit = true;
-  }
-
-  if (["Kho", "Dược", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
-    defaultMap.inventory = true;
   }
 
   if (["Hành chính - Nhân sự", "HCNS", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
@@ -246,9 +237,6 @@ export function getPermissions(employee: Employee | null): Permission[] {
       "tasks:edit_any",
       "tasks:delete",
       "tasks:change_status",
-      "inventory:view",
-      "inventory:edit",
-      "inventory:transfer",
       "cash:view",
       "cash:create",
       "cash:approve",
@@ -294,9 +282,6 @@ export function getPermissions(employee: Employee | null): Permission[] {
       "tasks:edit_own",
       "tasks:change_status",
     );
-  }
-  if (effectiveModules.inventory) {
-    mappedPermissions.push("inventory:view");
   }
   if (effectiveModules.cash) {
     mappedPermissions.push("cash:view", "cash:create");
@@ -385,9 +370,6 @@ export function getPermissionLabel(permission: Permission): string {
     "tasks:edit_any": "Sửa bất kỳ nhiệm vụ nào",
     "tasks:delete": "Xóa nhiệm vụ",
     "tasks:change_status": "Đổi trạng thái nhiệm vụ",
-    "inventory:view": "Xem kho vắc xin",
-    "inventory:edit": "Sửa kho vắc xin",
-    "inventory:transfer": "Điều chuyển kho",
     "cash:view": "Xem quỹ tiền",
     "cash:create": "Lập phiếu quỹ",
     "cash:approve": "Duyệt phiếu quỹ",

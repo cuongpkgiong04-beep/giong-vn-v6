@@ -20,7 +20,6 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GhiChuRouteImport } from './routes/ghi-chu'
 import { Route as HoSoRouteImport } from './routes/ho-so'
 import { Route as HuongDanRouteImport } from './routes/huong-dan'
-import { Route as KhoRouteImport } from './routes/kho'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NhanSuRouteImport } from './routes/nhan-su'
 import { Route as NhiemVuRouteImport } from './routes/nhiem-vu'
@@ -86,11 +85,6 @@ const HuongDanRoute = HuongDanRouteImport.update({
   path: '/huong-dan',
   getParentRoute: () => rootRouteImport,
 } as any)
-const KhoRoute = KhoRouteImport.update({
-  id: '/kho',
-  path: '/kho',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -149,7 +143,6 @@ export interface FileRoutesByFullPath {
   '/ghi-chu': typeof GhiChuRoute
   '/ho-so': typeof HoSoRoute
   '/huong-dan': typeof HuongDanRoute
-  '/kho': typeof KhoRoute
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
@@ -172,7 +165,6 @@ export interface FileRoutesByTo {
   '/ghi-chu': typeof GhiChuRoute
   '/ho-so': typeof HoSoRoute
   '/huong-dan': typeof HuongDanRoute
-  '/kho': typeof KhoRoute
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
@@ -196,7 +188,6 @@ export interface FileRoutesById {
   '/ghi-chu': typeof GhiChuRoute
   '/ho-so': typeof HoSoRoute
   '/huong-dan': typeof HuongDanRoute
-  '/kho': typeof KhoRoute
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
@@ -221,7 +212,6 @@ export interface FileRouteTypes {
     | '/ghi-chu'
     | '/ho-so'
     | '/huong-dan'
-    | '/kho'
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
@@ -244,7 +234,6 @@ export interface FileRouteTypes {
     | '/ghi-chu'
     | '/ho-so'
     | '/huong-dan'
-    | '/kho'
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
@@ -267,7 +256,6 @@ export interface FileRouteTypes {
     | '/ghi-chu'
     | '/ho-so'
     | '/huong-dan'
-    | '/kho'
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
@@ -291,7 +279,6 @@ export interface RootRouteChildren {
   GhiChuRoute: typeof GhiChuRoute
   HoSoRoute: typeof HoSoRoute
   HuongDanRoute: typeof HuongDanRoute
-  KhoRoute: typeof KhoRoute
   LoginRoute: typeof LoginRoute
   NhanSuRoute: typeof NhanSuRoute
   NhiemVuRoute: typeof NhiemVuRoute
@@ -382,13 +369,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HuongDanRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/kho': {
-      id: '/kho'
-      path: '/kho'
-      fullPath: '/kho'
-      preLoaderRoute: typeof KhoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -467,7 +447,6 @@ const rootRouteChildren: RootRouteChildren = {
   GhiChuRoute: GhiChuRoute,
   HoSoRoute: HoSoRoute,
   HuongDanRoute: HuongDanRoute,
-  KhoRoute: KhoRoute,
   LoginRoute: LoginRoute,
   NhanSuRoute: NhanSuRoute,
   NhiemVuRoute: NhiemVuRoute,

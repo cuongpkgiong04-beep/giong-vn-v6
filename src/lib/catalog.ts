@@ -233,8 +233,7 @@ export const GUIDES = [
 export const REPORTS = [
   { id: "bc1", name: "Bảng chấm công", desc: "Công vào/tan ca theo ngày, người, trung tâm", href: "/cham-cong" },
   { id: "bc2", name: "Báo cáo nhiệm vụ", desc: "Tiến độ kế hoạch theo người phụ trách", href: "/nhiem-vu" },
-  { id: "bc3", name: "Tồn kho vắc xin", desc: "Số lượng, giá trị, hạn dùng theo trung tâm", href: "/kho" },
-  { id: "bc4", name: "Điều chuyển kho", desc: "Phiếu điều chuyển liên trung tâm", href: "/kho" },
+
   { id: "bc5", name: "Quỹ tiền", desc: "Thu — chi — số dư theo ngày", href: "/quy" },
   { id: "bc6", name: "Đề nghị chờ duyệt", desc: "Hàng đợi phê duyệt của quản lý", href: "/de-nghi" },
 ];
@@ -243,7 +242,7 @@ export const DOCS = [
   { id: "hs1", name: "Quy chế chấm công & lương", dept: "HCNS", updated: "2026-07-12" },
   { id: "hs2", name: "Quy trình bảo quản vắc xin GSP", dept: "Dược", updated: "2026-06-03" },
   { id: "hs3", name: "Hồ sơ vay vốn VietinBank", dept: "Tài chính", updated: "2026-02-11" },
-  { id: "hs4", name: "Danh mục nhà cung cấp vắc xin", dept: "Kho", updated: "2026-08-01" },
+
   { id: "hs5", name: "Nội quy trung tâm tiêm chủng", dept: "Ban giám đốc", updated: "2026-04-18" },
   { id: "hs6", name: "Hướng dẫn thu ngân tại điểm", dept: "Kế toán", updated: "2026-03-10" },
 ];

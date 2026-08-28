@@ -3,7 +3,7 @@ import {
   ArrowUpRight,
   Building2,
   ClipboardList,
-  Package,
+  FileText,
   Timer,
   Users,
   Wallet,
@@ -12,10 +12,7 @@ import { useMemo } from "react";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -24,9 +21,9 @@ import {
 import { ClientOnly } from "@/components/client-only";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
-import { seedDaily, seedInventory } from "@/data";
-import { CENTERS, EMPLOYEES, centerName, findEmployeeByLooseText } from "@/lib/catalog";
-import { formatDate, formatNum, formatVndCompact, formatLongDate, greetingVi, todayIso } from "@/lib/format";
+import { seedDaily } from "@/data";
+import { CENTERS, EMPLOYEES, findEmployeeByLooseText } from "@/lib/catalog";
+import { formatDate, formatVndCompact, formatLongDate, greetingVi, todayIso } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/")({ component: Dashboard });
@@ -97,23 +94,14 @@ function Dashboard() {
       }));
   }, []);
 
-  const invChart = useMemo(
-    () =>
-      seedInventory.centers.slice(0, 8).map((c) => ({
-        name: centerName(c.code),
-        value: Math.round(c.value / 1_000_000),
-      })),
-    [],
-  );
-
   const firstName = userName.split(" ").slice(-1)[0];
   const pending = proposals.filter((p) => p.status === "Chờ duyệt").length;
-  const expiring = seedInventory.centers.reduce((s, c) => s + c.expiring, 0);
+
 
   const shortcuts = [
     { to: "/cham-cong", label: "Chấm công", desc: "Vào ca / tan ca", icon: Timer },
     { to: "/nhiem-vu", label: "Nhiệm vụ", desc: `${openTasks.length} việc mở`, icon: ClipboardList },
-    { to: "/kho", label: "Kho vắc xin", desc: `${formatNum(seedInventory.items.length)} lô mẫu`, icon: Package },
+
     { to: "/quy", label: "Quỹ tiền", desc: "Thu chi nội bộ", icon: Wallet },
     { to: "/nhan-su", label: "Nhân sự", desc: `${EMPLOYEES.length} người`, icon: Users },
     { to: "/trung-tam", label: "Trung tâm", desc: `${CENTERS.filter((c) => c.kind === "Trung tâm").length} điểm tiêm`, icon: Building2 },
@@ -160,16 +148,16 @@ function Dashboard() {
           icon={ClipboardList}
         />
         <Kpi
-          label="Tồn kho"
-          value={formatVndCompact(seedInventory.centers.reduce((s, c) => s + c.value, 0))}
-          hint={`${expiring} lô gần hạn · ${pending} đề nghị chờ`}
-          to="/kho"
-          icon={Package}
+          label="Đề nghị"
+          value={String(pending)}
+          hint="Chờ duyệt"
+          to="/de-nghi"
+          icon={FileText}
         />
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
+      <div className="mt-5">
+        <Card>
           <CardHeader>
             <div>
               <CardTitle>Chấm công 14 phiên đông</CardTitle>
@@ -190,42 +178,6 @@ function Dashboard() {
                   <Area type="monotone" dataKey="vào" stroke={CHART} fill={CHART} fillOpacity={0.18} strokeWidth={2} />
                   <Area type="monotone" dataKey="ra" stroke={CHART_2} fill={CHART_2} fillOpacity={0.12} strokeWidth={2} />
                 </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </ClientOnly>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div>
-              <CardTitle>Giá trị tồn theo điểm</CardTitle>
-              <p className="mt-0.5 text-sm text-muted">Triệu đồng · 8 trung tâm lớn</p>
-            </div>
-          </CardHeader>
-          <ClientOnly>
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={invChart} layout="vertical" margin={{ top: 0, right: 8, left: 8, bottom: 0 }}>
-                  <CartesianGrid stroke="#d3ddd8" strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" hide />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={78}
-                    tick={{ fill: "#5a6b65", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(v: number) => [`${formatNum(v)} tr`, "Giá trị"]}
-                    contentStyle={{ borderRadius: 12, border: "none", boxShadow: "var(--shadow-card)" }}
-                  />
-                  <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={12}>
-                    {invChart.map((_, i) => (
-                      <Cell key={i} fill={i === 0 ? CHART : "#9aada5"} />
-                    ))}
-                  </Bar>
-                </BarChart>
               </ResponsiveContainer>
             </div>
           </ClientOnly>
