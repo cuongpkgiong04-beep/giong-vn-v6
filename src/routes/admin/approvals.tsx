@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { clearAttendance } from "@/routes/api/data";
+import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,6 +146,27 @@ function AdminApprovals() {
   const approvedCount = requests.filter((r) => r.status === "approved").length;
   const rejectedCount = requests.filter((r) => r.status === "rejected").length;
 
+  const [clearing, setClearing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  const handleClearAttendance = useCallback(async () => {
+    if (!confirmClear) {
+      setConfirmClear(true);
+      return;
+    }
+    try {
+      setClearing(true);
+      await clearAttendance();
+      useAppStore.setState({ attendance: [] });
+      toast.success("Đã xóa trắng dữ liệu chấm công");
+      setConfirmClear(false);
+    } catch {
+      toast.error("Lỗi khi xóa dữ liệu");
+    } finally {
+      setClearing(false);
+    }
+  }, [confirmClear]);
+
   return (
     <main className="container mx-auto py-6 px-4">
       <div className="mb-6">
@@ -192,6 +215,34 @@ function AdminApprovals() {
           </div>
         </Card>
       </div>
+
+      {/* Danger zone */}
+      <Card className="mb-6 border-danger/30">
+        <CardHeader>
+          <CardTitle className="text-danger">Vùng nguy hiểm</CardTitle>
+          <CardDesc>Các thao tác không thể hoàn tác</CardDesc>
+        </CardHeader>
+        <div className="px-6 pb-4">
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleClearAttendance}
+            disabled={clearing}
+          >
+            {clearing ? "Đang xóa..." : confirmClear ? "Nhấn lại để xác nhận xóa WHITE" : "Xóa trắng dữ liệu chấm công"}
+          </Button>
+          {confirmClear && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2"
+              onClick={() => setConfirmClear(false)}
+            >
+              Hủy
+            </Button>
+          )}
+        </div>
+      </Card>
 
       {/* Requests Table */}
       <Card>

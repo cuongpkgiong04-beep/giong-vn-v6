@@ -439,6 +439,14 @@ export const insertCheckin = createServerFn({ method: "POST" })
     `;
   });
 
+/* ─────────────────── Clear attendance ─────────────────── */
+
+export const clearAttendance = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const sql = await getSql();
+    await sql`DELETE FROM attendance`;
+  });
+
 /* ─────────────────── Seed check ─────────────────── */
 
 export const isTableEmpty = createServerFn({ method: "GET" })
