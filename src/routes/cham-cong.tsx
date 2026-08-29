@@ -15,6 +15,7 @@ import { CENTERS, findEmployeeByLooseText, getEmployeeById, getVisibleCenterCode
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
+import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage } from "@/routes/api/upload";
 
 export const Route = createFileRoute("/cham-cong")({ component: ChamCongPage });
@@ -223,20 +224,15 @@ function ChamCongPage() {
     reader.readAsDataURL(file);
   }
 
-  // Reverse geocode coordinates → actual Vietnamese address
+  // Reverse geocode coordinates → actual Vietnamese address (server-side)
   async function resolveAddress(): Promise<string> {
     if (!gpsCoords) return "";
     const [lat, lng] = gpsCoords;
     if (lat === 0 && lng === 0) return "";
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        { headers: { "Accept-Language": "vi", "User-Agent": "GIONG-VN/1.0 (cham-cong)" } },
-      );
-      const data = await res.json();
-      if (data.display_name) return data.display_name;
-    } catch { /* ignore */ }
-    return "";
+      const addr = await reverseGeocode({ data: { lat, lng } });
+      return addr;
+    } catch { return ""; }
   }
 
   async function confirmPunch() {

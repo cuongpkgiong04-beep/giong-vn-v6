@@ -388,3 +388,25 @@ export const isTableEmpty = createServerFn({ method: "GET" })
     );
     return Number(rows[0]?.count ?? 0) === 0;
   });
+
+/* ─────────── Reverse Geocoding (server-side) ─────────── */
+
+export const reverseGeocode = createServerFn({ method: "GET" })
+  .validator((d: { lat: number; lng: number }) => d)
+  .handler(async ({ data }) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.lat}&lon=${data.lng}&zoom=18&addressdetails=1`,
+        {
+          headers: {
+            "Accept-Language": "vi",
+            "User-Agent": "GIONG-VN/1.0 (cham-cong-app)",
+          },
+        },
+      );
+      const json = await res.json();
+      return json.display_name || "";
+    } catch {
+      return "";
+    }
+  });
