@@ -66,11 +66,20 @@ function AdminPermissionsPage() {
     setModuleRows(nextRows);
   }, [selectedEmployeeId, employees, filteredEmployees]);
 
-  // Wait for session + employees to resolve before redirecting
+  // Wait for session to resolve
   if (isPending) return null;
   if (!user) return <Navigate to="/" replace />;
-  if (employees.length === 0 && !isAdmin) return null;
-  if (!isAdmin) return <Navigate to="/" replace />;
+
+  if (!isAdmin) {
+    return (
+      <main className="container mx-auto py-6 px-4">
+        <Card className="p-8 text-center">
+          <p className="text-lg font-semibold text-ink">Không có quyền truy cập</p>
+          <p className="mt-2 text-sm text-muted">Bạn cần quyền Admin để truy cập trang này.</p>
+        </Card>
+      </main>
+    );
+  }
 
   const selectedEmployee = employees.find((person) => person.id === selectedEmployeeId) ?? filteredEmployees[0];
 

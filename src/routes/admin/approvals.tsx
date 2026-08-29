@@ -169,12 +169,20 @@ function AdminApprovals() {
   const approvedCount = requests.filter((r) => r.status === "approved").length;
   const rejectedCount = requests.filter((r) => r.status === "rejected").length;
 
-  // Wait for session + employees to resolve before redirecting
+  // Wait for session to resolve
   if (isPending) return null;
   if (!user) return <Navigate to="/" />;
-  // Give employees array time to load from DB (retry up to 3s)
-  if (employees.length === 0 && !isAdmin) return null;
-  if (!isAdmin) return <Navigate to="/" />;
+
+  if (!isAdmin) {
+    return (
+      <main className="container mx-auto py-6 px-4">
+        <Card className="p-8 text-center">
+          <p className="text-lg font-semibold text-ink">Không có quyền truy cập</p>
+          <p className="mt-2 text-sm text-muted">Bạn cần quyền Admin để truy cập trang này.</p>
+        </Card>
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto py-6 px-4">
