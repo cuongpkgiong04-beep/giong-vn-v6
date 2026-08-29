@@ -174,7 +174,57 @@ src/
 
 ---
 
-## 10. Lịch sử thay đổi quan trọng
+## 10. Hướng dẫn làm việc tại nhà (từ máy cá nhân)
+
+### Yêu cầu
+- Node.js >= 18
+- Git
+- npm
+
+### Bước 1: Clone repo
+```bash
+git clone https://github.com/cuongpkgiong04-beep/giong-vn-v6.git
+cd giong-vn-v6
+```
+
+### Bước 2: Cài dependencies
+```bash
+npm install
+```
+
+### Bước 3: Chạy dev server
+```bash
+npm run dev
+```
+Dev server chạy tại `http://localhost:5173`
+
+### Env vars cần thiết (đã set trên Vercel, KHÔNG cần set local)
+| Variable | Ghi chú |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL — chỉ cần trên Vercel |
+| `BETTER_AUTH_URL` | Domain Vercel — chỉ cần trên Vercel |
+| `BETTER_AUTH_SECRET` | Secret key — chỉ cần trên Vercel |
+| `CLOUDINARY_*` | Upload ảnh — chỉ cần trên Vercel |
+
+> **Lưu ý:** Khi chạy local, auth có thể ở chế độ demo/dev. Để test đầy đủ, dùng Vercel.
+
+### Bước 4: Push code mới
+```bash
+git add .
+git commit -m "mô tả"
+git push origin main
+```
+Vercel tự động deploy sau mỗi push.
+
+### Quy tắc sync giữa 2 máy
+- **Luôn pull trước khi bắt đầu làm:** `git pull origin main`
+- **Luôn push sau khi xong:** `git push origin main`
+- **Không commit file .env** — đã nằm trong .gitignore
+- **startup.sh** đã được sửa dùng relative path — hoạt động ở bất kỳ máy nào
+
+---
+
+## 11. Lịch sử thay đổi quan trọng
 
 > *Cập nhật phần này sau mỗi lần sửa code lớn*
 
@@ -279,7 +329,7 @@ src/
 
 ---
 
-## 11. Hỏi & Trả lời nhanh
+## 12. Hỏi & Trả lời nhanh
 
 **Q:** Làm sao để em biết cần làm gì tiếp?
 **A:** Đọc file này → xem mục "Đang triển khai" và "Việc cần làm". Nếu trống → hỏi Đại ca.

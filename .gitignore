@@ -3,3 +3,16 @@ node_modules
 .vercel
 dist
 .output
+# Environment files
+.env
+.env.*
+# OS files
+.DS_Store
+Thumbs.db
+# IDE
+.vscode
+.idea
+# TanStack temp
+.tanstack/
+# Debug artifacts
+page.html
