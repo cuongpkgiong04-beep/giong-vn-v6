@@ -46,10 +46,10 @@ function ChamCongPage() {
     return attendance.filter((a) => a.name === empName && a.date === todayStr);
   }, [attendance, currentEmployee, currentName, todayStr]);
 
-  const lastPunchType = todayRecords.length > 0 ? todayRecords[todayRecords.length - 1].type : null;
+  const lastStatus = todayRecords.length > 0 ? todayRecords[todayRecords.length - 1].status : null;
   // Rules: must check in before check out. Can do multiple in/out cycles per day.
-  const canPunchIn = lastPunchType !== "Điểm danh vào ca"; // last was out or no records
-  const canPunchOut = lastPunchType === "Điểm danh vào ca"; // last was in
+  const canPunchIn = lastStatus !== "Điểm danh vào ca"; // last was out or no records
+  const canPunchOut = lastStatus === "Điểm danh vào ca"; // last was in
 
   const allowedCenters = useMemo(
     () => (currentEmployee ? getVisibleCenterCodes(currentEmployee) : ["VP"]),
