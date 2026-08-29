@@ -8,7 +8,7 @@ interface GpsMapProps {
 }
 
 /**
- * OpenStreetMap iframe embed — no library needed, guaranteed to render.
+ * Static map image from OpenStreetMap — simple <img>, no iframe, no library.
  * Click to expand fullscreen, click X to close.
  */
 export function GpsMap({ coords, address, fallback }: GpsMapProps) {
@@ -28,19 +28,26 @@ export function GpsMap({ coords, address, fallback }: GpsMapProps) {
   }
 
   const [lat, lng] = coords;
-  const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.008}%2C${lat - 0.005}%2C${lng + 0.008}%2C${lat + 0.005}&layer=mapnik&marker=${lat}%2C${lng}`;
+  const staticMapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=16&size=400x200&maptype=mapnik&markers=${lat},${lng},red-pushpin`;
   const osmFullUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
 
-  const mapElement = (
-    <div className="relative h-44 overflow-hidden rounded-xl border border-line">
-      <iframe
-        title="Bản đồ vị trí chấm công"
-        src={osmUrl}
-        className="h-full w-full border-0"
+  const mapPreview = (
+    <div className="relative h-44 overflow-hidden rounded-xl border border-line bg-surface-2">
+      <img
+        src={staticMapUrl}
+        alt={`Bản đồ vị trí ${lat}, ${lng}`}
+        className="h-full w-full object-cover"
         loading="lazy"
-        referrerPolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin"
+        onError={(e) => {
+          // Fallback: show coords if image fails
+          (e.target as HTMLImageElement).style.display = "none";
+        }}
       />
+      {/* Center marker overlay */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <MapPin className="size-8 text-red-500 drop-shadow-lg" fill="currentColor" />
+      </div>
+      {/* Expand button */}
       <button
         type="button"
         onClick={() => setExpanded(true)}
@@ -54,7 +61,7 @@ export function GpsMap({ coords, address, fallback }: GpsMapProps) {
 
   return (
     <>
-      {mapElement}
+      {mapPreview}
 
       {/* Fullscreen overlay */}
       {expanded && (
@@ -65,6 +72,7 @@ export function GpsMap({ coords, address, fallback }: GpsMapProps) {
               {address && (
                 <p className="truncate text-xs text-muted">{address}</p>
               )}
+              <p className="text-xs text-faint">{lat.toFixed(6)}, {lng.toFixed(6)}</p>
             </div>
             <div className="flex items-center gap-2">
               <a
@@ -84,14 +92,13 @@ export function GpsMap({ coords, address, fallback }: GpsMapProps) {
               </button>
             </div>
           </div>
-          <iframe
-            title="Bản đồ vị trí chấm công (phóng to)"
-            src={osmFullUrl.replace("www.openstreetmap.org", "www.openstreetmap.org/export/embed.html") + `&layer=mapnik&marker=${lat}%2C${lng}`}
-            className="flex-1 border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin"
-          />
+          <div className="flex-1 overflow-auto bg-surface-2 p-4">
+            <img
+              src={`https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=17&size=800x500&maptype=mapnik&markers=${lat},${lng},red-pushpin`}
+              alt={`Bản đồ vị trí ${lat}, ${lng}`}
+              className="mx-auto rounded-xl shadow-lg"
+            />
+          </div>
         </div>
       )}
     </>
