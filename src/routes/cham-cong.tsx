@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Camera, LogIn, LogOut, MapPin, TimerReset } from "lucide-react";
+import { Building2, Camera, Eye, LogIn, LogOut, MapPin, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -36,6 +36,8 @@ function ChamCongPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<[number, number] | null>(null);
   const [locationStatus, setLocationStatus] = useState("Đang xác định vị trí...");
+  const [detailRecord, setDetailRecord] = useState<typeof attendance[number] | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const allowedCenters = useMemo(
     () => (currentEmployee ? getVisibleCenterCodes(currentEmployee) : ["VP"]),
@@ -376,7 +378,7 @@ function ChamCongPage() {
                 const workplace = related?.center ?? a.workplace ?? "VP";
                 const short = CENTERS.find((c) => c.code === workplace)?.short ?? workplace;
                 return (
-                  <tr key={a.id} className="hover:bg-surface-2/50">
+                  <tr key={a.id} className="cursor-pointer transition hover:bg-surface-2/50" onClick={() => { setDetailRecord(a); setIsDetailOpen(true); }}>
                     <td className="px-4 py-3">
                       <div className="font-medium text-ink">{a.name}</div>
                       {related ? <div className="text-xs text-faint">{related.title}</div> : null}
@@ -491,6 +493,64 @@ function ChamCongPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Attendance Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogTitle>Chi tiết chấm công</DialogTitle>
+          <DialogDesc>Thông tin chi tiết lượt chấm công của nhân sự.</DialogDesc>
+
+          {detailRecord && (
+            <div className="mt-4 space-y-4">
+              {detailRecord.photo && (
+                <div className="overflow-hidden rounded-xl border border-line">
+                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-cover" style={{ maxHeight: 300 }} />
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Nhân sự</p>
+                  <p className="mt-1 text-base font-semibold text-ink">{detailRecord.name}</p>
+                  {(() => { const r = findEmployeeByLooseText(detailRecord.name); return r ? <p className="text-xs text-faint">{r.title} — {r.center}</p> : null; })()}
+                </div>
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Trạng thái</p>
+                  <div className="mt-1"><StatusBadge value={detailRecord.status} /></div>
+                </div>
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Thời gian</p>
+                  <p className="mt-1 text-base font-semibold text-ink">{detailRecord.time}</p>
+                  <p className="text-xs text-faint">{detailRecord.weekday}</p>
+                </div>
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Ngày</p>
+                  <p className="mt-1 text-base font-medium text-ink">{formatDate(detailRecord.date)}</p>
+                </div>
+              </div>
+
+              {detailRecord.gps && (() => {
+                const parts = detailRecord.gps.split(",").map((s) => parseFloat(s.trim()));
+                const lat = parts[0];
+                const lng = parts[1];
+                if (isNaN(lat) || isNaN(lng)) return null;
+                return (
+                  <div>
+                    <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Vị trí GPS</p>
+                    <GpsMap coords={[lat, lng]} address={detailRecord.address} />
+                    <p className="mt-2 text-sm text-ink">{detailRecord.address || detailRecord.gps}</p>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          <div className="mt-5 flex justify-end">
+            <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Đóng</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       </div>
     </ClientOnly>
   );
