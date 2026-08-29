@@ -1,6 +1,17 @@
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2, Camera, LogIn, LogOut, MapPin, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+
+// Fix Leaflet default marker icon not showing with bundlers
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -33,6 +44,7 @@ function ChamCongPage() {
   const [gps, setGps] = useState("Đang lấy vị trí...");
   const [address, setAddress] = useState("Đang xác định vị trí...");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [gpsCoords, setGpsCoords] = useState<[number, number] | null>(null);
   const [locationStatus, setLocationStatus] = useState("Đang xác định vị trí...");
 
   const allowedCenters = useMemo(
@@ -148,12 +160,14 @@ function ChamCongPage() {
         const lng = position.coords.longitude.toFixed(6);
         const coordinateText = `${lat}, ${lng}`;
         setGps(coordinateText);
+        setGpsCoords([position.coords.latitude, position.coords.longitude]);
         setAddress(`Vị trí chấm công hiện tại: ${coordinateText}. Tọa độ được ghi nhận từ thiết bị di động.`);
         setLocationStatus("Vị trí đã xác định");
       },
       () => {
         const fallback = "0.000000, 0.000000";
         setGps(fallback);
+        setGpsCoords([0, 0]);
         setAddress("Không thể xác định vị trí chính xác. Hệ thống đã ghi nhận tọa độ mặc định.");
         setLocationStatus("Không lấy được vị trí chính xác");
       },
@@ -172,6 +186,7 @@ function ChamCongPage() {
     setAddress("Đang xác định vị trí...");
     setLocationStatus("Đang xác định vị trí...");
     setPhotoPreview(null);
+    setGpsCoords(null);
     requestLocation();
   }
 
@@ -453,11 +468,33 @@ function ChamCongPage() {
                     {locationStatus}
                   </div>
                 </div>
-                <div className="relative h-36 overflow-hidden rounded-xl border border-line bg-[radial-gradient(circle_at_30%_30%,rgba(38,99,87,0.32),transparent_22%),linear-gradient(135deg,#dfe9e3,#c2d6cf)]">
-                  <div className="absolute inset-0 opacity-60" style={{backgroundImage: "linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)", backgroundSize: "24px 24px"}} />
-                  <div className="absolute left-[60%] top-[45%] flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-forest-fg ring-4 ring-white/70">
-                    <MapPin className="size-3" />
-                  </div>
+                <div className="relative h-44 overflow-hidden rounded-xl border border-line">
+                  {gpsCoords ? (
+                    <MapContainer
+                      center={gpsCoords}
+                      zoom={16}
+                      className="h-full w-full"
+                      zoomControl={false}
+                      attributionControl={false}
+                      dragging={false}
+                      scrollWheelZoom={false}
+                      doubleClickZoom={false}
+                      touchZoom={false}
+                      keyboard={false}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <Marker position={gpsCoords}>
+                        <Popup>Vị trí chấm công</Popup>
+                      </Marker>
+                    </MapContainer>
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-surface-2 text-sm text-muted">
+                      <MapPin className="mr-2 size-4" />
+                      Đang tải bản đồ...
+                    </div>
+                  )}
                 </div>
                 <p className="mt-3 text-sm font-medium text-ink">{gps}</p>
               </div>
