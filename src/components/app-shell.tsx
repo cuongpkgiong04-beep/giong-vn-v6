@@ -12,6 +12,7 @@ import {
   MapPin,
   Menu,
   MessageSquare,
+  RefreshCw,
   Search,
   ShieldCheck,
   StickyNote,
@@ -201,6 +202,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pending = useAppStore((s) => s.proposals.filter((p) => p.status === "Chờ duyệt").length);
   const { user: authUser, isPending } = useCurrentUserState();
   const [appVersion, setAppVersion] = useState(DEFAULT_VERSION);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   useEffect(() => {
     setAppVersion(getVersionValue());
   }, []);
@@ -214,6 +216,25 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     hydrate();
+  }, [hydrate]);
+
+  // iOS standalone PWA doesn't support pull-to-refresh.
+  // Re-hydrate data when app returns to foreground.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        setIsRefreshing(true);
+        hydrate();
+        setTimeout(() => setIsRefreshing(false), 1500);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    // Also handle iOS bfcache (pageshow)
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
   }, [hydrate]);
 
   useEffect(() => {
@@ -295,6 +316,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             aria-label="Mở menu"
           >
             <Menu className="size-5" />
+          </button>
+          <button
+            type="button"
+            className="flex size-11 items-center justify-center rounded-xl text-ink transition-colors hover:bg-surface-2 lg:hidden"
+            onClick={() => {
+              setIsRefreshing(true);
+              hydrate();
+              setTimeout(() => setIsRefreshing(false), 1500);
+            }}
+            aria-label="Làm mới dữ liệu"
+          >
+            <RefreshCw className={`size-5 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
