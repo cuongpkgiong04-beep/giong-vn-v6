@@ -66,11 +66,11 @@ function AdminPermissionsPage() {
     setModuleRows(nextRows);
   }, [selectedEmployeeId, employees, filteredEmployees]);
 
-  // Wait for session to resolve before redirecting
+  // Wait for session + employees to resolve before redirecting
   if (isPending) return null;
-  if (!user || !isAdmin) {
-    return <Navigate to="/" replace />;
-  }
+  if (!user) return <Navigate to="/" replace />;
+  if (employees.length === 0) return null;
+  if (!isAdmin) return <Navigate to="/" replace />;
 
   const selectedEmployee = employees.find((person) => person.id === selectedEmployeeId) ?? filteredEmployees[0];
 

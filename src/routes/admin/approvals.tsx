@@ -166,11 +166,12 @@ function AdminApprovals() {
   const approvedCount = requests.filter((r) => r.status === "approved").length;
   const rejectedCount = requests.filter((r) => r.status === "rejected").length;
 
-  // Wait for session to resolve before redirecting
+  // Wait for session + employees to resolve before redirecting
   if (isPending) return null;
-  if (!user || !isAdmin) {
-    return <Navigate to="/" />;
-  }
+  if (!user) return <Navigate to="/" />;
+  // Give employees array time to load from DB
+  if (employees.length === 0) return null;
+  if (!isAdmin) return <Navigate to="/" />;
 
   return (
     <main className="container mx-auto py-6 px-4">
