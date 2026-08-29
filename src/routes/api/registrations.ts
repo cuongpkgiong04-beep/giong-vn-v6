@@ -96,6 +96,7 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
     }
 
     // Create the user in Better Auth so they can sign in with email/password.
+    // This is non-blocking: if signUpEmail fails, the approval still succeeds.
     try {
       const { auth } = await import("@/lib/auth/server");
       await auth.api.signUpEmail({
@@ -108,13 +109,7 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
       console.log(`[auth] Created Better Auth user: ${request.email}`);
     } catch (err: any) {
       const msg = err?.message ?? String(err);
-      // If user already exists, that's OK — they can log in with their password
-      if (msg.includes("already") || msg.includes("exists")) {
-        console.log(`[auth] User ${request.email} already exists in Better Auth — skipping creation`);
-      } else {
-        console.error("[auth] Failed to create Better Auth user:", msg);
-        throw new Error(`Đã duyệt nhưng không thể tạo tài khoản: ${msg}`);
-      }
+      console.warn(`[auth] signUpEmail for ${request.email}: ${msg} (approval still succeeded)`);
     }
 
     return request;
