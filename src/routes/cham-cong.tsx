@@ -175,25 +175,8 @@ function ChamCongPage() {
         const coordinateText = `${lat}, ${lng}`;
         setGps(coordinateText);
         setGpsCoords([position.coords.latitude, position.coords.longitude]);
-        // Set address with coordinates first (instant)
         setAddress(`Vị trí chấm công hiện tại: ${coordinateText}`);
         setLocationStatus("Vị trí đã xác định");
-        // Reverse geocode to get actual address (async)
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-          headers: {
-            "Accept-Language": "vi",
-            "User-Agent": "GIONG-VN/1.0 (cham-cong-app)"
-          },
-        })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data.display_name) {
-              setAddress(`Vị trí chấm công hiện tại: ${data.display_name}`);
-            }
-          })
-          .catch(() => {
-            // Keep coordinates as address — already set above
-          });
       },
       () => {
         const fallback = "0.000000, 0.000000";
@@ -240,6 +223,22 @@ function ChamCongPage() {
     reader.readAsDataURL(file);
   }
 
+  // Reverse geocode coordinates → actual Vietnamese address
+  async function resolveAddress(): Promise<string> {
+    if (!gpsCoords) return "";
+    const [lat, lng] = gpsCoords;
+    if (lat === 0 && lng === 0) return "";
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+        { headers: { "Accept-Language": "vi", "User-Agent": "GIONG-VN/1.0 (cham-cong)" } },
+      );
+      const data = await res.json();
+      if (data.display_name) return data.display_name;
+    } catch { /* ignore */ }
+    return "";
+  }
+
   async function confirmPunch() {
     // Re-validate rules before submit
     if (punchType === "Điểm danh vào ca" && !canPunchIn) {
@@ -250,6 +249,11 @@ function ChamCongPage() {
       toast.warning("Bạn chưa vào ca hôm nay. Vui lòng vào ca trước.");
       return;
     }
+    // Resolve real address BEFORE saving
+    const resolvedAddress = await resolveAddress();
+    const finalAddress = resolvedAddress
+      ? `Vị trí chấm công hiện tại: ${resolvedAddress}`
+      : (address.startsWith("Vị trí") ? address : `Vịtri chấm công hiện tại: ${gps}`);
     // Upload photo to Cloudinary if available
     let photoUrl: string | undefined;
     if (photoPreview) {
@@ -263,7 +267,7 @@ function ChamCongPage() {
         photoUrl = photoPreview; // Fallback to base64
       }
     }
-    const rec = clock(punchType, gps === "Đang lấy vị trí..." ? "" : gps, address === "Đang xác định vị trí..." ? "" : address, photoUrl);
+    const rec = clock(punchType, gps === "Đang lấy vị trí..." ? "" : gps, finalAddress, photoUrl);
     toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
     setIsDialogOpen(false);
   }
