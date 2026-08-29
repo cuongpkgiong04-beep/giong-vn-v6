@@ -1,19 +1,9 @@
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import { createFileRoute } from "@tanstack/react-router";
 import { Building2, Camera, LogIn, LogOut, MapPin, TimerReset } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-
-// Fix Leaflet default marker icon not showing with bundlers
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+import { GpsMap } from "@/components/gps-map";
 import { PageHeader } from "@/components/page-header";
 import { ClientOnly } from "@/components/client-only";
 import { StatusBadge } from "@/components/status-badge";
@@ -468,34 +458,15 @@ function ChamCongPage() {
                     {locationStatus}
                   </div>
                 </div>
-                <div className="relative h-44 overflow-hidden rounded-xl border border-line">
-                  {gpsCoords ? (
-                    <MapContainer
-                      center={gpsCoords}
-                      zoom={16}
-                      className="h-full w-full"
-                      zoomControl={false}
-                      attributionControl={false}
-                      dragging={false}
-                      scrollWheelZoom={false}
-                      doubleClickZoom={false}
-                      touchZoom={false}
-                      keyboard={false}
-                    >
-                      <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Marker position={gpsCoords}>
-                        <Popup>Vị trí chấm công</Popup>
-                      </Marker>
-                    </MapContainer>
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-surface-2 text-sm text-muted">
+                <GpsMap
+                  coords={gpsCoords}
+                  fallback={
+                    <>
                       <MapPin className="mr-2 size-4" />
                       Đang tải bản đồ...
-                    </div>
-                  )}
-                </div>
+                    </>
+                  }
+                />
                 <p className="mt-3 text-sm font-medium text-ink">{gps}</p>
               </div>
 
