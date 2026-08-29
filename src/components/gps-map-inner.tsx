@@ -1,4 +1,3 @@
-import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 
@@ -16,11 +15,11 @@ interface GpsMapInnerProps {
 
 export function GpsMapInner({ coords }: GpsMapInnerProps) {
   return (
-    <div className="h-44 overflow-hidden rounded-xl border border-line">
+    <div className="relative h-44 overflow-hidden rounded-xl border border-line">
       <MapContainer
         center={coords}
         zoom={16}
-        className="h-full w-full"
+        style={{ height: "100%", width: "100%" }}
         zoomControl={false}
         attributionControl={false}
         dragging={false}
