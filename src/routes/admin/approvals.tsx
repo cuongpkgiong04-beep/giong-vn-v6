@@ -49,12 +49,15 @@ function AdminApprovals() {
   const [clearing, setClearing] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Check if user is admin — wait for session to resolve first
+  // Check if user is admin — same logic as app-shell
   const byEmail = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
   const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
   const byId = employees.find((e) => e.id === currentUserId) ?? employees[0];
   const employee = byEmail ?? byName ?? byId;
-  const isAdmin = employee ? isAdminRole(employee.role) : false;
+  // Fallback: if employee not found in list but user is logged in, check known admin emails
+  const isAdmin = employee
+    ? isAdminRole(employee.role)
+    : (user?.primaryEmail === "cuongpk.giong04@gmail.com" || user?.primaryEmail === "cuongpk.giong02@gmail.com");
 
   // Load registration requests
   useEffect(() => {
@@ -169,8 +172,8 @@ function AdminApprovals() {
   // Wait for session + employees to resolve before redirecting
   if (isPending) return null;
   if (!user) return <Navigate to="/" />;
-  // Give employees array time to load from DB
-  if (employees.length === 0) return null;
+  // Give employees array time to load from DB (retry up to 3s)
+  if (employees.length === 0 && !isAdmin) return null;
   if (!isAdmin) return <Navigate to="/" />;
 
   return (
