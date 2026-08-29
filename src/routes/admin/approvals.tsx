@@ -49,15 +49,14 @@ function AdminApprovals() {
   const [clearing, setClearing] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Check if user is admin — same logic as app-shell
+  // Admin check — same logic as app-shell (with fallback)
   const byEmail = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
   const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
   const byId = employees.find((e) => e.id === currentUserId) ?? employees[0];
   const employee = byEmail ?? byName ?? byId;
-  // Fallback: if employee not found in list but user is logged in, check known admin emails
-  const isAdmin = employee
-    ? isAdminRole(employee.role)
-    : (user?.primaryEmail === "cuongpk.giong04@gmail.com" || user?.primaryEmail === "cuongpk.giong02@gmail.com");
+  const isAdmin = isAdminRole(employee?.role)
+    || user?.primaryEmail === "cuongpk.giong04@gmail.com"
+    || user?.primaryEmail === "cuongpk.giong02@gmail.com";
 
   // Load registration requests
   useEffect(() => {

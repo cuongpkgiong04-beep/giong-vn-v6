@@ -212,7 +212,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const byName = authUser ? employees.find((e) => e.name === (authUser.displayName ?? "")) : null;
   const byId = employees.find((e) => e.id === userId) ?? employees[0];
   const currentUserEmployee = byEmail ?? byName ?? byId;
-  const isAdmin = isAdminRole(currentUserEmployee?.role);
+  const isAdmin = isAdminRole(currentUserEmployee?.role)
+    // Fallback: known admin emails always pass even if employee lookup fails during hydration
+    || authUser?.primaryEmail === "cuongpk.giong04@gmail.com"
+    || authUser?.primaryEmail === "cuongpk.giong02@gmail.com";
 
   useEffect(() => {
     hydrate();
