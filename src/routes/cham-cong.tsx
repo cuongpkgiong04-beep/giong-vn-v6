@@ -67,12 +67,10 @@ function ChamCongPage() {
 
   useEffect(() => {
     if (!currentEmployee) return;
-    if (isAdminRole(currentEmployee.role)) {
-      setCenter((prev) => (allowedCenters.includes(prev) ? prev : "all"));
-      return;
+    if (!isAdminRole(currentEmployee.role)) {
+      setCenter(currentEmployee.center);
     }
-    setCenter(currentEmployee.center);
-  }, [currentEmployee, allowedCenters]);
+  }, [currentEmployee]);
 
   const canViewAll = hasPermission(currentEmployee, "attendance:view_all");
   const canViewCenter = hasPermission(currentEmployee, "attendance:view_center");
@@ -245,25 +243,33 @@ function ChamCongPage() {
       toast.warning("Bạn chưa vào ca hôm nay. Vui lòng vào ca trước.");
       return;
     }
+    // Rule: photo is required
+    if (!photoPreview) {
+      toast.warning("Vui lòng chụp ảnh xác nhận trước khi điểm danh.");
+      return;
+    }
+    // Rule: GPS location is required
+    if (!gpsCoords || (gpsCoords[0] === 0 && gpsCoords[1] === 0)) {
+      toast.warning("Vui lòng bật định vị GPS trên thiết bị để điểm danh.");
+      return;
+    }
     // Resolve real address BEFORE saving
     const resolvedAddress = await resolveAddress();
     const finalAddress = resolvedAddress
       ? `Vị trí chấm công hiện tại: ${resolvedAddress}`
-      : (address.startsWith("Vị trí") ? address : `Vịtri chấm công hiện tại: ${gps}`);
-    // Upload photo to Cloudinary if available
+      : (address.startsWith("Vị trí") ? address : `Vị trí chấm công hiện tại: ${gps}`);
+    // Upload photo to Cloudinary
     let photoUrl: string | undefined;
-    if (photoPreview) {
-      try {
-        const result = await uploadImage({
-          data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
-        });
-        photoUrl = result.url;
-      } catch (err) {
-        console.warn("Cloudinary upload failed, using base64:", err);
-        photoUrl = photoPreview; // Fallback to base64
-      }
+    try {
+      const result = await uploadImage({
+        data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
+      });
+      photoUrl = result.url;
+    } catch (err) {
+      console.warn("Cloudinary upload failed, using base64:", err);
+      photoUrl = photoPreview;
     }
-    const rec = clock(punchType, gps === "Đang lấy vị trí..." ? "" : gps, finalAddress, photoUrl);
+    const rec = clock(punchType, gps, finalAddress, photoUrl);
     toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
     setIsDialogOpen(false);
   }
@@ -494,12 +500,12 @@ function ChamCongPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogTitle>{punchType}</DialogTitle>
-          <DialogDesc>Ghi nhận chấm công với hình ảnh, thời gian và định vị hiện tại.</DialogDesc>
+          <DialogDesc>Ghi nhận chấm công. <span className="font-medium text-danger">Yêu cầu:</span> chụp ảnh + bật định vị GPS.</DialogDesc>
 
           <div className="mt-5 space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-xs font-medium tracking-[0.12em] text-muted uppercase">Ảnh chụp</label>
+                <label className="text-xs font-medium tracking-[0.12em] text-muted uppercase">Ảnh chụp <span className="text-danger">*</span></label>
                 <label className="flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface-2 p-4 text-center text-sm text-muted transition hover:border-accent/50 hover:bg-accent-soft">
                   {photoPreview ? (
                     <img src={photoPreview} alt="Ảnh chấm công" className="h-full max-h-52 w-full rounded-xl object-cover" />
