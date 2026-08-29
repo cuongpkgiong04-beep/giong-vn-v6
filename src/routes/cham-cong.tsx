@@ -39,6 +39,18 @@ function ChamCongPage() {
   const [detailRecord, setDetailRecord] = useState<typeof attendance[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+  // Compute today's attendance status for current user
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayRecords = useMemo(() => {
+    const empName = currentEmployee?.name ?? currentName;
+    return attendance.filter((a) => a.name === empName && a.date === todayStr);
+  }, [attendance, currentEmployee, currentName, todayStr]);
+
+  const lastPunchType = todayRecords.length > 0 ? todayRecords[todayRecords.length - 1].type : null;
+  // Rules: must check in before check out. Can do multiple in/out cycles per day.
+  const canPunchIn = lastPunchType !== "Điểm danh vào ca"; // last was out or no records
+  const canPunchOut = lastPunchType === "Điểm danh vào ca"; // last was in
+
   const allowedCenters = useMemo(
     () => (currentEmployee ? getVisibleCenterCodes(currentEmployee) : ["VP"]),
     [currentEmployee],
@@ -153,7 +165,18 @@ function ChamCongPage() {
         const coordinateText = `${lat}, ${lng}`;
         setGps(coordinateText);
         setGpsCoords([position.coords.latitude, position.coords.longitude]);
-        setAddress(`Vị trí chấm công hiện tại: ${coordinateText}. Tọa độ được ghi nhận từ thiết bị di động.`);
+        // Reverse geocode to get actual address
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+          headers: { "Accept-Language": "vi" },
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            const addr = data.display_name || coordinateText;
+            setAddress(`Vị trí chấm công hiện tại: ${addr}`);
+          })
+          .catch(() => {
+            setAddress(`Vị trí chấm công hiện tại: ${coordinateText}`);
+          });
         setLocationStatus("Vị trí đã xác định");
       },
       () => {
@@ -172,6 +195,15 @@ function ChamCongPage() {
   }
 
   function handlePunchOpen(type: "Điểm danh vào ca" | "Điểm danh tan ca") {
+    // Validate attendance rules
+    if (type === "Điểm danh vào ca" && !canPunchIn) {
+      toast.warning("Hôm nay bạn đã vào ca. Vui lòng tan ca trước khi vào ca lại.");
+      return;
+    }
+    if (type === "Điểm danh tan ca" && !canPunchOut) {
+      toast.warning("Bạn chưa vào ca hôm nay. Vui lòng vào ca trước.");
+      return;
+    }
     setPunchType(type);
     setIsDialogOpen(true);
     setGps("Đang lấy vị trí...");
@@ -193,6 +225,15 @@ function ChamCongPage() {
   }
 
   async function confirmPunch() {
+    // Re-validate rules before submit
+    if (punchType === "Điểm danh vào ca" && !canPunchIn) {
+      toast.warning("Hôm nay bạn đã vào ca. Vui lòng tan ca trước.");
+      return;
+    }
+    if (punchType === "Điểm danh tan ca" && !canPunchOut) {
+      toast.warning("Bạn chưa vào ca hôm nay. Vui lòng vào ca trước.");
+      return;
+    }
     // Upload photo to Cloudinary if available
     let photoUrl: string | undefined;
     if (photoPreview) {
@@ -220,11 +261,20 @@ function ChamCongPage() {
         desc="Điểm danh vào ca và tan ca ở văn phòng và toàn bộ các trung tâm tiêm chủng."
         actions={
           <>
-            <Button onClick={() => handlePunchOpen("Điểm danh vào ca")}>
+            <Button
+              onClick={() => handlePunchOpen("Điểm danh vào ca")}
+              disabled={!canPunchIn}
+              title={!canPunchIn ? "Hôm nay bạn đã vào ca. Vui lòng tan ca trước." : ""}
+            >
               <LogIn />
               Vào ca
             </Button>
-            <Button variant="outline" onClick={() => handlePunchOpen("Điểm danh tan ca")}>
+            <Button
+              variant="outline"
+              onClick={() => handlePunchOpen("Điểm danh tan ca")}
+              disabled={!canPunchOut}
+              title={!canPunchOut ? "Bạn chưa vào ca hôm nay." : ""}
+            >
               <LogOut />
               Tan ca
             </Button>

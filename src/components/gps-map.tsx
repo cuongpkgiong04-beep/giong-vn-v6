@@ -30,7 +30,6 @@ export function GpsMap({ coords, address, fallback }: GpsMapProps) {
 
   const [lat, lng] = coords;
   const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}&z=17`;
-  const osmUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
 
   const MapPreview = ({ size }: { size?: "sm" | "lg" }) => {
     const isLg = size === "lg";
@@ -131,14 +130,6 @@ export function GpsMap({ coords, address, fallback }: GpsMapProps) {
               >
                 <ExternalLink className="size-3" />
                 Google Maps
-              </a>
-              <a
-                href={osmUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-2"
-              >
-                OSM
               </a>
               <button
                 type="button"
