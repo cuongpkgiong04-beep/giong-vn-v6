@@ -38,9 +38,16 @@ function ChamCongPage() {
   const [locationStatus, setLocationStatus] = useState("Đang xác định vị trí...");
   const [detailRecord, setDetailRecord] = useState<typeof attendance[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  // Compute today's attendance status for current user
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Compute today's attendance status for current user (use Vietnam timezone like store)
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
   const todayRecords = useMemo(() => {
     const empName = currentEmployee?.name ?? currentName;
     return attendance.filter((a) => a.name === empName && a.date === todayStr);
@@ -112,6 +119,8 @@ function ChamCongPage() {
       if (center !== "all" && workplace !== center) return false;
       if (kind === "in" && !a.status.includes("vào")) return false;
       if (kind === "out" && !a.status.includes("tan")) return false;
+      if (dateFrom && a.date < dateFrom) return false;
+      if (dateTo && a.date > dateTo) return false;
       if (q.trim()) {
         const s = q.toLowerCase();
         const searchText = [a.name, a.address, a.workplace, related?.username ?? "", related?.dept ?? "", related?.center ?? ""]
@@ -121,7 +130,7 @@ function ChamCongPage() {
       }
       return true;
     });
-  }, [center, currentEmployee, kind, q, visibleAttendance]);
+  }, [center, currentEmployee, kind, q, visibleAttendance, dateFrom, dateTo]);
 
   const selectedCenterRows = useMemo(() => {
     if (!selectedCenter) return [];
@@ -165,19 +174,25 @@ function ChamCongPage() {
         const coordinateText = `${lat}, ${lng}`;
         setGps(coordinateText);
         setGpsCoords([position.coords.latitude, position.coords.longitude]);
-        // Reverse geocode to get actual address
+        // Set address with coordinates first (instant)
+        setAddress(`Vị trí chấm công hiện tại: ${coordinateText}`);
+        setLocationStatus("Vị trí đã xác định");
+        // Reverse geocode to get actual address (async)
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-          headers: { "Accept-Language": "vi" },
+          headers: {
+            "Accept-Language": "vi",
+            "User-Agent": "GIONG-VN/1.0 (cham-cong-app)"
+          },
         })
           .then((r) => r.json())
           .then((data) => {
-            const addr = data.display_name || coordinateText;
-            setAddress(`Vị trí chấm công hiện tại: ${addr}`);
+            if (data.display_name) {
+              setAddress(`Vị trí chấm công hiện tại: ${data.display_name}`);
+            }
           })
           .catch(() => {
-            setAddress(`Vị trí chấm công hiện tại: ${coordinateText}`);
+            // Keep coordinates as address — already set above
           });
-        setLocationStatus("Vị trí đã xác định");
       },
       () => {
         const fallback = "0.000000, 0.000000";
@@ -371,7 +386,7 @@ function ChamCongPage() {
         </Card>
       ) : null}
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -391,6 +406,23 @@ function ChamCongPage() {
             </option>
           ))}
         </select>
+        <div className="flex items-center gap-1.5">
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-9 w-[140px] rounded-md px-2 text-xs"
+            title="Từ ngày"
+          />
+          <span className="text-xs text-muted">—</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-9 w-[140px] rounded-md px-2 text-xs"
+            title="Đến ngày"
+          />
+        </div>
         <div className="flex rounded-md bg-surface p-1 shadow-[var(--shadow-card)]">
           {([
             ["all", "Tất cả"],
