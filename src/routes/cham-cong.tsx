@@ -356,7 +356,7 @@ function ChamCongPage() {
                     const workplace = related?.center ?? a.workplace ?? "VP";
                     const short = CENTERS.find((c) => c.code === workplace)?.short ?? workplace;
                     return (
-                      <tr key={a.id} className="hover:bg-surface-2/50">
+                      <tr key={a.id} className="cursor-pointer transition hover:bg-surface-2/50" onClick={() => { setDetailRecord(a); setIsDetailOpen(true); }}>
                         <td className="px-4 py-3">
                           <div className="font-medium text-ink">{a.name}</div>
                           {related ? <div className="text-xs text-faint">{related.title}</div> : null}
