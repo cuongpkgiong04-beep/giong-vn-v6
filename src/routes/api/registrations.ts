@@ -128,6 +128,30 @@ export const revokeRegistrationRequest = createServerFn({ method: "POST" })
   });
 
 /**
+ * Ensure Better Auth user exists for an approved registration.
+ * Called during login when signIn fails but registration is approved.
+ */
+export const ensureAuthUser = createServerFn({ method: "POST" })
+  .validator((data: { email: string }) => data)
+  .handler(async ({ data }) => {
+    const { getRegistrationRequestByEmail } = await import("@/lib/registrations");
+    const reg = await getRegistrationRequestByEmail(data.email);
+    if (!reg || reg.status !== "approved") return { created: false };
+    try {
+      const { auth } = await import("@/lib/auth/server");
+      await auth.api.signUpEmail({
+        body: { name: reg.name, email: reg.email, password: reg.password },
+      });
+      console.log(`[auth] ensureAuthUser: created account for ${data.email}`);
+      return { created: true };
+    } catch (err: any) {
+      const msg = err?.message ?? String(err);
+      console.warn(`[auth] ensureAuthUser: ${data.email} — ${msg}`);
+      return { created: false, error: msg };
+    }
+  });
+
+/**
  * Check if email has a pending registration request
  */
 export const checkEmailPending = createServerFn({ method: "GET" })

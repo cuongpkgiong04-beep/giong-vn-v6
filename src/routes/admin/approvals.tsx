@@ -68,7 +68,15 @@ function AdminApprovals() {
     try {
       setLoading(true);
       const data = await getRegistrationRequests();
-      setRequests(data);
+      // Fix old reviewed_by names client-side (migration can't run without DB_URL at build)
+      const fixed = data.map((r) => {
+        if (!r.reviewedBy) return r;
+        let name = r.reviewedBy;
+        if (name.includes("Auto-duyệt")) name = "Admin Phạm Kiên Cường";
+        if (name === "Nguyễn Thị Thúy") name = "Admin Phạm Kiên Cường";
+        return { ...r, reviewedBy: name };
+      });
+      setRequests(fixed);
     } catch {
       toast.error("Không thể tải danh sách đăng ký");
     } finally {

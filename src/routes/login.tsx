@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient, authEnabled, signIn, GROK_PROVIDERS } from "@/lib/auth/client";
-import { checkEmailPending, checkEmailRejected, createRegRequest, autoApproveCatalogEmployee } from "@/routes/api/registrations";
+import { checkEmailPending, checkEmailRejected, createRegRequest, autoApproveCatalogEmployee, ensureAuthUser } from "@/routes/api/registrations";
 import { getEmployeeByEmail } from "@/lib/catalog";
 
 const REMEMBER_KEY = "giong-vn-login-remember";
@@ -123,11 +123,24 @@ function Login() {
           }
         }
 
-        const { error } = await authClient.signIn.email({
+        let { error } = await authClient.signIn.email({
           email: email.trim(),
           password,
         });
         if (error) {
+          // signIn failed — try to create Better Auth account on-the-fly for approved registrations
+          try {
+            const result = await ensureAuthUser({ data: { email: email.trim() } });
+            if (result.created) {
+              // Retry signIn now that account exists
+              const retry = await authClient.signIn.email({ email: email.trim(), password });
+              if (!retry.error) {
+                saveRememberedCredentials(rememberMe);
+                window.location.href = "/";
+                return;
+              }
+            }
+          } catch { /* ignore */ }
           toast.error(error.message ?? "Sai email hoặc mật khẩu");
           return;
         }
