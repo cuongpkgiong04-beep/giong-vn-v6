@@ -6,6 +6,7 @@ import {
   getAllRegistrationRequests,
   approveRegistration,
   rejectRegistration,
+  revokeRegistration,
   createRegistrationRequest,
   isEmailPending,
   isEmailRejected,
@@ -38,8 +39,7 @@ async function getCurrentAdmin(): Promise<{ email: string; name: string } | null
       if (employee) return { email: sessionUser.email, name: employee.name };
       // Fallback: known admin emails always pass
       const KNOWN_ADMINS: Record<string, string> = {
-        "cuongpk.giong04@gmail.com": "Phạm Kiên Cường",
-        "cuongpk.giong02@gmail.com": "Phạm Cường",
+        "cuongpk.giong04@gmail.com": "Admin Phạm Kiên Cường",
       };
       if (KNOWN_ADMINS[sessionUser.email]) {
         return { email: sessionUser.email, name: KNOWN_ADMINS[sessionUser.email] };
@@ -92,8 +92,6 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
     }
 
     // Create the user in Better Auth so they can sign in with email/password.
-    // Without this step, login fails because Better Auth's user/account tables
-    // have no record of the approved user.
     try {
       const { auth } = await import("@/lib/auth/server");
       await auth.api.signUpEmail({
@@ -103,15 +101,30 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
           password: request.password,
         },
       });
+      console.log(`[auth] Created Better Auth user: ${request.email}`);
     } catch (err: any) {
-      // If user already exists (e.g. approved twice), that's fine — just log it.
       const msg = err?.message ?? String(err);
-      if (!msg.includes("already") && !msg.includes("exists")) {
-        console.error("[auth] Failed to create Better Auth user for approved registration:", msg);
-        throw new Error(`Đã duyệt nhưng không thể tạo tài khoản đăng nhập: ${msg}`);
+      // If user already exists, that's OK — they can log in with their password
+      if (msg.includes("already") || msg.includes("exists")) {
+        console.log(`[auth] User ${request.email} already exists in Better Auth — skipping creation`);
+      } else {
+        console.error("[auth] Failed to create Better Auth user:", msg);
+        throw new Error(`Đã duyệt nhưng không thể tạo tài khoản: ${msg}`);
       }
     }
 
+    return request;
+  });
+
+/**
+ * Revoke an approved registration (admin only)
+ */
+export const revokeRegistrationRequest = createServerFn({ method: "POST" })
+  .validator((data: { requestId: string }) => data)
+  .handler(async ({ data }) => {
+    const admin = await assertAdmin();
+    const request = revokeRegistration(data.requestId, admin.name);
+    if (!request) throw new Error("Registration request not found");
     return request;
   });
 
@@ -157,7 +170,7 @@ export const autoApproveCatalogEmployee = createServerFn({ method: "POST" })
     if (!request || request.status !== "pending") return { approved: false };
 
     // Auto-approve
-    await approveRegistration(request.id, `Auto-duyệt (${employee.name})`);
+    await approveRegistration(request.id, `Admin ${employee.name}`);
 
     // Create Better Auth account so they can sign in with email/password
     try {

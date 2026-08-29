@@ -9,7 +9,6 @@ export const APPROVED_EMAILS = new Set([
   "thuynvy218@gmail.com",
   "hoangminhchau2631960@gmail.com",
   "cuongpk.giong04@gmail.com",
-  "cuongpk.giong02@gmail.com",
   "ketoangiongvina@gmail.com",
   "nguyenmyhanh2912@gmail.com",
   "thuonggvn@gmail.com",

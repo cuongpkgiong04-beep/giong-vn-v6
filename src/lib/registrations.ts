@@ -279,3 +279,19 @@ export async function isEmailRejected(email: string): Promise<boolean> {
   `;
   return rows[0].count > 0;
 }
+
+/**
+ * Revoke an approved registration (set back to pending)
+ */
+export async function revokeRegistration(
+  id: string,
+  revokedBy: string
+): Promise<RegistrationRequest | null> {
+  const sql = await getSql();
+  await sql`
+    UPDATE registration_requests 
+    SET status = 'pending', reviewed_at = NULL, reviewed_by = NULL
+    WHERE id = ${id}
+  `;
+  return getRegistrationRequestById(id);
+}

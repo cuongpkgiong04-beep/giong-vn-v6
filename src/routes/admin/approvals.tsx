@@ -13,6 +13,7 @@ import {
   getRegistrationRequests,
   approveRegistrationRequest,
   rejectRegistrationRequest,
+  revokeRegistrationRequest,
 } from "@/routes/api/registrations";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isAdminRole } from "@/lib/catalog";
@@ -106,6 +107,20 @@ function AdminApprovals() {
       await loadRequests();
     } catch {
       toast.error("Lỗi khi từ chối đăng ký");
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  async function handleRevoke(request: RegistrationRequest) {
+    if (!confirm(`Thu hồi quyền đăng nhập của ${request.name}?`)) return;
+    try {
+      setProcessing(true);
+      await revokeRegistrationRequest({ data: { requestId: request.id } });
+      toast.success(`Đã thu hồi quyền đăng nhập của ${request.name}`);
+      await loadRequests();
+    } catch {
+      toast.error("Lỗi khi thu hồi quyền đăng nhập");
     } finally {
       setProcessing(false);
     }
@@ -325,9 +340,20 @@ function AdminApprovals() {
                           </div>
                         )}
                         {request.status === "approved" && (
-                          <span className="text-sm text-muted">
-                            Duyệt bởi {request.reviewedBy}
-                          </span>
+                          <div className="flex gap-2 justify-end items-center">
+                            <span className="text-sm text-muted">
+                              Duyệt bởi {request.reviewedBy}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-orange-600 hover:bg-orange-50 whitespace-nowrap"
+                              onClick={() => handleRevoke(request)}
+                              disabled={processing}
+                            >
+                              Hủy duyệt
+                            </Button>
+                          </div>
                         )}
                         {request.status === "rejected" && (
                           <span className="text-sm text-muted">
