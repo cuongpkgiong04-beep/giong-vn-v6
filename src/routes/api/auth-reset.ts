@@ -4,7 +4,8 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import crypto from "crypto";
-import { getSql } from "@/lib/db";
+import { getSql } from "@/lib/db"
+import { auth } from "@/lib/auth/server";
 
 /**
  * Generate a random temporary password
@@ -29,18 +30,7 @@ function generateTempPassword(): string {
   return password.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-/**
- * Hash password using scrypt (same as Better Auth)
- */
-function hashPassword(password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const salt = crypto.randomBytes(16).toString('hex');
-    crypto.scrypt(password, salt, 64, (err, hash) => {
-      if (err) reject(err);
-      resolve(salt + ':' + hash.toString('hex'));
-    });
-  });
-}
+
 
 /**
  * Send password reset - generates temporary password
@@ -64,24 +54,27 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
     
     // Generate temporary password
     const tempPassword = generateTempPassword();
+    
+    // Use Better Auth's native hashPassword (correct hash format)
+    const { hashPassword } = await import("better-auth/crypto");
     const hashedPassword = await hashPassword(tempPassword);
     
-    // Check if account exists (Better Auth uses providerId 'credential' for email/password)
+    // Check if account exists (Better Auth uses providerId 'email' for email/password)
     const accounts = await sql<{ id: string }>`
-      SELECT id FROM account WHERE "userId" = ${user.id} AND "providerId" = 'credential'
+      SELECT id FROM account WHERE "userId" = ${user.id} AND "providerId" = 'email'
     `;
     
     if (accounts.length > 0) {
       // Update existing account
       await sql`
         UPDATE account SET password = ${hashedPassword}, "updatedAt" = NOW() 
-        WHERE "userId" = ${user.id} AND "providerId" = 'credential'
+        WHERE "userId" = ${user.id} AND "providerId" = 'email'
       `;
     } else {
-      // Create new account with providerId 'credential'
+      // Create new account with providerId 'email'
       await sql`
         INSERT INTO account (id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt")
-        VALUES (${crypto.randomUUID()}, ${user.id}, 'credential', ${user.id}, ${hashedPassword}, NOW(), NOW())
+        VALUES (${crypto.randomUUID()}, ${user.id}, 'email', ${user.id}, ${hashedPassword}, NOW(), NOW())
       `;
     }
     
