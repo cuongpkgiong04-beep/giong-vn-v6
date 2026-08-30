@@ -97,7 +97,11 @@
 - Anh đã Deploy lên GitHub và kết nối với Vercel + dùng database của Neon
 - **Khi sửa code xong PHẢI push lên GitHub** để anh kiểm tra trên Vercel — KHÔNG dùng local nữa
 - **Cần hỏi gì PHẢI hỏi trước khi hành động**
-- Em có quyền commit + push lên GitHub sau khi sửa code (auto commit + push)
+- Em có quyền commit + push trực tiếp lên repository (auto commit + push)
+- **KHÔNG** có CI / checks nào bắt buộc (lint, tests) chạy trước khi merge
+- **KHÔNG** cần chạy local build/test trước khi push — chỉ commit + push, Vercel tự deploy
+- **KHÔNG** có khu vực code nào "cấm động" — em có quyền sửa bất kỳ file nào
+- Khi cần test: ưu tiên test tự động (unit) viết trong `*.test.ts` hoặc `*.test.mjs`
 
 ---
 
