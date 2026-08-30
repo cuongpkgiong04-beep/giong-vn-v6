@@ -2,7 +2,7 @@
  * Employee add/edit form — clean rewrite.
  * Includes password management for Admin.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,17 +23,18 @@ type Props = {
 };
 
 export function EmployeeForm({ open, editing, onClose, onSaved }: Props) {
-  const [form, setForm] = useState<Employee>(editing ?? EMPTY);
+  const [form, setForm] = useState<Employee>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [pwd, setPwd] = useState("");
 
-  // Reset form when editing changes
-  if (editing && form.id !== editing.id) {
-    setForm(editing);
-  }
-  if (!editing && form.id !== "") {
-    setForm(EMPTY);
-  }
+  // Reset form when editing changes (proper useEffect, not in render body)
+  useEffect(() => {
+    if (editing) {
+      setForm(editing);
+    } else if (open) {
+      setForm(EMPTY);
+    }
+  }, [editing, open]);
 
   if (!open) return null;
 

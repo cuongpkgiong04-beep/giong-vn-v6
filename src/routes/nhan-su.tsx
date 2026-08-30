@@ -58,6 +58,11 @@ function NhanSuPage() {
     return { total, active, admins, centers };
   }, [employees]);
 
+  // Refresh employees from DB after CRUD
+  const refreshEmployees = useCallback(() => {
+    useAppStore.getState().hydrate();
+  }, []);
+
   // Handlers
   const openAdd = () => { setEditing(null); setFormOpen(true); };
   const openEdit = (e: Employee) => { setEditing(e); setFormOpen(true); };
@@ -66,10 +71,11 @@ function NhanSuPage() {
     try {
       await deleteEmployee({ data: { id: e.id } });
       toast.success(`Đã xóa ${e.name}`);
+      refreshEmployees();
     } catch (err: any) {
       toast.error(err?.message ?? "Lỗi xóa");
     }
-  }, []);
+  }, [refreshEmployees]);
 
   return (
     <div>
@@ -152,7 +158,7 @@ function NhanSuPage() {
       )}
 
       {/* Form modal */}
-      <EmployeeForm open={formOpen} editing={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSaved={() => {}} />
+      <EmployeeForm open={formOpen} editing={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSaved={refreshEmployees} />
     </div>
   );
 }
