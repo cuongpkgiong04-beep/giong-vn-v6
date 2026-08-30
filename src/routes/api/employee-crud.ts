@@ -186,8 +186,8 @@ export const syncApprovedToEmployees = createServerFn({ method: "POST" })
         const empId = crypto.randomUUID();
         const username = reg.email.split("@")[0];
         await sql`
-          INSERT INTO employees (id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
-          VALUES (${empId}, ${reg.name}, ${username}, 'Nam', '', ${reg.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
+          INSERT INTO employees (id, center_id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
+          VALUES (${empId}, '33333333-3333-3333-3333-333333333331', ${reg.name}, ${username}, 'Nam', '', ${reg.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
         `;
         created++;
       }

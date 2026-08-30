@@ -122,8 +122,8 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
         const empId = crypto.randomUUID();
         const username = request.email.split("@")[0];
         await sql`
-          INSERT INTO employees (id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
-          VALUES (${empId}, ${request.name}, ${username}, 'Nam', '', ${request.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
+          INSERT INTO employees (id, center_id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
+          VALUES (${empId}, '33333333-3333-3333-3333-333333333331', ${request.name}, ${username}, 'Nam', '', ${request.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
         `;
         console.log(`[employee] Auto-created employee for ${request.email}`);
       }
