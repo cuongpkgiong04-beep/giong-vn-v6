@@ -140,7 +140,7 @@ function Login() {
                 window.location.href = "/";
                 return;
               }
-              toast.error(retry.error?.message ?? "Sai mật khẩu");
+              toast.error("Sai email hoặc mật khẩu. Vui lòng kiểm tra lại.");
             } else if (result.error) {
               if (result.error.includes("already")) {
                 // User exists but password is wrong
@@ -149,11 +149,11 @@ function Login() {
                 toast.error(`Lỗi: ${result.error}`);
               }
             } else {
-              toast.error(error.message ?? "Sai email hoặc mật khẩu. Nếu vừa đăng ký, chờ admin duyệt.");
+              toast.error("Sai email hoặc mật khẩu. Nếu vừa đăng ký, chờ admin duyệt.");
             }
           } catch (err: any) {
             console.error("[login] ensureAuthUser error:", err);
-            toast.error(error.message ?? "Sai email hoặc mật khẩu");
+            toast.error("Sai email hoặc mật khẩu");
           }
           return;
         }
