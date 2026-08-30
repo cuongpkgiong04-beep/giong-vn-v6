@@ -348,6 +348,34 @@ Vercel tự động deploy sau mỗi push.
 | `5733127` | fix: admin pages không detect admin user khi auth disabled |
 | `d09e548` | fix: app-shell admin check dùng EMPLOYEES Proxy bị lỗi + non-reactive lookups |
 
+### Giai đoạn 12: SSR Fix & Employee CRUD Consolidation (2026-08-30)
+| Commit | Thay đổi |
+|---|---|
+| `c57c3cc` | refactor: viết lại module Nhân sự từ đầu |
+| `7e02d6c` | fix: restore fix-ssr-exports.mjs + add to build script |
+| `96f1651` | fix(nhan-su): fix React anti-pattern + auto-refresh sau CRUD |
+| `140b9cb` | refactor: consolidate employee CRUD into single file (xóa catalog-data.ts) |
+| `8da4d3a` | fix: rewrite fix-ssr-exports.mjs to patch ALL SSR chunks |
+| `051c7ed` | fix: use line-by-line scanning in fix-ssr-exports for multi-line exports |
+| `bf1fbd1` | **fix: pin vite@8.1.5 to avoid Rolldown 1.2.x SSR chunk bug** |
+
+> **LESSON LEARNED — Vite 8.2.x + Rolldown 1.2.x SSR Bug:**
+> Vite 8.2.x kéo Rolldown 1.2.2+ → Nitro re-bundle tách SSR chunk thành nhiều files
+> (ssr.mjs + ssr2.mjs). File ssr2.mjs export `ssr_exports` mà không khai báo →
+> `SyntaxError: Export 'ssr_exports' is not defined` → **500 trên MỌI route**,
+> nhưng `vite build` exit 0 (không detect lỗi).
+>
+> **Fix:** Pin `vite@8.1.5` (dùng Rolldown 1.1.x — không có bug).
+> **Reference:** https://github.com/TanStack/router/issues/8031
+>
+> **Lưu ý khi upgrade Vite:** Kiểm tra https://github.com/TanStack/router/issues/8031
+> trước khi upgrade lên Vite 8.2+. Đợi TanStack fix bug hoặc Vite 8.3+.
+
+> **LESSON LEARNED — Consolidate Server Functions:**
+> KHÔNG để 2 files export cùng tên server function (catalog-data.ts + employee-crud.ts).
+> TanStack Start server functions dùng file path làm ID → duplicate names gây conflict.
+> Giải pháp: gộp vào 1 file duy nhất (`employee-crud.ts`).
+
 ---
 
 ## 12. Hỏi & Trả lời nhanh
@@ -363,5 +391,5 @@ Vercel tự động deploy sau mỗi push.
 
 ---
 
-*Cập nhật lần cuối: 2026-08-29*
+*Cập nhật lần cuối: 2026-08-30*
 *Người cập nhật: Trợ lý lập trình*
