@@ -88,6 +88,17 @@
 
 > Hãy đọc file CLAUDE.md ở gốc repo. Mọi sửa đổi cần: 1) trước khi thay đổi liệt kê giả định; 2) hỏi nếu có chỗ không rõ; 3) chỉ thay đổi những dòng cần sửa; 4) cung cấp test/kiểm tra nếu có thể. Bắt đầu bằng tóm tắt 3 quy tắc quan trọng nhất.
 
+> Hãy đọc file AGENTS.md ở gốc repo và tuân thủ nguyên tắc đó.
+
+> Sử dụng tiếng Việt Nam để tương tác với anh.
+
+### Quy tắc làm việc mới (2026-08-30):
+
+- Anh đã Deploy lên GitHub và kết nối với Vercel + dùng database của Neon
+- **Khi sửa code xong PHẢI push lên GitHub** để anh kiểm tra trên Vercel — KHÔNG dùng local nữa
+- **Cần hỏi gì PHẢI hỏi trước khi hành động**
+- Em có quyền commit + push lên GitHub sau khi sửa code (auto commit + push)
+
 ---
 
 ## 5. Cấu trúc project quan trọng
