@@ -57,10 +57,13 @@
 - Tín dụng (credit module) — xóa ngày 2026-08-28
 
 ### 🔄 Đang triển khai / Cần theo dõi
-- (Không có task nào đang dở — chờ yêu cầu mới từ Đại ca)
+- **Auth login cho nhân sự mới** — signUpEmail hoạt động nhưng signIn retry vẫn fail. Cần test flow “Quên mật khẩu” (đã fix providerId + hash) để user đặt lại password.
 
 ### 📋 Việc cần làm (backlog)
-- (Chưa có — Đại ca sẽ yêu cầu khi cần)
+- Xác nhận đăng nhập nhân sự mới hoạt động trên Vercel
+- Nếu “Quên mật khẩu” hoạt động → đăng nhập thành công
+- Nếu vẫn lỗi → kiểm tra Vercel logs chi tiết hơn
+- Sau khi auth ổn → test toàn bộ flow: đăng ký → duyệt sync → login
 
 ---
 
@@ -376,6 +379,24 @@ Vercel tự động deploy sau mỗi push.
 > TanStack Start server functions dùng file path làm ID → duplicate names gây conflict.
 > Giải pháp: gộp vào 1 file duy nhất (`employee-crud.ts`).
 
+### Giai đoạn 13: Auth Login Fix (2026-08-30)
+| Commit | Thay đổi |
+|---|---|
+| `dd67cff` | fix(auth): xóa databaseHooks trong auth/server.ts (cho phép mọi approved user) |
+| `c2dfbe5` | fix(auth): revert về signUpEmail + fix JSON.stringify password hash bug |
+| `1a9ebdf` | fix(auth): fix forgot-password — wrong providerId ('credential'→'email') + wrong hash algorithm |
+
+> **LESSON LEARNED — hashPassword + JSON.stringify Bug:**
+> `hashPassword` từ `better-auth/crypto` trả về **STRING** dạng `salt:hexKey`.
+> Khi làm `JSON.stringify(hashed)`, nó wrap trong quotes thừa → stored hash sai format.
+> signIn verify thất bại vì hash DB có format `"salt:hex"` thay vì `salt:hex`.
+>
+> **Fix:** Dùng `auth.api.signUpEmail` (native Better Auth API) thay vì manual hash + SQL.
+> signUpEmail xử lý hash đúng cách internally.
+>
+> **Lưu ý:** `auth-reset.ts` (forgot-password) cũng sai — dùng `providerId='credential'`
+> thay vì `'email'` + dùng `crypto.scrypt` (params khác). Đã fix cả hai.
+
 ---
 
 ## 12. Hỏi & Trả lời nhanh
@@ -391,5 +412,5 @@ Vercel tự động deploy sau mỗi push.
 
 ---
 
-*Cập nhật lần cuối: 2026-08-30*
+*Cập nhật lần cuối: 2026-08-30 (cuối ngày)*
 *Người cập nhật: Trợ lý lập trình*
