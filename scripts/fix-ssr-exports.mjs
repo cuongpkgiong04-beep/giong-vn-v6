@@ -30,24 +30,29 @@ try {
     // Already patched — skip
     if (code.includes("var ssr_exports")) continue;
 
-    // Check if this file uses ssr_exports without declaring it
+    // Check if this file references ssr_exports at all (in exports or imports)
     if (!code.includes("ssr_exports")) continue;
 
-    // Find the export line that references ssr_exports
-    // Pattern: export { ... ssr_exports as ... ... };
-    const exportMatch = code.match(
-      /export\s*\{[^}]*ssr_exports\s+as\s+\w+[^}]*\}/,
-    );
-    if (!exportMatch) continue;
+    // This file uses ssr_exports but never declares it.
+    // Insert `var ssr_exports = server_default;` before the first export line.
+    // Use a broad approach: find any line that starts with "export" (after trimming)
+    const lines = code.split("\n");
+    let insertIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trimStart().startsWith("export ")) {
+        insertIdx = i;
+        break;
+      }
+    }
 
-    // Insert the declaration before the first export statement
-    const firstExportIdx = code.indexOf("\nexport ");
-    if (firstExportIdx === -1) continue;
+    if (insertIdx === -1) {
+      console.log(`[fix-ssr-exports] ${file}: uses ssr_exports but no export line found — skipping`);
+      continue;
+    }
 
-    code =
-      code.slice(0, firstExportIdx + 1) +
-      "var ssr_exports = server_default;\n" +
-      code.slice(firstExportIdx + 1);
+    // Insert the declaration before the export line
+    lines.splice(insertIdx, 0, "var ssr_exports = server_default;");
+    code = lines.join("\n");
 
     writeFileSync(path, code, "utf-8");
     patched++;
@@ -56,6 +61,8 @@ try {
 
   if (patched === 0) {
     console.log("[fix-ssr-exports] no patches needed — all files clean");
+  } else {
+    console.log(`[fix-ssr-exports] done — ${patched} file(s) patched`);
   }
 } catch (err) {
   if (err.code === "ENOENT") {
