@@ -320,6 +320,41 @@ function NhanSuPage() {
               <div><Label>Đơn vị (center)</Label><Input value={form.center} onChange={(e) => setForm({ ...form, center: e.target.value })} className="mt-1" /></div>
               <div><Label>Vai trò</Label><select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"><option>User</option><option>Admin</option><option>SuperAdmin</option></select></div>
             </div>
+            {/* Password section (Admin only, edit mode) */}
+            {isAdmin && editing && (
+              <div className="mt-4 rounded-xl border border-line bg-surface-2 p-4">
+                <p className="mb-3 text-sm font-medium text-ink">Đặt lại mật khẩu</p>
+                <div className="flex gap-2">
+                  <Input
+                    type="password"
+                    placeholder="Mật khẩu mới (ít nhất 8 ký tự)"
+                    minLength={8}
+                    id="new-password"
+                    className="flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      const input = document.getElementById("new-password") as HTMLInputElement;
+                      const pwd = input?.value;
+                      if (!pwd || pwd.length < 8) { toast.error("Mật khẩu ít nhất 8 ký tự"); return; }
+                      if (!editing?.email) { toast.error("Không có email nhân sự"); return; }
+                      try {
+                        const { resetEmployeePassword } = await import("@/routes/api/catalog-data");
+                        await resetEmployeePassword({ data: { email: editing.email, newPassword: pwd } });
+                        toast.success(`Đã đặt lại mật khẩu cho ${editing.name}`);
+                        input.value = "";
+                      } catch (err: any) {
+                        toast.error(err?.message ?? "Lỗi đặt lại mật khẩu");
+                      }
+                    }}
+                  >
+                    Đặt lại
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowForm(false)}>Hủy</Button>
               <Button onClick={handleSave}>{editing ? "Lưu" : "Thêm"}</Button>

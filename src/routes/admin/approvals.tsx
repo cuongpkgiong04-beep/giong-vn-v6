@@ -64,6 +64,22 @@ function AdminApprovals() {
     loadRequests();
   }, []);
 
+  async function syncEmployees() {
+    try {
+      const { syncApprovedToEmployees } = await import("@/routes/api/registrations");
+      const result = await syncApprovedToEmployees();
+      if (result.created > 0) {
+        toast.success(`Đã sync ${result.created} nhân sự từ danh sách duyệt`);
+        // Reload store employees
+        useAppStore.getState().hydrate();
+      } else {
+        toast.info("Tất cả nhân sự đã có trong danh sách");
+      }
+    } catch {
+      toast.error("Lỗi khi sync nhân sự");
+    }
+  }
+
   async function loadRequests() {
     try {
       setLoading(true);
@@ -285,11 +301,16 @@ function AdminApprovals() {
 
       {/* Requests Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Danh sách yêu cầu</CardTitle>
-          <CardDesc>
-            {loading ? "Đang tải..." : `Tổng cộng ${requests.length} yêu cầu`}
-          </CardDesc>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Danh sách yêu cầu</CardTitle>
+            <CardDesc>
+              {loading ? "Đang tải..." : `Tổng cộng ${requests.length} yêu cầu`}
+            </CardDesc>
+          </div>
+          <Button size="sm" variant="outline" onClick={syncEmployees}>
+            Sync nhân sự từ duyệt
+          </Button>
         </CardHeader>
         <div>
           {loading ? (

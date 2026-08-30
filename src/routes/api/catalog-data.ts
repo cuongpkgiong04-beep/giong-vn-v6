@@ -133,3 +133,37 @@ export const deleteEmployee = createServerFn({ method: "POST" })
     `;
     return { success: true };
   });
+
+/** Reset employee password in Better Auth. */
+export const resetEmployeePassword = createServerFn({ method: "POST" })
+  .validator((data: { email: string; newPassword: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    // Find the user in Better Auth tables
+    const users = await sql<{ id: string }>`
+      SELECT id FROM "user" WHERE email = ${data.email} LIMIT 1
+    `;
+    if (users.length === 0) {
+      return { success: false, error: "User not found in auth" };
+    }
+    const userId = users[0].id;
+    // Hash new password and update
+    const { hashPassword } = await import("better-auth/crypto");
+    const hashed = await hashPassword(data.newPassword);
+    // Update or insert account
+    const accounts = await sql<{ id: string }>`
+      SELECT id FROM "account" WHERE "userId" = ${userId} AND "providerId" = 'email' LIMIT 1
+    `;
+    if (accounts.length > 0) {
+      await sql`
+        UPDATE "account" SET password = ${JSON.stringify(hashed)}, "updatedAt" = NOW()
+        WHERE id = ${accounts[0].id}
+      `;
+    } else {
+      await sql`
+        INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt")
+        VALUES (${crypto.randomUUID()}, ${userId}, ${data.email}, 'email', ${JSON.stringify(hashed)}, NOW(), NOW())
+      `;
+    }
+    return { success: true };
+  });
