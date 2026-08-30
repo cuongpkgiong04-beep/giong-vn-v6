@@ -66,7 +66,7 @@ function AdminApprovals() {
 
   async function syncEmployees() {
     try {
-      const { syncApprovedToEmployees } = await import("@/routes/api/registrations");
+      const { syncApprovedToEmployees } = await import("@/routes/api/employee-crud");
       const result = await syncApprovedToEmployees();
       if (result.created > 0) {
         toast.success(`Đã sync ${result.created} nhân sự từ danh sách duyệt`);

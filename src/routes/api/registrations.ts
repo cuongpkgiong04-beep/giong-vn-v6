@@ -254,31 +254,3 @@ export const rejectRegistrationRequest = createServerFn({ method: "POST" })
     return request;
   });
 
-/**
- * Sync all approved registrations to employees table.
- * Fixes missing employees from registrations approved before auto-sync was added.
- */
-export const syncApprovedToEmployees = createServerFn({ method: "POST" })
-  .handler(async () => {
-    const sql = await getSql();
-    // Get all approved registrations
-    const approved = await sql<{ id: string; name: string; email: string }>`
-      SELECT id, name, email FROM registration_requests WHERE status = 'approved'
-    `;
-    let created = 0;
-    for (const reg of approved) {
-      const existing = await sql<{ id: string }>`
-        SELECT id FROM employees WHERE LOWER(email) = LOWER(${reg.email}) LIMIT 1
-      `;
-      if (existing.length === 0) {
-        const empId = crypto.randomUUID();
-        const username = reg.email.split("@")[0];
-        await sql`
-          INSERT INTO employees (id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
-          VALUES (${empId}, ${reg.name}, ${username}, 'Nam', '', ${reg.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
-        `;
-        created++;
-      }
-    }
-    return { total: approved.length, created };
-  });
