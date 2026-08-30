@@ -43,13 +43,14 @@ function NhanSuPage() {
   const [editing, setEditing] = useState<Employee | null>(null);
   const [form, setForm] = useState<Employee>(EMPTY_FORM);
 
-  // Admin check (fallback email)
+  // Admin check (fallback email + name)
   const byEmail = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
   const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
   const currentEmployee = byEmail ?? byName ?? employees[0];
   const isAdmin = (currentEmployee ? isAdminRole(currentEmployee.role) : false)
     || user?.primaryEmail === "cuongpk.giong04@gmail.com"
-    || user?.primaryEmail === "cuongpk.giong02@gmail.com";
+    || user?.primaryEmail === "cuongpk.giong02@gmail.com"
+    || user?.displayName === "Phạm Kiên Cường";
 
   const openAdd = () => { setEditing(null); setForm(EMPTY_FORM); setShowForm(true); };
   const openEdit = (e: Employee) => { setEditing(e); setForm(e); setShowForm(true); };
@@ -101,7 +102,7 @@ function NhanSuPage() {
 
   const stats = useMemo(() => {
     const total = employees.length;
-    const active = employees.filter((e) => e.status === "Đang làm việc").length;
+    const active = employees.filter((e) => e.status === "Đang làm việc" || e.status === "active").length;
     const admins = employees.filter((e) => e.role === "Admin" || e.role === "SuperAdmin").length;
     const centers = new Set(employees.map((e) => e.center)).size;
     return { total, active, admins, centers };
