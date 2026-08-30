@@ -112,6 +112,25 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
       console.warn(`[auth] signUpEmail for ${request.email}: ${msg} (approval still succeeded)`);
     }
 
+    // Auto-add to employees table if not already exists
+    try {
+      const sql = await getSql();
+      const existing = await sql<{ id: string }>`
+        SELECT id FROM employees WHERE LOWER(email) = LOWER(${request.email}) LIMIT 1
+      `;
+      if (existing.length === 0) {
+        const empId = crypto.randomUUID();
+        const username = request.email.split("@")[0];
+        await sql`
+          INSERT INTO employees (id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
+          VALUES (${empId}, ${request.name}, ${username}, 'Nam', '', ${request.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
+        `;
+        console.log(`[employee] Auto-created employee for ${request.email}`);
+      }
+    } catch (err: any) {
+      console.warn(`[employee] Auto-create for ${request.email} failed:`, err?.message);
+    }
+
     return request;
   });
 
