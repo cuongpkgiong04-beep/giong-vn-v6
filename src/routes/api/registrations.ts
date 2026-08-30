@@ -95,21 +95,42 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
       throw new Error("Registration request not found");
     }
 
-    // Create the user in Better Auth so they can sign in with email/password.
-    // This is non-blocking: if signUpEmail fails, the approval still succeeds.
+    // Create the user in Better Auth (hashPassword + direct SQL)
     try {
-      const { auth } = await import("@/lib/auth/server");
-      await auth.api.signUpEmail({
-        body: {
-          name: request.name,
-          email: request.email,
-          password: request.password,
-        },
-      });
-      console.log(`[auth] Created Better Auth user: ${request.email}`);
+      const { hashPassword } = await import("better-auth/crypto");
+      const sql2 = await getSql();
+      const users = await sql2<{ id: string }>`
+        SELECT id FROM "user" WHERE email = ${request.email} LIMIT 1
+      `;
+      let userId: string;
+      if (users.length === 0) {
+        userId = crypto.randomUUID();
+        await sql2`
+          INSERT INTO "user" (id, name, email, "emailVerified", "createdAt", "updatedAt")
+          VALUES (${userId}, ${request.name}, ${request.email}, false, NOW(), NOW())
+        `;
+        console.log(`[auth] Created Better Auth user: ${request.email}`);
+      } else {
+        userId = users[0].id;
+      }
+      const hashed = await hashPassword(request.password);
+      const existingAccount = await sql2<{ id: string }>`
+        SELECT id FROM "account" WHERE "userId" = ${userId} AND "providerId" = 'email' LIMIT 1
+      `;
+      if (existingAccount.length > 0) {
+        await sql2`
+          UPDATE "account" SET password = ${JSON.stringify(hashed)}, "updatedAt" = NOW()
+          WHERE id = ${existingAccount[0].id}
+        `;
+      } else {
+        await sql2`
+          INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt")
+          VALUES (${crypto.randomUUID()}, ${userId}, ${request.email}, 'email', ${JSON.stringify(hashed)}, NOW(), NOW())
+        `;
+      }
+      console.log(`[auth] Created auth account: ${request.email}`);
     } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      console.warn(`[auth] signUpEmail for ${request.email}: ${msg} (approval still succeeded)`);
+      console.warn(`[auth] create auth account for ${request.email}: ${err?.message ?? err}`);
     }
 
     // Auto-add to employees table if not already exists
@@ -164,10 +185,40 @@ export const ensureAuthUser = createServerFn({ method: "POST" })
       return { created: false, error: `Yêu cầu đăng ký chưa được duyệt (status: ${reg.status})` };
     }
     try {
-      const { auth } = await import("@/lib/auth/server");
-      await auth.api.signUpEmail({
-        body: { name: reg.name, email: reg.email, password: reg.password },
-      });
+      const { getSql } = await import("@/lib/db");
+      const { hashPassword } = await import("better-auth/crypto");
+      const sql = await getSql();
+      // Find or create user in Better Auth
+      const users = await sql<{ id: string }>`
+        SELECT id FROM "user" WHERE email = ${reg.email} LIMIT 1
+      `;
+      let userId: string;
+      if (users.length === 0) {
+        userId = crypto.randomUUID();
+        await sql`
+          INSERT INTO "user" (id, name, email, "emailVerified", "createdAt", "updatedAt")
+          VALUES (${userId}, ${reg.name}, ${reg.email}, false, NOW(), NOW())
+        `;
+        console.log(`[auth] ensureAuthUser: created user for ${data.email}`);
+      } else {
+        userId = users[0].id;
+      }
+      // Hash password and create/update account
+      const hashed = await hashPassword(reg.password);
+      const existingAccount = await sql<{ id: string }>`
+        SELECT id FROM "account" WHERE "userId" = ${userId} AND "providerId" = 'email' LIMIT 1
+      `;
+      if (existingAccount.length > 0) {
+        await sql`
+          UPDATE "account" SET password = ${JSON.stringify(hashed)}, "updatedAt" = NOW()
+          WHERE id = ${existingAccount[0].id}
+        `;
+      } else {
+        await sql`
+          INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt")
+          VALUES (${crypto.randomUUID()}, ${userId}, ${reg.email}, 'email', ${JSON.stringify(hashed)}, NOW(), NOW())
+        `;
+      }
       console.log(`[auth] ensureAuthUser: created account for ${data.email}`);
       return { created: true };
     } catch (err: any) {
@@ -221,21 +272,41 @@ export const autoApproveCatalogEmployee = createServerFn({ method: "POST" })
     // Auto-approve
     await approveRegistration(request.id, `Admin ${employee.name}`);
 
-    // Create Better Auth account so they can sign in with email/password
+    // Create Better Auth account (hashPassword + direct SQL)
     try {
-      const { auth } = await import("@/lib/auth/server");
-      await auth.api.signUpEmail({
-        body: {
-          name: request.name,
-          email: request.email,
-          password: request.password,
-        },
-      });
-    } catch (err: any) {
-      const msg = err?.message ?? String(err);
-      if (!msg.includes("already") && !msg.includes("exists")) {
-        console.error("[auth] Auto-approve: failed to create Better Auth user:", msg);
+      const { getSql } = await import("@/lib/db");
+      const { hashPassword } = await import("better-auth/crypto");
+      const sql = await getSql();
+      const users = await sql<{ id: string }>`
+        SELECT id FROM "user" WHERE email = ${request.email} LIMIT 1
+      `;
+      let userId: string;
+      if (users.length === 0) {
+        userId = crypto.randomUUID();
+        await sql`
+          INSERT INTO "user" (id, name, email, "emailVerified", "createdAt", "updatedAt")
+          VALUES (${userId}, ${request.name}, ${request.email}, false, NOW(), NOW())
+        `;
+      } else {
+        userId = users[0].id;
       }
+      const hashed = await hashPassword(request.password);
+      const existingAccount = await sql<{ id: string }>`
+        SELECT id FROM "account" WHERE "userId" = ${userId} AND "providerId" = 'email' LIMIT 1
+      `;
+      if (existingAccount.length > 0) {
+        await sql`
+          UPDATE "account" SET password = ${JSON.stringify(hashed)}, "updatedAt" = NOW()
+          WHERE id = ${existingAccount[0].id}
+        `;
+      } else {
+        await sql`
+          INSERT INTO "account" (id, "userId", "accountId", "providerId", password, "createdAt", "updatedAt")
+          VALUES (${crypto.randomUUID()}, ${userId}, ${request.email}, 'email', ${JSON.stringify(hashed)}, NOW(), NOW())
+        `;
+      }
+    } catch (err: any) {
+      console.error("[auth] Auto-approve: failed to create auth account:", err?.message ?? err);
     }
 
     return { approved: true, name: employee.name };
