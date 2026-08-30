@@ -131,7 +131,7 @@ src/
 │   │   └── permissions.tsx # Phân quyền
 │   └── api/                # Server functions (TanStack Start)
 │       ├── data.ts         # CRUD ops (attendance, tasks, notes...)
-│       ├── catalog-data.ts # Load employees, centers
+│       ├── employee-crud.ts # Employee/Center CRUD + queries
 │       ├── registrations.ts # Registration requests
 │       ├── upload.ts       # File upload
 │       ├── auth-change-password.ts # Đổi mật khẩu

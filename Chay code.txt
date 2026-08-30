@@ -12,3 +12,11 @@ Cần hỏi gì thì phải hỏi trước khi hành động
 3. Khi sửa không cần em chạy local build/test trước khi push, chỉ commit thay đổi và Push lên Github để nó tự động cập nhật sang Vercel (anh sẽ kiểm tra trên Vercel)
 4. Không Có khu vực code nào “cấm động”
 5. Khi cần thêm test: anh muốn test tự động (unit)
+
+Điều quan trọng trong việc chạy song song 2 công việc khi xây dựng ứng dụng
+1. Cho người sử dụng chạy ứng dụng
+2. Người lập trình Admin vẫn chỉnh sửa và tạo mới các module trên ứng dụng
+Giải pháp tối ưu cho việc này là gì. Nếu người lập trình cho phép tự động Push code lên GitHub và auto lên Vercel khi bị lỗi web không hoạt động cần xử lý nhưng chưa khắc phục được thì người sử dụng bị treo lỗi app không dùng được.Là một lập trình chuyên nghiệp họ làm như thế nào?
+
+c047ed7
+fix: fix tên duyệt cũ + auto-create Better Auth account khi login

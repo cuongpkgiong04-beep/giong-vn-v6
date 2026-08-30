@@ -328,7 +328,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           "@/routes/api/data"
         );
         const { loadEmployees: loadEmps, loadCenters: loadCtrs } = await import(
-          "@/routes/api/catalog-data"
+          "@/routes/api/employee-crud"
         );
         const [att, tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
           loadAttendance(),
