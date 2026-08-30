@@ -131,6 +131,7 @@ function Login() {
           // signIn failed — try to create Better Auth account on-the-fly for approved registrations
           try {
             const result = await ensureAuthUser({ data: { email: email.trim() } });
+            console.log("[login] ensureAuthUser result:", result);
             if (result.created) {
               // Retry signIn now that account exists
               const retry = await authClient.signIn.email({ email: email.trim(), password });
@@ -139,9 +140,16 @@ function Login() {
                 window.location.href = "/";
                 return;
               }
+              toast.error(retry.error?.message ?? "Đăng nhập lại thất bại");
+            } else if (result.error) {
+              toast.error(`Lỗi tạo tài khoản: ${result.error}`);
+            } else {
+              toast.error(error.message ?? "Sai email hoặc mật khẩu. Nếu vừa đăng ký, chờ admin duyệt.");
             }
-          } catch { /* ignore */ }
-          toast.error(error.message ?? "Sai email hoặc mật khẩu");
+          } catch (err: any) {
+            console.error("[login] ensureAuthUser error:", err);
+            toast.error(error.message ?? "Sai email hoặc mật khẩu");
+          }
           return;
         }
         saveRememberedCredentials(rememberMe);

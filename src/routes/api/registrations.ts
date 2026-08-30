@@ -155,7 +155,14 @@ export const ensureAuthUser = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { getRegistrationRequestByEmail } = await import("@/lib/registrations");
     const reg = await getRegistrationRequestByEmail(data.email);
-    if (!reg || reg.status !== "approved") return { created: false };
+    if (!reg) {
+      console.warn(`[auth] ensureAuthUser: no registration found for ${data.email}`);
+      return { created: false, error: "Không tìm thấy yêu cầu đăng ký" };
+    }
+    if (reg.status !== "approved") {
+      console.warn(`[auth] ensureAuthUser: ${data.email} status=${reg.status}`);
+      return { created: false, error: `Yêu cầu đăng ký chưa được duyệt (status: ${reg.status})` };
+    }
     try {
       const { auth } = await import("@/lib/auth/server");
       await auth.api.signUpEmail({

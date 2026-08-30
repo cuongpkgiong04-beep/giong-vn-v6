@@ -170,15 +170,17 @@ export const resetEmployeePassword = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-/** Sync all approved registrations → employees table. */
+/** Sync all approved registrations → employees table + ensure Better Auth accounts. */
 export const syncApprovedToEmployees = createServerFn({ method: "POST" })
   .handler(async () => {
     const sql = await getSql();
-    const approved = await sql<{ id: string; name: string; email: string }>`
-      SELECT id, name, email FROM registration_requests WHERE status = 'approved'
+    // Get approved registrations with password for auth creation
+    const approved = await sql<{ id: string; name: string; email: string; password: string }>`
+      SELECT id, name, email, password FROM registration_requests WHERE status = 'approved'
     `;
     let created = 0;
     for (const reg of approved) {
+      // 1. Create employee if not exists
       const existing = await sql<{ id: string }>`
         SELECT id FROM employees WHERE LOWER(email) = LOWER(${reg.email}) LIMIT 1
       `;
@@ -190,6 +192,20 @@ export const syncApprovedToEmployees = createServerFn({ method: "POST" })
           VALUES (${empId}, '33333333-3333-3333-3333-333333333331', ${reg.name}, ${username}, 'Nam', '', ${reg.email}, 'Chưa phân bộ', 'User', 'Nhân viên', 'VP', 'active', CURRENT_DATE)
         `;
         created++;
+      }
+      // 2. Ensure Better Auth account exists
+      try {
+        const { auth } = await import("@/lib/auth/server");
+        await auth.api.signUpEmail({
+          body: { name: reg.name, email: reg.email, password: reg.password },
+        });
+        console.log(`[sync] Created Better Auth user: ${reg.email}`);
+      } catch (err: any) {
+        const msg = err?.message ?? String(err);
+        // "already exists" is expected — skip
+        if (!msg.includes("already") && !msg.includes("exists")) {
+          console.warn(`[sync] signUpEmail for ${reg.email}: ${msg}`);
+        }
       }
     }
     return { total: approved.length, created };
