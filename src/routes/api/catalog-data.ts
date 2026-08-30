@@ -80,3 +80,56 @@ export const loadCenters = createServerFn({ method: "GET" }).handler(
     `;
   },
 );
+
+// ── Employee CRUD ───────────────────────────────────────────────────────────
+
+type EmployeeInput = {
+  name: string;
+  username: string;
+  gender: string;
+  phone: string;
+  email: string;
+  department: string;
+  role: string;
+  title: string;
+  center: string;
+};
+
+/** Insert a new employee. */
+export const insertEmployee = createServerFn({ method: "POST" })
+  .validator((data: EmployeeInput) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    const id = crypto.randomUUID();
+    await sql`
+      INSERT INTO employees (id, name, username, gender, phone, email, department, role, title, center, status)
+      VALUES (${id}, ${data.name}, ${data.username}, ${data.gender}, ${data.phone}, ${data.email}, ${data.department}, ${data.role}, ${data.title}, ${data.center}, 'active')
+    `;
+    return { id, ...data, status: "active" };
+  });
+
+/** Update an existing employee. */
+export const updateEmployee = createServerFn({ method: "POST" })
+  .validator((data: { id: string } & EmployeeInput) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE employees
+      SET name = ${data.name}, username = ${data.username}, gender = ${data.gender},
+          phone = ${data.phone}, email = ${data.email}, department = ${data.department},
+          role = ${data.role}, title = ${data.title}, center = ${data.center}
+      WHERE id = ${data.id}
+    `;
+    return { success: true };
+  });
+
+/** Soft-delete an employee (set status = 'inactive'). */
+export const deleteEmployee = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE employees SET status = 'inactive' WHERE id = ${data.id}
+    `;
+    return { success: true };
+  });

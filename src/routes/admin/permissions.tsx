@@ -33,7 +33,10 @@ function AdminPermissionsPage() {
   const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
   const byId = employees.find((e) => e.id === currentUserId) ?? employees[0];
   const employee = byEmail ?? byName ?? byId;
-  const isAdmin = employee ? isAdminRole(employee.role) : false;
+  const isAdmin = (employee ? isAdminRole(employee.role) : false)
+    // Fallback: known admin emails always pass even if employee lookup fails
+    || user?.primaryEmail === "cuongpk.giong04@gmail.com"
+    || user?.primaryEmail === "cuongpk.giong02@gmail.com";
 
   const filteredEmployees = useMemo(() => {
     const term = search.trim().toLowerCase();
