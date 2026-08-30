@@ -82,6 +82,12 @@
 - **Minimal Change Policy** — tối thiểu thay đổi cần thiết
 - **AUTO COMMIT + PUSH** — Sau mỗi lần sửa code, em TỰ ĐỘNG commit + push lên GitHub. KHÔNG cần hỏi Đại ca. Chỉ thông báo "Đã push thành công".
 
+### Quy tắc CLAUDE.md (bắt buộc tuân thủ):
+
+> Trong repository này có file CLAUDE.md ở gốc. Khi hỗ trợ chỉnh sửa code cho dự án này, hãy tuân theo mọi nguyên tắc trong CLAUDE.md: trước khi thay đổi, hiện các giả định; hỏi nếu không rõ; chỉ thực hiện thay đổi "surgical" chạm đúng chỗ; và luôn cung cấp tiêu chí kiểm chứng. Bắt đầu bằng cách tóm tắt các điểm chính của CLAUDE.md và hỏi nếu cần làm rõ. Bạn có quyền đọc file CLAUDE.md trong workspace.
+
+> Hãy đọc file CLAUDE.md ở gốc repo. Mọi sửa đổi cần: 1) trước khi thay đổi liệt kê giả định; 2) hỏi nếu có chỗ không rõ; 3) chỉ thay đổi những dòng cần sửa; 4) cung cấp test/kiểm tra nếu có thể. Bắt đầu bằng tóm tắt 3 quy tắc quan trọng nhất.
+
 ---
 
 ## 5. Cấu trúc project quan trọng
