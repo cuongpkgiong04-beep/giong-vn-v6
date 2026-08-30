@@ -140,9 +140,14 @@ function Login() {
                 window.location.href = "/";
                 return;
               }
-              toast.error(retry.error?.message ?? "Đăng nhập lại thất bại");
+              toast.error(retry.error?.message ?? "Sai mật khẩu");
             } else if (result.error) {
-              toast.error(`Lỗi tạo tài khoản: ${result.error}`);
+              if (result.error.includes("already")) {
+                // User exists but password is wrong
+                toast.error("Sai mật khẩu. Vui lòng kiểm tra lại.");
+              } else {
+                toast.error(`Lỗi: ${result.error}`);
+              }
             } else {
               toast.error(error.message ?? "Sai email hoặc mật khẩu. Nếu vừa đăng ký, chờ admin duyệt.");
             }
