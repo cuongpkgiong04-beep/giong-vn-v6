@@ -71,14 +71,12 @@ function AdminPermissionsPage() {
 
   // Wait for session to resolve
   if (isPending) return null;
-  if (!user) return <Navigate to="/" replace />;
 
-  if (!isAdmin) {
+  if (!user || !isAdmin) {
     return (
       <main className="container mx-auto py-6 px-4">
         <Card className="p-8 text-center">
-          <p className="text-lg font-semibold text-ink">Không có quyền truy cập</p>
-          <p className="mt-2 text-sm text-muted">Bạn cần quyền Admin để truy cập trang này.</p>
+          <p className="text-lg font-semibold text-ink">Bạn không phải là Admin nên không có quyền truy cập</p>
         </Card>
       </main>
     );
