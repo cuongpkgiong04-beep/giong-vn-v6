@@ -146,6 +146,62 @@ function saveLs(s: PersistSlice) {
   }
 }
 
+// ── Pending sync queue (localStorage) ────────────────────────────────────────
+const PENDING_KEY = "giong-vn-pending-sync";
+
+type PendingRecord = { collection: string; data: any };
+
+function getPendingSync(): PendingRecord[] {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addPendingSync(record: PendingRecord) {
+  const pending = getPendingSync();
+  pending.push(record);
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  } catch {
+    /* quota */
+  }
+}
+
+function clearPendingSync(ids: string[]) {
+  if (ids.length === 0) return;
+  const pending = getPendingSync().filter((r) => !ids.includes(r.data.id));
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  } catch {
+    /* quota */
+  }
+}
+
+/** Retry pending Neon inserts from previous offline sessions. */
+async function retryPendingSync() {
+  const pending = getPendingSync();
+  if (pending.length === 0) return;
+  const succeeded: string[] = [];
+  for (const record of pending) {
+    try {
+      const { insertAttendance } = await import("@/routes/api/data");
+      if (record.collection === "attendance") {
+        await insertAttendance({ data: record.data });
+        succeeded.push(record.data.id);
+      }
+    } catch {
+      // Will retry on next hydrate
+    }
+  }
+  if (succeeded.length > 0) {
+    clearPendingSync(succeeded);
+    console.log(`[store] Retry sync: ${succeeded.length}/${pending.length} records synced`);
+  }
+}
+
 /** Fire-and-forget Neon sync helpers (imported lazily to avoid SSR issues). */
 async function _neonBulkAttendance(rows: Attendance[]) {
   const { bulkInsertAttendance } = await import(
@@ -207,23 +263,28 @@ async function _neonBulkMessages(rows: ChatMessage[]) {
 }
 
 async function _neonInsertAttendance(r: Attendance) {
-  const { insertAttendance } = await import("@/routes/api/data");
-  await insertAttendance({
-    data: {
-      id: r.id,
-      name: r.name,
-      status: r.status,
-      time: r.time,
-      date: r.date,
-      weekday: r.weekday,
-      gps: r.gps,
-      address: r.address,
-      photo: r.photo,
-      type: r.type,
-      approved: r.approved,
-      workplace: r.workplace,
-    },
-  });
+  try {
+    const { insertAttendance } = await import("@/routes/api/data");
+    await insertAttendance({
+      data: {
+        id: r.id,
+        name: r.name,
+        status: r.status,
+        time: r.time,
+        date: r.date,
+        weekday: r.weekday,
+        gps: r.gps,
+        address: r.address,
+        photo: r.photo,
+        type: r.type,
+        approved: r.approved,
+        workplace: r.workplace,
+      },
+    });
+  } catch (err) {
+    console.warn("[store] Neon insert attendance failed — saving to pending queue:", err);
+    addPendingSync({ collection: "attendance", data: r });
+  }
 }
 
 async function _neonInsertTask(r: Task) {
@@ -324,6 +385,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     // Sync from Neon first. Only fall back to localStorage if Neon sync fails.
     (async () => {
       try {
+        // Retry any pending offline inserts from previous sessions
+        await retryPendingSync();
+
         const { loadAttendance, loadTasks, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
           "@/routes/api/data"
         );
@@ -451,12 +515,29 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const finalCenters = Array.from(centerMap.values());
 
         // If Neon has data, use it as the source of truth.
+        // Also merge any pending unsynced records from localStorage.
         const hasNeonData =
           neonAttendance.length > 0 ||
           neonTasks.length > 0;
-        if (hasNeonData) {
+
+        // Get pending unsynced records from localStorage
+        const pendingRecords = getPendingSync();
+        const pendingAttendance: Attendance[] = pendingRecords
+          .filter((r) => r.collection === "attendance")
+          .map((r) => r.data as Attendance);
+
+        // Merge: Neon data + pending records (dedupe by id)
+        const neonAttMap = new Map<string, Attendance>();
+        for (const a of neonAttendance) neonAttMap.set(a.id, a);
+        for (const a of pendingAttendance) {
+          if (!neonAttMap.has(a.id)) neonAttMap.set(a.id, a);
+        }
+        const mergedAttendance = Array.from(neonAttMap.values())
+          .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
+
+        if (hasNeonData || pendingAttendance.length > 0) {
           set({
-            attendance: neonAttendance,
+            attendance: mergedAttendance,
             tasks: neonTasks,
             proposals: neonProposals,
             notes: neonNotes,
