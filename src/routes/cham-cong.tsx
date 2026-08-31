@@ -19,16 +19,16 @@ import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage } from "@/routes/api/upload";
 
 /**
- * Clean address: remove house numbers (e.g. "11810") and unnecessary details.
- * Input: "11810 Đường Lê Văn Lương, Hoàn Kiếm, Hà Nội, Việt Nam"
- * Output: "Đường Lê Văn Lương, Hoàn Kiếm, Hà Nội"
+ * Clean address: remove postal codes (e.g. "11810") but keep house numbers.
+ * Input:  "Ngõ 409 Đường Nguyễn Văn Cừ, Ngọc Lâm, Hà Nội, 11810, Việt Nam"
+ * Output: "Ngõ 409 Đường Nguyễn Văn Cừ, Ngọc Lâm, Hà Nội, Việt Nam"
  */
 function cleanAddress(addr: string): string {
   if (!addr) return addr;
-  // Remove leading house numbers (digits, optionally followed by space/letter)
-  let cleaned = addr.replace(/^\d+\s*,?\s*/, "");
-  // Remove country at the end (Việt Nam, Vietnam, etc.)
-  cleaned = cleaned.replace(/,?\s*(Việt Nam|Vietnam|VN)$/i, "");
+  // Remove standalone postal codes (4-6 digits between commas)
+  let cleaned = addr.replace(/,?\s*\d{4,6}\s*(?=,|$)/g, "");
+  // Clean up double commas/spaces from removal
+  cleaned = cleaned.replace(/,\s*,/g, ",").replace(/^\s*,|,\s*$/g, "");
   return cleaned.trim();
 }
 
