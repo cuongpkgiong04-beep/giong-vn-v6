@@ -18,6 +18,20 @@ import { useAppStore } from "@/lib/store";
 import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage } from "@/routes/api/upload";
 
+/**
+ * Clean address: remove house numbers (e.g. "11810") and unnecessary details.
+ * Input: "11810 Đường Lê Văn Lương, Hoàn Kiếm, Hà Nội, Việt Nam"
+ * Output: "Đường Lê Văn Lương, Hoàn Kiếm, Hà Nội"
+ */
+function cleanAddress(addr: string): string {
+  if (!addr) return addr;
+  // Remove leading house numbers (digits, optionally followed by space/letter)
+  let cleaned = addr.replace(/^\d+\s*,?\s*/, "");
+  // Remove country at the end (Việt Nam, Vietnam, etc.)
+  cleaned = cleaned.replace(/,?\s*(Việt Nam|Vietnam|VN)$/i, "");
+  return cleaned.trim();
+}
+
 export const Route = createFileRoute("/cham-cong")({ component: ChamCongPage });
 
 function ChamCongPage() {
@@ -167,7 +181,7 @@ function ChamCongPage() {
         const coordinateText = `${lat}, ${lng}`;
         setGps(coordinateText);
         setGpsCoords([position.coords.latitude, position.coords.longitude]);
-        setAddress(`Vị trí chấm công hiện tại: ${coordinateText}`);
+        setAddress(coordinateText);
         setLocationStatus("Vị trí đã xác định");
       },
       () => {
@@ -249,8 +263,8 @@ function ChamCongPage() {
     // Resolve real address BEFORE saving
     const resolvedAddress = await resolveAddress();
     const finalAddress = resolvedAddress
-      ? `Vị trí chấm công hiện tại: ${resolvedAddress}`
-      : (address.startsWith("Vị trí") ? address : `Vị trí chấm công hiện tại: ${gps}`);
+      ? cleanAddress(resolvedAddress)
+      : (address || gps);
     // Upload photo to Cloudinary
     let photoUrl: string | undefined;
     try {
