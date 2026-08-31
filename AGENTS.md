@@ -58,8 +58,10 @@
 
 ### 🔄 Đang triển khai / Cần theo dõi
 - **Auth login cho nhân sự mới** — signUpEmail hoạt động nhưng signIn retry vẫn fail. Cần test flow “Quên mật khẩu” (đã fix providerId + hash) để user đặt lại password.
+- **Chấm công sync** — Đã fix pending sync queue (localStorage → Neon), nhưng CHƯA TEST được trên điện thoại. Cần test: điểm danh trên điện thoại → mở trên máy tính phải thấy data.
 
 ### 📋 Việc cần làm (backlog)
+- **[ƯU TIÊN]** Test chấm công sync: điểm danh trên điện thoại → kiểm tra data hiện trên máy tính/admin
 - Xác nhận đăng nhập nhân sự mới hoạt động trên Vercel
 - Nếu “Quên mật khẩu” hoạt động → đăng nhập thành công
 - Nếu vẫn lỗi → kiểm tra Vercel logs chi tiết hơn
@@ -400,7 +402,7 @@ Vercel tự động deploy sau mỗi push.
 ### Giai đoạn 14: Vercel CLI Setup & Monitoring (2026-08-31)
 | Commit | Thay đổi |
 |---|---|
-| `(pending)` | docs: thêm Vercel CLI access info + log monitoring guide vào AGENTS.md |
+| `dc82c65` | docs: thêm Vercel CLI access info + log monitoring guide vào AGENTS.md |
 
 > **LESSON LEARNED — Vercel CLI Access:**
 > Đại ca đã cài Vercel CLI 59.10.0 trên máy cá nhân.
@@ -409,6 +411,31 @@ Vercel tự động deploy sau mỗi push.
 > - Em có quyền chạy `vercel logs` trực tiếp từ terminal để debug production.
 > - SSL Warning từ `pg` library là stderr noise, KHÔNG phải lỗi auth.
 > - Logs 200 dòng gần nhất: không có login attempt nào — nghĩa là chưa ai test trên deployment mới.
+
+### Giai đoạn 15: Admin Pages, Data Sync & Permission Fix (2026-08-31)
+| Commit | Thay đổi |
+|---|---|
+| `29c4654` | fix(admin): hiển thị thông báo thay vì redirect khi user truy cập admin pages |
+| `7e1649a` | fix(admin): xóa /admin/approvals + /admin/permissions khỏi ADMIN_ONLY_PATHS |
+| `f22fd03` | fix(cham-cong): sync dữ liệu chấm công giữa điện thoại và máy tính (pending sync queue) |
+| `00aa077` | fix: user thường chỉ thấy dữ liệu của mình (chấm công, check-in, nhiệm vụ) |
+| `d91609f` | fix(cham-cong): Clean format hiển thị địa chỉ chấm công |
+| `7e8ff88` | fix(cham-cong): chỉ xóa postal code, giữ số nhà và quốc gia |
+
+> **LESSON LEARNED — Attendance Sync (CHƯA TEST):**
+> Nguyên nhân: Neon insert fail trên điện thoại → data chỉ nằm trong localStorage.
+> Desktop hydrate dùng Neon data → bỏ qua localStorage → data mất.
+>
+> **Fix:** Thêm pending sync queue (localStorage key: `giong-vn-pending-sync`).
+> Khi Neon insert fail → lưu vào pending queue. Khi hydrate → merge Neon + pending.
+> **CHƯA TEST** — cần test: điểm danh trên điện thoại → mở trên máy tính.
+>
+> **LESSON LEARNED — Data Visibility:**
+> User thường (role=User) chỉ thấy dữ liệu của mình:
+> - Chấm công: chỉ thấy records có `name === currentEmployee.name`
+> - Check-in: tương tự
+> - Nhiệm vụ: auto-filter own tasks, disable checkbox "mine"
+> Admin thấy tất cả dữ liệu của mọi người.
 
 ---
 
@@ -476,5 +503,5 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
-*Cập nhật lần cuối: 2026-08-31 (thêm Vercel CLI access)*
+*Cập nhật lần cuối: 2026-08-31 (cuối ngày — Admin pages, data sync, permission fix)*
 *Người cập nhật: Trợ lý lập trình*
