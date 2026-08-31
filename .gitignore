@@ -16,3 +16,4 @@ Thumbs.db
 .tanstack/
 # Debug artifacts
 page.html
+.env*

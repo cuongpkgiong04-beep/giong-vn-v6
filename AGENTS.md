@@ -397,9 +397,70 @@ Vercel tự động deploy sau mỗi push.
 > **Lưu ý:** `auth-reset.ts` (forgot-password) cũng sai — dùng `providerId='credential'`
 > thay vì `'email'` + dùng `crypto.scrypt` (params khác). Đã fix cả hai.
 
+### Giai đoạn 14: Vercel CLI Setup & Monitoring (2026-08-31)
+| Commit | Thay đổi |
+|---|---|
+| `(pending)` | docs: thêm Vercel CLI access info + log monitoring guide vào AGENTS.md |
+
+> **LESSON LEARNED — Vercel CLI Access:**
+> Đại ca đã cài Vercel CLI 59.10.0 trên máy cá nhân.
+> - Account: `cuongpkgiong04-4735`
+> - Team: `giong-vn`, Project: `giong-vn-v6`
+> - Em có quyền chạy `vercel logs` trực tiếp từ terminal để debug production.
+> - SSL Warning từ `pg` library là stderr noise, KHÔNG phải lỗi auth.
+> - Logs 200 dòng gần nhất: không có login attempt nào — nghĩa là chưa ai test trên deployment mới.
+
 ---
 
-## 12. Hỏi & Trả lời nhanh
+## 12. Vercel CLI — Access & Monitoring
+
+> **Đại ca đã cài Vercel CLI và cấu hình project.** Em có quyền truy cập logs trực tiếp từ terminal.
+
+### Thông tin kết nối
+| Thông tin | Giá trị |
+|---|---|
+| Account | `cuongpkgiong04-4735` |
+| Team | `giong-vn` |
+| Project | `giong-vn-v6` |
+| URL | `https://giong-vn-v6.vercel.app` |
+| Directory | `D:\DuLieuChung\CUONG_2026\giong-vn-v6` |
+
+### Lệnh thường dùng
+```bash
+# Kiểm tra đã login chưa
+vercel whoami
+
+# Xem logs gần nhất (50 dòng)
+vercel logs --limit 50
+
+# Xem logs real-time (theo dõi khi anh test)
+vercel logs --follow
+
+# Filter logs theo từ khóa
+vercel logs --limit 200 2>&1 | grep -i "auth\|login\|error"
+
+# Xem project info
+vercel project ls
+```
+
+### Ký hiệu trong logs
+| Ký hiệu | Ý nghĩa |
+|---|---|
+| `λ GET /api/auth/get-session` | Kiểm tra session |
+| `λ POST /api/auth/sign-in/email` | Đăng nhập email/password |
+| `λ POST /api/auth/sign-up/email` | Đăng ký tài khoản mới |
+| `λ GET /_serverFn/...` | Server function call |
+| `error` level | Có lỗi (có thể là SSL warning từ pg library, không nhất thiết là lỗi auth) |
+
+### SSL Warning (bình thường)
+```
+SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
+```
+Đây là warning từ `pg` library khi kết nối Neon PostgreSQL. **Không phải lỗi thực** — chỉ là stderr noise. Không cần fix.
+
+---
+
+## 13. Hỏi & Trả lời nhanh
 
 **Q:** Làm sao để em biết cần làm gì tiếp?
 **A:** Đọc file này → xem mục "Đang triển khai" và "Việc cần làm". Nếu trống → hỏi Đại ca.
@@ -410,7 +471,10 @@ Vercel tự động deploy sau mỗi push.
 **Q:** Em có được phép refactor không?
 **A:** KHÔNG, trừ khi Đại ca yêu cầu rõ ràng.
 
+**Q:** Em có thể tự xem Vercel logs không?
+**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.
+
 ---
 
-*Cập nhật lần cuối: 2026-08-30 (cuối ngày)*
+*Cập nhật lần cuối: 2026-08-31 (thêm Vercel CLI access)*
 *Người cập nhật: Trợ lý lập trình*
