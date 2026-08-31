@@ -73,23 +73,16 @@ function ChamCongPage() {
   }, [currentEmployee]);
 
   const canViewAll = hasPermission(currentEmployee, "attendance:view_all");
-  const canViewCenter = hasPermission(currentEmployee, "attendance:view_center");
 
   const visibleAttendance = useMemo(() => {
     return attendance.filter((record) => {
-      const related = findEmployeeByLooseText(record.name);
-      const workplace = related?.center ?? record.workplace ?? currentEmployee?.center ?? "VP";
-
       if (!currentEmployee) return false;
       // Admin/SuperAdmin can see all
       if (canViewAll) return true;
-      // Can see own records
-      if (record.name === currentEmployee.name || related?.id === currentEmployee.id) return true;
-      // Can see records from same center (if has view_center permission)
-      if (canViewCenter && workplace === currentEmployee.center) return true;
-      return false;
+      // User can only see own records
+      return record.name === currentEmployee.name;
     });
-  }, [attendance, currentEmployee, canViewAll, canViewCenter]);
+  }, [attendance, currentEmployee, canViewAll]);
 
   const centerStats = useMemo(() => {
     const map = new Map<string, { in: number; out: number; total: number }>();

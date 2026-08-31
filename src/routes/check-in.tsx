@@ -23,15 +23,10 @@ function CheckInPage() {
 
   const visibleCheckins = useMemo(() => {
     return checkins.filter((entry) => {
+      // Admin can see all
       if (isAdminRole(currentEmployee?.role)) return true;
-      if (!currentEmployee) return false;
-      const matchingEmployee = findEmployeeByLooseText(entry.name) ?? null;
-      return (
-        matchingEmployee?.id === currentEmployee.id ||
-        matchingEmployee?.center === currentEmployee.center ||
-        entry.name === currentEmployee.name ||
-        (entry.address ?? "").includes(currentEmployee.center)
-      );
+      // User can only see own check-ins
+      return entry.name === currentEmployee?.name;
     });
   }, [checkins, currentEmployee]);
 

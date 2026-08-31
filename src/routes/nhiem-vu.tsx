@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDesc, DialogTitle } from "@/components/ui/
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EMPLOYEES, getEmployeeById } from "@/lib/catalog";
+import { EMPLOYEES, getEmployeeById, isAdminRole } from "@/lib/catalog";
 import { canCreateTaskForOthers, canEditTask } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
@@ -38,10 +38,18 @@ function TasksPage() {
   const [due, setDue] = useState("");
   const [view, setView] = useState<"board" | "list">("board");
 
+  const isAdmin = isAdminRole(currentEmployee?.role);
+
   const filtered = useMemo(() => {
     const currentUserName = currentUser.username.toLowerCase();
     return tasks.filter((t) => {
-      if (mine) {
+      // Non-admin users can only see their own tasks
+      if (!isAdmin) {
+        const assigneeMatches = t.assignee.toLowerCase() === currentUserName;
+        const createdByMatches = t.createdBy.toLowerCase() === me.toLowerCase();
+        if (!assigneeMatches && !createdByMatches) return false;
+      } else if (mine) {
+        // Admin can toggle "mine" filter
         const assigneeMatches = t.assignee.toLowerCase() === currentUserName;
         const createdByMatches = t.createdBy.toLowerCase() === me.toLowerCase();
         if (!assigneeMatches && !createdByMatches) return false;
@@ -52,7 +60,7 @@ function TasksPage() {
       }
       return true;
     });
-  }, [tasks, q, mine, currentUser.username, me]);
+  }, [tasks, q, mine, currentUser.username, me, isAdmin]);
 
   function colOf(t: Task) {
     if (t.status === "Đã xong") return "Đã xong";
@@ -95,8 +103,8 @@ function TasksPage() {
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm việc, người phụ trách…" className="sm:max-w-sm" />
         <label className="flex h-11 items-center gap-2 text-sm text-ink">
-          <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} className="size-4 accent-accent" />
-          {currentUser.name}
+          <input type="checkbox" checked={isAdmin ? mine : true} onChange={(e) => isAdmin && setMine(e.target.checked)} disabled={!isAdmin} className="size-4 accent-accent" />
+          {currentUser.name} {!isAdmin && "(chỉ của bạn)"}
         </label>
         <div className="ml-auto flex rounded-md bg-surface p-1 shadow-[var(--shadow-card)]">
           <button type="button" onClick={() => setView("board")} className={`h-9 rounded-sm px-3 text-sm ${view === "board" ? "bg-forest text-forest-fg" : "text-muted"}`}>
