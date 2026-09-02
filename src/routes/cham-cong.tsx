@@ -230,12 +230,16 @@ function ChamCongPage() {
   }
 
   // Reverse geocode coordinates → actual Vietnamese address (server-side)
+  // 10s timeout prevents hanging on slow mobile networks
   async function resolveAddress(): Promise<string> {
     if (!gpsCoords) return "";
     const [lat, lng] = gpsCoords;
     if (lat === 0 && lng === 0) return "";
     try {
-      const addr = await reverseGeocode({ data: { lat, lng } });
+      const addr = await Promise.race([
+        reverseGeocode({ data: { lat, lng } }),
+        new Promise<string>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
+      ]);
       return addr;
     } catch { return ""; }
   }

@@ -539,43 +539,26 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           .filter((r) => r.collection === "attendance")
           .map((r) => r.data as Attendance);
 
-        // Also include localStorage attendance (may have records not yet in Neon)
-        const lsAttendance: Attendance[] = (() => {
-          try {
-            const raw = localStorage.getItem(LS_KEY);
-            if (!raw) return [];
-            const ls = JSON.parse(raw);
-            return ls.attendance ?? [];
-          } catch { return []; }
-        })();
-
-        // Merge: Neon (source of truth) + localStorage (local) + pending (failed)
+        // Merge: Neon (source of truth) + pending (failed inserts)
+        // NOTE: Do NOT merge localStorage data here — Neon is source of truth.
+        // localStorage was already loaded in step 1 for instant UI.
+        // Pending records are kept because Neon insert hasn't succeeded yet.
         const attMap = new Map<string, Attendance>();
         for (const a of neonAttendance) attMap.set(a.id, a);
-        for (const a of lsAttendance) {
-          if (!attMap.has(a.id)) attMap.set(a.id, a);
-        }
         for (const a of pendingAttendance) {
           if (!attMap.has(a.id)) attMap.set(a.id, a);
         }
         const mergedAttendance = Array.from(attMap.values())
           .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
 
-        // Keep localStorage data for other collections if Neon is empty for them
-        const lsTasks = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).tasks ?? []) : []; } catch { return []; } })();
-        const lsProposals = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).proposals ?? []) : []; } catch { return []; } })();
-        const lsNotes = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).notes ?? []) : []; } catch { return []; } })();
-        const lsMessages = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).messages ?? []) : []; } catch { return []; } })();
-        const lsCheckins = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).checkins ?? []) : []; } catch { return []; } })();
-
-        if (neonAttendance.length > 0 || pendingAttendance.length > 0 || lsAttendance.length > 0 || neonTasks.length > 0) {
+        if (neonAttendance.length > 0 || pendingAttendance.length > 0 || neonTasks.length > 0) {
           set({
             attendance: mergedAttendance,
-            tasks: neonTasks.length > 0 ? neonTasks : lsTasks,
-            proposals: neonProposals.length > 0 ? neonProposals : lsProposals,
-            notes: neonNotes.length > 0 ? neonNotes : lsNotes,
-            messages: neonMessages.length > 0 ? neonMessages : lsMessages,
-            checkins: neonCheckins.length > 0 ? neonCheckins : lsCheckins,
+            tasks: neonTasks,
+            proposals: neonProposals,
+            notes: neonNotes,
+            messages: neonMessages,
+            checkins: neonCheckins,
             employees: finalEmployees,
             centers: finalCenters,
             _neonReady: true,
