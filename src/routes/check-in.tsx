@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { findEmployeeByLooseText, getEmployeeById, isAdminRole } from "@/lib/catalog";
+import { findEmployeeByLooseText, isAdminRole } from "@/lib/catalog";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
@@ -17,7 +17,7 @@ function CheckInPage() {
   const checkins = useAppStore((s) => s.checkins);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const addCheckin = useAppStore((s) => s.addCheckin);
-  const currentEmployee = getEmployeeById(currentUserId) ?? null;
+  const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDesc, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { CENTERS, findEmployeeByLooseText, getEmployeeById, getVisibleCenterCodes, isAdminRole } from "@/lib/catalog";
+import { CENTERS, findEmployeeByLooseText, getVisibleCenterCodes, isAdminRole } from "@/lib/catalog";
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
@@ -38,7 +38,8 @@ function ChamCongPage() {
   const attendance = useAppStore((s) => s.attendance);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const clock = useAppStore((s) => s.clock);
-  const currentEmployee = getEmployeeById(currentUserId) ?? null;
+  // Reactive: subscribe to employees so this re-renders when DB data loads
+  const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const currentName = useAppStore((s) => s.currentName());
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<"all" | "in" | "out">("all");
