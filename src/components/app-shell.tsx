@@ -88,7 +88,7 @@ const NAV: NavItem[] = [
   { to: "/huong-dan", label: "Hướng dẫn", icon: BookOpen, group: "Hệ thống" },
 ];
 
-const MOBILE_PRIMARY = ["/cham-cong", "/", "/nhiem-vu"];
+const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/chat", "/nhiem-vu"];
 const ADMIN_ONLY_PATHS = ["/bao-cao"];
 
 function NavLink({
@@ -392,7 +392,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="px-4 pt-6 pb-28 sm:px-6 lg:pb-10">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
         {visibleNav.filter((n) => MOBILE_PRIMARY.includes(n.to)).sort((a, b) => MOBILE_PRIMARY.indexOf(a.to) - MOBILE_PRIMARY.indexOf(b.to)).map((item) => {
           const Icon = item.icon;
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);

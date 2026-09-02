@@ -59,13 +59,13 @@
 
 ### 🔄 Đang triển khai / Cần theo dõi
 - **Auth login cho nhân sự mới** — signUpEmail hoạt động nhưng signIn retry vẫn fail. Cần test flow “Quên mật khẩu” (đã fix providerId + hash) để user đặt lại password.
-- **Chấm công sync** — Đã fix pending sync queue (localStorage → Neon), nhưng CHƯA TEST được trên điện thoại. Cần test: điểm danh trên điện thoại → mở trên máy tính phải thấy data.
+- **Chấm công sync** — Đã fix pending sync queue + localStorage-first loading. Cần test trên điện thoại.
+- **Mobile bottom bar** — Đã thêm Check-in + Chat vào bottom bar (5 nút). Chưa commit cuối cùng.
 
 ### 📋 Việc cần làm (backlog)
 - **[ƯU TIÊN]** Test chấm công sync: điểm danh trên điện thoại → kiểm tra data hiện trên máy tính/admin
+- **[ƯU TIÊN]** Test mobile bottom bar mới: Check-in, Chat hiển thị đúng trên iOS/Android
 - Xác nhận đăng nhập nhân sự mới hoạt động trên Vercel
-- Nếu “Quên mật khẩu” hoạt động → đăng nhập thành công
-- Nếu vẫn lỗi → kiểm tra Vercel logs chi tiết hơn
 - Sau khi auth ổn → test toàn bộ flow: đăng ký → duyệt sync → login
 
 ---
@@ -504,5 +504,107 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
-*Cập nhật lần cuối: 2026-08-31 (cuối ngày — Admin pages, data sync, permission fix)*
+### Giai đoạn 16: Attendance Data Fix & Mobile UI (2026-09-03)
+| Commit | Thay đổi |
+|---|---|
+| `57f6560` | fix(cham-cong): visibleAttendance filter dùng currentName fallback khi employee null |
+| `b819c28` | fix(cham-cong): dùng reactive Zustand selector cho currentEmployee → Admin thấy tất cả |
+| (pending) | feat(app-shell): thêm Check-in + Chat vào mobile bottom bar, thứ tự mới 5 nút |
+
+> **LESSON LEARNED — Non-reactive `getEmployeeById()` Bug:**
+> `getEmployeeById()` trong `catalog.ts` dùng `useAppStore.getState().employees.find(...)` —
+> đây là **non-reactive snapshot**. Khi component render lần đầu, employees chưa load từ DB
+> → trả về `null`. Khi hydrate hoàn thành, component KHÔNG re-render vì `employees`
+> không nằm trong Zustand selector → `currentEmployee` vẫn `null` → `hasPermission(null, ...)`
+> trả về `false` → `canViewAll` luôn `false`.
+>
+> **Fix:** Dùng reactive Zustand selector:
+> ```tsx
+> const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
+> ```
+> Component re-renders khi `employees` thay đổi trong store.
+>
+> **Lưu ý:** Kiểm tra tất cả trang dùng `getEmployeeById()` trong render — phải chuyển sang
+> reactive selector. Đã fix: `cham-cong.tsx`, `check-in.tsx`. Chưa fix: `nhiem-vu.tsx`, `de-nghi.tsx`.
+
+> **LESSON LEARNED — Hydrate Merge Priority:**
+> Sau khi admin xóa data trên Neon → mobile vẫn hiện data cũ vì hydrate merge Neon + localStorage.
+> **Fix:** Chỉ dùng Neon + pending queue trong merge. BỎ hoàn toàn localStorage data.
+> Flow mới: localStorage load ngay (instant UI) → Neon overwrite ở background.
+
+> **LESSON LEARNED — resolveAddress Timeout:**
+> `reverseGeocode()` có thể treo vô hạn trên mạng chậm → `confirmPunch()` không gọi `clock()`.
+> **Fix:** `Promise.race` với timeout 10s. Nếu timeout, dùng GPS coordinates thay vì treo.
+
+> **LESSON LEARNED — Mobile Bottom Bar:**
+> `MOBILE_PRIMARY` array trong `app-shell.tsx` kiểm soát nút nào hiện + thứ tự.
+> Grid layout phải khớp số nút (`grid-cols-N`). Đang chuyển từ 3→5 nút.
+
+---
+
+## 12. Vercel CLI — Access & Monitoring
+
+> **Đại ca đã cài Vercel CLI và cấu hình project.** Em có quyền truy cập logs trực tiếp từ terminal.
+
+### Thông tin kết nối
+| Thông tin | Giá trị |
+|---|---|
+| Account | `cuongpkgiong04-4735` |
+| Team | `giong-vn` |
+| Project | `giong-vn-v6` |
+| URL | `https://giong-vn-v6.vercel.app` |
+| Directory | `D:\DuLieuChung\CUONG_2026\giong-vn-v6` |
+
+### Lệnh thường dùng
+```bash
+# Kiểm tra đã login chưa
+vercel whoami
+
+# Xem logs gần nhất (50 dòng)
+vercel logs --limit 50
+
+# Xem logs real-time (theo dõi khi anh test)
+vercel logs --follow
+
+# Filter logs theo từ khóa
+vercel logs --limit 200 2>&1 | grep -i "auth\|login\|error"
+
+# Xem project info
+vercel project ls
+```
+
+### Ký hiệu trong logs
+| Ký hiệu | Ý nghĩa |
+|---|---|
+| `λ GET /api/auth/get-session` | Kiểm tra session |
+| `λ POST /api/auth/sign-in/email` | Đăng nhập email/password |
+| `λ POST /api/auth/sign-up/email` | Đăng ký tài khoản mới |
+| `λ GET /_serverFn/...` | Server function call |
+| `error` level | Có lỗi (có thể là SSL warning từ pg library, không nhất thiết là lỗi auth) |
+
+### SSL Warning (bình thường)
+```
+SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
+```
+Đây là warning từ `pg` library khi kết nối Neon PostgreSQL. **Không phải lỗi thực** — chỉ là stderr noise. Không cần fix.
+
+---
+
+## 13. Hỏi & Trả lời nhanh
+
+**Q:** Làm sao để em biết cần làm gì tiếp?
+**A:** Đọc file này → xem mục "Đang triển khai" và "Việc cần làm". Nếu trống → hỏi Đại ca.
+
+**Q:** Khi nào em cần hỏi Đại ca?
+**A:** Khi chưa rõ yêu cầu, khi có nhiều cách xử lý, khi thay đổi ảnh hưởng lớn.
+
+**Q:** Em có được phép refactor không?
+**A:** KHÔNG, trừ khi Đại ca yêu cầu rõ ràng.
+
+**Q:** Em có thể tự xem Vercel logs không?
+**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.
+
+---
+
+*Cập nhật lần cuối: 2026-09-03 (Attendance data fix, mobile bottom bar update)*
 *Người cập nhật: Trợ lý lập trình*
