@@ -90,13 +90,13 @@ function ChamCongPage() {
 
   const visibleAttendance = useMemo(() => {
     return attendance.filter((record) => {
-      if (!currentEmployee) return false;
       // Admin/SuperAdmin can see all
       if (canViewAll) return true;
-      // User can only see own records
-      return record.name === currentEmployee.name;
+      // User can only see own records — fallback to currentName if employee not found
+      const empName = currentEmployee?.name ?? currentName;
+      return record.name === empName;
     });
-  }, [attendance, currentEmployee, canViewAll]);
+  }, [attendance, currentEmployee, currentName, canViewAll]);
 
   const centerStats = useMemo(() => {
     const map = new Map<string, { in: number; out: number; total: number }>();
