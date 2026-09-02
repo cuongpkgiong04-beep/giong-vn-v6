@@ -282,8 +282,8 @@ async function _neonInsertAttendance(r: Attendance) {
       },
     });
   } catch (err) {
-    console.warn("[store] Neon insert attendance failed — saving to pending queue:", err);
-    addPendingSync({ collection: "attendance", data: r });
+    console.warn("[store] Neon insert attendance failed:", err);
+    // Already added to pending queue by clock() — no need to add again
   }
 }
 
@@ -382,7 +382,26 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   ...initial,
 
   hydrate: () => {
-    // Sync from Neon first. Only fall back to localStorage if Neon sync fails.
+    // STEP 1: Load from localStorage immediately for instant UI (survives refresh)
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const ls = JSON.parse(raw) as PersistSlice;
+        set({
+          tasks: ls.tasks ?? [],
+          attendance: ls.attendance ?? [],
+          notes: ls.notes ?? [],
+          proposals: ls.proposals ?? [],
+          messages: ls.messages ?? [],
+          checkins: ls.checkins ?? [],
+          currentUserId: ls.currentUserId ?? initial.currentUserId,
+          employees: ls.employees?.length ? ls.employees : FALLBACK_EMPLOYEES,
+          centers: ls.centers?.length ? ls.centers : FALLBACK_CENTERS,
+        });
+      }
+    } catch { /* ignore parse errors */ }
+
+    // STEP 2: Sync from Neon in background (merge with localStorage data)
     (async () => {
       try {
         // Retry any pending offline inserts from previous sessions
@@ -514,42 +533,56 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         for (const c of dbCenterList) centerMap.set(c.code, c);
         const finalCenters = Array.from(centerMap.values());
 
-        // If Neon has data, use it as the source of truth.
-        // Also merge any pending unsynced records from localStorage.
-        const hasNeonData =
-          neonAttendance.length > 0 ||
-          neonTasks.length > 0;
-
         // Get pending unsynced records from localStorage
         const pendingRecords = getPendingSync();
         const pendingAttendance: Attendance[] = pendingRecords
           .filter((r) => r.collection === "attendance")
           .map((r) => r.data as Attendance);
 
-        // Merge: Neon data + pending records (dedupe by id)
-        const neonAttMap = new Map<string, Attendance>();
-        for (const a of neonAttendance) neonAttMap.set(a.id, a);
-        for (const a of pendingAttendance) {
-          if (!neonAttMap.has(a.id)) neonAttMap.set(a.id, a);
+        // Also include localStorage attendance (may have records not yet in Neon)
+        const lsAttendance: Attendance[] = (() => {
+          try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return [];
+            const ls = JSON.parse(raw);
+            return ls.attendance ?? [];
+          } catch { return []; }
+        })();
+
+        // Merge: Neon (source of truth) + localStorage (local) + pending (failed)
+        const attMap = new Map<string, Attendance>();
+        for (const a of neonAttendance) attMap.set(a.id, a);
+        for (const a of lsAttendance) {
+          if (!attMap.has(a.id)) attMap.set(a.id, a);
         }
-        const mergedAttendance = Array.from(neonAttMap.values())
+        for (const a of pendingAttendance) {
+          if (!attMap.has(a.id)) attMap.set(a.id, a);
+        }
+        const mergedAttendance = Array.from(attMap.values())
           .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
 
-        if (hasNeonData || pendingAttendance.length > 0) {
+        // Keep localStorage data for other collections if Neon is empty for them
+        const lsTasks = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).tasks ?? []) : []; } catch { return []; } })();
+        const lsProposals = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).proposals ?? []) : []; } catch { return []; } })();
+        const lsNotes = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).notes ?? []) : []; } catch { return []; } })();
+        const lsMessages = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).messages ?? []) : []; } catch { return []; } })();
+        const lsCheckins = (() => { try { const r = localStorage.getItem(LS_KEY); return r ? (JSON.parse(r).checkins ?? []) : []; } catch { return []; } })();
+
+        if (neonAttendance.length > 0 || pendingAttendance.length > 0 || lsAttendance.length > 0 || neonTasks.length > 0) {
           set({
             attendance: mergedAttendance,
-            tasks: neonTasks,
-            proposals: neonProposals,
-            notes: neonNotes,
-            messages: neonMessages,
-            checkins: neonCheckins,
+            tasks: neonTasks.length > 0 ? neonTasks : lsTasks,
+            proposals: neonProposals.length > 0 ? neonProposals : lsProposals,
+            notes: neonNotes.length > 0 ? neonNotes : lsNotes,
+            messages: neonMessages.length > 0 ? neonMessages : lsMessages,
+            checkins: neonCheckins.length > 0 ? neonCheckins : lsCheckins,
             employees: finalEmployees,
             centers: finalCenters,
             _neonReady: true,
           });
         } else {
-          // Neon empty — start with no data but still load catalog from DB.
-          console.log('[store] Neon empty — starting with empty state');
+          // All sources empty — start with empty state
+          console.log('[store] All sources empty — starting with empty state');
           set({
             tasks: [],
             attendance: [],
@@ -635,7 +668,14 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     };
     set((s) => ({ attendance: [rec, ...s.attendance] }));
     saveLs(get());
-    _neonInsertAttendance(rec).catch(console.warn);
+    // Eagerly add to pending queue — ensures data survives page refresh
+    addPendingSync({ collection: "attendance", data: rec });
+    // Fire Neon insert — on success, clear from pending queue
+    _neonInsertAttendance(rec).then(() => {
+      clearPendingSync([rec.id]);
+    }).catch(() => {
+      // Already in pending queue from eager add, will retry on next hydrate
+    });
     return rec;
   },
 
