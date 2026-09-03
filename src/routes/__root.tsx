@@ -50,7 +50,7 @@ function Root() {
       <head suppressHydrationWarning>
         <HeadContent />
       </head>
-      <body className="bg-bg text-ink">
+      <body className="bg-bg text-ink" suppressHydrationWarning>
         <PreviewHostBridge />
         <AuthProvider>
           <AppShell>
