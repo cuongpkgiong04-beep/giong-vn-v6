@@ -381,7 +381,15 @@ function ChamCongPage() {
                         </td>
                         <td className="px-4 py-3 text-muted">{short}</td>
                         <td className="px-4 py-3">
-                          <StatusBadge value={a.status} />
+                          <div className="flex items-center gap-1.5">
+                            <StatusBadge value={a.status} />
+                            {a.synced === false && (
+                              <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                <span className="size-1 rounded-full bg-amber-500" />
+                                Đang chờ
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-muted tabular">
                           {formatDate(a.date)}
@@ -486,7 +494,15 @@ function ChamCongPage() {
                     </td>
                     <td className="px-4 py-3 text-muted">{short}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge value={a.status} />
+                      <div className="flex items-center gap-1.5">
+                        <StatusBadge value={a.status} />
+                        {a.synced === false && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" title="Chưa đồng bộ lên server">
+                            <span className="size-1 rounded-full bg-amber-500" />
+                            Đang chờ
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-muted tabular">
                       {formatDate(a.date)}

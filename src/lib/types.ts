@@ -26,6 +26,10 @@ export type Attendance = {
   type: string;
   approved: string;
   workplace: string;
+  /** ISO timestamp of last modification — used for LWW conflict resolution */
+  updatedAt: string;
+  /** Client-only: true if this record has been synced to Neon */
+  synced?: boolean;
 };
 
 export type DailyAttendance = { date: string; in: number; out: number };

@@ -23,7 +23,8 @@ export const loadAttendance = createServerFn({ method: "GET" })
       type: string;
       approved: string;
       workplace: string;
-    }>`SELECT * FROM attendance ORDER BY date DESC, time DESC LIMIT 500`;
+      updated_at: string | null;
+    }>`SELECT * FROM attendance ORDER BY date DESC, time DESC LIMIT 1000`;
   });
 
 export const insertAttendance = createServerFn({ method: "POST" })
@@ -41,16 +42,22 @@ export const insertAttendance = createServerFn({ method: "POST" })
       type?: string;
       approved?: string;
       workplace?: string;
+      updatedAt?: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
+    const ts = data.updatedAt ? new Date(data.updatedAt) : new Date();
     await sql`
-      INSERT INTO attendance (id, name, status, time, date, weekday, gps, address, photo, type, approved, workplace)
+      INSERT INTO attendance (id, name, status, time, date, weekday, gps, address, photo, type, approved, workplace, updated_at)
       VALUES (${data.id}, ${data.name}, ${data.status}, ${data.time}, ${data.date}, ${data.weekday},
               ${data.gps ?? ""}, ${data.address ?? ""}, ${data.photo ?? null},
-              ${data.type ?? "Bình thường"}, ${data.approved ?? "Chưa"}, ${data.workplace ?? "VP"})
-      ON CONFLICT (id) DO NOTHING
+              ${data.type ?? "Bình thường"}, ${data.approved ?? "Chưa"}, ${data.workplace ?? "VP"}, ${ts})
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name, status = EXCLUDED.status, time = EXCLUDED.time,
+        date = EXCLUDED.date, weekday = EXCLUDED.weekday, gps = EXCLUDED.gps,
+        address = EXCLUDED.address, photo = EXCLUDED.photo, workplace = EXCLUDED.workplace,
+        updated_at = GREATEST(attendance.updated_at, EXCLUDED.updated_at)
     `;
   });
 
@@ -70,18 +77,24 @@ export const bulkInsertAttendance = createServerFn({ method: "POST" })
         type?: string;
         approved?: string;
         workplace?: string;
+        updatedAt?: string;
       }>;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     for (const r of data.rows) {
+      const ts = r.updatedAt ? new Date(r.updatedAt) : new Date();
       await sql`
-        INSERT INTO attendance (id, name, status, time, date, weekday, gps, address, photo, type, approved, workplace)
+        INSERT INTO attendance (id, name, status, time, date, weekday, gps, address, photo, type, approved, workplace, updated_at)
         VALUES (${r.id}, ${r.name}, ${r.status}, ${r.time}, ${r.date}, ${r.weekday},
                 ${r.gps ?? ""}, ${r.address ?? ""}, ${r.photo ?? null},
-                ${r.type ?? "Bình thường"}, ${r.approved ?? "Chưa"}, ${r.workplace ?? "VP"})
-        ON CONFLICT (id) DO NOTHING
+                ${r.type ?? "Bình thường"}, ${r.approved ?? "Chưa"}, ${r.workplace ?? "VP"}, ${ts})
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name, status = EXCLUDED.status, time = EXCLUDED.time,
+          date = EXCLUDED.date, weekday = EXCLUDED.weekday, gps = EXCLUDED.gps,
+          address = EXCLUDED.address, photo = EXCLUDED.photo, workplace = EXCLUDED.workplace,
+          updated_at = GREATEST(attendance.updated_at, EXCLUDED.updated_at)
       `;
     }
   });

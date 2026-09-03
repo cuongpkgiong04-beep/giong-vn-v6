@@ -241,6 +241,7 @@ async function _neonBulkAttendance(rows: Attendance[]) {
         type: r.type,
         approved: r.approved,
         workplace: r.workplace,
+        updatedAt: (r as any).updatedAt,
       })),
     },
   });
@@ -298,11 +299,12 @@ async function _neonInsertAttendance(r: Attendance) {
         type: r.type,
         approved: r.approved,
         workplace: r.workplace,
+        updatedAt: r.updatedAt,
       },
     });
   } catch (err) {
     console.warn("[store] Neon insert attendance failed:", err);
-    // Already added to pending queue by clock() — no need to add again
+    // Already in pending queue — will retry on next sync cycle
   }
 }
 
@@ -400,15 +402,25 @@ async function _neonUpdateProposalStatus(id: string, status: string) {
 export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   ...initial,
 
+  /* ── OFFLINE-FIRST HYDRATE ──────────────────────────────────────────────────
+   * Strategy: localStorage is Source of Truth for display.
+   * Neon data is MERGED INTO local — never overwrites.
+   */
   hydrate: () => {
-    // STEP 1: Load from localStorage immediately for instant UI (survives refresh)
+    // STEP 1: Load from localStorage IMMEDIATELY — this is the source of truth
+    let localAtt: Attendance[] = [];
     try {
       const raw = localStorage.getItem(LS_KEY);
       if (raw) {
         const ls = JSON.parse(raw) as PersistSlice;
+        localAtt = (ls.attendance ?? []).map((a) => ({
+          ...a,
+          synced: a.synced ?? true, // older records without field = synced
+          updatedAt: (a as any).updatedAt ?? `${a.date}T${a.time}`,
+        }));
         set({
           tasks: ls.tasks ?? [],
-          attendance: ls.attendance ?? [],
+          attendance: localAtt,
           notes: ls.notes ?? [],
           proposals: ls.proposals ?? [],
           messages: ls.messages ?? [],
@@ -420,10 +432,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       }
     } catch { /* ignore parse errors */ }
 
-    // STEP 2: Sync from Neon in background (merge with localStorage data)
+    // STEP 2: Background — retry pending + fetch Neon + merge INTO local
     (async () => {
       try {
-        // Retry any pending offline inserts from previous sessions
+        // 2a: Push unsynced records to Neon
         await retryPendingSync();
 
         const { loadAttendance, loadTasks, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
@@ -443,233 +455,132 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadCtrs(),
         ]);
 
-        // Map Neon rows to app types
+        // Map Neon rows → app types (all synced since they came from DB)
         const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
-          id: r.id,
-          name: r.name,
-          status: r.status,
-          time: r.time,
-          date: r.date,
-          weekday: r.weekday,
-          gps: r.gps ?? "",
-          address: r.address ?? "",
-          photo: r.photo ?? undefined,
-          type: r.type ?? "Bình thường",
-          approved: r.approved ?? "Chưa",
+          id: r.id, name: r.name, status: r.status, time: r.time,
+          date: r.date, weekday: r.weekday, gps: r.gps ?? "",
+          address: r.address ?? "", photo: r.photo ?? undefined,
+          type: r.type ?? "Bình thường", approved: r.approved ?? "Chưa",
           workplace: r.workplace ?? "VP",
+          updatedAt: r.updated_at ?? `${r.date}T${r.time}`,
+          synced: true,
         }));
 
         const neonTasks: Task[] = (tsk as any[]).map((r) => ({
-          id: r.id,
-          assignee: r.assignee,
-          title: r.title,
-          created: r.created,
-          due: r.due ?? "",
-          status: r.status ?? "Việc cần làm",
-          support: r.support ?? "",
-          blocker: r.blocker ?? "",
-          updated: r.updated,
-          createdBy: r.created_by ?? "",
+          id: r.id, assignee: r.assignee, title: r.title, created: r.created,
+          due: r.due ?? "", status: r.status ?? "Việc cần làm",
+          support: r.support ?? "", blocker: r.blocker ?? "",
+          updated: r.updated, createdBy: r.created_by ?? "",
         }));
-
         const neonProposals: Proposal[] = (prp as any[]).map((r) => ({
-          id: r.id,
-          kind: r.kind as Proposal["kind"],
-          title: r.title,
-          requester: r.requester ?? "",
-          date: r.date,
-          detail: r.detail ?? "",
-          status: (r.status ?? "Chờ duyệt") as Proposal["status"],
-          dept: r.dept ?? "",
+          id: r.id, kind: r.kind as Proposal["kind"], title: r.title,
+          requester: r.requester ?? "", date: r.date, detail: r.detail ?? "",
+          status: (r.status ?? "Chờ duyệt") as Proposal["status"], dept: r.dept ?? "",
         }));
-
         const neonNotes: Note[] = (nts as any[]).map((r) => ({
-          id: r.id,
-          stt: r.stt ?? undefined,
-          date: r.date,
-          content: r.content,
-          author: r.author ?? "",
-          deploy: r.deploy ?? "",
-          deadline: r.deadline ?? "",
-          support: r.support ?? "",
-          dept: r.dept ?? "",
-          status: r.status ?? "",
+          id: r.id, stt: r.stt ?? undefined, date: r.date, content: r.content,
+          author: r.author ?? "", deploy: r.deploy ?? "", deadline: r.deadline ?? "",
+          support: r.support ?? "", dept: r.dept ?? "", status: r.status ?? "",
         }));
-
         const neonMessages: ChatMessage[] = (msgs as any[]).map((r) => ({
-          id: r.id,
-          from: r.from_name,
-          text: r.text,
-          at: r.at,
-          channel: r.channel,
+          id: r.id, from: r.from_name, text: r.text, at: r.at, channel: r.channel,
         }));
-
         const neonCheckins: CheckIn[] = (cks as any[]).map((r) => ({
-          id: r.id,
-          name: r.name,
-          time: r.time,
-          date: r.date,
-          weekday: r.weekday,
-          gps: r.gps ?? "",
-          address: r.address ?? "",
-          note: r.note ?? "",
+          id: r.id, name: r.name, time: r.time, date: r.date, weekday: r.weekday,
+          gps: r.gps ?? "", address: r.address ?? "", note: r.note ?? "",
         }));
 
-        // Map DB employees to app Employee type
         const dbEmployeeList: Employee[] = (dbEmps as any[]).map((r) => ({
-          id: r.id,
-          name: r.name,
-          username: r.username,
-          gender: r.gender ?? '',
-          phone: r.phone ?? '',
-          email: r.email ?? '',
-          dept: r.department,
-          role: r.role ?? 'User',
-          title: r.title,
-          center: r.center,
-          status: r.status,
+          id: r.id, name: r.name, username: r.username,
+          gender: r.gender ?? '', phone: r.phone ?? '', email: r.email ?? '',
+          dept: r.department, role: r.role ?? 'User', title: r.title,
+          center: r.center, status: r.status,
         }));
-
-        // Map DB centers to app Center type
         const dbCenterList: Center[] = (dbCtrs as any[]).map((r) => ({
-          code: r.code,
-          name: r.name,
-          short: r.short_name,
-          city: r.city,
+          code: r.code, name: r.name, short: r.short_name, city: r.city,
           kind: (r.code === 'VP' ? 'Văn phòng' : 'Trung tâm') as 'Trung tâm' | 'Văn phòng',
         }));
 
-        // Merge: start with fallback, overlay DB employees on top.
-        // This ensures fallback employees (with known emails) are always available
-        // even if DB has different employees.
         const employeeMap = new Map<string, Employee>();
         for (const e of FALLBACK_EMPLOYEES) employeeMap.set(e.id, e);
         for (const e of dbEmployeeList) employeeMap.set(e.id, e);
         const finalEmployees = Array.from(employeeMap.values());
-
         const centerMap = new Map<string, import("@/lib/types").Center>();
         for (const c of FALLBACK_CENTERS) centerMap.set(c.code, c);
         for (const c of dbCenterList) centerMap.set(c.code, c);
         const finalCenters = Array.from(centerMap.values());
 
-        // Get pending unsynced records from localStorage
-        const pendingRecords = getPendingSync();
-        const pendingAttendance: Attendance[] = pendingRecords
-          .filter((r) => r.collection === "attendance")
-          .map((r) => r.data as Attendance);
-
-        // Merge: Neon (source of truth) + pending (failed inserts)
-        // NOTE: Do NOT merge localStorage data here — Neon is source of truth.
-        // localStorage was already loaded in step 1 for instant UI.
-        // Pending records are kept because Neon insert hasn't succeeded yet.
+        /* ── OFFLINE-FIRST MERGE: local is source of truth ────────────────────
+         * 1. Build map from LOCAL data (already loaded in step 1)
+         * 2. For each Neon record:
+         *    - If NOT in local → add it (new from another device)
+         *    - If IN local AND local is unsynced → keep local (Last Write Wins)
+         *    - If IN local AND local is synced → use Neon (newer version)
+         * 3. Result: local data preserved, Neon supplements with new records
+         */
+        const currentLocal = get().attendance;
         const attMap = new Map<string, Attendance>();
-        for (const a of neonAttendance) attMap.set(a.id, a);
-        for (const a of pendingAttendance) {
-          if (!attMap.has(a.id)) attMap.set(a.id, a);
+        // Start with ALL local records
+        for (const a of currentLocal) attMap.set(a.id, a);
+        // Overlay Neon records
+        for (const n of neonAttendance) {
+          const local = attMap.get(n.id);
+          if (!local) {
+            // New record from Neon (another device) → add it
+            attMap.set(n.id, n);
+          } else if (local.synced) {
+            // Local was already synced → use Neon version (it's the source)
+            attMap.set(n.id, n);
+          }
+          // else: local is unsynced (pending sync) → KEEP local, don't overwrite
         }
         const mergedAttendance = Array.from(attMap.values())
           .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
 
-        // FIX: When Neon returns empty but _neonReady is false (sync incomplete),
-        // keep localStorage data to prevent data loss.
-        // Only clear when Neon actually has data (neonAttendance.length > 0) or
-        // sync completed successfully (_neonReady was already true).
-        const neonSyncCompleted = get()._neonReady;
-        const neonHasData = neonAttendance.length > 0;
-        const pendingHasData = pendingAttendance.length > 0;
-        const currentLocalHasData = get().attendance.length > 0;
-
-        if (neonHasData || pendingHasData || neonTasks.length > 0) {
-          // Neon has data — use merged result
-          set({
-            attendance: mergedAttendance,
-            tasks: neonTasks,
-            proposals: neonProposals,
-            notes: neonNotes,
-            messages: neonMessages,
-            checkins: neonCheckins,
-            employees: finalEmployees,
-            centers: finalCenters,
-            _neonReady: true,
-          });
-        } else if (currentLocalHasData && !neonSyncCompleted) {
-          // Neon returned empty BUT local has data AND this is first sync attempt
-          // → Network issue or slow response — KEEP local data, don't overwrite
-          console.log('[store] Neon returned empty but local has data — keeping local data');
-          set({
-            employees: finalEmployees,
-            centers: finalCenters,
-            _neonReady: true,
-          });
-        } else {
-          // Genuinely empty — all sources empty
-          console.log('[store] All sources empty — starting with empty state');
-          set({
-            tasks: [],
-            attendance: [],
-            notes: [],
-            proposals: [],
-            messages: [],
-            checkins: [],
-            employees: finalEmployees,
-            centers: finalCenters,
-            currentUserId: initial.currentUserId,
-            _neonReady: true,
-          });
+        // Mark pending records as unsynced
+        const pendingIds = new Set(getPendingSync().filter((r) => r.collection === 'attendance').map((r) => r.data.id));
+        for (const a of mergedAttendance) {
+          if (pendingIds.has(a.id)) a.synced = false;
         }
-      } catch (err) {
-        console.error('[store] Neon sync failed — keeping localStorage data:', err);
-        // FIX: Don't clear localStorage data on sync failure.
-        // Keep whatever was loaded from localStorage in step 1.
-        // Only set _neonReady = false so we know sync hasn't completed.
+
         set({
-          _neonReady: false,
+          attendance: mergedAttendance,
+          tasks: neonTasks,
+          proposals: neonProposals,
+          notes: neonNotes,
+          messages: neonMessages,
+          checkins: neonCheckins,
+          employees: finalEmployees,
+          centers: finalCenters,
+          _neonReady: true,
         });
+        saveLs(get()); // persist merged result
+      } catch (err) {
+        console.error('[store] Neon sync failed — keeping local data:', err);
+        // DO NOT clear local data — just mark sync as incomplete
+        set({ _neonReady: false });
       }
 
-      // Start background retry interval (once only)
+      // Background retry interval (once only)
       if (!_bgRetryStarted) {
         _bgRetryStarted = true;
+        // Online listener — sync immediately when network returns
+        if (typeof window !== 'undefined') {
+          window.addEventListener('online', () => {
+            console.log('[store] Network online — triggering sync');
+            retryPendingSync().then(() => get().hydrate()).catch(() => {});
+          });
+        }
         _bgRetryInterval = setInterval(() => {
-          const pending = getPendingSync();
-          if (pending.length > 0) {
-            retryPendingSync().then(() => {
-              // After successful retry, re-fetch from Neon to update state
-              const currentPending = getPendingSync();
-              if (currentPending.length === 0 && pending.length > 0) {
-                // Some records were synced — refresh state from Neon
-                import('@/routes/api/data').then(({ loadAttendance }) =>
-                  loadAttendance().then((att) => {
-                    const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
-                      id: r.id, name: r.name, status: r.status, time: r.time,
-                      date: r.date, weekday: r.weekday, gps: r.gps ?? '',
-                      address: r.address ?? '', photo: r.photo ?? undefined,
-                      type: r.type ?? 'Bình thường', approved: r.approved ?? 'Chưa',
-                      workplace: r.workplace ?? 'VP',
-                    }));
-                    // Merge with current state
-                    const attMap = new Map<string, Attendance>();
-                    for (const a of neonAttendance) attMap.set(a.id, a);
-                    // Also keep any local records not yet in Neon
-                    for (const a of get().attendance) {
-                      if (!attMap.has(a.id)) attMap.set(a.id, a);
-                    }
-                    const merged = Array.from(attMap.values())
-                      .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
-                    set({ attendance: merged, _neonReady: true });
-                    saveLs(get());
-                  })
-                ).catch(() => { /* ignore */ });
-              }
-            }).catch(() => { /* will retry next interval */ });
+          if (getPendingSync().length > 0) {
+            retryPendingSync().then(() => get().hydrate()).catch(() => {});
           }
-        }, 30_000); // every 30 seconds
+        }, 30_000);
       }
     })();
   },
 
   persist: () => {
-    // Always save to localStorage (fast, offline)
     saveLs(get());
   },
 
@@ -707,6 +618,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       emps.find((e) => e.id === get().currentUserId) ?? emps[0] ?? { center: 'VP', title: 'Nhân viên' } as any;
     const date = todayIso();
     const workplace = currentEmployee.center ?? "VP";
+    const nowTs = new Date().toISOString();
     const rec: Attendance = {
       id: uid("cc"),
       name,
@@ -720,16 +632,25 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       type: "Bình thường",
       approved: "Chưa",
       workplace,
+      updatedAt: nowTs,
+      synced: false, // starts unsynced — will be marked true after Neon insert
     };
+    // 1. Save to state + localStorage immediately (local is source of truth)
     set((s) => ({ attendance: [rec, ...s.attendance] }));
     saveLs(get());
-    // Eagerly add to pending queue — ensures data survives page refresh
+    // 2. Add to pending queue for retry
     addPendingSync({ collection: "attendance", data: rec });
-    // Fire Neon insert — on success, clear from pending queue
+    // 3. Fire-and-forget Neon insert
     _neonInsertAttendance(rec).then(() => {
+      // Success: mark as synced, remove from pending queue, save
       clearPendingSync([rec.id]);
+      const current = get().attendance.map((a) =>
+        a.id === rec.id ? { ...a, synced: true } : a
+      );
+      set({ attendance: current });
+      saveLs(get());
     }).catch(() => {
-      // Already in pending queue from eager add, will retry on next hydrate
+      // Failed: stays in pending queue, will retry on next sync cycle
     });
     return rec;
   },
