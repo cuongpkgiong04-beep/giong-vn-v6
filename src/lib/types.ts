@@ -97,4 +97,9 @@ export type CheckIn = {
   gps: string;
   address: string;
   note: string;
+  photo?: string;
+  centerCode?: string;
+  status?: string;
+  updatedAt?: string;
+  deletedAt?: string;
 };

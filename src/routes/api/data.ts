@@ -364,7 +364,7 @@ export const loadCheckins = createServerFn({ method: "GET" })
       gps: string;
       address: string;
       note: string;
-    }>`SELECT * FROM checkins ORDER BY date DESC, time DESC LIMIT 200`;
+    }>`SELECT * FROM checkins WHERE deleted_at IS NULL ORDER BY date DESC, time DESC LIMIT 500`;
   });
 
 export const insertCheckin = createServerFn({ method: "POST" })
@@ -378,16 +378,40 @@ export const insertCheckin = createServerFn({ method: "POST" })
       gps?: string;
       address?: string;
       note?: string;
+      photo?: string;
+      centerCode?: string;
+      status?: string;
+      updatedAt?: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
+    const ts = data.updatedAt ? new Date(data.updatedAt) : new Date();
     await sql`
-      INSERT INTO checkins (id, name, time, date, weekday, gps, address, note)
+      INSERT INTO checkins (id, name, time, date, weekday, gps, address, note, photo, center_code, status, updated_at)
       VALUES (${data.id}, ${data.name}, ${data.time}, ${data.date}, ${data.weekday},
-              ${data.gps ?? ""}, ${data.address ?? ""}, ${data.note ?? ""})
-      ON CONFLICT (id) DO NOTHING
+              ${data.gps ?? ""}, ${data.address ?? ""}, ${data.note ?? ""},
+              ${data.photo ?? ""}, ${data.centerCode ?? "VP"}, ${data.status ?? "checked_in"}, ${ts})
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name, time = EXCLUDED.time, date = EXCLUDED.date,
+        weekday = EXCLUDED.weekday, gps = EXCLUDED.gps, address = EXCLUDED.address,
+        note = EXCLUDED.note, photo = EXCLUDED.photo, center_code = EXCLUDED.center_code,
+        status = EXCLUDED.status, updated_at = EXCLUDED.updated_at
+      WHERE checkins.updated_at < EXCLUDED.updated_at
     `;
+  });
+
+export const deleteCheckin = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE checkins SET deleted_at = now() WHERE id = ${data.id}`;
+  });
+
+export const loadDeletedCheckinIds = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{ id: string }>`SELECT id FROM checkins WHERE deleted_at IS NOT NULL`;
   });
 
 /* ─────────────────── Clear attendance ─────────────────── */

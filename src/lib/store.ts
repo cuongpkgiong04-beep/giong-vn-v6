@@ -48,7 +48,8 @@ type Actions = {
   addProposal: (p: Omit<Proposal, "id">) => void;
   setProposalStatus: (id: string, status: Proposal["status"]) => void;
   sendMessage: (text: string, channel: string) => void;
-  addCheckin: (gps?: string, address?: string, note?: string) => CheckIn;
+  addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
+  removeCheckin: (id: string) => void;
 };
 
 function slice(s: PersistSlice): PersistSlice {
@@ -406,8 +407,17 @@ async function _neonInsertCheckin(r: CheckIn) {
       gps: r.gps,
       address: r.address,
       note: r.note,
+      photo: r.photo ?? "",
+      centerCode: r.centerCode ?? "VP",
+      status: r.status ?? "checked_in",
+      updatedAt: r.updatedAt,
     },
   });
+}
+
+async function _neonDeleteCheckin(id: string) {
+  const { deleteCheckin } = await import("@/routes/api/data");
+  await deleteCheckin({ data: { id } });
 }
 
 async function _neonUpdateTaskStatus(id: string, status: string, updated: string) {
@@ -467,6 +477,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadMessages,
           loadCheckins,
           loadDeletedAttendanceIds,
+          loadDeletedCheckinIds,
         } = await import(
           "@/routes/api/data"
         );
@@ -484,14 +495,15 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           console.error("[store] Neon attendance load failed — keeping local attendance:", err);
         }
 
-        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [];
+        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], delCks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [];
         try {
-          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
+          [tsk, prp, nts, msgs, cks, delCks, dbEmps, dbCtrs] = await Promise.all([
             loadTasks(),
             loadProposals(),
             loadNotes(),
             loadMessages({ data: { channel: "general" } }),
             loadCheckins(),
+            loadDeletedCheckinIds(),
             loadEmps(),
             loadCtrs(),
           ]);
@@ -532,6 +544,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const neonCheckins: CheckIn[] = (cks as any[]).map((r) => ({
           id: r.id, name: r.name, time: r.time, date: r.date, weekday: r.weekday,
           gps: r.gps ?? "", address: r.address ?? "", note: r.note ?? "",
+          photo: r.photo ?? "", centerCode: r.center_code ?? "VP",
+          status: r.status ?? "checked_in", updatedAt: r.updated_at ?? null,
         }));
 
         const dbEmployeeList: Employee[] = (dbEmps as any[]).map((r) => ({
@@ -596,7 +610,15 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds),
           notes: mergeByTs(get().notes, neonNotes, notePendingIds),
           messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
-          checkins: mergeByTs(get().checkins, neonCheckins, checkinPendingIds),
+          checkins: (() => {
+            const deletedCheckinIds = new Set((delCks as any[]).map((r) => r.id));
+            return mergeByTs(
+              get().checkins, neonCheckins, checkinPendingIds,
+              (r) => r.updatedAt ?? `${r.date}T${r.time}`,
+            )
+              .filter((c) => !deletedCheckinIds.has(c.id))
+              .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
+          })(),
           employees: finalEmployees,
           centers: finalCenters,
           _neonReady: true,
@@ -774,8 +796,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       .catch(console.warn);
   },
 
-  addCheckin: (gps = "", address = "", note = "") => {
+  addCheckin: (gps = "", address = "", note = "", photo = "", centerCode = "VP") => {
     const date = todayIso();
+    const ts = new Date().toISOString();
     const rec: CheckIn = {
       id: uid("ck"),
       name: get().currentName(),
@@ -785,6 +808,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       gps,
       address,
       note,
+      photo,
+      centerCode,
+      status: "checked_in",
+      updatedAt: ts,
     };
     set((s) => ({ checkins: [rec, ...s.checkins] }));
     saveLs(get());
@@ -793,5 +820,11 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       .then(() => clearPendingSync([rec.id]))
       .catch(console.warn);
     return rec;
+  },
+
+  removeCheckin: (id: string) => {
+    set((s) => ({ checkins: s.checkins.filter((c) => c.id !== id) }));
+    saveLs(get());
+    _neonDeleteCheckin(id).catch(console.warn);
   },
 }));
