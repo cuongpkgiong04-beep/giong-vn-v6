@@ -473,17 +473,31 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const { loadEmployees: loadEmps, loadCenters: loadCtrs } = await import(
           "@/routes/api/employee-crud"
         );
-        const [att, tsk, prp, nts, msgs, cks, dbEmps, dbCtrs, delAtt] = await Promise.all([
-          loadAttendance(),
-          loadTasks(),
-          loadProposals(),
-          loadNotes(),
-          loadMessages({ data: { channel: "general" } }),
-          loadCheckins(),
-          loadEmps(),
-          loadCtrs(),
-          loadDeletedAttendanceIds(),
-        ]);
+        // Fetch Neon data. Attendance loads in its OWN try/catch so an error
+        // in any other module (tasks/messages/checkins/employees/centers...)
+        // never hides attendance from admins — it still merges.
+        let att: any[] = [];
+        let delAtt: any[] = [];
+        try {
+          [att, delAtt] = await Promise.all([loadAttendance(), loadDeletedAttendanceIds()]);
+        } catch (err) {
+          console.error("[store] Neon attendance load failed — keeping local attendance:", err);
+        }
+
+        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [];
+        try {
+          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
+            loadTasks(),
+            loadProposals(),
+            loadNotes(),
+            loadMessages({ data: { channel: "general" } }),
+            loadCheckins(),
+            loadEmps(),
+            loadCtrs(),
+          ]);
+        } catch (err) {
+          console.error("[store] Neon other-module load failed — attendance still merged:", err);
+        }
 
         // Map Neon rows → app types (all synced since they came from DB)
         const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
