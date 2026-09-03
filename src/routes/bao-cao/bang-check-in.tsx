@@ -353,19 +353,21 @@ function BangCheckInReport() {
             </option>
           ))}
         </select>
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
-        />
-        <span className="text-muted">—</span>
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
-        />
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
+          />
+          <span className="text-muted">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="rounded-xl border border-line bg-surface px-3 py-2 text-sm"
+          />
+        </div>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" size="sm" onClick={exportToCSV}>
             <Download className="size-4" />
