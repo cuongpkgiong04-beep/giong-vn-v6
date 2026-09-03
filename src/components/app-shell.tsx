@@ -241,10 +241,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!authEnabled || !authUser) return;
-    const byEmail = employees.find((e) => e.email === (authUser.primaryEmail ?? ""));
-    const byName = !byEmail ? employees.find((e) => e.name === (authUser.displayName ?? "")) : null;
-    const mapped = byEmail ?? byName;
-    console.log(`[app-shell] setCurrentUserId: authEmail=${authUser.primaryEmail} authName=${authUser.displayName} byEmail=${byEmail?.name}(${byEmail?.role}) byName=${byName?.name}(${byName?.role}) mapped=${mapped?.name}(${mapped?.role})`);
+    // Find employees matching email — prefer Admin role when duplicates exist
+    const emailMatches = employees.filter((e) => e.email === (authUser.primaryEmail ?? ""));
+    const nameMatches = emailMatches.length === 0
+      ? employees.filter((e) => e.name === (authUser.displayName ?? ""))
+      : [];
+    const candidates = [...emailMatches, ...nameMatches];
+    // Prefer admin role, then any match
+    const mapped = candidates.find((e) => isAdminRole(e.role)) ?? candidates[0];
     if (mapped) setCurrentUserId(mapped.id);
   }, [authUser, setCurrentUserId, employees]);
 
