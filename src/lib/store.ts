@@ -495,20 +495,26 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           console.error("[store] Neon attendance load failed — keeping local attendance:", err);
         }
 
-        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], delCks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [];
+        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [];
         try {
-          [tsk, prp, nts, msgs, cks, delCks, dbEmps, dbCtrs] = await Promise.all([
+          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
             loadTasks(),
             loadProposals(),
             loadNotes(),
             loadMessages({ data: { channel: "general" } }),
             loadCheckins(),
-            loadDeletedCheckinIds(),
             loadEmps(),
             loadCtrs(),
           ]);
         } catch (err) {
           console.error("[store] Neon other-module load failed — attendance still merged:", err);
+        }
+        // Load deleted checkin IDs separately — this may fail if migration 0014 hasn't run yet
+        let delCks: any[] = [];
+        try {
+          delCks = await loadDeletedCheckinIds();
+        } catch {
+          // Migration 0014 not applied yet — ignore, no tombstone filtering needed
         }
 
         // Map Neon rows → app types (all synced since they came from DB)
