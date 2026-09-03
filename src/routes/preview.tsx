@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw, Smartphone, QrCode, ExternalLink, Monitor, X } from "lucide-react";
+import { RefreshCw, Smartphone, QrCode, ExternalLink, Monitor, X, ShieldAlert, ArrowLeft } from "lucide-react";
 import { ClientOnly } from "@/components/client-only";
+import { useAppStore } from "@/lib/store";
+import { isAdminRole } from "@/lib/catalog";
 
 export const Route = createFileRoute("/preview")({ component: PreviewPage });
 
@@ -21,6 +23,9 @@ const PAGES = [
 ];
 
 function PreviewPage() {
+  const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
+  const isAllowed = isAdminRole(currentEmployee?.role);
+
   const [currentPath, setCurrentPath] = useState("/");
   const [baseUrl, setBaseUrl] = useState("");
   const [showQr, setShowQr] = useState(false);
@@ -57,6 +62,27 @@ function PreviewPage() {
 
   return (
     <ClientOnly>
+      {/* Access Denied for non-admin */}
+      {!isAllowed ? (
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-4">
+          <div className="max-w-md text-center">
+            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-red-900/30">
+              <ShieldAlert className="size-8 text-red-400" />
+            </div>
+            <h1 className="text-xl font-bold text-white mb-2">Không có quyền truy cập</h1>
+            <p className="text-gray-400 mb-6">
+              Bạn không phải là Admin nên không có quyền truy cập trang Preview Mobile.
+            </p>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition"
+            >
+              <ArrowLeft className="size-4" />
+              Về trang chủ
+            </Link>
+          </div>
+        </div>
+      ) : (
       <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 p-4 lg:p-8">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -246,6 +272,7 @@ function PreviewPage() {
           </div>
         </div>
       </div>
+      )}
     </ClientOnly>
   );
 }

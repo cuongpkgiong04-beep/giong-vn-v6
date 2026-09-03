@@ -260,7 +260,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   const visibleNav = useMemo(
-    () => NAV.filter((item) => allowedPaths.includes(item.to)),
+    () => NAV.filter((item) => allowedPaths.includes(item.to) || item.to === "/preview"),
     [allowedPaths],
   );
 
