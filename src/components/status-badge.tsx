@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 export function StatusBadge({ value }: { value: string }) {
   const v = value.toLowerCase();
   let tone: "muted" | "accent" | "ok" | "warn" | "danger" = "muted";
-  if (v.includes("từ chối") || v.includes("hủy")) tone = "danger";
+  if (v.includes("từ chối") || v.includes("hủy") || v.includes("quá hạn")) tone = "danger";
   else if (v.includes("chờ") || v.includes("nháp") || v.includes("chưa") || v.includes("cần làm"))
     tone = "warn";
   else if (v.includes("tan ca"))

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, MapPin, Plus } from "lucide-react";
+import { Camera, Edit, MapPin, Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -19,7 +19,9 @@ import type { Task } from "@/lib/types";
 
 export const Route = createFileRoute("/nhiem-vu")({ component: TasksPage });
 
-const COLS = ["Việc cần làm", "Đang làm", "Đã xong"] as const;
+const COLS = ["Việc cần làm", "Quá hạn", "Đã xong"] as const;
+
+type TaskStatus = (typeof COLS)[number];
 
 function TasksPage() {
   const tasks = useAppStore((s) => s.tasks);
@@ -45,6 +47,21 @@ function TasksPage() {
 
   const isAdmin = isAdminRole(currentEmployee?.role);
 
+  // Check if task is overdue: due date < now and status is "Việc cần làm"
+  function isOverdue(t: Task): boolean {
+    if (t.status !== "Việc cần làm" || !t.due) return false;
+    const dueDate = new Date(t.due);
+    const now = new Date();
+    return dueDate.getTime() < now.getTime();
+  }
+
+  // Get effective column for task (auto-detect overdue)
+  function colOf(t: Task): TaskStatus {
+    if (t.status === "Đã xong") return "Đã xong";
+    if (isOverdue(t)) return "Quá hạn";
+    return "Việc cần làm";
+  }
+
   const filtered = useMemo(() => {
     const currentUserName = currentUser.username.toLowerCase();
     return tasks.filter((t) => {
@@ -66,12 +83,6 @@ function TasksPage() {
       return true;
     });
   }, [tasks, q, mine, currentUser.username, me, isAdmin]);
-
-  function colOf(t: Task) {
-    if (t.status === "Đã xong") return "Đã xong";
-    if (t.status === "Đang làm") return "Đang làm";
-    return "Việc cần làm";
-  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -140,7 +151,7 @@ function TasksPage() {
         </label>
         <div className="ml-auto flex rounded-md bg-surface p-1 shadow-[var(--shadow-card)]">
           <button type="button" onClick={() => setView("board")} className={`h-9 rounded-sm px-3 text-sm ${view === "board" ? "bg-forest text-forest-fg" : "text-muted"}`}>
-            Kanban
+            Khối
           </button>
           <button type="button" onClick={() => setView("list")} className={`h-9 rounded-sm px-3 text-sm ${view === "list" ? "bg-forest text-forest-fg" : "text-muted"}`}>
             Danh sách
@@ -159,32 +170,52 @@ function TasksPage() {
                   <span className="text-xs tabular text-muted">{items.length}</span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {items.slice(0, 24).map((t) => (
-                    <article key={t.id} className="rounded-lg bg-surface p-3 shadow-[var(--shadow-card)]">
-                      <p className="text-sm font-medium text-ink">{t.title}</p>
-                      <p className="mt-2 text-xs text-muted">
-                        {t.assignee || "Chưa gán"} · đến hạn {formatDate(t.due)}
-                      </p>
-                      {t.support ? <p className="mt-1 text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
-                      {t.blocker ? <p className="mt-2 line-clamp-2 text-xs text-warn">⚠ {t.blocker}</p> : null}
-                      {t.photo ? <img src={t.photo} alt="Ảnh" className="mt-2 h-12 w-12 rounded object-cover" /> : null}
-                      {t.location ? <p className="mt-1 text-[10px] text-faint">📍 {t.location}</p> : null}
-                      {canEditTask(currentEmployee, t.createdBy) ? (
-                        <div className="mt-3 flex flex-wrap gap-1">
-                          {COLS.filter((c) => c !== col).map((c) => (
+                  {items.slice(0, 24).map((t) => {
+                    const overdue = isOverdue(t);
+                    return (
+                      <article key={t.id} className={`rounded-lg bg-surface p-3 shadow-[var(--shadow-card)] ${overdue ? "border-l-2 border-red-300" : ""}`}>
+                        <p className={`text-sm font-medium ${overdue ? "text-red-400" : "text-ink"}`}>{t.title}</p>
+                        <p className={`mt-2 text-xs ${overdue ? "text-red-300" : "text-muted"}`}>
+                          {t.assignee || "Chưa gán"} · đến hạn {formatDate(t.due)}
+                        </p>
+                        {t.support ? <p className="mt-1 text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
+                        {t.blocker ? <p className="mt-2 line-clamp-2 text-xs text-warn">⚠ {t.blocker}</p> : null}
+                        {t.photo ? <img src={t.photo} alt="Ảnh" className="mt-2 h-12 w-12 rounded object-cover" /> : null}
+                        {t.location ? <p className="mt-1 text-[10px] text-faint">📍 {t.location}</p> : null}
+                        {canEditTask(currentEmployee, t.createdBy) ? (
+                          <div className="mt-3 flex flex-wrap gap-1">
+                            {COLS.filter((c) => c !== col).map((c) => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setTaskStatus(t.id, c)}
+                                className="h-8 rounded-sm bg-surface-2 px-2 text-[11px] font-medium text-muted hover:text-ink"
+                              >
+                                {c}
+                              </button>
+                            ))}
                             <button
-                              key={c}
                               type="button"
-                              onClick={() => setTaskStatus(t.id, c)}
-                              className="h-8 rounded-sm bg-surface-2 px-2 text-[11px] font-medium text-muted hover:text-ink"
+                              onClick={() => {
+                                setTitle(t.title);
+                                setAssignee(t.assignee);
+                                setDue(t.due ? t.due.split(" ")[0] : "");
+                                setSupport(t.support);
+                                setBlocker(t.blocker);
+                                setPhoto(t.photo ?? null);
+                                setLocation(t.location ?? "");
+                                setOpen(true);
+                              }}
+                              className="h-8 rounded-sm bg-surface-2 px-2 text-[11px] font-medium text-muted hover:text-ink flex items-center gap-1"
                             >
-                              {c}
+                              <Edit className="size-3" />
+                              Chỉnh sửa
                             </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </article>
-                  ))}
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
                   {items.length === 0 ? <p className="px-1 py-6 text-center text-sm text-faint">Trống</p> : null}
                 </div>
               </section>
@@ -199,22 +230,25 @@ function TasksPage() {
             </div>
           ) : (
             <ul className="divide-y divide-line">
-              {filtered.slice(0, 60).map((t) => (
-                <li key={t.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="font-medium text-ink">{t.title}</p>
-                    <p className="text-sm text-muted">
-                      {t.assignee} · tạo {formatDate(t.created)} · đến hạn {formatDate(t.due)}
-                    </p>
-                    {t.support ? <p className="text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
-                    {t.blocker ? <p className="text-xs text-warn">⚠ {t.blocker}</p> : null}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {t.photo ? <img src={t.photo} alt="Ảnh" className="h-10 w-10 rounded object-cover" /> : null}
-                    <StatusBadge value={t.status} />
-                  </div>
-                </li>
-              ))}
+              {filtered.slice(0, 60).map((t) => {
+                const overdue = isOverdue(t);
+                return (
+                  <li key={t.id} className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${overdue ? "bg-red-50/50" : ""}`}>
+                    <div className="min-w-0">
+                      <p className={`font-medium ${overdue ? "text-red-400" : "text-ink"}`}>{t.title}</p>
+                      <p className={`text-sm ${overdue ? "text-red-300" : "text-muted"}`}>
+                        {t.assignee} · tạo {formatDate(t.created)} · đến hạn {formatDate(t.due)}
+                      </p>
+                      {t.support ? <p className="text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
+                      {t.blocker ? <p className="text-xs text-warn">⚠ {t.blocker}</p> : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {t.photo ? <img src={t.photo} alt="Ảnh" className="h-10 w-10 rounded object-cover" /> : null}
+                      <StatusBadge value={overdue ? "Quá hạn" : t.status} />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Card>
