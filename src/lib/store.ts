@@ -396,28 +396,23 @@ async function _neonInsertMessage(r: ChatMessage) {
 }
 
 async function _neonInsertCheckin(r: CheckIn) {
-  try {
-    const { insertCheckin } = await import("@/routes/api/data");
-    await insertCheckin({
-      data: {
-        id: r.id,
-        name: r.name,
-        time: r.time,
-        date: r.date,
-        weekday: r.weekday,
-        gps: r.gps,
-        address: r.address,
-        note: r.note,
-        photo: r.photo ?? "",
-        centerCode: r.centerCode ?? "VP",
-        status: r.status ?? "checked_in",
-        updatedAt: r.updatedAt,
-      },
-    });
-    console.log(`[store] checkin synced to Neon: ${r.id}`);
-  } catch (err) {
-    console.error(`[store] checkin INSERT failed for ${r.id}:`, err);
-  }
+  const { insertCheckin } = await import("@/routes/api/data");
+  await insertCheckin({
+    data: {
+      id: r.id,
+      name: r.name,
+      time: r.time,
+      date: r.date,
+      weekday: r.weekday,
+      gps: r.gps,
+      address: r.address,
+      note: r.note,
+      photo: r.photo ?? "",
+      centerCode: r.centerCode ?? "VP",
+      status: r.status ?? "checked_in",
+      updatedAt: r.updatedAt,
+    },
+  });
 }
 
 async function _neonDeleteCheckin(id: string) {
@@ -827,10 +822,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     set((s) => ({ checkins: [rec, ...s.checkins] }));
     saveLs(get());
     addPendingSync({ collection: "checkins", data: rec });
-    console.log(`[store] addCheckin called: ${rec.id}, name=${rec.name}, gps=${rec.gps}`);
     _neonInsertCheckin(rec)
       .then(() => clearPendingSync([rec.id]))
-      .catch((err) => console.error(`[store] addCheckin neon failed:`, err));
+      .catch(console.warn);
     return rec;
   },
 

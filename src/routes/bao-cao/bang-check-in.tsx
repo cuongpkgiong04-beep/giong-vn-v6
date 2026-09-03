@@ -44,84 +44,85 @@ function CheckInMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const L = require("leaflet");
+    let cancelled = false;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !containerRef.current) return;
 
-    // Fix Leaflet default marker icon
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl:
-        "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-    });
+      // Fix Leaflet default marker icon
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
 
-    const map = L.map(containerRef.current, {
-      center: [21.0285, 105.8542], // Hanoi center
-      zoom: 12,
-      zoomControl: true,
-      attributionControl: true,
-    });
+      const map = L.map(containerRef.current, {
+        center: [21.0285, 105.8542],
+        zoom: 12,
+        zoomControl: true,
+        attributionControl: true,
+      });
 
-    const streetLayer = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        attribution: '&copy; <a href="https://osm.org/copyright">OSM</a>',
-        maxZoom: 19,
-      },
-    );
-
-    const satelliteLayer = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        attribution: '&copy; Esri',
-        maxZoom: 18,
-      },
-    );
-
-    // Default to street
-    streetLayer.addTo(map);
-
-    // Store layers for toggle
-    map._streetLayer = streetLayer;
-    map._satelliteLayer = satelliteLayer;
-
-    // Add markers
-    const markers = [];
-    for (const p of points) {
-      const coords = parseGps(p.gps);
-      if (!coords) continue;
-
-      const related = findEmployeeByLooseText(p.name);
-      const centerShort =
-        CENTERS.find((c) => c.code === p.centerCode)?.short ?? p.centerCode;
-
-      const marker = L.marker(coords).addTo(map);
-      marker.bindPopup(
-        `<div style="font-family:system-ui;min-width:180px">
-          <p style="font-weight:600;margin:0 0 4px 0">${p.name}</p>
-          <p style="font-size:12px;color:#666;margin:0 0 2px 0">${formatDate(p.date)} · ${p.time}</p>
-          <p style="font-size:12px;color:#666;margin:0 0 2px 0">Trung tâm: ${centerShort}</p>
-          ${p.address ? `<p style="font-size:12px;color:#666;margin:0 0 2px 0">${p.address}</p>` : ""}
-          ${related?.title ? `<p style="font-size:11px;color:#999;margin:2px 0 0 0">${related.title}</p>` : ""}
-        </div>`,
+      const streetLayer = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: '&copy; <a href="https://osm.org/copyright">OSM</a>',
+          maxZoom: 19,
+        },
       );
-      markers.push(marker);
-    }
 
-    // Fit bounds if markers exist
-    if (markers.length > 0) {
-      const group = L.featureGroup(markers);
-      map.fitBounds(group.getBounds().pad(0.1));
-    }
+      const satelliteLayer = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+          attribution: '&copy; Esri',
+          maxZoom: 18,
+        },
+      );
 
-    setTimeout(() => map.invalidateSize(), 200);
+      streetLayer.addTo(map);
+      (map as any)._streetLayer = streetLayer;
+      (map as any)._satelliteLayer = satelliteLayer;
 
-    mapRef.current = map;
+      const markers = [];
+      for (const p of points) {
+        const coords = parseGps(p.gps);
+        if (!coords) continue;
+
+        const related = findEmployeeByLooseText(p.name);
+        const centerShort =
+          CENTERS.find((c) => c.code === p.centerCode)?.short ?? p.centerCode;
+
+        const marker = L.marker(coords).addTo(map);
+        marker.bindPopup(
+          `<div style="font-family:system-ui;min-width:180px">
+            <p style="font-weight:600;margin:0 0 4px 0">${p.name}</p>
+            <p style="font-size:12px;color:#666;margin:0 0 2px 0">${formatDate(p.date)} · ${p.time}</p>
+            <p style="font-size:12px;color:#666;margin:0 0 2px 0">Trung tâm: ${centerShort}</p>
+            ${p.address ? `<p style="font-size:12px;color:#666;margin:0 0 2px 0">${p.address}</p>` : ""}
+            ${related?.title ? `<p style="font-size:11px;color:#999;margin:2px 0 0 0">${related.title}</p>` : ""}
+          </div>`,
+        );
+        markers.push(marker);
+      }
+
+      if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+      }
+
+      setTimeout(() => map.invalidateSize(), 200);
+      mapRef.current = map;
+    })();
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      cancelled = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [points]);
 
@@ -129,14 +130,13 @@ function CheckInMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const L = require("leaflet");
 
     if (layer === "satellite") {
-      map.removeLayer(map._streetLayer);
-      map._satelliteLayer.addTo(map);
+      if (map.hasLayer((map as any)._streetLayer)) map.removeLayer((map as any)._streetLayer);
+      if (!map.hasLayer((map as any)._satelliteLayer)) (map as any)._satelliteLayer.addTo(map);
     } else {
-      map.removeLayer(map._satelliteLayer);
-      map._streetLayer.addTo(map);
+      if (map.hasLayer((map as any)._satelliteLayer)) map.removeLayer((map as any)._satelliteLayer);
+      if (!map.hasLayer((map as any)._streetLayer)) (map as any)._streetLayer.addTo(map);
     }
   }, [layer]);
 

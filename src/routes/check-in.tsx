@@ -67,6 +67,7 @@ function CheckInPage() {
 
   const [detailRecord, setDetailRecord] = useState<(typeof checkins)[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [filterCenter, setFilterCenter] = useState<string>("all");
 
   const [q, setQ] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -84,6 +85,7 @@ function CheckInPage() {
 
   const rows = useMemo(() => {
     return visibleCheckins.filter((c) => {
+      if (filterCenter !== "all" && (c.centerCode ?? "VP") !== filterCenter) return false;
       if (dateFrom && c.date < dateFrom) return false;
       if (dateTo && c.date > dateTo) return false;
       if (q.trim()) {
@@ -103,7 +105,7 @@ function CheckInPage() {
       }
       return true;
     });
-  }, [visibleCheckins, q, dateFrom, dateTo]);
+  }, [visibleCheckins, q, dateFrom, dateTo, filterCenter]);
 
   function requestLocation(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -272,19 +274,36 @@ function CheckInPage() {
 
         {/* Center stats */}
         {centerStats.length > 0 && (
-          <div className="mb-4 flex gap-3 overflow-x-auto">
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => setFilterCenter("all")}
+              className={`flex-shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                filterCenter === "all"
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line bg-surface text-muted hover:border-accent/50"
+              }`}
+            >
+              Tất cả
+            </button>
             {centerStats.map((s) => (
-              <div
+              <button
                 key={s.code}
-                className="min-w-[120px] rounded-xl border border-line bg-surface p-3 text-sm"
+                type="button"
+                onClick={() => setFilterCenter(filterCenter === s.code ? "all" : s.code)}
+                className={`flex-shrink-0 rounded-xl border px-4 py-2 text-left text-sm transition ${
+                  filterCenter === s.code
+                    ? "border-accent bg-accent-soft"
+                    : "border-line bg-surface hover:border-accent/50"
+                }`}
               >
-                <p className="font-medium text-ink">
+                <p className={`font-medium ${filterCenter === s.code ? "text-accent" : "text-ink"}`}>
                   {CENTERS.find((c) => c.code === s.code)?.short ?? s.code}
                 </p>
-                <p className="text-muted">
+                <p className="text-xs text-muted">
                   <strong>{s.count}</strong> lượt
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         )}

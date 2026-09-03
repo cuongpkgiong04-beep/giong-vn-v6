@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Camera, Eye, Loader2, LogIn, LogOut, MapPin, TimerReset, Trash2 } from "lucide-react";
+import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, TimerReset, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -345,30 +345,28 @@ function ChamCongPage() {
         }
       />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {centerStats.map((item) => {
           const isActive = selectedCenter === item.code;
           return (
-            <Card
+            <button
               key={item.code}
-              className={`cursor-pointer p-3 transition ${isActive ? "border border-accent/60 bg-accent-soft/60 shadow-[var(--shadow-card-hover)]" : "hover:bg-surface-2"}`}
+              type="button"
               onClick={() => setSelectedCenter(isActive ? null : item.code)}
+              className={`flex-shrink-0 rounded-xl border px-4 py-2 text-left text-sm transition ${
+                isActive
+                  ? "border-accent bg-accent-soft"
+                  : "border-line bg-surface hover:border-accent/50"
+              }`}
             >
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-[10px] font-semibold tracking-[0.14em] text-muted uppercase">{item.code}</p>
-                  <p className="mt-1 text-sm font-semibold text-ink">{CENTERS.find((c) => c.code === item.code)?.short ?? item.code}</p>
-                </div>
-                <span className="flex size-8 items-center justify-center rounded-md bg-accent-soft text-accent">
-                  <Building2 className="size-4" />
-                </span>
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-muted">
-                <span>Vào: {item.in}</span>
-                <span>Ra: {item.out}</span>
-              </div>
-              <p className="mt-1 text-xs text-faint">Tổng {item.total} lượt</p>
-            </Card>
+              <p className={`font-medium ${isActive ? "text-accent" : "text-ink"}`}>
+                {CENTERS.find((c) => c.code === item.code)?.short ?? item.code}
+              </p>
+              <p className="text-xs text-muted">
+                Vào: <strong>{item.in}</strong> · Ra: <strong>{item.out}</strong>
+              </p>
+              <p className="text-xs text-faint">Tổng {item.total} lượt</p>
+            </button>
           );
         })}
       </div>
