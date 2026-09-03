@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { ClientOnly } from "@/components/client-only";
 import { PageHeader } from "@/components/page-header";
@@ -11,6 +11,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 export const Route = createFileRoute("/bao-cao")({ component: BaoCaoPage });
 
 function BaoCaoPage() {
+  const location = useRouterState({ select: (s) => s.location });
+  const isParentRoute = location.pathname === "/bao-cao";
   const tasks = useAppStore((s) => s.tasks);
   const pie = [
     { name: "Đã xong", value: tasks.filter((t) => t.status === "Đã xong").length, color: "#1c6b58" },
@@ -18,6 +20,8 @@ function BaoCaoPage() {
   ];
   const busy = seedDaily.filter((d) => d.in + d.out >= 8);
   const avgIn = Math.round(busy.reduce((s, d) => s + d.in, 0) / Math.max(busy.length, 1));
+
+  if (!isParentRoute) return <Outlet />;
 
   return (
     <div>
