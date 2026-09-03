@@ -611,6 +611,53 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > **Fix:** Thêm `COALESCE(e.role, 'User') as role` vào SELECT + thêm `role` vào DbEmployee type.
 > **LUÔN KIỂM TRA** query SELECT có đủ column cần thiết, đặc biệt là `role`.
 
+### Giai đoạn 19: Auth Flow Fixes (2026-09-03)
+
+| Commit | Thay đổi |
+|---|---|
+| `88181d3` | fix: loadEmployees query thiếu role column → tất cả员工都成User |
+| `456fdb2` | fix: forgot-password auto-create Better Auth account từ employees |
+| `c0317f7` | fix: column names camelCase trong auth INSERT |
+| `1738af1` | fix: ensureAuthUser dùng employee data thay vì registration |
+| `3a83c27` | fix: ensureAuthUser dùng password thật từ login form |
+| `dc4c9ff` | fix: forgot-password dùng auth.api.signUpEmail (hash đúng) |
+| `42aa4d0` | fix: forgot-password xóa user+account trước khi tạo lại |
+| `5f8dcd4` | fix: change-password providerId 'credential' → 'email' |
+| `4128a6b` | fix: changePassword dùng authMiddleware |
+| `812231a` | fix: changePassword bypass authConfigured check |
+| `846ecad` | fix: changePassword tìm account bằng password IS NOT NULL |
+
+> **LESSON LEARNED — Better Auth hashPassword format (2026-09-03):**
+> KHÔNG hash password thủ công bằng `hashPassword()` + SQL INSERT.
+> Better Auth signIn dùng format hash riêng → hash thủ công không khớp → “Sai mật khẩu”.
+> **Luôn dùng `auth.api.signUpEmail()`** để Better Auth tự xử lý hash đúng cách.
+> Khi user đã tồn tại → xóa user + session + account → gọi signUpEmail lại.
+>
+> **LESSON LEARNED — authMiddleware vs authConfigured (2026-09-03):**
+> `authMiddleware` gọi `requireUserId()` → fail nếu `authConfigured=false`.
+> Trên Vercel, `VITE_AUTH_ENABLED` có thể là false → middleware refuse.
+> **Fix:** Dùng `auth.api.getSession({ headers: request.headers })` trực tiếp.
+> Session cookie vẫn được forward đúng cách, bypass authConfigured check.
+>
+> **LESSON LEARNED — Server function session resolution (2026-09-03):**
+> Server function KHÔNG tự có session cookie. Cần:
+> 1. Dùng `authMiddleware` (nếu authConfigured=true), hoặc
+> 2. Dùng `auth.api.getSession({ headers: getRequest().headers })` trực tiếp.
+> `getSessionUser()` cũng cần headers được truyền vào.
+>
+> **LESSON LEARNED — Forgot password cho employee-only users (2026-09-03):**
+> Employee có trong `employees` table nhưng chưa có trong Better Auth `user` table.
+> Flow: 
+> 1. Tìm employee theo email
+> 2. Dùng `auth.api.signUpEmail()` tạo user + account (hash đúng)
+> 3. Nếu user đã tồn tại → xóa user + session + account → signUpEmail lại
+> 4. Trả temp password cho user
+>
+> **LESSON LEARNED — ensureAuthUser cần password (2026-09-03):**
+> `ensureAuthUser` gọi từ login flow khi signIn fail. Nếu chỉ truyền email,
+> function tự tạo random password → signIn retry fail.
+> **Fix:** Truyền password từ login form vào `ensureAuthUser`, dùng signUpEmail.
+
 ---
 
 ## 12. Vercel CLI — Access & Monitoring
@@ -677,5 +724,5 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
-*Cập nhật lần cuối: 2026-09-03 (Attendance data investigation + hydration fix + Vercel/Neon access rules)*
+*Cập nhật lần cuối: 2026-09-03 (Auth flow fixes: forgot-password + change-password + loadEmployees role)*
 *Người cập nhật: Trợ lý lập trình*
