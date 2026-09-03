@@ -72,7 +72,7 @@ function CheckInPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const canViewAll = hasPermission(currentEmployee, "checkin:view_all");
+  const canViewAll = isAdminRole(currentEmployee?.role) || hasPermission(currentEmployee, "checkin:view_all");
 
   const visibleCheckins = useMemo(() => {
     return checkins.filter((entry) => {
