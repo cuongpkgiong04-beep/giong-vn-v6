@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate, todayIso } from "@/lib/format";
-import { getEmployeeById } from "@/lib/catalog";
+
 import { canApproveProposals } from "@/lib/permissions";
 import { useAppStore } from "@/lib/store";
 import type { Proposal } from "@/lib/types";
@@ -25,8 +25,8 @@ function DeNghiPage() {
   const addProposal = useAppStore((s) => s.addProposal);
   const setProposalStatus = useAppStore((s) => s.setProposalStatus);
   const me = useAppStore((s) => s.currentName());
-  const currentUserId = useAppStore((s) => s.currentUserId);
-  const currentEmployee = getEmployeeById(currentUserId);
+  // Reactive: subscribe to employees so this re-renders when DB data loads
+  const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const canApprove = canApproveProposals(currentEmployee);
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Proposal["kind"]>("Nhân sự");

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDesc, DialogTitle } from "@/components/ui/
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EMPLOYEES, getEmployeeById, isAdminRole } from "@/lib/catalog";
+import { EMPLOYEES, isAdminRole } from "@/lib/catalog";
 import { canCreateTaskForOthers, canEditTask } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
@@ -26,9 +26,9 @@ function TasksPage() {
   const addTask = useAppStore((s) => s.addTask);
   const setTaskStatus = useAppStore((s) => s.setTaskStatus);
   const me = useAppStore((s) => s.currentName());
-  const currentUserId = useAppStore((s) => s.currentUserId);
-  const currentUser = getEmployeeById(currentUserId) ?? EMPLOYEES[0];
-  const currentEmployee = getEmployeeById(currentUserId);
+  // Reactive: subscribe to employees so this re-renders when DB data loads
+  const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
+  const currentUser = currentEmployee ?? EMPLOYEES[0];
   const canCreateForOthers = canCreateTaskForOthers(currentEmployee);
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
