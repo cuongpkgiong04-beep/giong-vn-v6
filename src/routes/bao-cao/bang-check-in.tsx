@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Download, Layers, MapPin, Satellite, Map as MapIcon } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { ClientOnly } from "@/components/client-only";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -44,13 +46,8 @@ function CheckInMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    let cancelled = false;
-    (async () => {
-      const L = (await import("leaflet")).default;
-      if (cancelled || !containerRef.current) return;
-
-      // Fix Leaflet default marker icon
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
+    // Fix Leaflet default marker icon
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl:
           "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -115,10 +112,8 @@ function CheckInMap({
 
       setTimeout(() => map.invalidateSize(), 200);
       mapRef.current = map;
-    })();
 
     return () => {
-      cancelled = true;
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
