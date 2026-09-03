@@ -305,29 +305,24 @@ async function _neonBulkMessages(rows: ChatMessage[]) {
 }
 
 async function _neonInsertAttendance(r: Attendance) {
-  try {
-    const { insertAttendance } = await import("@/routes/api/data");
-    await insertAttendance({
-      data: {
-        id: r.id,
-        name: r.name,
-        status: r.status,
-        time: r.time,
-        date: r.date,
-        weekday: r.weekday,
-        gps: r.gps,
-        address: r.address,
-        photo: r.photo,
-        type: r.type,
-        approved: r.approved,
-        workplace: r.workplace,
-        updatedAt: r.updatedAt,
-      },
-    });
-  } catch (err) {
-    console.warn("[store] Neon insert attendance failed:", err);
-    // Already in pending queue — will retry on next sync cycle
-  }
+  const { insertAttendance } = await import("@/routes/api/data");
+  await insertAttendance({
+    data: {
+      id: r.id,
+      name: r.name,
+      status: r.status,
+      time: r.time,
+      date: r.date,
+      weekday: r.weekday,
+      gps: r.gps,
+      address: r.address,
+      photo: r.photo,
+      type: r.type,
+      approved: r.approved,
+      workplace: r.workplace,
+      updatedAt: r.updatedAt,
+    },
+  });
 }
 
 async function _neonInsertTask(r: Task) {
