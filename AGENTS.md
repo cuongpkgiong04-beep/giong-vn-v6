@@ -540,6 +540,39 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > `MOBILE_PRIMARY` array trong `app-shell.tsx` kiểm soát nút nào hiện + thứ tự.
 > Grid layout phải khớp số nút (`grid-cols-N`). Đang chuyển từ 3→5 nút.
 
+### Giai đoạn 17: Offline-First Hoàn Chỉnh (2026-09-03)
+
+> Kiểm tra lại toàn bộ sync chấm công theo 4 tiêu chí của Đại ca (sync queue, local source of truth,
+> conflict resolution, PowerSync). Kết quả: giữ giải pháp custom, sửa 3 lỗ hổng + thêm tombstone.
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(sync): merge LWW so sánh `updatedAt` thay vì flag `synced` (fix badge "Đang chờ" kẹt vĩnh viễn sau khi retry thành công) |
+| (mới) | feat(sync): thêm pending queue cho tasks/notes/proposals/messages/checkins (trước chỉ có attendance) |
+| (mới) | feat(sync): tombstone xóa chấm công — `deleted_at` + `deleteAttendance()` + nút Xóa trong dialog chi tiết |
+| (mới) | feat(sync): upsert attendance dùng `WHERE attendance.updated_at < EXCLUDED.updated_at` (LWW đúng phía DB) |
+| (mới) | test: unit test `mergeByTs`/`parseTs` trong `src/lib/merge.ts` (11 test) |
+
+> **LESSON LEARNED — LWW phải so version, không dùng flag `synced`:**
+> Merge cũ: local `synced:false` → giữ local. Sau khi `retryPendingSync()` đẩy record lên Neon thành công
+> (clear queue), record vẫn `synced:false` trong local → badge "Đang chờ" kẹt vĩnh viễn dù data đã lên server.
+> **Fix:** Merge mới — record còn trong pending queue thì giữ local; không còn pending thì so `updatedAt`
+> (LWW), bản bằng nhau ưu tiên Neon (bản chính thức) → `synced` được tính lại đúng.
+>
+> **LESSON LEARNED — Merge từng collection:**
+> Trước đây chỉ `attendance` được merge cẩn thận; tasks/notes/checkins/messages bị ghi đè toàn bộ bằng Neon
+> → dữ liệu tạo offline (insert fail) bị mất. **Fix:** dùng chung `mergeByTs` cho tất cả collection
+> (local pending luôn giữ; không pending → Neon; có version field thì so LWW).
+>
+> **LESSON LEARNED — Tombstone:**
+> Xóa vật lý không lan truyền được trong offline-first (record "hồi sinh" trong local thiết bị khác).
+> **Fix:** soft delete `deleted_at` + `loadDeletedAttendanceIds()` → hydrate filter bỏ record đã xóa.
+> Migration: `migrations/0013_attendance_tombstone.sql`.
+>
+> **LƯU Ý cho Đại ca khi test:** Điểm danh offline trên điện thoại → bật mạng → record tự lên Neon
+> và badge "Đang chờ" tự hết. Admin xóa lượt chấm trên máy tính → điện thoại mở lại app sẽ không còn thấy
+> lượt đó. Migration 0013 chạy tự động khi Vercel build (`npm run db:migrate`).
+
 ---
 
 ## 12. Vercel CLI — Access & Monitoring
@@ -606,5 +639,5 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
-*Cập nhật lần cuối: 2026-09-03 (Attendance data fix, mobile bottom bar update)*
+*Cập nhật lần cuối: 2026-09-03 (Offline-first sync hoàn chỉnh: LWW merge, pending queue mọi module, tombstone)*
 *Người cập nhật: Trợ lý lập trình*

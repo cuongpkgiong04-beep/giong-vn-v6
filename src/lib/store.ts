@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types";
 import { nowTime, todayIso, weekdayVi } from "@/lib/format";
 import { uid } from "@/lib/utils";
+import { mergeByTs } from "./merge";
 
 const LS_KEY = "giong-vn-v5";
 
@@ -42,6 +43,7 @@ type Actions = {
     address?: string,
     photo?: string,
   ) => Attendance;
+  removeAttendance: (id: string) => void;
   addNote: (n: Omit<Note, "id">) => void;
   addProposal: (p: Omit<Proposal, "id">) => void;
   setProposalStatus: (id: string, status: Proposal["status"]) => void;
@@ -204,15 +206,34 @@ async function retryPendingSync() {
   const pending = getPendingSync();
   if (pending.length === 0) return;
   const succeeded: string[] = [];
+  const api = await import("@/routes/api/data");
   for (const record of pending) {
     try {
-      const { insertAttendance } = await import("@/routes/api/data");
-      if (record.collection === "attendance") {
-        await insertAttendance({ data: record.data });
-        succeeded.push(record.data.id);
+      switch (record.collection) {
+        case "attendance":
+          await api.insertAttendance({ data: record.data });
+          break;
+        case "tasks":
+          await _neonInsertTask(record.data as Task);
+          break;
+        case "notes":
+          await _neonInsertNote(record.data as Note);
+          break;
+        case "proposals":
+          await _neonInsertProposal(record.data as Proposal);
+          break;
+        case "messages":
+          await _neonInsertMessage(record.data as ChatMessage);
+          break;
+        case "checkins":
+          await _neonInsertCheckin(record.data as CheckIn);
+          break;
+        default:
+          continue; // unknown collection — leave in queue
       }
+      succeeded.push(record.data.id);
     } catch {
-      // Will retry on next hydrate
+      // Will retry on next sync cycle
     }
   }
   if (succeeded.length > 0) {
@@ -438,13 +459,21 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         // 2a: Push unsynced records to Neon
         await retryPendingSync();
 
-        const { loadAttendance, loadTasks, loadProposals, loadNotes, loadMessages, loadCheckins } = await import(
+        const {
+          loadAttendance,
+          loadTasks,
+          loadProposals,
+          loadNotes,
+          loadMessages,
+          loadCheckins,
+          loadDeletedAttendanceIds,
+        } = await import(
           "@/routes/api/data"
         );
         const { loadEmployees: loadEmps, loadCenters: loadCtrs } = await import(
           "@/routes/api/employee-crud"
         );
-        const [att, tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
+        const [att, tsk, prp, nts, msgs, cks, dbEmps, dbCtrs, delAtt] = await Promise.all([
           loadAttendance(),
           loadTasks(),
           loadProposals(),
@@ -453,6 +482,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadCheckins(),
           loadEmps(),
           loadCtrs(),
+          loadDeletedAttendanceIds(),
         ]);
 
         // Map Neon rows → app types (all synced since they came from DB)
@@ -511,45 +541,48 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const finalCenters = Array.from(centerMap.values());
 
         /* ── OFFLINE-FIRST MERGE: local is source of truth ────────────────────
-         * 1. Build map from LOCAL data (already loaded in step 1)
-         * 2. For each Neon record:
-         *    - If NOT in local → add it (new from another device)
-         *    - If IN local AND local is unsynced → keep local (Last Write Wins)
-         *    - If IN local AND local is synced → use Neon (newer version)
-         * 3. Result: local data preserved, Neon supplements with new records
+         * 1. Records still in the pending queue (offline-created) are KEPT from local.
+         * 2. Non-pending records use Neon; when a version timestamp exists the
+         *    NEWER one wins (LWW by updatedAt).
+         * 3. Records tombstoned on Neon (deleted_at) are removed from local.
          */
-        const currentLocal = get().attendance;
-        const attMap = new Map<string, Attendance>();
-        // Start with ALL local records
-        for (const a of currentLocal) attMap.set(a.id, a);
-        // Overlay Neon records
-        for (const n of neonAttendance) {
-          const local = attMap.get(n.id);
-          if (!local) {
-            // New record from Neon (another device) → add it
-            attMap.set(n.id, n);
-          } else if (local.synced) {
-            // Local was already synced → use Neon version (it's the source)
-            attMap.set(n.id, n);
-          }
-          // else: local is unsynced (pending sync) → KEEP local, don't overwrite
-        }
-        const mergedAttendance = Array.from(attMap.values())
-          .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
+        const attPendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'attendance').map((r) => r.data.id),
+        );
+        const taskPendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'tasks').map((r) => r.data.id),
+        );
+        const notePendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'notes').map((r) => r.data.id),
+        );
+        const proposalPendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'proposals').map((r) => r.data.id),
+        );
+        const messagePendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'messages').map((r) => r.data.id),
+        );
+        const checkinPendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'checkins').map((r) => r.data.id),
+        );
+        const deletedAttendanceIds = new Set((delAtt as any[]).map((r) => r.id));
 
-        // Mark pending records as unsynced
-        const pendingIds = new Set(getPendingSync().filter((r) => r.collection === 'attendance').map((r) => r.data.id));
-        for (const a of mergedAttendance) {
-          if (pendingIds.has(a.id)) a.synced = false;
-        }
+        const mergedAttendance = mergeByTs(
+          get().attendance,
+          neonAttendance,
+          attPendingIds,
+          (r) => r.updatedAt ?? `${r.date}T${r.time}`,
+        )
+          .filter((a) => !deletedAttendanceIds.has(a.id))
+          .map((a) => ({ ...a, synced: attPendingIds.has(a.id) ? false : true }))
+          .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
 
         set({
           attendance: mergedAttendance,
-          tasks: neonTasks,
-          proposals: neonProposals,
-          notes: neonNotes,
-          messages: neonMessages,
-          checkins: neonCheckins,
+          tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated),
+          proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds),
+          notes: mergeByTs(get().notes, neonNotes, notePendingIds),
+          messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
+          checkins: mergeByTs(get().checkins, neonCheckins, checkinPendingIds),
           employees: finalEmployees,
           centers: finalCenters,
           _neonReady: true,
@@ -599,7 +632,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     const task: Task = { ...t, id: uid("nv"), created: now, updated: now };
     set((s) => ({ tasks: [task, ...s.tasks] }));
     saveLs(get());
-    _neonInsertTask(task).catch(console.warn);
+    addPendingSync({ collection: "tasks", data: task });
+    _neonInsertTask(task)
+      .then(() => clearPendingSync([task.id]))
+      .catch(console.warn);
   },
 
   setTaskStatus: (id, status) => {
@@ -655,18 +691,35 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     return rec;
   },
 
+  removeAttendance: (id) => {
+    // Local first (source of truth): remove immediately
+    set((s) => ({ attendance: s.attendance.filter((a) => a.id !== id) }));
+    saveLs(get());
+    clearPendingSync([id]);
+    // Tombstone on Neon so other devices remove it too
+    import("@/routes/api/data")
+      .then(({ deleteAttendance }) => deleteAttendance({ data: { id } }))
+      .catch(console.warn);
+  },
+
   addNote: (n) => {
     const note: Note = { ...n, id: uid("gc") };
     set((s) => ({ notes: [note, ...s.notes] }));
     saveLs(get());
-    _neonInsertNote(note).catch(console.warn);
+    addPendingSync({ collection: "notes", data: note });
+    _neonInsertNote(note)
+      .then(() => clearPendingSync([note.id]))
+      .catch(console.warn);
   },
 
   addProposal: (p) => {
     const proposal: Proposal = { ...p, id: uid("dn") };
     set((s) => ({ proposals: [proposal, ...s.proposals] }));
     saveLs(get());
-    _neonInsertProposal(proposal).catch(console.warn);
+    addPendingSync({ collection: "proposals", data: proposal });
+    _neonInsertProposal(proposal)
+      .then(() => clearPendingSync([proposal.id]))
+      .catch(console.warn);
   },
 
   setProposalStatus: (id, status) => {
@@ -691,7 +744,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     };
     set((s) => ({ messages: [...s.messages, msg] }));
     saveLs(get());
-    _neonInsertMessage(msg).catch(console.warn);
+    addPendingSync({ collection: "messages", data: msg });
+    _neonInsertMessage(msg)
+      .then(() => clearPendingSync([msg.id]))
+      .catch(console.warn);
   },
 
   addCheckin: (gps = "", address = "", note = "") => {
@@ -708,7 +764,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     };
     set((s) => ({ checkins: [rec, ...s.checkins] }));
     saveLs(get());
-    _neonInsertCheckin(rec).catch(console.warn);
+    addPendingSync({ collection: "checkins", data: rec });
+    _neonInsertCheckin(rec)
+      .then(() => clearPendingSync([rec.id]))
+      .catch(console.warn);
     return rec;
   },
 }));

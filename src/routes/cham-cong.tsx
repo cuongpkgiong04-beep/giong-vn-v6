@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Camera, Eye, LogIn, LogOut, MapPin, TimerReset } from "lucide-react";
+import { Building2, Camera, Eye, LogIn, LogOut, MapPin, TimerReset, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -38,6 +38,7 @@ function ChamCongPage() {
   const attendance = useAppStore((s) => s.attendance);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const clock = useAppStore((s) => s.clock);
+  const removeAttendance = useAppStore((s) => s.removeAttendance);
   // Reactive: subscribe to employees so this re-renders when DB data loads
   const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const currentName = useAppStore((s) => s.currentName());
@@ -88,6 +89,10 @@ function ChamCongPage() {
   }, [currentEmployee]);
 
   const canViewAll = hasPermission(currentEmployee, "attendance:view_all");
+  // Delete allowed for admins (any record) or the record owner
+  const canDeleteRecord = detailRecord
+    ? canViewAll || detailRecord.name === (currentEmployee?.name ?? currentName)
+    : false;
 
   const visibleAttendance = useMemo(() => {
     return attendance.filter((record) => {
@@ -284,6 +289,18 @@ function ChamCongPage() {
     const rec = clock(punchType, gps, finalAddress, photoUrl);
     toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
     setIsDialogOpen(false);
+  }
+
+  function handleDeleteRecord() {
+    if (!detailRecord) return;
+    const empName = detailRecord.name;
+    const ok = window.confirm(
+      `Xóa lượt chấm công của ${empName} lúc ${detailRecord.time} ngày ${formatDate(detailRecord.date)}?`,
+    );
+    if (!ok) return;
+    removeAttendance(detailRecord.id);
+    setIsDetailOpen(false);
+    toast.success("Đã xóa lượt chấm công", { description: empName });
   }
 
   return (
@@ -662,7 +679,15 @@ function ChamCongPage() {
             </div>
           )}
 
-          <div className="mt-5 flex justify-end">
+          <div className="mt-5 flex items-center justify-between gap-3">
+            {canDeleteRecord ? (
+              <Button variant="danger" onClick={handleDeleteRecord}>
+                <Trash2 className="size-4" />
+                Xóa lượt chấm
+              </Button>
+            ) : (
+              <span />
+            )}
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Đóng</Button>
           </div>
         </DialogContent>

@@ -24,7 +24,8 @@ export const loadAttendance = createServerFn({ method: "GET" })
       approved: string;
       workplace: string;
       updated_at: string | null;
-    }>`SELECT * FROM attendance ORDER BY date DESC, time DESC LIMIT 1000`;
+      deleted_at: string | null;
+    }>`SELECT * FROM attendance WHERE deleted_at IS NULL ORDER BY date DESC, time DESC LIMIT 1000`;
   });
 
 export const insertAttendance = createServerFn({ method: "POST" })
@@ -57,7 +58,8 @@ export const insertAttendance = createServerFn({ method: "POST" })
         name = EXCLUDED.name, status = EXCLUDED.status, time = EXCLUDED.time,
         date = EXCLUDED.date, weekday = EXCLUDED.weekday, gps = EXCLUDED.gps,
         address = EXCLUDED.address, photo = EXCLUDED.photo, workplace = EXCLUDED.workplace,
-        updated_at = GREATEST(attendance.updated_at, EXCLUDED.updated_at)
+        updated_at = EXCLUDED.updated_at
+      WHERE attendance.updated_at < EXCLUDED.updated_at
     `;
   });
 
@@ -94,9 +96,24 @@ export const bulkInsertAttendance = createServerFn({ method: "POST" })
           name = EXCLUDED.name, status = EXCLUDED.status, time = EXCLUDED.time,
           date = EXCLUDED.date, weekday = EXCLUDED.weekday, gps = EXCLUDED.gps,
           address = EXCLUDED.address, photo = EXCLUDED.photo, workplace = EXCLUDED.workplace,
-          updated_at = GREATEST(attendance.updated_at, EXCLUDED.updated_at)
+          updated_at = EXCLUDED.updated_at
+        WHERE attendance.updated_at < EXCLUDED.updated_at
       `;
     }
+  });
+
+export const deleteAttendance = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    // Tombstone — soft delete so other devices can sync the removal
+    await sql`UPDATE attendance SET deleted_at = now() WHERE id = ${data.id}`;
+  });
+
+export const loadDeletedAttendanceIds = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{ id: string }>`SELECT id FROM attendance WHERE deleted_at IS NOT NULL`;
   });
 
 /* ─────────────────── Tasks ─────────────────── */
