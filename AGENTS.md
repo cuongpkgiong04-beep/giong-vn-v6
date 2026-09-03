@@ -603,6 +603,13 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > Em có quyền dùng Playwright headless browser để login vào Vercel và test UI.
 > Script test nên đặt trong `scripts/test-*.mjs` và xóa sau khi hoàn thành.
 > Luôn dùng `waitUntil: 'networkidle'` + `waitForTimeout(15000)` để đợi Neon hydration.
+>
+> **LESSON LEARNED — CRITICAL BUG: Missing role column in query (2026-09-03):**
+> Query `loadEmployees` trong `employee-crud.ts` **thiếu `e.role`** trong SELECT.
+> Kết quả: role luôn undefined → fallback `'User'` → TẤT CẢ nhân sự đều thành User.
+> Admin không thấy dữ liệu attendance của người khác vì `canViewAll=false`.
+> **Fix:** Thêm `COALESCE(e.role, 'User') as role` vào SELECT + thêm `role` vào DbEmployee type.
+> **LUÔN KIỂM TRA** query SELECT có đủ column cần thiết, đặc biệt là `role`.
 
 ---
 
