@@ -6,7 +6,9 @@ export function StatusBadge({ value }: { value: string }) {
   if (v.includes("từ chối") || v.includes("hủy")) tone = "danger";
   else if (v.includes("chờ") || v.includes("nháp") || v.includes("chưa") || v.includes("cần làm"))
     tone = "warn";
-  else if (v.includes("đang làm") || v.includes("giải ngân") || v.includes("mở l/c") || v.includes("tan ca"))
+  else if (v.includes("tan ca"))
+    tone = "warn";
+  else if (v.includes("đang làm") || v.includes("giải ngân") || v.includes("mở l/c"))
     tone = "accent";
   else if (
     v.includes("xong") ||
