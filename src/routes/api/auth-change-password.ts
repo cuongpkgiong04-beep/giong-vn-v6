@@ -66,8 +66,8 @@ export const changePassword = createServerFn({ method: "POST" })
     const userId = session.user.id;
     
     // Get current account
-    const accounts = await sql<{ id: string; password: string }>`
-      SELECT id, password FROM account WHERE "userId" = ${userId} AND "providerId" = 'email'
+    const accounts = await sql<{ id: string; password: string; providerId: string }>`
+      SELECT id, password, "providerId" FROM account WHERE "userId" = ${userId} AND password IS NOT NULL
     `;
     
     if (accounts.length === 0) {
