@@ -441,31 +441,27 @@ export const reverseGeocode = createServerFn({ method: "GET" })
     }
   });
 
-/* ─────────── TEMP: Fix duplicate employees ─────────── */
-export const fixDuplicateEmployees = createServerFn({ method: "POST" })
+/* ─────────── TEMP: Fix admin roles in DB ─────────── */
+export const fixAdminRoles = createServerFn({ method: "POST" })
   .handler(async () => {
     const sql = await getSql();
     const results: string[] = [];
-    // Find emails with multiple employees
-    const dupes = await sql<{ email: string; count: number }>`
-      SELECT LOWER(email) as email, COUNT(*) as count FROM employees WHERE status = 'active' AND email IS NOT NULL AND email != '' GROUP BY LOWER(email) HAVING COUNT(*) > 1
-    `;
-    for (const d of dupes) {
-      const employees = await sql<{ id: string; name: string; role: string }>`
-        SELECT id, name, role FROM employees WHERE LOWER(email) = ${d.email} AND status = 'active' ORDER BY CASE WHEN role = 'Admin' THEN 0 ELSE 1 END
+    // Known admin emails from catalog
+    const adminEmails = [
+      'cuongpk.giong04@gmail.com',
+      'cuongpk.giong02@gmail.com',
+      'thuynvy218@gmail.com',
+      'hoangminhchau2631960@gmail.com',
+    ];
+    for (const email of adminEmails) {
+      const r = await sql<{ name: string }>`
+        UPDATE employees SET role = 'Admin' WHERE LOWER(email) = LOWER(${email}) AND status = 'active' RETURNING name
       `;
-      if (employees.length > 1) {
-        // Keep the Admin one, soft-delete the rest
-        const keep = employees[0];
-        for (let i = 1; i < employees.length; i++) {
-          await sql`UPDATE employees SET status = 'inactive' WHERE id = ${employees[i].id}`;
-          results.push(`Deleted: ${employees[i].name} (role=${employees[i].role}) — kept ${keep.name} (role=${keep.role})`);
-        }
-      }
+      if (r.length > 0) results.push(`Set Admin: ${r[0].name}`);
+      else results.push(`Not found: ${email}`);
     }
-    if (results.length === 0) results.push('No duplicates found');
     const all = await sql<{ name: string; email: string; role: string }>`
-      SELECT name, email, role FROM employees WHERE status = 'active' ORDER BY role, name
+      SELECT name, email, role FROM employees WHERE status = 'active' ORDER BY role DESC, name
     `;
     return { results, allEmployees: all };
   });

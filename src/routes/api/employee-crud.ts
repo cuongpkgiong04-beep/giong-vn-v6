@@ -11,6 +11,7 @@ export type DbEmployee = {
   id: string;
   center_id: string;
   department: string;
+  role: string;
   title: string;
   gender: string;
   phone: string;
@@ -58,6 +59,7 @@ export const loadEmployees = createServerFn({ method: "GET" }).handler(
         e.id,
         e.center_id,
         e.department,
+        COALESCE(e.role, 'User') as role,
         e.title,
         e.gender,
         COALESCE(e.phone, '') as phone,
