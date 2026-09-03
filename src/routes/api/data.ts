@@ -385,6 +385,7 @@ export const insertCheckin = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data }) => {
+    console.log(`[insertCheckin] called: id=${data.id}, name=${data.name}`);
     const sql = await getSql();
     const ts = data.updatedAt ? new Date(data.updatedAt) : new Date();
     try {
@@ -403,6 +404,7 @@ export const insertCheckin = createServerFn({ method: "POST" })
       `;
     } catch {
       // Fallback: old columns only (migration 0014 not yet applied)
+      console.log(`[insertCheckin] fallback to old columns for ${data.id}`);
       await sql`
         INSERT INTO checkins (id, name, time, date, weekday, gps, address, note)
         VALUES (${data.id}, ${data.name}, ${data.time}, ${data.date}, ${data.weekday},
@@ -410,6 +412,7 @@ export const insertCheckin = createServerFn({ method: "POST" })
         ON CONFLICT (id) DO NOTHING
       `;
     }
+    console.log(`[insertCheckin] SUCCESS: ${data.id}`);
   });
 
 export const deleteCheckin = createServerFn({ method: "POST" })
