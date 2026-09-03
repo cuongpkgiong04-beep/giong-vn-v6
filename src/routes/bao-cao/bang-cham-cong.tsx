@@ -116,28 +116,33 @@ function BangChamCongReport() {
     let stt = 1;
 
     for (const g of grouped.values()) {
-      // Sort times
-      const ins = g.checkIns.sort();
-      const outs = g.checkOuts.sort();
+      // Sort times numerically (not lexicographic)
+      const ins = g.checkIns.sort((a, b) => timeToSeconds(a) - timeToSeconds(b));
+      const outs = g.checkOuts.sort((a, b) => timeToSeconds(a) - timeToSeconds(b));
 
-      // Calculate work time: pair ins and outs
+      // Calculate work time: pair ins and outs chronologically
       let totalSeconds = 0;
       const pairs = Math.min(ins.length, outs.length);
       for (let i = 0; i < pairs; i++) {
         const inSec = timeToSeconds(ins[i]);
         const outSec = timeToSeconds(outs[i]);
-        if (outSec > inSec) totalSeconds += outSec - inSec;
+        const shift = outSec > inSec ? outSec - inSec : 0;
+        // Cap single shift at 12h (no valid shift exceeds 12h)
+        totalSeconds += Math.min(shift, 12 * 3600);
       }
       // If more outs than ins, pair remaining outs with earliest ins
       if (outs.length > ins.length && ins.length > 0) {
         for (let i = pairs; i < outs.length; i++) {
           const inSec = timeToSeconds(ins[0]);
           const outSec = timeToSeconds(outs[i]);
-          if (outSec > inSec) totalSeconds += outSec - inSec;
+          const shift = outSec > inSec ? outSec - inSec : 0;
+          totalSeconds += Math.min(shift, 12 * 3600);
         }
       }
+      // Cap total daily work time at 24h max
+      totalSeconds = Math.min(totalSeconds, 24 * 3600);
 
-      const workDays = totalSeconds > 0 ? Math.round((totalSeconds / (8 * 3600)) * 100) / 100 : 0;
+      const workDays = totalSeconds > 0 ? Math.min(Math.round((totalSeconds / (8 * 3600)) * 100) / 100, 3.0) : 0;
 
       rows.push({
         stt: stt++,
