@@ -781,6 +781,27 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > **Push fail:** Windows Credential Manager giữ credential tài khoản cũ (`cuongpkgiong02-cyber`).
 > Fix: Đại ca logout GitHub cũ + login đúng tài khoản `cuongpkgiong04-beep`.
 
+### Giai đoạn 21: Fix Attendance Sync Bug (2026-09-04)
+
+| Commit | Thay đổi |
+|---|---|
+| `34222e9` | fix(cham-cong): xóa try/catch trong _neonInsertAttendance để error propagate đúng |
+
+> **LESSON LEARNED — _neonInsertAttendance nuốt lỗi (2026-09-04):**
+> `_neonInsertAttendance()` có try/catch bịt lỗi KHÔNG throw lại.
+> `clock()` gọi `_neonInsertAttendance(rec).then(clearPendingSync).catch(...)` nhưng
+> `.catch()` KHÔNG BAO GIỜ chạy vì error đã bị nuốt.
+> **Hậu quả:** Neon INSERT fail → record vẫn bị xóa khỏi pending queue + synced=true.
+> → Record KHÔNG có trên Neon, KHÔNG có trong pending queue → không bao giờ retry.
+> → Tan ca mất trên thiết bị khác (cross-device sync fail).
+>
+> **Fix:** Xóa try/catch trong `_neonInsertAttendance()` — để error propagate tự nhiên.
+> `.catch()` trong `clock()` chạy → giữ record trong pending queue → retry qua interval 30s.
+>
+> **LƯU Ý:** Kiểm tra tất cả `_neonInsert*` functions — chỉ `_neonInsertAttendance` có bug này.
+> Các functions khác (`_neonInsertTask`, `_neonInsertNote`, `_neonInsertProposal`,
+> `_neonInsertMessage`) KHÔNG có try/catch → throw đúng cách → `.catch()` hoạt động.
+
 ---
-*Cập nhật lần cuối: 2026-09-04 (Check-in module: upgrade, report, center filter, map debug)*
+*Cập nhật lần cuối: 2026-09-04 (Fix attendance sync bug — swallowed error)*
 *Người cập nhật: Trợ lý lập trình*
