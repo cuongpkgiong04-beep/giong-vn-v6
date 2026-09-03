@@ -552,6 +552,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 | (mới) | feat(sync): tombstone xóa chấm công — `deleted_at` + `deleteAttendance()` + nút Xóa trong dialog chi tiết |
 | (mới) | feat(sync): upsert attendance dùng `WHERE attendance.updated_at < EXCLUDED.updated_at` (LWW đúng phía DB) |
 | (mới) | test: unit test `mergeByTs`/`parseTs` trong `src/lib/merge.ts` (11 test) |
+| `77c3ffd` | fix(store): hydrate tách load attendance ra try/catch riêng — lỗi module khác không còn chặn merge chấm công |
 
 > **LESSON LEARNED — LWW phải so version, không dùng flag `synced`:**
 > Merge cũ: local `synced:false` → giữ local. Sau khi `retryPendingSync()` đẩy record lên Neon thành công
