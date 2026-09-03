@@ -346,6 +346,21 @@ function ChamCongPage() {
       />
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <button
+          type="button"
+          onClick={() => setSelectedCenter(null)}
+          className={`flex-shrink-0 rounded-xl border px-4 py-2 text-left text-sm font-medium transition ${
+            !selectedCenter
+              ? "border-accent bg-accent-soft text-accent"
+              : "border-line bg-surface text-muted hover:border-accent/50"
+          }`}
+        >
+          <p>Tất cả</p>
+          <p className="text-xs text-faint">
+            Vào: <strong>{centerStats.reduce((sum, c) => sum + c.in, 0)}</strong> · Ra: <strong>{centerStats.reduce((sum, c) => sum + c.out, 0)}</strong>
+          </p>
+          <p className="text-xs text-faint">Tổng {centerStats.reduce((sum, c) => sum + c.total, 0)} lượt</p>
+        </button>
         {centerStats.map((item) => {
           const isActive = selectedCenter === item.code;
           return (
