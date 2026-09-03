@@ -41,13 +41,44 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
     const sql = await getSql();
     const { email } = data;
     
-    // Find user by email
-    const users = await sql<{ id: string; email: string; name: string }>`
+    // Find user by email in Better Auth user table
+    let users = await sql<{ id: string; email: string; name: string }>`
       SELECT id, email, name FROM "user" WHERE LOWER(email) = LOWER(${email})
     `;
     
+    // If not found in Better Auth, check employees table and auto-create auth account
     if (users.length === 0) {
-      throw new Error("Không tìm thấy tài khoản với email này");
+      const emps = await sql<{ id: string; name: string; email: string }>`
+        SELECT id, name, email FROM employees WHERE LOWER(email) = LOWER(${email}) AND status = 'active' LIMIT 1
+      `;
+      if (emps.length === 0) {
+        throw new Error("Không tìm thấy tài khoản với email này");
+      }
+      // Auto-create Better Auth user from employee data
+      const emp = emps[0];
+      const tempPwd = generateTempPassword();
+      const { hashPassword } = await import("better-auth/crypto");
+      const hashedPwd = await hashPassword(tempPwd);
+      // Create user
+      const userId = crypto.randomUUID();
+      await sql`
+        INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at)
+        VALUES (${userId}, ${emp.name}, ${emp.email}, true, NOW(), NOW())
+        ON CONFLICT (email) DO NOTHING
+      `;
+      // Create account
+      await sql`
+        INSERT INTO account (id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt")
+        VALUES (${crypto.randomUUID()}, ${emp.email}, 'email', ${userId}, ${hashedPwd}, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+      `;
+      // Re-query to get the user
+      users = await sql<{ id: string; email: string; name: string }>`
+        SELECT id, email, name FROM "user" WHERE LOWER(email) = LOWER(${email})
+      `;
+      if (users.length === 0) {
+        throw new Error("Không thể tạo tài khoản auth");
+      }
     }
     
     const user = users[0];
