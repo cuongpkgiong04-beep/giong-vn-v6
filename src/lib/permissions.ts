@@ -57,7 +57,8 @@ export type ModuleKey =
   | "notes"
   | "chat"
   | "guide"
-  | "admin";
+  | "admin"
+  | "preview";
 
 const MODULE_ACCESS_STORAGE_KEY = "giong-vn-module-access";
 
@@ -77,6 +78,7 @@ export const MODULE_DEFINITIONS = [
   { key: "notes", label: "Ghi chú", paths: ["/ghi-chu"], group: "Hệ thống" },
   { key: "chat", label: "Chat", paths: ["/chat"], group: "Hệ thống" },
   { key: "guide", label: "Hướng dẫn", paths: ["/huong-dan"], group: "Hệ thống" },
+  { key: "preview", label: "Preview Mobile", paths: ["/preview"], group: "Hệ thống" },
   { key: "admin", label: "Quản trị", paths: ["/admin/approvals", "/admin/permissions"], group: "Quản trị" },
 ] as const;
 
@@ -135,6 +137,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
     chat: true,
     guide: true,
     documents: true,
+    preview: true,
   };
 
   if (!employee) return defaultMap;
@@ -156,6 +159,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       chat: true,
       guide: true,
       admin: true,
+      preview: true,
     };
   }
 

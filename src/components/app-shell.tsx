@@ -13,6 +13,7 @@ import {
   Menu,
   MessageSquare,
   RefreshCw,
+  Smartphone,
   Search,
   ShieldCheck,
   StickyNote,
@@ -87,6 +88,7 @@ const NAV: NavItem[] = [
   { to: "/ghi-chu", label: "Ghi chú", icon: StickyNote, group: "Hệ thống" },
   { to: "/chat", label: "Chat", icon: MessageSquare, group: "Hệ thống" },
   { to: "/huong-dan", label: "Hướng dẫn", icon: BookOpen, group: "Hệ thống" },
+  { to: "/preview", label: "Preview Mobile", icon: Smartphone, group: "Hệ thống" },
 ];
 
 const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/chat", "/nhiem-vu"];
