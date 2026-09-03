@@ -432,7 +432,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     let localAtt: Attendance[] = [];
     try {
       const raw = localStorage.getItem(LS_KEY);
-      console.log(`[store] Hydrate start: localStorage ${raw ? 'has data' : 'empty'}`);
       if (raw) {
         const ls = JSON.parse(raw) as PersistSlice;
         localAtt = (ls.attendance ?? []).map((a) => ({
@@ -453,7 +452,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         });
       }
     } catch { /* ignore parse errors */ }
-    console.log(`[store] Hydrate step1: ${localAtt.length} local attendance, ${get().employees.length} employees from localStorage`);
 
     // STEP 2: Background — retry pending + fetch Neon + merge INTO local
     (async () => {
@@ -482,7 +480,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         let delAtt: any[] = [];
         try {
           [att, delAtt] = await Promise.all([loadAttendance(), loadDeletedAttendanceIds()]);
-          console.log(`[store] Neon attendance loaded: ${att.length} records, ${delAtt.length} deleted`);
         } catch (err) {
           console.error("[store] Neon attendance load failed — keeping local attendance:", err);
         }
@@ -498,7 +495,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             loadEmps(),
             loadCtrs(),
           ]);
-          console.log(`[store] Neon other modules: tasks=${tsk.length}, proposals=${prp.length}, notes=${nts.length}, messages=${msgs.length}, checkins=${cks.length}, employees=${dbEmps.length}, centers=${dbCtrs.length}`);
         } catch (err) {
           console.error("[store] Neon other-module load failed — attendance still merged:", err);
         }
@@ -584,7 +580,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         );
         const deletedAttendanceIds = new Set((delAtt as any[]).map((r) => r.id));
 
-        console.log(`[store] Hydrate merge: local=${get().attendance.length}, neon=${neonAttendance.length}, pending=${attPendingIds.size}, deleted=${deletedAttendanceIds.size}`);
         const mergedAttendance = mergeByTs(
           get().attendance,
           neonAttendance,
@@ -595,7 +590,6 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           .map((a) => ({ ...a, synced: attPendingIds.has(a.id) ? false : true }))
           .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
 
-        console.log(`[store] Hydrate result: ${mergedAttendance.length} attendance records, ${finalEmployees.length} employees`);
         set({
           attendance: mergedAttendance,
           tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated),
