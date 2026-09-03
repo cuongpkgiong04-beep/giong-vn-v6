@@ -15,6 +15,7 @@ import {
 import { isAdminRole } from "@/lib/catalog";
 import { getSql } from "@/lib/db";
 import { createServerFn } from "@tanstack/react-start";
+import crypto from "crypto";
 
 /**
  * Resolve the current signed-in user from the session.
@@ -158,9 +159,42 @@ export const ensureAuthUser = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { getRegistrationRequestByEmail } = await import("@/lib/registrations");
     const reg = await getRegistrationRequestByEmail(data.email);
+    
+    // If no registration request, check employees table (forgot-password users)
     if (!reg) {
-      console.warn(`[auth] ensureAuthUser: no registration found for ${data.email}`);
-      return { created: false, error: "Không tìm thấy yêu cầu đăng ký" };
+      const sql = await getSql();
+      const emp = await sql<{ id: string; name: string; email: string }>`
+        SELECT id, name, email FROM employees WHERE LOWER(email) = LOWER(${data.email}) AND status = 'active' LIMIT 1
+      `;
+      if (emp.length === 0) {
+        console.warn(`[auth] ensureAuthUser: no registration or employee found for ${data.email}`);
+        return { created: false, error: "Không tìm thấy tài khoản với email này" };
+      }
+      // Check if Better Auth user already exists
+      const existingUser = await sql<{ id: string }>`
+        SELECT id FROM "user" WHERE LOWER(email) = LOWER(${data.email}) LIMIT 1
+      `;
+      if (existingUser.length > 0) {
+        // User exists but signIn failed — password is wrong
+        return { created: false, error: "already" };
+      }
+      // Create Better Auth account from employee data
+      const { hashPassword } = await import("better-auth/crypto");
+      const tempPwd = Array.from({ length: 12 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%'[Math.floor(Math.random() * 66)]).join('');
+      const hashedPwd = await hashPassword(tempPwd);
+      const userId = crypto.randomUUID();
+      await sql`
+        INSERT INTO "user" ("id", "name", "email", "emailVerified", "createdAt", "updatedAt")
+        VALUES (${userId}, ${emp[0].name}, ${emp[0].email}, true, NOW(), NOW())
+        ON CONFLICT ("email") DO NOTHING
+      `;
+      await sql`
+        INSERT INTO "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
+        VALUES (${crypto.randomUUID()}, ${emp[0].email}, 'email', ${userId}, ${typeof hashedPwd === 'string' ? hashedPwd : JSON.stringify(hashedPwd)}, NOW(), NOW())
+        ON CONFLICT DO NOTHING
+      `;
+      console.log(`[auth] ensureAuthUser: created account from employee for ${data.email}`);
+      return { created: true };
     }
     if (reg.status !== "approved") {
       console.warn(`[auth] ensureAuthUser: ${data.email} status=${reg.status}`);

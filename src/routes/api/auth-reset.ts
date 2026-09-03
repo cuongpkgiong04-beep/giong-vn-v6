@@ -69,7 +69,7 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
       // Create account
       await sql`
         INSERT INTO "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
-        VALUES (${crypto.randomUUID()}, ${emp.email}, 'email', ${userId}, ${hashedPwd}, NOW(), NOW())
+        VALUES (${crypto.randomUUID()}, ${emp.email}, 'email', ${userId}, ${typeof hashedPwd === 'string' ? hashedPwd : JSON.stringify(hashedPwd)}, NOW(), NOW())
         ON CONFLICT DO NOTHING
       `;
       // Re-query to get the user
