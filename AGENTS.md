@@ -58,16 +58,15 @@
 - Tín dụng (credit module) — xóa ngày 2026-08-28
 
 ### 🔄 Đang triển khai / Cần theo dõi
+- **Check-in sync từ điện thoại** — User check-in trên điện thoại KHÔNG lên Neon. INSERT server function không được gọi từ client. Cần debug thêm (có thể do user dùng bản code cũ/cached, hoặc lỗi dynamic import trên mobile).
+- **Bản đồ report Check-in** — Tile layer đường phố (OSM) CHƯA hiển thị trên báo cáo. Leaflet marker + controls hoạt động, nhưng tile images không load. Cần tiếp tục debug.
 - **Auth login cho nhân sự mới** — signUpEmail hoạt động, signIn retry đã fix. Cần test flow "Quên mật khẩu" trên Vercel.
-- **Chấm công sync** — Đã fix pending sync queue + localStorage-first loading. Đã test PASSED trên Vercel.
-- **Mobile bottom bar** — Đã thêm Check-in + Chat vào bottom bar (5 nút). Đã test PASSED trên Vercel.
-- **Check-in module** — Đã nâng cấp hoàn chỉnh (commit `b7fd7c5`). Cần push lên GitHub + test trên Vercel.
 
 ### 📋 Việc cần làm (backlog)
-- **[ƯU TIÊN]** Push commit Check-in lên GitHub + test trên Vercel
-- Test Check-in flow: GPS bắt buộc → photo → confirm → verify trên Neon
-- Test Báo cáo Check-in: bản đồ 2 lớp satellite/street hoạt động đúng
-- Xác nhận migration 0014 chạy đúng trên Neon
+- **[ƯU TIÊN]** Fix bản đồ báo cáo Check-in — tile layer OSM không load (đã import static + CSS nhưng chưa hoạt động)
+- **[ƯU TIÊNI]** Debug check-in sync từ điện thoại — user check-in nhưng INSERT không gọi tới server
+- Test lại flow check-in trên điện thoại sau khi fix
+- Xác nhận admin thấy data check-in của user khác trên desktop
 
 ---
 
@@ -735,6 +734,11 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 | Commit | Thay đổi |
 |---|---|
 | `b7fd7c5` | feat(check-in): nâng cấp Module Check-in hoàn chỉnh |
+| `389fe91` | docs: thêm nguyên tắc Auto Push + cập nhật trạng thái |
+| `3ac29da` | fix(check-in): fix hydrate crash khi migration 0014 chưa chạy |
+| `bda889b` | fix(check-in): Admin không thấy data user khác + sync fail |
+| `bdfe541` | feat: center card filter + map tile fix + attendance card style |
+| `bcebacf` | fix(bang-check-in): fix bản đồ — import Leaflet tĩnh + CSS |
 
 > **LESSON LEARNED — Check-in Module Upgrade (2026-09-04):**
 > Nâng cấp Check-in từ simple location log thành full-featured module:
@@ -742,18 +746,41 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > - **Photo bắt buộc:** upload Cloudinary, chụp từ camera thiết bị
 > - **Dialog xác nhận:** xem lại GPS + photo + center trước khi submit
 > - **Center selector:** chọn trung tâm check-in (VP, LB, SĐ, NL...)
-> - **Bản đồ 2 lớp:** Satellite (Esri) + Street (OSM) trong báo cáo
+> - **Center card filter:** click center card để filter danh sách check-in
 > - **Tombstone xóa:** `deleted_at` + `loadDeletedCheckinIds()` — offline-first sync giống attendance
 > - **LWW merge:** `updated_at` comparison cho conflict resolution
-> - **Phân quyền:** Admin thấy tất cả, User chỉ thấy mình (giống attendance)
-> - **Báo cáo mới:** `/bao-cao/bang-check-in` với bảng + filter + export CSV + bản đồ vị trí
+> - **Phân quyền:** Admin thấy tất cả (`isAdminRole` fallback), User chỉ thấy mình
+> - **Báo cáo mới:** `/bao-cao/bang-check-in` với bảng + filter + export CSV + bản đồ
+> - **Chấm công card style:** thay grid 4 cột lớn bằng horizontal scrollable buttons
 >
-> **Migration 0014:** Thêm columns `photo`, `center_code`, `status`, `updated_at`, `deleted_at` vào `checkins` table.
+> **Migration 0014:** Thêm columns `photo`, `center_code`, `status`, `updated_at`, `deleted_at` vào `checkins` table. ĐÃ CHẠY thành công trên Neon.
 >
-> **LƯU Ý:** Push fail do Windows Credential Manager giữ credential tài khoản cũ (`cuongpkgiong02-cyber`).
-> Cần login đúng tài khoản GitHub (`cuongpkgiong04-beep`) trước khi push.
-> Fix: `gh auth login` hoặc xóa credential cũ trong Windows Credential Manager.
+> **LESSON LEARNED — Hydrate crash khi migration chưa chạy (2026-09-04):**
+> `loadDeletedCheckinIds()` dùng cột `deleted_at` — nếu migration chưa chạy → query fail →
+> Promise.all reject → TẤT CẢ data (tasks/notes/messages/employees/centers) đều rỗng.
+> **Fix:** tách `loadDeletedCheckinIds` ra try/catch riêng.
+>
+> **LESSON LEARNED — Admin permission bug (2026-09-04):**
+> `hasPermission(employee, "checkin:view_all")` gọi `isAdminRole(employee.role)` nhưng role
+> có thể chưa load khi component render → `canViewAll = false` → Admin chỉ thấy data mình.
+> **Fix:** thêm `isAdminRole(currentEmployee?.role)` fallback trực tiếp.
+>
+> **LESSON LEARNED — Leaflet tile layer không load trong TanStack Start (2026-09-04):**
+> `require("leaflet")` không hoạt động trong SSR context → markers hiện nhưng tile không load.
+> Dynamic `import("leaflet")` cũng có vấn đề.
+> **Approach:** dùng `import L from "leaflet"` + `import "leaflet/dist/leaflet.css"` tĩnh
+> (component wrap trong `ClientOnly` nên an toàn). **CHƯA HOẠT ĐỘNG** — cần tiếp tục debug.
+>
+> **LESSON LEARNED — Check-in sync từ điện thoại thất bại (2026-09-04):**
+> User "Phạm Kiên Cường_01" check-in trên điện thoại → toast xanh thành công →
+> nhưng Neon KHÔNG CÓ data. Server logs KHÔNG CÓ POST insertCheckin.
+> **Nguyên nhân chưa rõ:** có thể do user dùng bản code cũ (cached), hoặc
+> `_neonInsertCheckin` dynamic import fail trên mobile browser.
+> **CHƯA FIX** — cần debug thêm.
+>
+> **Push fail:** Windows Credential Manager giữ credential tài khoản cũ (`cuongpkgiong02-cyber`).
+> Fix: Đại ca logout GitHub cũ + login đúng tài khoản `cuongpkgiong04-beep`.
 
 ---
-*Cập nhật lần cuối: 2026-09-04 (Check-in module upgrade: GPS, photo, map, tombstone, report)*
+*Cập nhật lần cuối: 2026-09-04 (Check-in module: upgrade, report, center filter, map debug)*
 *Người cập nhật: Trợ lý lập trình*
