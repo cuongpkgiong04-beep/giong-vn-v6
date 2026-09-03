@@ -1,6 +1,7 @@
 const CACHE_NAME = "giong-vn-v1";
-const STATIC_CACHE = "giong-vn-static-v1";
-const DYNAMIC_CACHE = "giong-vn-dynamic-v1";
+// Bumped to v2: stale-while-revalidate strategy + cleanup of old v1 caches
+const STATIC_CACHE = "giong-vn-static-v2";
+const DYNAMIC_CACHE = "giong-vn-dynamic-v2";
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
@@ -66,7 +67,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets (CSS, JS, images): cache-first
+  // Static assets (CSS, JS, images): stale-while-revalidate
+  // Serve the cached copy instantly, but ALWAYS re-fetch in the background
+  // and update the cache — so new deployments reach devices without
+  // requiring users to manually clear the browser cache.
   if (
     url.pathname.includes("/assets/") ||
     url.pathname.endsWith(".css") ||
@@ -79,8 +83,7 @@ self.addEventListener("fetch", (event) => {
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        if (cached) return cached;
-        return fetch(request)
+        const networkFetch = fetch(request)
           .then((response) => {
             if (response.ok) {
               const clone = response.clone();
@@ -97,6 +100,7 @@ self.addEventListener("fetch", (event) => {
             }
             return new Response("", { status: 408 });
           });
+        return cached || networkFetch;
       })
     );
     return;
