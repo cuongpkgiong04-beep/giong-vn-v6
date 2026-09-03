@@ -58,14 +58,13 @@
 - Tín dụng (credit module) — xóa ngày 2026-08-28
 
 ### 🔄 Đang triển khai / Cần theo dõi
-- **Check-in sync từ điện thoại** — User check-in trên điện thoại KHÔNG lên Neon. INSERT server function không được gọi từ client. Cần debug thêm (có thể do user dùng bản code cũ/cached, hoặc lỗi dynamic import trên mobile).
 - **Bản đồ report Check-in** — Tile layer đường phố (OSM) CHƯA hiển thị trên báo cáo. Leaflet marker + controls hoạt động, nhưng tile images không load. Cần tiếp tục debug.
-- **Auth login cho nhân sự mới** — signUpEmail hoạt động, signIn retry đã fix. Cần test flow "Quên mật khẩu" trên Vercel.
+- **Check-in sync từ điện thoại** — Đã fix `_neonInsertAttendance` swallowed error. Cần test lại trên điện thoại.
 
 ### 📋 Việc cần làm (backlog)
-- **[ƯU TIÊN]** Fix bản đồ báo cáo Check-in — tile layer OSM không load (đã import static + CSS nhưng chưa hoạt động)
-- **[ƯU TIÊNI]** Debug check-in sync từ điện thoại — user check-in nhưng INSERT không gọi tới server
-- Test lại flow check-in trên điện thoại sau khi fix
+- **[ƯU TIÊN]** Tinh chỉnh Module Nghiệp vụ (Đề nghị)
+- **[ƯU TIÊN]** Fix bản đồ báo cáo Check-in — tile layer OSM không load
+- Test lại flow check-in/chấm công trên điện thoại sau khi fix sync
 - Xác nhận admin thấy data check-in của user khác trên desktop
 
 ---
@@ -802,6 +801,36 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > Các functions khác (`_neonInsertTask`, `_neonInsertNote`, `_neonInsertProposal`,
 > `_neonInsertMessage`) KHÔNG có try/catch → throw đúng cách → `.catch()` hoạt động.
 
+### Giai đoạn 22: Mobile Preview Page + Permissions (2026-09-04)
+
+| Commit | Thay đổi |
+|---|---|
+| `2ac4c7d` | feat: thêm trang /preview — phone frame 390×812px + QR code + page nav |
+| `3ba781c` | fix(preview): chỉ Admin mới có quyền truy cập |
+| `12398fd` | feat(preview): User thấy link trong sidebar nhưng hiện thông báo từ chối |
+
+> **Trang Preview Mobile (`/preview`):**
+> - Hiển thị app trong phone frame (iPhone-style 390×812px) với iframe
+> - QR code để quét bằng điện thoại thật → mở trên Safari/Chrome
+> - Nút chuyển trang nhanh: Dashboard, Chấm công, Check-in, Nhiệm vụ...
+> - Hot reload hoạt động trong iframe — code thay đổi → thấy ngay trên desktop
+> - **Phân quyền:** Admin thấy đầy đủ, User thấy link trong sidebar nhưng hiện thông báo từ chối
+
+### Giai đoạn 23: UI Fixes — Filter Date Mobile + Center Cards (2026-09-04)
+
+| Commit | Thay đổi |
+|---|---|
+| `9f10c63` | fix(filter-date): nhóm 2 input date + dấu — vào div flex để không bị lệch mobile |
+| `b99bb0a` | feat(cham-cong): thêm nút 'Tất cả' vào center cards giống Check-in |
+
+> **Filter Date fix:** 2 input date + dấu "—" bị flex-wrap tách dòng trên mobile.
+> Fix: nhóm lại trong `<div className="flex items-center gap-1.5">`.
+> Áp dụng: `check-in.tsx`, `bang-check-in.tsx`, `bang-cham-cong.tsx`.
+>
+> **Center Cards "Tất cả":** Trang Chấm công thiếu nút "Tất cả" (Check-in đã có).
+> Fix: thêm button "Tất cả" ở đầu `centerStats` hiển thị tổng hợp Vào/Ra/Tổng.
+> Logic: mặc định active, click center khác → deselect.
+
 ---
-*Cập nhật lần cuối: 2026-09-04 (Fix attendance sync bug — swallowed error)*
+*Cập nhật lần cuối: 2026-09-04 (Mobile Preview + UI fixes — filter date, center cards)*
 *Người cập nhật: Trợ lý lập trình*
