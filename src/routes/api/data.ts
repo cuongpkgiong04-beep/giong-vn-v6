@@ -440,3 +440,28 @@ export const reverseGeocode = createServerFn({ method: "GET" })
       return "";
     }
   });
+
+/* ─────────── TEMP: Fix admin roles ─────────── */
+export const fixAdminRoles = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const sql = await getSql();
+    const adminEmails = [
+      'cuongpk.giong04@gmail.com',
+      'cuongpk.giong02@gmail.com',
+      'thuynvy218@gmail.com',
+      'hoangminhchau2631960@gmail.com',
+    ];
+    const results: string[] = [];
+    for (const email of adminEmails) {
+      const r = await sql<{ name: string }>`
+        UPDATE employees SET role = 'Admin' WHERE LOWER(email) = LOWER(${email}) AND role != 'Admin' RETURNING name
+      `;
+      if (r.length > 0) results.push(`Fixed: ${r[0].name} -> Admin`);
+      else results.push(`Already OK: ${email}`);
+    }
+    // Also check current state
+    const all = await sql<{ name: string; email: string; role: string }>`
+      SELECT name, email, role FROM employees WHERE status = 'active' ORDER BY role, name
+    `;
+    return { results, allEmployees: all };
+  });
