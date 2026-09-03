@@ -63,17 +63,19 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
       // If user already exists, delete old account and recreate
       const msg = err?.message ?? String(err);
       if (msg.includes("already") || msg.includes("exist")) {
-        // Find existing user
+        // Delete old user + account completely, then recreate
         const existingUser = await sql<{ id: string }>`
           SELECT id FROM "user" WHERE LOWER(email) = LOWER(${email}) LIMIT 1
         `;
         if (existingUser.length > 0) {
-          // Delete old account, then recreate
-          await sql`DELETE FROM "account" WHERE "userId" = ${existingUser[0].id} AND "providerId" = 'email'`;
-          await auth.api.signUpEmail({
-            body: { name: emp.name, email: emp.email, password: tempPassword },
-          });
+          await sql`DELETE FROM "account" WHERE "userId" = ${existingUser[0].id}`;
+          await sql`DELETE FROM "session" WHERE "userId" = ${existingUser[0].id}`;
+          await sql`DELETE FROM "user" WHERE "id" = ${existingUser[0].id}`;
         }
+        // Now create fresh
+        await auth.api.signUpEmail({
+          body: { name: emp.name, email: emp.email, password: tempPassword },
+        });
       } else {
         throw new Error("Không thể tạo tài khoản: " + msg);
       }
