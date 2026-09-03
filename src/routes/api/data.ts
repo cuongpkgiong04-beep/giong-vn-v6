@@ -440,3 +440,35 @@ export const reverseGeocode = createServerFn({ method: "GET" })
       return "";
     }
   });
+
+/* ─────────── Debug: Neon connection check ─────────── */
+
+export const debugNeonAttendance = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      name: string;
+      status: string;
+      time: string;
+      date: string;
+      workplace: string;
+      updated_at: string | null;
+      deleted_at: string | null;
+    }>`SELECT id, name, status, time, date, workplace, updated_at, deleted_at FROM attendance ORDER BY date DESC, time DESC LIMIT 20`;
+    const countResult = await sql<{ count: number }>`SELECT COUNT(*) as count FROM attendance`;
+    return {
+      rowCount: Number(countResult[0]?.count ?? 0),
+      deletedCount: (await sql<{ count: number }>`SELECT COUNT(*) as count FROM attendance WHERE deleted_at IS NOT NULL`).length,
+      sample: rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        status: r.status,
+        time: r.time,
+        date: r.date,
+        workplace: r.workplace,
+        updated_at: r.updated_at,
+        deleted: r.deleted_at !== null,
+      })),
+    };
+  });
