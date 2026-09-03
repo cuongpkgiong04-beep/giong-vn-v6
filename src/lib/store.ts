@@ -284,6 +284,8 @@ async function _neonBulkTasks(rows: Task[]) {
         blocker: r.blocker,
         updated: r.updated,
         createdBy: r.createdBy,
+        photo: r.photo,
+        location: r.location,
       })),
     },
   });
@@ -339,6 +341,8 @@ async function _neonInsertTask(r: Task) {
       blocker: r.blocker,
       updated: r.updated,
       createdBy: r.createdBy,
+      photo: r.photo,
+      location: r.location,
     },
   });
 }
@@ -528,6 +532,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           due: r.due ?? "", status: r.status ?? "Việc cần làm",
           support: r.support ?? "", blocker: r.blocker ?? "",
           updated: r.updated, createdBy: r.created_by ?? "",
+          photo: r.photo ?? undefined, location: r.location ?? "",
         }));
         const neonProposals: Proposal[] = (prp as any[]).map((r) => ({
           id: r.id, kind: r.kind as Proposal["kind"], title: r.title,

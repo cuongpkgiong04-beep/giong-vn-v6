@@ -11,6 +11,8 @@ export type Task = {
   blocker: string;
   updated: string;
   createdBy: string;
+  photo?: string;
+  location?: string;
 };
 
 export type Attendance = {

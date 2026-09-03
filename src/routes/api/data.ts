@@ -132,6 +132,8 @@ export const loadTasks = createServerFn({ method: "GET" })
       blocker: string;
       updated: string;
       created_by: string;
+      photo: string | null;
+      location: string;
     }>`SELECT *, created_by as "createdBy" FROM tasks ORDER BY created DESC LIMIT 200`;
   });
 
@@ -148,16 +150,18 @@ export const insertTask = createServerFn({ method: "POST" })
       blocker?: string;
       updated: string;
       createdBy?: string;
+      photo?: string;
+      location?: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
-      INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by)
+      INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, photo, location)
       VALUES (${data.id}, ${data.assignee}, ${data.title}, ${data.created},
               ${data.due ?? ""}, ${data.status ?? "Việc cần làm"},
               ${data.support ?? ""}, ${data.blocker ?? ""}, ${data.updated},
-              ${data.createdBy ?? ""})
+              ${data.createdBy ?? ""}, ${data.photo ?? null}, ${data.location ?? ""})
       ON CONFLICT (id) DO NOTHING
     `;
   });
@@ -183,6 +187,8 @@ export const bulkInsertTasks = createServerFn({ method: "POST" })
         blocker?: string;
         updated: string;
         createdBy?: string;
+        photo?: string;
+        location?: string;
       }>;
     }) => data,
   )
@@ -190,11 +196,11 @@ export const bulkInsertTasks = createServerFn({ method: "POST" })
     const sql = await getSql();
     for (const r of data.rows) {
       await sql`
-        INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by)
+        INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, photo, location)
         VALUES (${r.id}, ${r.assignee}, ${r.title}, ${r.created},
                 ${r.due ?? ""}, ${r.status ?? "Việc cần làm"},
                 ${r.support ?? ""}, ${r.blocker ?? ""}, ${r.updated},
-                ${r.createdBy ?? ""})
+                ${r.createdBy ?? ""}, ${r.photo ?? null}, ${r.location ?? ""})
         ON CONFLICT (id) DO NOTHING
       `;
     }

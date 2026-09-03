@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Camera, MapPin, Plus } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -36,7 +36,12 @@ function TasksPage() {
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState(currentUser.username);
   const [due, setDue] = useState("");
+  const [support, setSupport] = useState("");
+  const [blocker, setBlocker] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [location, setLocation] = useState("");
   const [view, setView] = useState<"board" | "list">("board");
+  const photoRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = isAdminRole(currentEmployee?.role);
 
@@ -76,14 +81,41 @@ function TasksPage() {
       title: title.trim(),
       due: due ? `${due} 18:00` : "",
       status: "Việc cần làm",
-      support: "",
-      blocker: "",
+      support,
+      blocker,
       createdBy: me,
+      photo: photo ?? undefined,
+      location,
     });
     setTitle("");
     setDue("");
+    setSupport("");
+    setBlocker("");
+    setPhoto(null);
+    setLocation("");
     setOpen(false);
     toast.success("Đã tạo nhiệm vụ");
+  }
+
+  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(file);
+  }
+
+  function requestLocation() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        setLocation(`${lat}, ${lng}`);
+      },
+      () => setLocation(""),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
   }
 
   return (
@@ -131,9 +163,12 @@ function TasksPage() {
                     <article key={t.id} className="rounded-lg bg-surface p-3 shadow-[var(--shadow-card)]">
                       <p className="text-sm font-medium text-ink">{t.title}</p>
                       <p className="mt-2 text-xs text-muted">
-                        {t.assignee || "Chưa gán"} · hạn {formatDate(t.due)}
+                        {t.assignee || "Chưa gán"} · đến hạn {formatDate(t.due)}
                       </p>
-                      {t.blocker ? <p className="mt-2 line-clamp-2 text-xs text-warn">{t.blocker}</p> : null}
+                      {t.support ? <p className="mt-1 text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
+                      {t.blocker ? <p className="mt-2 line-clamp-2 text-xs text-warn">⚠ {t.blocker}</p> : null}
+                      {t.photo ? <img src={t.photo} alt="Ảnh" className="mt-2 h-12 w-12 rounded object-cover" /> : null}
+                      {t.location ? <p className="mt-1 text-[10px] text-faint">📍 {t.location}</p> : null}
                       {canEditTask(currentEmployee, t.createdBy) ? (
                         <div className="mt-3 flex flex-wrap gap-1">
                           {COLS.filter((c) => c !== col).map((c) => (
@@ -169,10 +204,15 @@ function TasksPage() {
                   <div className="min-w-0">
                     <p className="font-medium text-ink">{t.title}</p>
                     <p className="text-sm text-muted">
-                      {t.assignee} · tạo {formatDate(t.created)} · hạn {formatDate(t.due)}
+                      {t.assignee} · tạo {formatDate(t.created)} · đến hạn {formatDate(t.due)}
                     </p>
+                    {t.support ? <p className="text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
+                    {t.blocker ? <p className="text-xs text-warn">⚠ {t.blocker}</p> : null}
                   </div>
-                  <StatusBadge value={t.status} />
+                  <div className="flex items-center gap-2">
+                    {t.photo ? <img src={t.photo} alt="Ảnh" className="h-10 w-10 rounded object-cover" /> : null}
+                    <StatusBadge value={t.status} />
+                  </div>
                 </li>
               ))}
             </ul>
@@ -181,7 +221,7 @@ function TasksPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogTitle>Nhiệm vụ mới</DialogTitle>
           <DialogDesc>Ghi việc cần làm trong tuần hoặc tháng.</DialogDesc>
           <form onSubmit={submit} className="mt-4 flex flex-col gap-3">
@@ -212,8 +252,41 @@ function TasksPage() {
               </select>
             </div>
             <div>
-              <Label htmlFor="d">Hạn</Label>
+              <Label htmlFor="s">Người hỗ trợ</Label>
+              <Input id="s" value={support} onChange={(e) => setSupport(e.target.value)} placeholder="Tên người hỗ trợ (nếu có)" className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="d">Ngày đến hạn</Label>
               <Input id="d" type="date" value={due} onChange={(e) => setDue(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label htmlFor="b">Khó khăn khi triển khai</Label>
+              <Textarea id="b" value={blocker} onChange={(e) => setBlocker(e.target.value)} placeholder="Cản trở, khó khăn (nếu có)" className="mt-1" rows={2} />
+            </div>
+            <div>
+              <Label>Ảnh xác nhận</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                <Button type="button" variant="outline" size="sm" onClick={() => photoRef.current?.click()}>
+                  <Camera className="size-4 mr-1" />
+                  Chọn ảnh
+                </Button>
+                {photo && (
+                  <div className="relative">
+                    <img src={photo} alt="Preview" className="h-16 w-16 rounded-lg object-cover" />
+                    <button type="button" onClick={() => setPhoto(null)} className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">×</button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label>Vị trí khởi tạo</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Tọa độ GPS hoặc địa chỉ" className="flex-1" />
+                <Button type="button" variant="outline" size="sm" onClick={requestLocation} title="Lấy vị trí hiện tại">
+                  <MapPin className="size-4" />
+                </Button>
+              </div>
             </div>
             <Button type="submit">Lưu nhiệm vụ</Button>
           </form>
