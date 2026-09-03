@@ -130,7 +130,7 @@ function Login() {
         if (error) {
           // signIn failed — try to create Better Auth account on-the-fly for approved registrations
           try {
-            const result = await ensureAuthUser({ data: { email: email.trim() } });
+            const result = await ensureAuthUser({ data: { email: email.trim(), password } });
             console.log("[login] ensureAuthUser result:", result);
             if (result.created) {
               // Retry signIn now that account exists

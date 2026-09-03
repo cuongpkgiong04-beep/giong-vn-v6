@@ -155,7 +155,7 @@ export const revokeRegistrationRequest = createServerFn({ method: "POST" })
  * Called during login when signIn fails but registration is approved.
  */
 export const ensureAuthUser = createServerFn({ method: "POST" })
-  .validator((data: { email: string }) => data)
+  .validator((data: { email: string; password?: string }) => data)
   .handler(async ({ data }) => {
     const { getRegistrationRequestByEmail } = await import("@/lib/registrations");
     const reg = await getRegistrationRequestByEmail(data.email);
@@ -178,23 +178,19 @@ export const ensureAuthUser = createServerFn({ method: "POST" })
         // User exists but signIn failed — password is wrong
         return { created: false, error: "already" };
       }
-      // Create Better Auth account from employee data
-      const { hashPassword } = await import("better-auth/crypto");
-      const tempPwd = Array.from({ length: 12 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%'[Math.floor(Math.random() * 66)]).join('');
-      const hashedPwd = await hashPassword(tempPwd);
-      const userId = crypto.randomUUID();
-      await sql`
-        INSERT INTO "user" ("id", "name", "email", "emailVerified", "createdAt", "updatedAt")
-        VALUES (${userId}, ${emp[0].name}, ${emp[0].email}, true, NOW(), NOW())
-        ON CONFLICT ("email") DO NOTHING
-      `;
-      await sql`
-        INSERT INTO "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
-        VALUES (${crypto.randomUUID()}, ${emp[0].email}, 'email', ${userId}, ${typeof hashedPwd === 'string' ? hashedPwd : JSON.stringify(hashedPwd)}, NOW(), NOW())
-        ON CONFLICT DO NOTHING
-      `;
-      console.log(`[auth] ensureAuthUser: created account from employee for ${data.email}`);
-      return { created: true };
+      // Use signUpEmail which handles password hashing correctly
+      const pwd = data.password || crypto.randomBytes(12).toString('base64url');
+      try {
+        const { auth } = await import("@/lib/auth/server");
+        await auth.api.signUpEmail({
+          body: { name: emp[0].name, email: emp[0].email, password: pwd },
+        });
+        console.log(`[auth] ensureAuthUser: created account from employee for ${data.email}`);
+        return { created: true };
+      } catch (err: any) {
+        console.warn(`[auth] ensureAuthUser: signUpEmail failed for ${data.email}:`, err?.message);
+        return { created: false, error: err?.message ?? "Failed to create account" };
+      }
     }
     if (reg.status !== "approved") {
       console.warn(`[auth] ensureAuthUser: ${data.email} status=${reg.status}`);
