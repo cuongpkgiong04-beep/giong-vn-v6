@@ -241,7 +241,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!authEnabled || !authUser) return;
-    const mapped = employees.find((e) => e.email === (authUser.primaryEmail ?? "")) ?? employees.find((e) => e.name === (authUser.displayName ?? ""));
+    const byEmail = employees.find((e) => e.email === (authUser.primaryEmail ?? ""));
+    const byName = !byEmail ? employees.find((e) => e.name === (authUser.displayName ?? "")) : null;
+    const mapped = byEmail ?? byName;
+    console.log(`[app-shell] setCurrentUserId: authEmail=${authUser.primaryEmail} authName=${authUser.displayName} byEmail=${byEmail?.name}(${byEmail?.role}) byName=${byName?.name}(${byName?.role}) mapped=${mapped?.name}(${mapped?.role})`);
     if (mapped) setCurrentUserId(mapped.id);
   }, [authUser, setCurrentUserId, employees]);
 
