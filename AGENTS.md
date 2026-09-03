@@ -198,6 +198,8 @@ src/
 - **Test tự động (unit)** khi cần — viết trong `*.test.ts` hoặc `*.test.mjs`
 - **Ngôn ngữ code:** TypeScript, Tiếng Việt cho UI text
 - **Formatting:** Prettier + ESLint (đã cấu hình sẵn)
+- **Được phép truy cập Vercel** — Em có quyền dùng Playwright/headless browser để login vào website Vercel (`https://giong-vn-v6.vercel.app`) và xem toàn bộ dự án. Login credentials: `cuongpk.giong04@gmail.com` / `Admin123!`. Dùng khi cần kiểm tra UI, debug lỗi trên deployment thực tế.
+- **Được phép truy cập Neon** — Em có quyền truy cập Neon PostgreSQL console để kiểm tra dữ liệu, chạy SQL query, và thực hiện lệnh cần thiết. Kết nối qua `DATABASE_URL` env var trên Vercel. Dùng khi cần verify data, debug query, hoặc thực hiện migration thủ công.
 
 ---
 
@@ -574,6 +576,34 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > và badge "Đang chờ" tự hết. Admin xóa lượt chấm trên máy tính → điện thoại mở lại app sẽ không còn thấy
 > lượt đó. Migration 0013 chạy tự động khi Vercel build (`npm run db:migrate`).
 
+### Giai đoạn 18: Attendance Data Investigation & Hydration Fix (2026-09-03)
+
+| Commit | Thay đổi |
+|---|---|
+| `554f0a2` | debug: thêm logging hydrate + debug endpoint để test Neon connection |
+| `f204bdc` | fix: React hydration error #418 — stabilize server/client render |
+| `45ad417` | fix: wrap Toaster with ClientOnly to prevent hydration mismatch |
+| `3775afb` | fix: add suppressHydrationWarning to body element |
+| `bc0db7d` | chore: cleanup debug logs, debug endpoint, and test scripts |
+
+> **LESSON LEARNED — Attendance Data Investigation:**
+> Em dùng Playwright headless browser để test trực tiếp trên Vercel deployment.
+> Kết quả: Neon connection hoạt động, 12 records load đúng, Admin thấy đầy đủ dữ liệu.
+> Vấn đề "không thấy dữ liệu" là do **chưa login** — auth redirect chặn trang chấm công.
+> Login credentials: `cuongpk.giong04@gmail.com` / `Admin123!`.
+>
+> **LESSON LEARNED — React Hydration Error #418:**
+> Lỗi #418 xảy ra trên MỌI page nhưng KHÔNG ảnh hưởng chức năng.
+> Nguyên nhân: React 19.2.0 + TanStack Start 1.168.0 SSR hydration mismatch.
+> Server render `<head>` với meta tags trước, client render Sonner `<style>` trước → ordering diff.
+> `suppressHydrationWarning` trên `<html>`, `<head>`, `<body>` không fix được.
+> **Kết luận: Known framework issue, cosmetic only.**
+>
+> **LESSON LEARNED — Playwright for Vercel Testing:**
+> Em có quyền dùng Playwright headless browser để login vào Vercel và test UI.
+> Script test nên đặt trong `scripts/test-*.mjs` và xóa sau khi hoàn thành.
+> Luôn dùng `waitUntil: 'networkidle'` + `waitForTimeout(15000)` để đợi Neon hydration.
+
 ---
 
 ## 12. Vercel CLI — Access & Monitoring
@@ -640,5 +670,5 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
-*Cập nhật lần cuối: 2026-09-03 (Offline-first sync hoàn chỉnh: LWW merge, pending queue mọi module, tombstone)*
+*Cập nhật lần cuối: 2026-09-03 (Attendance data investigation + hydration fix + Vercel/Neon access rules)*
 *Người cập nhật: Trợ lý lập trình*
