@@ -13,7 +13,7 @@ import type {
 } from "@/lib/types";
 import { nowTime, todayIso, weekdayVi } from "@/lib/format";
 import { uid } from "@/lib/utils";
-import { mergeByTs } from "./merge";
+import { mergeByTs, parseTs } from "./merge";
 
 const LS_KEY = "giong-vn-v5";
 
@@ -653,6 +653,16 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     const currentEmployee =
       emps.find((e) => e.id === get().currentUserId) ?? emps[0] ?? { center: 'VP', title: 'Nhân viên' } as any;
     const date = todayIso();
+    // Guard chống trùng lặp: cùng người, cùng ngày, cùng loại trong 5 giây gần nhất
+    // → trả về bản ghi đã tạo, KHÔNG tạo thêm (bảo vệ bản chất dữ liệu khi bấm nhiều lần)
+    const recent = get().attendance.find(
+      (a) =>
+        a.name === name &&
+        a.date === date &&
+        a.status === kind &&
+        Date.now() - parseTs(a.updatedAt ?? `${a.date}T${a.time}`) < 5000,
+    );
+    if (recent) return recent;
     const workplace = currentEmployee.center ?? "VP";
     const nowTs = new Date().toISOString();
     const rec: Attendance = {

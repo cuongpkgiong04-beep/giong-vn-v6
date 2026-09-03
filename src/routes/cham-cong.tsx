@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, Camera, Eye, LogIn, LogOut, MapPin, TimerReset, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Building2, Camera, Eye, Loader2, LogIn, LogOut, MapPin, TimerReset, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { GpsMap } from "@/components/gps-map";
@@ -57,6 +57,9 @@ function ChamCongPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  // Chỉ cho phép xác nhận 1 lần — ref chặn mọi double-tap trước khi re-render
+  const submittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Compute today's attendance status for current user (use Vietnam timezone like store)
   const todayStr = new Intl.DateTimeFormat("en-CA", {
@@ -251,6 +254,8 @@ function ChamCongPage() {
   }
 
   async function confirmPunch() {
+    // Chỉ cho phép xác nhận 1 lần — mọi lần bấm tiếp theo bị bỏ qua ngay
+    if (submittingRef.current) return;
     // Re-validate rules before submit
     if (punchType === "Điểm danh vào ca" && !canPunchIn) {
       toast.warning("Hôm nay bạn đã vào ca. Vui lòng tan ca trước.");
@@ -270,25 +275,32 @@ function ChamCongPage() {
       toast.warning("Vui lòng bật định vị GPS trên thiết bị để điểm danh.");
       return;
     }
-    // Resolve real address BEFORE saving
-    const resolvedAddress = await resolveAddress();
-    const finalAddress = resolvedAddress
-      ? cleanAddress(resolvedAddress)
-      : (address || gps);
-    // Upload photo to Cloudinary
-    let photoUrl: string | undefined;
+    submittingRef.current = true;
+    setIsSubmitting(true);
     try {
-      const result = await uploadImage({
-        data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
-      });
-      photoUrl = result.url;
-    } catch (err) {
-      console.warn("Cloudinary upload failed, using base64:", err);
-      photoUrl = photoPreview;
+      // Resolve real address BEFORE saving
+      const resolvedAddress = await resolveAddress();
+      const finalAddress = resolvedAddress
+        ? cleanAddress(resolvedAddress)
+        : (address || gps);
+      // Upload photo to Cloudinary
+      let photoUrl: string | undefined;
+      try {
+        const result = await uploadImage({
+          data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
+        });
+        photoUrl = result.url;
+      } catch (err) {
+        console.warn("Cloudinary upload failed, using base64:", err);
+        photoUrl = photoPreview;
+      }
+      const rec = clock(punchType, gps, finalAddress, photoUrl);
+      toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
+      setIsDialogOpen(false);
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
-    const rec = clock(punchType, gps, finalAddress, photoUrl);
-    toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
-    setIsDialogOpen(false);
   }
 
   function handleDeleteRecord() {
@@ -617,12 +629,21 @@ function ChamCongPage() {
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button onClick={confirmPunch}>
-              <LogIn className="size-4" />
-              Xác nhận {punchType === "Điểm danh vào ca" ? "vào ca" : "tan ca"}
+            <Button onClick={confirmPunch} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <LogIn className="size-4" />
+                  Xác nhận {punchType === "Điểm danh vào ca" ? "vào ca" : "tan ca"}
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
