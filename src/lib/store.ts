@@ -149,12 +149,29 @@ function saveLs(s: PersistSlice) {
 // ── Pending sync queue (localStorage) ────────────────────────────────────────
 const PENDING_KEY = "giong-vn-pending-sync";
 
+// Background retry state (module-level, singleton)
+let _bgRetryStarted = false;
+let _bgRetryInterval: ReturnType<typeof setInterval> | null = null;
+
 type PendingRecord = { collection: string; data: any };
+
+const PENDING_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function getPendingSync(): PendingRecord[] {
   try {
     const raw = localStorage.getItem(PENDING_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const all = JSON.parse(raw) as PendingRecord[];
+    // Expire records older than 7 days
+    const now = Date.now();
+    const fresh = all.filter((r) => {
+      const ts = r.data?._syncTs ?? 0;
+      return ts === 0 || (now - ts) < PENDING_EXPIRY_MS;
+    });
+    if (fresh.length < all.length) {
+      localStorage.setItem(PENDING_KEY, JSON.stringify(fresh));
+    }
+    return fresh;
   } catch {
     return [];
   }
@@ -162,6 +179,8 @@ function getPendingSync(): PendingRecord[] {
 
 function addPendingSync(record: PendingRecord) {
   const pending = getPendingSync();
+  // Add timestamp for expiry tracking
+  record.data._syncTs = Date.now();
   pending.push(record);
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
@@ -551,7 +570,17 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const mergedAttendance = Array.from(attMap.values())
           .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
 
-        if (neonAttendance.length > 0 || pendingAttendance.length > 0 || neonTasks.length > 0) {
+        // FIX: When Neon returns empty but _neonReady is false (sync incomplete),
+        // keep localStorage data to prevent data loss.
+        // Only clear when Neon actually has data (neonAttendance.length > 0) or
+        // sync completed successfully (_neonReady was already true).
+        const neonSyncCompleted = get()._neonReady;
+        const neonHasData = neonAttendance.length > 0;
+        const pendingHasData = pendingAttendance.length > 0;
+        const currentLocalHasData = get().attendance.length > 0;
+
+        if (neonHasData || pendingHasData || neonTasks.length > 0) {
+          // Neon has data — use merged result
           set({
             attendance: mergedAttendance,
             tasks: neonTasks,
@@ -563,8 +592,17 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             centers: finalCenters,
             _neonReady: true,
           });
+        } else if (currentLocalHasData && !neonSyncCompleted) {
+          // Neon returned empty BUT local has data AND this is first sync attempt
+          // → Network issue or slow response — KEEP local data, don't overwrite
+          console.log('[store] Neon returned empty but local has data — keeping local data');
+          set({
+            employees: finalEmployees,
+            centers: finalCenters,
+            _neonReady: true,
+          });
         } else {
-          // All sources empty — start with empty state
+          // Genuinely empty — all sources empty
           console.log('[store] All sources empty — starting with empty state');
           set({
             tasks: [],
@@ -580,18 +618,52 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           });
         }
       } catch (err) {
-        console.error('[store] Neon sync failed — loading fallback data:', err);
+        console.error('[store] Neon sync failed — keeping localStorage data:', err);
+        // FIX: Don't clear localStorage data on sync failure.
+        // Keep whatever was loaded from localStorage in step 1.
+        // Only set _neonReady = false so we know sync hasn't completed.
         set({
-          tasks: [],
-          attendance: [],
-          notes: [],
-          proposals: [],
-          messages: [],
-          checkins: [],
-          employees: FALLBACK_EMPLOYEES,
-          centers: FALLBACK_CENTERS,
           _neonReady: false,
         });
+      }
+
+      // Start background retry interval (once only)
+      if (!_bgRetryStarted) {
+        _bgRetryStarted = true;
+        _bgRetryInterval = setInterval(() => {
+          const pending = getPendingSync();
+          if (pending.length > 0) {
+            retryPendingSync().then(() => {
+              // After successful retry, re-fetch from Neon to update state
+              const currentPending = getPendingSync();
+              if (currentPending.length === 0 && pending.length > 0) {
+                // Some records were synced — refresh state from Neon
+                import('@/routes/api/data').then(({ loadAttendance }) =>
+                  loadAttendance().then((att) => {
+                    const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
+                      id: r.id, name: r.name, status: r.status, time: r.time,
+                      date: r.date, weekday: r.weekday, gps: r.gps ?? '',
+                      address: r.address ?? '', photo: r.photo ?? undefined,
+                      type: r.type ?? 'Bình thường', approved: r.approved ?? 'Chưa',
+                      workplace: r.workplace ?? 'VP',
+                    }));
+                    // Merge with current state
+                    const attMap = new Map<string, Attendance>();
+                    for (const a of neonAttendance) attMap.set(a.id, a);
+                    // Also keep any local records not yet in Neon
+                    for (const a of get().attendance) {
+                      if (!attMap.has(a.id)) attMap.set(a.id, a);
+                    }
+                    const merged = Array.from(attMap.values())
+                      .sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.time > a.time ? 1 : -1));
+                    set({ attendance: merged, _neonReady: true });
+                    saveLs(get());
+                  })
+                ).catch(() => { /* ignore */ });
+              }
+            }).catch(() => { /* will retry next interval */ });
+          }
+        }, 30_000); // every 30 seconds
       }
     })();
   },
