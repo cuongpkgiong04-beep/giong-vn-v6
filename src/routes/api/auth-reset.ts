@@ -62,13 +62,13 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
       // Create user
       const userId = crypto.randomUUID();
       await sql`
-        INSERT INTO "user" (id, name, email, email_verified, created_at, updated_at)
+        INSERT INTO "user" ("id", "name", "email", "emailVerified", "createdAt", "updatedAt")
         VALUES (${userId}, ${emp.name}, ${emp.email}, true, NOW(), NOW())
-        ON CONFLICT (email) DO NOTHING
+        ON CONFLICT ("email") DO NOTHING
       `;
       // Create account
       await sql`
-        INSERT INTO account (id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt")
+        INSERT INTO "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt")
         VALUES (${crypto.randomUUID()}, ${emp.email}, 'email', ${userId}, ${hashedPwd}, NOW(), NOW())
         ON CONFLICT DO NOTHING
       `;
