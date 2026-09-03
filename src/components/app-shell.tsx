@@ -431,7 +431,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </SheetContent>
       </Sheet>
 
-      <Toaster position="top-center" richColors closeButton />
+      <ClientOnly fallback={null}>
+        <Toaster position="top-center" richColors closeButton />
+      </ClientOnly>
     </div>
   );
 }
