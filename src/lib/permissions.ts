@@ -137,7 +137,6 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
     chat: true,
     guide: true,
     documents: true,
-    preview: true,
   };
 
   if (!employee) return defaultMap;
