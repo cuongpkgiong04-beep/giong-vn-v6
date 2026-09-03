@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Logo } from "@/components/logo";
+import { ClientOnly } from "@/components/client-only";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { isAdminRole } from "@/lib/catalog";
 import { getAllowedNavItems } from "@/lib/permissions";
@@ -207,15 +208,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     setAppVersion(getVersionValue());
   }, []);
   const employees = useAppStore((s) => s.employees);
-  // Resolve current employee: try auth email → auth name → store userId → first employee
-  const byEmail = authUser ? employees.find((e) => e.email === (authUser.primaryEmail ?? "")) : null;
-  const byName = authUser ? employees.find((e) => e.name === (authUser.displayName ?? "")) : null;
+  // Resolve current employee: ALWAYS use store userId (stable across server/client)
+  // to avoid hydration mismatch. Auth email/name may differ between SSR and client.
   const byId = employees.find((e) => e.id === userId) ?? employees[0];
-  const currentUserEmployee = byEmail ?? byName ?? byId;
-  const isAdmin = isAdminRole(currentUserEmployee?.role)
-    // Fallback: known admin emails always pass even if employee lookup fails during hydration
-    || authUser?.primaryEmail === "cuongpk.giong04@gmail.com"
-    || authUser?.primaryEmail === "cuongpk.giong02@gmail.com";
+  const currentUserEmployee = byId;
+  // isAdmin based ONLY on employee role (stable across server/client).
+  // Removed authUser email fallback to prevent hydration mismatch.
+  const isAdmin = isAdminRole(currentUserEmployee?.role);
 
   useEffect(() => {
     hydrate();
@@ -363,7 +362,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <ShieldCheck className="size-3.5" />
                 {isAdmin ? "Quản trị" : "Nhân sự"}
               </div>
-              <UserButton />
+              <ClientOnly fallback={<span className="h-8 w-8 rounded-full bg-black/10" />}>
+                <UserButton />
+              </ClientOnly>
             </div>
           ) : (
             <Link
