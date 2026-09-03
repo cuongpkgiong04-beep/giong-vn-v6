@@ -92,7 +92,6 @@ function ChamCongPage() {
   }, [currentEmployee]);
 
   const canViewAll = hasPermission(currentEmployee, "attendance:view_all");
-  console.log(`[cham-cong] currentEmployee=${currentEmployee?.name} role=${currentEmployee?.role} canViewAll=${canViewAll} totalRecords=${attendance.length}`);
   // Delete allowed for admins (any record) or the record owner
   const canDeleteRecord = detailRecord
     ? canViewAll || detailRecord.name === (currentEmployee?.name ?? currentName)
