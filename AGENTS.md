@@ -37,7 +37,7 @@
 - Auth system (Better Auth + Neon) — đăng ký, đăng nhập, phân quyền
 - Dashboard chính (KPI cards, charts, shortcuts)
 - Chấm công (attendance check-in/check-out, Cloudinary upload ảnh)
-- Check-in (location-based check-in)
+- **Check-in nâng cấp** (GPS bắt buộc + photo bắt buộc + center selector + detail dialog + tombstone sync + báo cáo bản đồ)
 - Quản lý nhiệm vụ (tasks CRUD)
 - Nhân sự (employee management — table/grid views, 33 employees fallback)
 - Trung tâm (center management — 20 centers fallback)
@@ -46,10 +46,10 @@
 - Ghi chú (notes)
 - Hồ sơ tài liệu (document management)
 - Hướng dẫn sử dụng (user guides)
-- Báo cáo (bao-cao)
+- Báo cáo (bao-cao) + Báo cáo Check-in (bảng + bản đồ satellite/street)
 - Đổi mật khẩu / Quên mật khẩu
 - Admin pages (approvals, permissions)
-- Database migrations (11 files: 0001-0010)
+- Database migrations (14 files: 0001-0014)
 - Deploy lên GitHub + Vercel + Neon
 
 ### ❌ Đã xóa (theo yêu cầu Đại ca)
@@ -58,15 +58,16 @@
 - Tín dụng (credit module) — xóa ngày 2026-08-28
 
 ### 🔄 Đang triển khai / Cần theo dõi
-- **Auth login cho nhân sự mới** — signUpEmail hoạt động nhưng signIn retry vẫn fail. Cần test flow “Quên mật khẩu” (đã fix providerId + hash) để user đặt lại password.
-- **Chấm công sync** — Đã fix pending sync queue + localStorage-first loading. Cần test trên điện thoại.
-- **Mobile bottom bar** — Đã thêm Check-in + Chat vào bottom bar (5 nút). Chưa commit cuối cùng.
+- **Auth login cho nhân sự mới** — signUpEmail hoạt động, signIn retry đã fix. Cần test flow "Quên mật khẩu" trên Vercel.
+- **Chấm công sync** — Đã fix pending sync queue + localStorage-first loading. Đã test PASSED trên Vercel.
+- **Mobile bottom bar** — Đã thêm Check-in + Chat vào bottom bar (5 nút). Đã test PASSED trên Vercel.
+- **Check-in module** — Đã nâng cấp hoàn chỉnh (commit `b7fd7c5`). Cần push lên GitHub + test trên Vercel.
 
 ### 📋 Việc cần làm (backlog)
-- **[ƯU TIÊN]** Test chấm công sync: điểm danh trên điện thoại → kiểm tra data hiện trên máy tính/admin
-- **[ƯU TIÊN]** Test mobile bottom bar mới: Check-in, Chat hiển thị đúng trên iOS/Android
-- Xác nhận đăng nhập nhân sự mới hoạt động trên Vercel
-- Sau khi auth ổn → test toàn bộ flow: đăng ký → duyệt sync → login
+- **[ƯU TIÊN]** Push commit Check-in lên GitHub + test trên Vercel
+- Test Check-in flow: GPS bắt buộc → photo → confirm → verify trên Neon
+- Test Báo cáo Check-in: bản đồ 2 lớp satellite/street hoạt động đúng
+- Xác nhận migration 0014 chạy đúng trên Neon
 
 ---
 
@@ -105,9 +106,18 @@
 - **Cần hỏi gì PHẢI hỏi trước khi hành động**
 - Em có quyền commit + push trực tiếp lên repository (auto commit + push)
 - **KHÔNG** có CI / checks nào bắt buộc (lint, tests) chạy trước khi merge
-- **KHÔNG** cần chạy local build/test trước khi push — chỉ commit + push, Vercel tự deploy
+- **KHÔNG** cần chạy local build/test trước khi push — commit + push, Vercel tự deploy
 - **KHÔNG** có khu vực code nào "cấm động" — em có quyền sửa bất kỳ file nào
 - Khi cần test: ưu tiên test tự động (unit) viết trong `*.test.ts` hoặc `*.test.mjs`
+
+### Nguyên tắc Auto Push (bắt buộc tuân thủ):
+
+- **GitHub repo:** `https://github.com/cuongpkgiong04-beep/giong-vn-v6`
+- **Sau MỖI lần sửa code, em PHẢI tự động commit + push lên GitHub.**
+- **KHÔNG** cần hỏi Đại ca trước khi push — em tự push rồi thông báo.
+- **Commit message** phải rõ ràng, mô tả chính xác thay đổi (feat/fix/refactor + mô tả).
+- **Nếu push fail** (credential, network) → thông báo Đại ca ngay để xử lý.
+- **Vercel auto-deploy** sau mỗi push — Đại ca chỉ cần kiểm tra trên URL.
 
 ---
 
@@ -720,9 +730,30 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 **A:** KHÔNG, trừ khi Đại ca yêu cầu rõ ràng.
 
 **Q:** Em có thể tự xem Vercel logs không?
-**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.
+**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.### Giai đoạn 20: Check-in Module Upgrade (2026-09-04)
+
+| Commit | Thay đổi |
+|---|---|
+| `b7fd7c5` | feat(check-in): nâng cấp Module Check-in hoàn chỉnh |
+
+> **LESSON LEARNED — Check-in Module Upgrade (2026-09-04):**
+> Nâng cấp Check-in từ simple location log thành full-featured module:
+> - **GPS bắt buộc:** 15s timeout, không fallback "mô phỏng" — phải có vị trí mới check-in được
+> - **Photo bắt buộc:** upload Cloudinary, chụp từ camera thiết bị
+> - **Dialog xác nhận:** xem lại GPS + photo + center trước khi submit
+> - **Center selector:** chọn trung tâm check-in (VP, LB, SĐ, NL...)
+> - **Bản đồ 2 lớp:** Satellite (Esri) + Street (OSM) trong báo cáo
+> - **Tombstone xóa:** `deleted_at` + `loadDeletedCheckinIds()` — offline-first sync giống attendance
+> - **LWW merge:** `updated_at` comparison cho conflict resolution
+> - **Phân quyền:** Admin thấy tất cả, User chỉ thấy mình (giống attendance)
+> - **Báo cáo mới:** `/bao-cao/bang-check-in` với bảng + filter + export CSV + bản đồ vị trí
+>
+> **Migration 0014:** Thêm columns `photo`, `center_code`, `status`, `updated_at`, `deleted_at` vào `checkins` table.
+>
+> **LƯU Ý:** Push fail do Windows Credential Manager giữ credential tài khoản cũ (`cuongpkgiong02-cyber`).
+> Cần login đúng tài khoản GitHub (`cuongpkgiong04-beep`) trước khi push.
+> Fix: `gh auth login` hoặc xóa credential cũ trong Windows Credential Manager.
 
 ---
-
-*Cập nhật lần cuối: 2026-09-03 (Auth flow fixes: forgot-password + change-password + loadEmployees role)*
+*Cập nhật lần cuối: 2026-09-04 (Check-in module upgrade: GPS, photo, map, tombstone, report)*
 *Người cập nhật: Trợ lý lập trình*
