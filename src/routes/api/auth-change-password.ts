@@ -5,6 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { randomBytes, scrypt } from "node:crypto";
 import { getSql } from "@/lib/db";
+import { authMiddleware } from "@/lib/auth/middleware";
 
 // Exact same config as Better Auth
 const config = {
@@ -51,16 +52,12 @@ async function verifyPassword(hash: string, password: string): Promise<boolean> 
  * Change password - requires current password verification
  */
 export const changePassword = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
   .validator((data: { currentPassword: string; newPassword: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const sql = await getSql();
     const { currentPassword, newPassword } = data;
-    
-    // Get current user from session
-    const { getSessionUser } = await import("@/lib/auth/verify.server");
-    const sessionUser = await getSessionUser();
-    if (!sessionUser) throw new Error("Vui lòng đăng nhập");
-    const userId = sessionUser.id;
+    const userId = context.userId;
     
     // Get current account
     const accounts = await sql<{ id: string; password: string }>`
