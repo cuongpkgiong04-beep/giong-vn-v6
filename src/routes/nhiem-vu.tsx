@@ -64,6 +64,8 @@ function TasksPage() {
   const photoRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = isAdminRole(currentEmployee?.role);
+  // Dropdown: only VP center employees
+  const vpEmployees = useMemo(() => EMPLOYEES.filter((e) => e.center === "VP"), []);
 
   // Check if task is overdue: due date < now and status is "Việc cần làm"
   function isOverdue(t: Task): boolean {
@@ -323,7 +325,7 @@ function TasksPage() {
                 disabled={!canCreateForOthers && !!editingId}
               >
                 {canCreateForOthers ? (
-                  EMPLOYEES.map((e) => (
+                  vpEmployees.map((e) => (
                     <option key={e.id} value={e.username}>
                       {e.name} ({e.username})
                     </option>
@@ -337,7 +339,19 @@ function TasksPage() {
             </div>
             <div>
               <Label htmlFor="s">Người hỗ trợ</Label>
-              <Input id="s" value={support} onChange={(e) => setSupport(e.target.value)} placeholder="Tên người hỗ trợ (nếu có)" className="mt-1" />
+              <select
+                id="s"
+                value={support}
+                onChange={(e) => setSupport(e.target.value)}
+                className="mt-1 h-11 w-full rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+              >
+                <option value="">Không có</option>
+                {vpEmployees.map((e) => (
+                  <option key={e.id} value={e.name}>
+                    {e.name} ({e.username})
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <Label htmlFor="d">Ngày đến hạn</Label>
