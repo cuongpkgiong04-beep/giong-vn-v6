@@ -45,6 +45,7 @@ type Actions = {
     photo?: string,
   ) => Attendance;
   removeAttendance: (id: string) => void;
+  removeTask: (id: string) => void;
   addNote: (n: Omit<Note, "id">) => void;
   addProposal: (p: Omit<Proposal, "id">) => void;
   setProposalStatus: (id: string, status: Proposal["status"]) => void;
@@ -430,6 +431,11 @@ async function _neonUpdateTask(id: string, data: { assignee: string; title: stri
   await updateTask({ data: { id, ...data } });
 }
 
+async function _neonDeleteTask(id: string) {
+  const { deleteTask } = await import("@/routes/api/data");
+  await deleteTask({ data: { id } });
+}
+
 async function _neonUpdateProposalStatus(id: string, status: string) {
   const { updateProposalStatus } = await import("@/routes/api/data");
   await updateProposalStatus({ data: { id, status } });
@@ -704,6 +710,12 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     }));
     saveLs(get());
     _neonUpdateTask(id, { ...data, updated: now }).catch(console.warn);
+  },
+
+  removeTask: (id) => {
+    set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
+    saveLs(get());
+    _neonDeleteTask(id).catch(console.warn);
   },
 
   clock: (kind, gps = "", address = "", photo = "") => {

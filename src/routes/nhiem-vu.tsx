@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Edit, MapPin, Plus } from "lucide-react";
+import { Camera, Edit, MapPin, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -28,6 +28,7 @@ function TasksPage() {
   const addTask = useAppStore((s) => s.addTask);
   const setTaskStatus = useAppStore((s) => s.setTaskStatus);
   const updateTask = useAppStore((s) => s.updateTask);
+  const removeTask = useAppStore((s) => s.removeTask);
   const me = useAppStore((s) => s.currentName());
   // Reactive: subscribe to employees so this re-renders when DB data loads
   const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
@@ -37,6 +38,7 @@ function TasksPage() {
   const [mine, setMine] = useState(false);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -212,7 +214,7 @@ function TasksPage() {
                         {t.location ? <p className="mt-1 text-[10px] text-faint">📍 {t.location}</p> : null}
                         {canEditTask(currentEmployee, t.createdBy) ? (
                           <div className="mt-3 flex flex-wrap gap-1">
-                            {COLS.filter((c) => c !== col).map((c) => (
+                            {COLS.filter((c) => c !== col && c !== "Quá hạn").map((c) => (
                               <button
                                 key={c}
                                 type="button"
@@ -239,6 +241,14 @@ function TasksPage() {
                             >
                               <Edit className="size-3" />
                               Chỉnh sửa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingId(t.id)}
+                              className="h-8 rounded-sm bg-surface-2 px-2 text-[11px] font-medium text-red-400 hover:text-red-500 hover:bg-red-50 flex items-center gap-1"
+                            >
+                              <Trash2 className="size-3" />
+                              Xóa
                             </button>
                           </div>
                         ) : null}
@@ -364,6 +374,29 @@ function TasksPage() {
             </div>
             <Button type="submit">{editingId ? "Cập nhật" : "Lưu nhiệm vụ"}</Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Xóa nhiệm vụ</DialogTitle>
+          <DialogDesc>Bạn có muốn xóa không?</DialogDesc>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeletingId(null)}>Lưu lại</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deletingId) {
+                  removeTask(deletingId);
+                  toast.success("Đã xóa nhiệm vụ");
+                  setDeletingId(null);
+                }
+              }}
+            >
+              Chắc xóa
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

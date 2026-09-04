@@ -201,6 +201,13 @@ export const updateTask = createServerFn({ method: "POST" })
       WHERE id = ${data.id}`;
   });
 
+export const deleteTask = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`DELETE FROM tasks WHERE id = ${data.id}`;
+  });
+
 export const bulkInsertTasks = createServerFn({ method: "POST" })
   .validator(
     (data: {
