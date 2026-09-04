@@ -831,6 +831,65 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > Fix: thêm button "Tất cả" ở đầu `centerStats` hiển thị tổng hợp Vào/Ra/Tổng.
 > Logic: mặc định active, click center khác → deselect.
 
+### Giai đoạn 24: Nhiệm_vu Module Upgrade (2026-09-04)
+
+| Commit | Thay đổi |
+|---|---|
+| `730eb6c` | style(nhiem-vu): cột Đã xong chuyển sang xanh lá nhạt + viền trái |
+| `ffc1cc1` | feat(nhiem-vu): upgrade display format, sorting, and darker green for Đã xong |
+| `ce5e9a8` | feat(nhiem-vu): fix edit dialog + add updateTask |
+| `e9df039` | feat(nhiem-vu): replace 'Quá hạn' button with 'Xóa' + confirmation dialog |
+| `dae452d` | feat(nhiem-vu): dropdown Phụ特长 + Người hỗ trợ chỉ hiện nhân VP |
+| `e82c5a5` | feat(nhiem-vu): thêm bộ lọc người phụ trách + ngày khởi tạo |
+| `460655e` | fix(nhiem-vu): dropdown filter center='VP' → check cả 'VP' và 'Văn phòng' |
+| `9196aaf` | fix(nhiem-vu): dropdown VP employees reactive (useAppStore selector) |
+| `f1d01d5` | style(nhiem-vu): darken green colors in Đã xong column |
+| `9fbc911` | fix(nhiem-vu): sort Quá hạn descending (quá hạn lâu nhất lên trên) |
+
+> **LESSON LEARNED — Center value mismatch (2026-09-04):**
+> Fallback employees dùng `center: 'VP'`, DB employees dùng `center: 'Văn phòng'`.
+> Filter `center === 'VP'` bỏ qua DB employees → dropdown trống.
+> **Fix:** Check cả 2 giá trị: `e.center === 'VP' || e.center === 'Văn phòng'`.
+>
+> **LESSON LEARNED — useMemo non-reactive employees (2026-09-04):**
+> `useMemo(() => EMPLOYEES.filter(...), [])` chỉ chạy 1 lần khi mount.
+> DB employees load sau mount → dropdown trống vì useMemo không re-compute.
+> **Fix:** Subscribe reactive `allEmployees` từ store:
+> ```tsx
+> const allEmployees = useAppStore((s) => s.employees);
+> const vpEmployees = useMemo(() => allEmployees.filter(...), [allEmployees]);
+> ```
+>
+> **LESSON LEARNED — Edit dialog shared state (2026-09-04):**
+> Dialog "Nhiệm vụ mới" dùng chung cho tạo + chỉnh sửa.
+> **Fix:** Thêm `editingId` state để phân biệt. Dialog title/description/button
+> thay đổi theo mode. Reset form khi dialog đóng qua useEffect.
+>
+> **LESSON LEARNED — updateTask server function (2026-09-04):**
+> Trước chỉ có `addTask` và `setTaskStatus`. Cần thêm `updateTask` để sửa
+> các field khác (assignee, title, due, support, blocker, photo, location).
+> Thêm server function `updateTask` trong `data.ts` + store action.
+>
+> **LESSON LEARNED — Task display format (2026-09-04):**
+> Format cũ: `Assignee · đến hạn Due` → Format mới: `Assignee: Created - Due`.
+> Sorting: Việc cần làm (created DESC), Quá hạn (due DESC), Đã xong (updated DESC).
+>
+> **LESSON LEARNED — Task permissions (2026-09-04):**
+> Phân quyền Nhiệm_vu đã có sẵn, giống Chấm công + Check-in:
+> - Admin: thấy tất cả, sửa/xóa tất cả
+> - User: chỉ thấy nhiệm vụ của mình (assignee hoặc createdBy khớp)
+> - Chỉ creator mới sửa/xóa được (canEditTask check)
+>
+> **Trạng thái hiện tại Nhiệm_vu:**
+> - Board view 3 cột: Việc cần làm, Quá hạn, Đã xong
+> - Đã xong: xanh lá đậm (text-green-700, border-green-500)
+> - Quá hạn: đỏ (text-red-400, border-red-300), sort giảm dần
+> - Dropdown Phụ特长 + Người hỗ trợ: chỉ nhân VP, reactive từ store
+> - Bộ lọc: search text + dropdown phụ trách + date range + checkbox mine
+> - Edit dialog: phân biệt tạo/sửa, pre-fill đúng data
+> - Delete: dialog xác nhận "Chắc xóa" / "Lưu lại"
+> - CRUD: addTask, updateTask, removeTask, setTaskStatus — tất cả sync Neon + pending queue
+
 ---
-*Cập nhật lần cuối: 2026-09-04 (Mobile Preview + UI fixes — filter date, center cards)*
+*Cập nhật lần cuối: 2026-09-04 (Nhiệm_vu Module Upgrade)*
 *Người cập nhật: Trợ lý lập trình*
