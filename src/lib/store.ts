@@ -43,6 +43,9 @@ type Actions = {
     gps?: string,
     address?: string,
     photo?: string,
+    employeeName?: string,
+    employeeId?: string,
+    workplace?: string,
   ) => Attendance;
   removeAttendance: (id: string) => void;
   removeTask: (id: string) => void;
@@ -235,8 +238,9 @@ async function retryPendingSync() {
           continue; // unknown collection — leave in queue
       }
       succeeded.push(record.data.id);
-    } catch {
-      // Will retry on next sync cycle
+    } catch (err) {
+      // Skip this record — don't block others, will retry on next cycle
+      console.warn(`[store] Retry sync failed for ${record.collection}/${record.data.id}:`, err);
     }
   }
   if (succeeded.length > 0) {
@@ -722,11 +726,13 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     _neonDeleteTask(id).catch(console.warn);
   },
 
-  clock: (kind, gps = "", address = "", photo = "") => {
-    const name = get().currentName();
+  clock: (kind, gps = "", address = "", photo = "", employeeName, employeeId, workplace) => {
+    // Use passed employee data directly — no more non-reactive snapshot
+    const name = employeeName || get().currentName();
+    const empId = employeeId || get().currentUserId;
     const emps = get().employees;
     const currentEmployee =
-      emps.find((e) => e.id === get().currentUserId) ?? emps[0] ?? { center: 'VP', title: 'Nhân viên' } as any;
+      emps.find((e) => e.id === empId) ?? emps[0] ?? { center: 'VP', title: 'Nhân viên' } as any;
     const date = todayIso();
     // Guard chống trùng lặp: cùng người, cùng ngày, cùng loại trong 5 giây gần nhất
     // → trả về bản ghi đã tạo, KHÔNG tạo thêm (bảo vệ bản chất dữ liệu khi bấm nhiều lần)
@@ -738,7 +744,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         Date.now() - parseTs(a.updatedAt ?? `${a.date}T${a.time}`) < 5000,
     );
     if (recent) return recent;
-    const workplace = currentEmployee.center ?? "VP";
+    const wp = workplace || currentEmployee.center || "VP";
     const nowTs = new Date().toISOString();
     const rec: Attendance = {
       id: uid("cc"),
@@ -752,7 +758,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       photo: photo || undefined,
       type: "Bình thường",
       approved: "Chưa",
-      workplace,
+      workplace: wp,
       updatedAt: nowTs,
       synced: false, // starts unsynced — will be marked true after Neon insert
     };

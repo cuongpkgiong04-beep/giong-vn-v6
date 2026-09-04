@@ -256,12 +256,23 @@ function ChamCongPage() {
   async function confirmPunch() {
     // Chỉ cho phép xác nhận 1 lần — mọi lần bấm tiếp theo bị bỏ qua ngay
     if (submittingRef.current) return;
-    // Re-validate rules before submit
-    if (punchType === "Điểm danh vào ca" && !canPunchIn) {
+
+    // ── Re-read FRESH state from store (not stale closure) ──
+    const freshState = useAppStore.getState();
+    const freshAttendance = freshState.attendance;
+    const freshEmp = freshState.employees.find((e) => e.id === freshState.currentUserId) ?? null;
+    const freshEmpName = freshEmp?.name ?? freshState.currentName();
+    const todayRecs = freshAttendance.filter((a) => a.name === freshEmpName && a.date === todayStr);
+    const freshLastStatus = todayRecs.length > 0 ? todayRecs[0].status : null;
+    const freshCanPunchIn = freshLastStatus !== "Điểm danh vào ca";
+    const freshCanPunchOut = freshLastStatus === "Điểm danh vào ca";
+
+    // Re-validate rules with fresh state
+    if (punchType === "Điểm danh vào ca" && !freshCanPunchIn) {
       toast.warning("Hôm nay bạn đã vào ca. Vui lòng tan ca trước.");
       return;
     }
-    if (punchType === "Điểm danh tan ca" && !canPunchOut) {
+    if (punchType === "Điểm danh tan ca" && !freshCanPunchOut) {
       toast.warning("Bạn chưa vào ca hôm nay. Vui lòng vào ca trước.");
       return;
     }
@@ -283,18 +294,19 @@ function ChamCongPage() {
       const finalAddress = resolvedAddress
         ? cleanAddress(resolvedAddress)
         : (address || gps);
-      // Upload photo to Cloudinary
-      let photoUrl: string | undefined;
+      // Upload photo to Cloudinary — REQUIRED, no base64 fallback
+      let photoUrl: string;
       try {
         const result = await uploadImage({
           data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
         });
         photoUrl = result.url;
       } catch (err) {
-        console.warn("Cloudinary upload failed, using base64:", err);
-        photoUrl = photoPreview;
+        toast.error("Upload ảnh thất bại. Vui lòng thử lại.");
+        return;
       }
-      const rec = clock(punchType, gps, finalAddress, photoUrl);
+      // Pass employee data directly — no more non-reactive snapshot
+      const rec = clock(punchType, gps, finalAddress, photoUrl, freshEmpName, freshState.currentUserId, freshEmp?.center);
       toast.success(`${punchType} lúc ${rec.time}`, { description: rec.name });
       setIsDialogOpen(false);
     } finally {
