@@ -36,6 +36,9 @@ function TasksPage() {
   const canCreateForOthers = canCreateTaskForOthers(currentEmployee);
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -96,13 +99,25 @@ function TasksPage() {
         const createdByMatches = t.createdBy.toLowerCase() === me.toLowerCase();
         if (!assigneeMatches && !createdByMatches) return false;
       }
+      // Filter by assignee (dropdown)
+      if (filterAssignee && t.assignee !== filterAssignee) return false;
+      // Filter by creation date range
+      if (dateFrom) {
+        const taskDate = t.created.slice(0, 10);
+        if (taskDate < dateFrom) return false;
+      }
+      if (dateTo) {
+        const taskDate = t.created.slice(0, 10);
+        if (taskDate > dateTo) return false;
+      }
+      // Search by title or assignee
       if (q.trim()) {
         const s = q.toLowerCase();
         return t.title.toLowerCase().includes(s) || t.assignee.toLowerCase().includes(s);
       }
       return true;
     });
-  }, [tasks, q, mine, currentUser.username, me, isAdmin]);
+  }, [tasks, q, mine, filterAssignee, dateFrom, dateTo, currentUser.username, me, isAdmin]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -170,8 +185,33 @@ function TasksPage() {
         }
       />
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm việc, người phụ trách…" className="sm:max-w-sm" />
+        <select
+          value={filterAssignee}
+          onChange={(e) => setFilterAssignee(e.target.value)}
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px]"
+        >
+          <option value="">Tất cả phụ trách</option>
+          {vpEmployees.map((e) => (
+            <option key={e.id} value={e.username}>{e.name}</option>
+          ))}
+        </select>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+          />
+          <span className="text-muted">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+          />
+        </div>
         <label className="flex h-11 items-center gap-2 text-sm text-ink">
           <input type="checkbox" checked={isAdmin ? mine : true} onChange={(e) => isAdmin && setMine(e.target.checked)} disabled={!isAdmin} className="size-4 accent-accent" />
           {currentUser.name} {!isAdmin && "(chỉ của bạn)"}
