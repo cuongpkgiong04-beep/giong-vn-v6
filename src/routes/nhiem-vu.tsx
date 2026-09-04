@@ -233,7 +233,7 @@ function TasksPage() {
           {COLS.map((col) => {
             const items = filtered.filter((t) => colOf(t) === col).sort((a, b) => {
               if (col === "Việc cần làm") return (b.created || "").localeCompare(a.created || "");
-              if (col === "Quá hạn") return (a.due || "").localeCompare(b.due || "");
+              if (col === "Quá hạn") return (b.due || "").localeCompare(a.due || "");
               if (col === "Đã xong") return (b.updated || "").localeCompare(a.updated || "");
               return 0;
             });
