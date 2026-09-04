@@ -67,8 +67,10 @@ function TasksPage() {
   const photoRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = isAdminRole(currentEmployee?.role);
-  // Dropdown: only VP center employees
-  const vpEmployees = useMemo(() => EMPLOYEES.filter((e) => e.center === "VP" || e.center === "Văn phòng"), []);
+  // Reactive: subscribe to employees list so dropdown updates after DB load
+  const allEmployees = useAppStore((s) => s.employees);
+  // Dropdown: only "Văn phòng" center employees
+  const vpEmployees = useMemo(() => allEmployees.filter((e) => e.center === "VP" || e.center === "Văn phòng"), [allEmployees]);
 
   // Check if task is overdue: due date < now and status is "Việc cần làm"
   function isOverdue(t: Task): boolean {
