@@ -580,7 +580,11 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const employeeMap = new Map<string, Employee>();
         for (const e of FALLBACK_EMPLOYEES) employeeMap.set(e.id, e);
         for (const e of dbEmployeeList) employeeMap.set(e.id, e);
-        const finalEmployees = Array.from(employeeMap.values());
+        // Remove fallback employees that were deleted from DB (inactive)
+        const dbEmpIds = new Set(dbEmployeeList.map((e) => e.id));
+        const finalEmployees = Array.from(employeeMap.values()).filter(
+          (e) => dbEmpIds.has(e.id) || !FALLBACK_EMPLOYEES.some((fe) => fe.id === e.id),
+        );
         const centerMap = new Map<string, import("@/lib/types").Center>();
         for (const c of FALLBACK_CENTERS) centerMap.set(c.code, c);
         for (const c of dbCenterList) centerMap.set(c.code, c);
