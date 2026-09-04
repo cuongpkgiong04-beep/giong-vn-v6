@@ -748,6 +748,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     const nowTs = new Date().toISOString();
     const rec: Attendance = {
       id: uid("cc"),
+      employeeId: empId,
       name,
       status: kind,
       time: nowTime(),

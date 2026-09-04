@@ -17,6 +17,7 @@ export type Task = {
 
 export type Attendance = {
   id: string;
+  employeeId?: string;
   name: string;
   status: string;
   time: string;

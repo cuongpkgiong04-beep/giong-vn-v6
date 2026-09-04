@@ -69,8 +69,10 @@ function ChamCongPage() {
     day: "2-digit",
   }).format(new Date());
   const todayRecords = useMemo(() => {
-    const empName = currentEmployee?.name ?? currentName;
-    return attendance.filter((a) => a.name === empName && a.date === todayStr);
+    const empId = currentEmployee?.id;
+    return attendance.filter((a) =>
+      (empId && a.employeeId === empId) || a.name === (currentEmployee?.name ?? currentName),
+    ).filter((a) => a.date === todayStr);
   }, [attendance, currentEmployee, currentName, todayStr]);
 
   // attendance array is newest-first (prepended), so [0] is most recent
@@ -262,7 +264,9 @@ function ChamCongPage() {
     const freshAttendance = freshState.attendance;
     const freshEmp = freshState.employees.find((e) => e.id === freshState.currentUserId) ?? null;
     const freshEmpName = freshEmp?.name ?? freshState.currentName();
-    const todayRecs = freshAttendance.filter((a) => a.name === freshEmpName && a.date === todayStr);
+    const todayRecs = freshAttendance.filter((a) =>
+      (freshEmp?.id && a.employeeId === freshEmp.id) || a.name === freshEmpName,
+    ).filter((a) => a.date === todayStr);
     const freshLastStatus = todayRecs.length > 0 ? todayRecs[0].status : null;
     const freshCanPunchIn = freshLastStatus !== "Điểm danh vào ca";
     const freshCanPunchOut = freshLastStatus === "Điểm danh vào ca";
