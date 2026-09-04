@@ -68,7 +68,7 @@ function TasksPage() {
 
   const isAdmin = isAdminRole(currentEmployee?.role);
   // Dropdown: only VP center employees
-  const vpEmployees = useMemo(() => EMPLOYEES.filter((e) => e.center === "VP"), []);
+  const vpEmployees = useMemo(() => EMPLOYEES.filter((e) => e.center === "VP" || e.center === "Văn phòng"), []);
 
   // Check if task is overdue: due date < now and status is "Việc cần làm"
   function isOverdue(t: Task): boolean {
