@@ -162,21 +162,26 @@ function TasksPage() {
       {view === "board" ? (
         <div className="grid gap-3 lg:grid-cols-3">
           {COLS.map((col) => {
-            const items = filtered.filter((t) => colOf(t) === col);
+            const items = filtered.filter((t) => colOf(t) === col).sort((a, b) => {
+              if (col === "Việc cần làm") return (b.created || "").localeCompare(a.created || "");
+              if (col === "Quá hạn") return (a.due || "").localeCompare(b.due || "");
+              if (col === "Đã xong") return (b.updated || "").localeCompare(a.updated || "");
+              return 0;
+            });
             return (
               <section key={col} className="rounded-xl bg-surface-2/70 p-3">
                 <div className="mb-2 flex items-center justify-between px-1">
-                  <h2 className={`text-sm font-semibold ${col === "Đã xong" ? "text-green-500" : "text-ink"}`}>{col}</h2>
+                  <h2 className={`text-sm font-semibold ${col === "Đã xong" ? "text-green-600" : "text-ink"}`}>{col}</h2>
                   <span className="text-xs tabular text-muted">{items.length}</span>
                 </div>
                 <div className="flex flex-col gap-2">
                   {items.slice(0, 24).map((t) => {
                     const overdue = isOverdue(t);
                     return (
-                      <article key={t.id} className={`rounded-lg bg-surface p-3 shadow-[var(--shadow-card)] ${overdue ? "border-l-2 border-red-300" : col === "Đã xong" ? "border-l-2 border-green-300" : ""}`}>
-                        <p className={`text-sm font-medium ${overdue ? "text-red-400" : col === "Đã xong" ? "text-green-500" : "text-ink"}`}>{t.title}</p>
-                        <p className={`mt-2 text-xs ${overdue ? "text-red-300" : col === "Đã xong" ? "text-green-400" : "text-muted"}`}>
-                          {t.assignee || "Chưa gán"} · đến hạn {formatDate(t.due)}
+                      <article key={t.id} className={`rounded-lg bg-surface p-3 shadow-[var(--shadow-card)] ${overdue ? "border-l-2 border-red-300" : col === "Đã xong" ? "border-l-2 border-green-400" : ""}`}>
+                        <p className={`text-sm font-medium ${overdue ? "text-red-400" : col === "Đã xong" ? "text-green-600" : "text-ink"}`}>{t.title}</p>
+                        <p className={`mt-2 text-xs ${overdue ? "text-red-300" : col === "Đã xong" ? "text-green-500" : "text-muted"}`}>
+                          {t.assignee || "Chưa gán"}: {formatDate(t.created)} - {formatDate(t.due)}
                         </p>
                         {t.support ? <p className="mt-1 text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
                         {t.blocker ? <p className="mt-2 line-clamp-2 text-xs text-warn">⚠ {t.blocker}</p> : null}
@@ -230,14 +235,25 @@ function TasksPage() {
             </div>
           ) : (
             <ul className="divide-y divide-line">
-              {filtered.slice(0, 60).map((t) => {
+              {filtered.slice(0, 60).sort((a, b) => {
+                const aCol = colOf(a);
+                const bCol = colOf(b);
+                if (aCol !== bCol) {
+                  const order = ["Việc cần làm", "Quá hạn", "Đã xong"];
+                  return order.indexOf(aCol) - order.indexOf(bCol);
+                }
+                if (aCol === "Việc cần làm") return (b.created || "").localeCompare(a.created || "");
+                if (aCol === "Quá hạn") return (a.due || "").localeCompare(b.due || "");
+                if (aCol === "Đã xong") return (b.updated || "").localeCompare(a.updated || "");
+                return 0;
+              }).map((t) => {
                 const overdue = isOverdue(t);
                 return (
                   <li key={t.id} className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${overdue ? "bg-red-50/50" : t.status === "Đã xong" ? "bg-green-50/50" : ""}`}>
                     <div className="min-w-0">
-                      <p className={`font-medium ${overdue ? "text-red-400" : t.status === "Đã xong" ? "text-green-500" : "text-ink"}`}>{t.title}</p>
-                      <p className={`text-sm ${overdue ? "text-red-300" : t.status === "Đã xong" ? "text-green-400" : "text-muted"}`}>
-                        {t.assignee} · tạo {formatDate(t.created)} · đến hạn {formatDate(t.due)}
+                      <p className={`font-medium ${overdue ? "text-red-400" : t.status === "Đã xong" ? "text-green-600" : "text-ink"}`}>{t.title}</p>
+                      <p className={`text-sm ${overdue ? "text-red-300" : t.status === "Đã xong" ? "text-green-500" : "text-muted"}`}>
+                        {t.assignee}: {formatDate(t.created)} - {formatDate(t.due)}
                       </p>
                       {t.support ? <p className="text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
                       {t.blocker ? <p className="text-xs text-warn">⚠ {t.blocker}</p> : null}
