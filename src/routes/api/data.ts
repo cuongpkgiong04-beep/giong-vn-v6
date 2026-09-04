@@ -173,6 +173,34 @@ export const updateTaskStatus = createServerFn({ method: "POST" })
     await sql`UPDATE tasks SET status = ${data.status}, updated = ${data.updated} WHERE id = ${data.id}`;
   });
 
+export const updateTask = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      assignee: string;
+      title: string;
+      due: string;
+      support: string;
+      blocker: string;
+      photo?: string;
+      location?: string;
+      updated: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE tasks SET
+      assignee = ${data.assignee},
+      title = ${data.title},
+      due = ${data.due},
+      support = ${data.support},
+      blocker = ${data.blocker},
+      photo = ${data.photo ?? null},
+      location = ${data.location ?? null},
+      updated = ${data.updated}
+      WHERE id = ${data.id}`;
+  });
+
 export const bulkInsertTasks = createServerFn({ method: "POST" })
   .validator(
     (data: {

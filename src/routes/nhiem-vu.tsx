@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Camera, Edit, MapPin, Plus } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
@@ -27,6 +27,7 @@ function TasksPage() {
   const tasks = useAppStore((s) => s.tasks);
   const addTask = useAppStore((s) => s.addTask);
   const setTaskStatus = useAppStore((s) => s.setTaskStatus);
+  const updateTask = useAppStore((s) => s.updateTask);
   const me = useAppStore((s) => s.currentName());
   // Reactive: subscribe to employees so this re-renders when DB data loads
   const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
@@ -35,6 +36,21 @@ function TasksPage() {
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setEditingId(null);
+      setTitle("");
+      setAssignee(currentUser.username);
+      setDue("");
+      setSupport("");
+      setBlocker("");
+      setPhoto(null);
+      setLocation("");
+    }
+  }, [open, currentUser.username]);
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState(currentUser.username);
   const [due, setDue] = useState("");
@@ -87,25 +103,32 @@ function TasksPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
-    addTask({
-      assignee,
-      title: title.trim(),
-      due: due ? `${due} 18:00` : "",
-      status: "Việc cần làm",
-      support,
-      blocker,
-      createdBy: me,
-      photo: photo ?? undefined,
-      location,
-    });
-    setTitle("");
-    setDue("");
-    setSupport("");
-    setBlocker("");
-    setPhoto(null);
-    setLocation("");
+    if (editingId) {
+      updateTask(editingId, {
+        assignee,
+        title: title.trim(),
+        due: due ? `${due} 18:00` : "",
+        support,
+        blocker,
+        photo: photo ?? undefined,
+        location,
+      });
+      toast.success("Đã cập nhật nhiệm vụ");
+    } else {
+      addTask({
+        assignee,
+        title: title.trim(),
+        due: due ? `${due} 18:00` : "",
+        status: "Việc cần làm",
+        support,
+        blocker,
+        createdBy: me,
+        photo: photo ?? undefined,
+        location,
+      });
+      toast.success("Đã tạo nhiệm vụ");
+    }
     setOpen(false);
-    toast.success("Đã tạo nhiệm vụ");
   }
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -202,6 +225,7 @@ function TasksPage() {
                             <button
                               type="button"
                               onClick={() => {
+                                setEditingId(t.id);
                                 setTitle(t.title);
                                 setAssignee(t.assignee);
                                 setDue(t.due ? t.due.split(" ")[0] : "");
@@ -272,8 +296,8 @@ function TasksPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogTitle>Nhiệm vụ mới</DialogTitle>
-          <DialogDesc>Ghi việc cần làm trong tuần hoặc tháng.</DialogDesc>
+          <DialogTitle>{editingId ? "Chỉnh sửa nhiệm vụ" : "Nhiệm vụ mới"}</DialogTitle>
+          <DialogDesc>{editingId ? "Cập nhật thông tin nhiệm vụ." : "Ghi việc cần làm trong tuần hoặc tháng."}</DialogDesc>
           <form onSubmit={submit} className="mt-4 flex flex-col gap-3">
             <div>
               <Label htmlFor="t">Nội dung</Label>
@@ -286,7 +310,7 @@ function TasksPage() {
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
                 className="mt-1 h-11 w-full rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
-                disabled={!canCreateForOthers}
+                disabled={!canCreateForOthers && !!editingId}
               >
                 {canCreateForOthers ? (
                   EMPLOYEES.map((e) => (
@@ -338,7 +362,7 @@ function TasksPage() {
                 </Button>
               </div>
             </div>
-            <Button type="submit">Lưu nhiệm vụ</Button>
+            <Button type="submit">{editingId ? "Cập nhật" : "Lưu nhiệm vụ"}</Button>
           </form>
         </DialogContent>
       </Dialog>

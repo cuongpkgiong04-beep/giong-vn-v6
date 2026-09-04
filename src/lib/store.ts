@@ -37,6 +37,7 @@ type Actions = {
   currentName: () => string;
   addTask: (t: Omit<Task, "id" | "created" | "updated">) => void;
   setTaskStatus: (id: string, status: string) => void;
+  updateTask: (id: string, data: { assignee: string; title: string; due: string; support: string; blocker: string; photo?: string; location?: string }) => void;
   clock: (
     kind: "Điểm danh vào ca" | "Điểm danh tan ca",
     gps?: string,
@@ -424,6 +425,11 @@ async function _neonUpdateTaskStatus(id: string, status: string, updated: string
   await updateTaskStatus({ data: { id, status, updated } });
 }
 
+async function _neonUpdateTask(id: string, data: { assignee: string; title: string; due: string; support: string; blocker: string; photo?: string; location?: string; updated: string }) {
+  const { updateTask } = await import("@/routes/api/data");
+  await updateTask({ data: { id, ...data } });
+}
+
 async function _neonUpdateProposalStatus(id: string, status: string) {
   const { updateProposalStatus } = await import("@/routes/api/data");
   await updateProposalStatus({ data: { id, status } });
@@ -687,6 +693,17 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     }));
     saveLs(get());
     _neonUpdateTaskStatus(id, status, now).catch(console.warn);
+  },
+
+  updateTask: (id, data) => {
+    const now = `${todayIso()} ${nowTime().slice(0, 5)}`;
+    set((s) => ({
+      tasks: s.tasks.map((x) =>
+        x.id === id ? { ...x, ...data, updated: now } : x,
+      ),
+    }));
+    saveLs(get());
+    _neonUpdateTask(id, { ...data, updated: now }).catch(console.warn);
   },
 
   clock: (kind, gps = "", address = "", photo = "") => {
