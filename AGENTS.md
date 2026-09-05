@@ -955,5 +955,36 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > - Chọn xong → hiện tags removable bên dưới button
 > - Tiết kiệm ~200px vertical space trong dialog
 
-*Cập nhật lần cuối: 2026-09-05 (Giai đoạn 26 — Người hỗ trợ dropdown + Nguyên tắc mới)*
+### Giai đoạn 27: Camera Live + Overlay Đóng Dấu Ảnh Chấm Công (2026-09-05)
+
+| Commit | Thay đổi |
+|---|---|
+| `4f457b6` | feat(cham-cong): camera live + overlay đóng dấu ảnh chấm công |
+| `1af6e55` | style(cham-cong): overlay giống ảnh mẫu — time lớn, green accent line, không dark bar |
+
+> **LESSON LEARNED — Camera Live + Overlay Stamp (2026-09-05):**
+> Chuyển luồng ảnh chấm công từ `<input type="file" capture>` sang camera live (`getUserMedia`).
+>
+> **Flow mới:**
+> 1. Mở dialog → Camera live hiện overlay với thông tin realtime
+> 2. Overlay: GPS, thời gian, ngày/thứ, tên NV, công ty —font trắng với shadow
+> 3. Ấn nút chụp → GPS + thời gian lấy LẠI tại giây chụp (fresh)
+> 4. Đóng dấu tất thông tin lên ảnh bằng Canvas
+> 5. Preview ảnh đã đóng dấu → Xác nhận → Upload lên Cloudinary
+>
+> **Style overlay (giống ảnh mẫu):**
+> - Không có dark bar — text nổi trực tiếp trên ảnh
+> - Time rất lớn kiểu đồng hồ (bold, ~9% width canvas)
+> - Đường kẻ xanh lá bên trái làm accent line
+> - Font: Arial, shadow rgba(0,0,0,0.7)
+> - Thứ tự bottom-up: Company → Tên NV → Địa chỉ → Ngày/Thứ → Time lớn
+>
+> **GPS fresh at capture:** `navigator.geolocation.getCurrentPosition` với `maximumAge: 0` + 5s timeout
+> để lấy toạ độ chính xác tại giây chụp, không dùng giá trị cũ lúc mở dialog.
+>
+> **Tên công ty:** "Công ty Cổ Phần Giong Việt Nam" (theo yêu cầu Đại ca)
+>
+> **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
+
+*Cập nhật lần cuối: 2026-09-05 (Giai đoạn 27 — Camera Live + Overlay Đóng Dấu Ảnh Chấm Công)*
 *Người cập nhật: Trợ lý lập trình*
