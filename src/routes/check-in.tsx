@@ -144,6 +144,7 @@ function CheckInPage() {
       );
     });
   }  async function handleOpenDialog() {
+    console.log('[check-in] handleOpenDialog called, setIsDialogOpen(true)');
     // Luôn mở dialog trước — camera và GPS chỉ là bổ sung
     setIsDialogOpen(true);
     setGps("");
