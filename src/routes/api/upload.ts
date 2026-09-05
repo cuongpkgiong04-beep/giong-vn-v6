@@ -42,33 +42,33 @@ export const uploadImage = createServerFn({ method: "POST" })
     const isVideo = data.base64.includes("video/");
     const resourceType = isVideo ? "video" : "image";
 
-    // Upload using upload_stream
-    const result = await new Promise<{
-      secure_url: string;
-      public_id: string;
-    }>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: data.folder || "giong-vn",
-          resource_type: resourceType,
-          transformation: [
-            { width: 1200, height: 1200, crop: "limit" }, // Max 1200px
-            { quality: "auto" }, // Auto compress
-          ],
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else
-            resolve({
-              secure_url: result!.secure_url,
-              public_id: result!.public_id,
-            });
-        },
-      );
+    // Upload using upload_stream with 30s timeout to avoid hanging on slow networks
+    const result = await Promise.race([
+      new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: data.folder || "giong-vn",
+            resource_type: resourceType,
+            transformation: [
+              { width: 1200, height: 1200, crop: "limit" }, // Max 1200px
+              { quality: "auto" }, // Auto compress
+            ],
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else
+              resolve({
+                secure_url: result!.secure_url,
+                public_id: result!.public_id,
+              });
+          },
+        );
 
-      // Send the base64 data
-      stream.end(Buffer.from(data.base64.split(",")[1], "base64"));
-    });
+        // Send the base64 data
+        stream.end(Buffer.from(data.base64.split(",")[1], "base64"));
+      }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("upload timeout (30s)")), 30000)),
+    ]);
 
     return { url: result.secure_url, provider: "cloudinary" as const };
   });

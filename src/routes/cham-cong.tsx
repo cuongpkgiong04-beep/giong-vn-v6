@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { CENTERS, findEmployeeByLooseText, getVisibleCenterCodes, isAdminRole } from "@/lib/catalog";
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, getPendingSyncRecords } from "@/lib/store";
 import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage } from "@/routes/api/upload";
 
@@ -60,6 +60,24 @@ function ChamCongPage() {
   // Chỉ cho phép xác nhận 1 lần — ref chặn mọi double-tap trước khi re-render
   const submittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingRecords, setPendingRecords] = useState<Array<{ collection: string; data: any; attempts?: number }>>([]);
+  const [showSyncDashboard, setShowSyncDashboard] = useState(false);
+
+  // Refresh pending records periodically
+  useEffect(() => {
+    const refresh = () => setPendingRecords(getPendingSyncRecords());
+    refresh();
+    const interval = setInterval(refresh, 10_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const syncStats = useMemo(() => {
+    const pending = pendingRecords.filter((r) => r.collection === "attendance");
+    const total = pending.length;
+    const failed = pending.filter((r) => (r.attempts ?? 0) > 5).length;
+    const retrying = total - failed;
+    return { total, failed, retrying };
+  }, [pendingRecords]);
 
   // Compute today's attendance status for current user (use Vietnam timezone like store)
   const todayStr = new Intl.DateTimeFormat("en-CA", {
@@ -298,15 +316,18 @@ function ChamCongPage() {
       const finalAddress = resolvedAddress
         ? cleanAddress(resolvedAddress)
         : (address || gps);
+      // Compress ảnh trước khi upload để tránh lỗi kích thước lớn trên mobile
+      const compressedPhoto = await compressBase64Image(photoPreview);
       // Upload photo to Cloudinary — REQUIRED, no base64 fallback
       let photoUrl: string;
       try {
         const result = await uploadImage({
-          data: { base64: photoPreview, folder: "giong-vn/cham-cong" },
+          data: { base64: compressedPhoto, folder: "giong-vn/cham-cong" },
         });
         photoUrl = result.url;
-      } catch (err) {
-        toast.error("Upload ảnh thất bại. Vui lòng thử lại.");
+      } catch (err: any) {
+        console.error("[cham-cong] Upload ảnh thất bại:", err?.message || err);
+        toast.error(`Upload ảnh thất bại: ${err?.message || "không xác định"}. Vui lòng thử lại.`);
         return;
       }
       // Pass employee data directly — no more non-reactive snapshot
@@ -360,6 +381,82 @@ function ChamCongPage() {
           </>
         }
       />
+
+      {/* Sync Status Dashboard — Admin only */}
+      {isAdmin && syncStats.total > 0 && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowSyncDashboard(!showSyncDashboard)}
+            className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm transition hover:bg-amber-100"
+          >
+            <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="font-medium text-amber-800">
+              Đang chờ đồng bộ: {syncStats.total} bản ghi
+            </span>
+            {syncStats.failed > 0 && (
+              <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                {syncStats.failed} lỗi
+              </span>
+            )}
+            <span className="text-amber-600 text-xs">{showSyncDashboard ? "▲" : "▼"}</span>
+          </button>
+          {showSyncDashboard && (
+            <div className="mt-2 rounded-lg border border-line bg-surface p-4">
+              <div className="mb-3 flex items-center gap-4 text-sm">
+                <span className="text-muted">Tổng: <strong className="text-ink">{syncStats.total}</strong></span>
+                <span className="text-muted">Đang retry: <strong className="text-amber-600">{syncStats.retrying}</strong></span>
+                <span className="text-muted">Lỗi >5 lần: <strong className="text-red-500">{syncStats.failed}</strong></span>
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="text-muted uppercase">
+                    <tr>
+                      <th className="pb-2 pr-4">Nhân sự</th>
+                      <th className="pb-2 pr-4">Loại</th>
+                      <th className="pb-2 pr-4">Ngày</th>
+                      <th className="pb-2 pr-4">Giờ</th>
+                      <th className="pb-2">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {pendingRecords
+                      .filter((r) => r.collection === "attendance")
+                      .map((r) => {
+                        const attempts = r.attempts ?? 0;
+                        const isFailed = attempts > 5;
+                        return (
+                          <tr key={r.data.id} className={isFailed ? "bg-red-50/50" : ""}>
+                            <td className="py-1.5 pr-4 font-medium text-ink">{r.data.name ?? "—"}</td>
+                            <td className="py-1.5 pr-4 text-muted">{r.data.status ?? "—"}</td>
+                            <td className="py-1.5 pr-4 text-muted">{r.data.date ?? "—"}</td>
+                            <td className="py-1.5 pr-4 text-muted">{r.data.time ?? "—"}</td>
+                            <td className="py-1.5">
+                              {isFailed ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                                  <span className="size-1 rounded-full bg-red-500" />
+                                  Lỗi ({attempts} lần)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                                  <span className="size-1 rounded-full bg-amber-500 animate-pulse" />
+                                  Đang retry ({attempts} lần)
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-xs text-faint">
+                Bản ghi tự động retry mỗi 30 giây. Lỗi >5 lần cần kiểm tra DB hoặc network.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         <button
@@ -554,12 +651,22 @@ function ChamCongPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <StatusBadge value={a.status} />
-                        {a.synced === false && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" title="Chưa đồng bộ lên server">
-                            <span className="size-1 rounded-full bg-amber-500" />
-                            Đang chờ
-                          </span>
-                        )}
+                        {a.synced === false && (() => {
+                          const pending = pendingRecords.find((r) => r.data.id === a.id);
+                          const attempts = pending?.attempts ?? 0;
+                          const isFailed = attempts > 5;
+                          return isFailed ? (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700" title={`Đồng bộ thất bại ${attempts} lần`}>
+                              <span className="size-1 rounded-full bg-red-500" />
+                              Lỗi sync
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700" title="Chưa đồng bộ lên server">
+                              <span className="size-1 rounded-full bg-amber-500" />
+                              Đang chờ
+                            </span>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted tabular">
@@ -747,3 +854,41 @@ function ChamCongPage() {
     </ClientOnly>
   );
 }
+
+/**
+ * Nén ảnh base64 sang JPEG — giảm kích thước để tránh lỗi upload trên mobile.
+ * Target: ≤ 800KB, resize về max 1024px nếu ảnh gốc quá lớn.
+ */
+export async function compressBase64Image(base64: string, maxSizeKB = 800): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const MAX_DIM = 1024;
+      let { width, height } = img;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+        width *= ratio;
+        height *= ratio;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+      let result = canvas.toDataURL("image/jpeg", 0.8);
+      // Kiểm tra kích thước, giảm quality nếu vẫn quá lớn
+      const sizeKB = (result.length * 0.75) / 1024;
+      if (sizeKB > maxSizeKB) {
+        const quality = Math.max(0.5, maxSizeKB / sizeKB);
+        result = canvas.toDataURL("image/jpeg", quality);
+      }
+      resolve(result);
+    };
+    img.onerror = () => {
+      // Nếu không load được, trả về base64 gốc
+      resolve(base64);
+    };
+    img.src = base64;
+  });
+}
+
