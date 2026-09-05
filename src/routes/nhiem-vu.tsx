@@ -40,6 +40,7 @@ function TasksPage() {
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
   const [filterAssignee, setFilterAssignee] = useState("");
+  const [filterAssigner, setFilterAssigner] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [open, setOpen] = useState(false);
@@ -113,6 +114,7 @@ function TasksPage() {
       }
       // Filter by assignee (dropdown)
       if (filterAssignee && t.assignee !== filterAssignee) return false;
+      if (filterAssigner && t.assigner !== filterAssigner) return false;
       // Filter by creation date range
       if (dateFrom) {
         const taskDate = t.created.slice(0, 10);
@@ -129,7 +131,7 @@ function TasksPage() {
       }
       return true;
     });
-  }, [tasks, q, mine, filterAssignee, dateFrom, dateTo, currentUser.username, me, isAdmin]);
+  }, [tasks, q, mine, filterAssignee, filterAssigner, dateFrom, dateTo, currentUser.username, me, isAdmin]);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -225,6 +227,16 @@ function TasksPage() {
             className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
           />
         </div>
+        <select
+          value={filterAssigner}
+          onChange={(e) => setFilterAssigner(e.target.value)}
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px]"
+        >
+          <option value="">Tất cả người giao</option>
+          {vpEmployees.map((e) => (
+            <option key={e.id} value={e.name}>{e.name}</option>
+          ))}
+        </select>
         <label className="flex h-11 items-center gap-2 text-sm text-ink">
           <input type="checkbox" checked={isAdmin ? mine : true} onChange={(e) => isAdmin && setMine(e.target.checked)} disabled={!isAdmin} className="size-4 accent-accent" />
           {currentUser.name} {!isAdmin && "(chỉ của bạn)"}
