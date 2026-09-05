@@ -891,5 +891,49 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > - CRUD: addTask, updateTask, removeTask, setTaskStatus — tất cả sync Neon + pending queue
 
 ---
-*Cập nhật lần cuối: 2026-09-04 (Nhiệm_vu Module Upgrade)*
+---
+
+### Giai đoạn 25: Fix chấm công — Favicon + Build + isAdmin (2026-09-05)
+
+| Commit | Thay đổi |
+|---|---|
+| `60bb45b` | fix(cham-cong): nén ảnh + timeout upload Cloudinary + log lỗi chi tiết |
+| `d72c7f5` | feat: đổi favicon + apple-touch-icon thành logo PNG giong-vina-logo.png (giống sidebar) |
+| `b95ea24` | fix(build): thêm external leaflet cho Rolldown + xóa import CSS thừa |
+| `c57e924` | chore: trigger Vercel redeploy (favicon comment) |
+| `8222086` | fix(cham-cong): thêm biến isAdmin bị thiếu gây lỗi "isAdmin is not defined" |
+
+> **Tóm tắt công việc ngày 2026-09-05:**
+>
+> **1. Upload ảnh thất bại trên điện thoại**
+> - Nguyên nhân: ảnh camera mobile quá lớn (5-12MB), Cloudinary có thể reject hoặc treo.
+> - Fix: Client-side compress ảnh base64 về ≤800KB (resize max 1024px, giảm quality). Server-side thêm timeout 30s cho Cloudinary upload_stream.
+> - Log chi tiết lỗi vào console + toast rõ ràng.
+>
+> **2. Favicon không phải logo Giong**
+> - Nguyên nhân: favicon vẫn là SVG cũ (`/favicon.svg`), apple-touch-icon là icon-192.png.
+> - Fix: Đổi `__root.tsx` — favicon + apple-touch-icon đều dùng `/giong-vina-logo.png` (logo PNG sidebar).
+> - Vercel deployment báo "Error" do build fail (xem mục 3).
+>
+> **3. Deployment Error trên Vercel**
+> - Nguyên nhân build fail:
+>   - JSX escape lỗi: `Lỗi >5 lần` trong JSX raw text → Rolldown compile fail.
+>   - Import CSS leaflet thừa trong `bang-check-in.tsx` → Rolldown không resolve.
+>   - Import `leaflet` trong component route file → SSR/SSG context không bundle được.
+> - Fix: Sửa 3 chỗ `Lỗi &gt;5 lần`, xóa import CSS thừa, thêm `rolldownOptions.external: ['leaflet']` trong `vite.config.ts`.
+> - Trigger redeploy thủ công bằng `vercel deploy --prod`.
+>
+> **4. Lỗi "Something went wrong — isAdmin is not defined" trên /cham-cong**
+> - Nguyên nhân: biến `isAdmin` được dùng ở dòng 386 nhưng không khai báo.
+> - Fix: Thêm `const isAdmin = isAdminRole(currentEmployee?.role);` ngay sau `canViewAll`.
+> - Đồng bộ pattern với các file khác (nhiem-vu, app-shell, nhan-su...).
+>
+> **Kết quả cuối:**
+> - Favicon tab trình duyệt = logo PNG `giong-vina-logo.png` (giống sidebar).
+> - Apple-touch-icon = logo PNG đó.
+> - Upload ảnh nén client-side, timeout 30s server-side, log lỗi chi tiết.
+> - Chấm công hoạt động bình thường, không còn lỗi `isAdmin is not defined`.
+> - Build local thành công, Vercel deploy thành công.
+
+*Cập nhật lần cuối: 2026-09-05 (Fix chấm công — Favicon + Build + isAdmin)*
 *Người cập nhật: Trợ lý lập trình*

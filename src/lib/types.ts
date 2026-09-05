@@ -7,10 +7,12 @@ export type Task = {
   created: string;
   due: string;
   status: TaskStatus | string;
-  support: string;
+  support: string; // comma-separated list of support names
   blocker: string;
   updated: string;
   createdBy: string;
+  /** Người giao nhiệm vụ — mặc định trùng createdBy */
+  assigner: string;
   photo?: string;
   location?: string;
 };

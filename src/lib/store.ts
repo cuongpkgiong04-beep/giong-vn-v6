@@ -35,7 +35,7 @@ type Actions = {
   persist: () => void;
   setCurrentUserId: (userId: string) => void;
   currentName: () => string;
-  addTask: (t: Omit<Task, "id" | "created" | "updated">) => void;
+  addTask: (t: Omit<Task, "id" | "created" | "updated"> & { assigner?: string }) => void;
   setTaskStatus: (id: string, status: string) => void;
   updateTask: (id: string, data: { assignee: string; title: string; due: string; support: string; blocker: string; photo?: string; location?: string }) => void;
   clock: (
@@ -161,7 +161,7 @@ const PENDING_KEY = "giong-vn-pending-sync";
 let _bgRetryStarted = false;
 let _bgRetryInterval: ReturnType<typeof setInterval> | null = null;
 
-type PendingRecord = { collection: string; data: any };
+type PendingRecord = { collection: string; data: any; attempts?: number };
 
 const PENDING_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -239,14 +239,24 @@ async function retryPendingSync() {
       }
       succeeded.push(record.data.id);
     } catch (err) {
-      // Skip this record — don't block others, will retry on next cycle
-      console.warn(`[store] Retry sync failed for ${record.collection}/${record.data.id}:`, err);
+      // Increment attempts — track failures for admin visibility
+      record.attempts = (record.attempts ?? 0) + 1;
+      console.warn(`[store] Retry sync failed (${record.attempts}x) for ${record.collection}/${record.data.id}:`, err);
     }
   }
   if (succeeded.length > 0) {
     clearPendingSync(succeeded);
     console.log(`[store] Retry sync: ${succeeded.length}/${pending.length} records synced`);
   }
+  // Save updated attempts back to localStorage
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+  } catch { /* quota */ }
+}
+
+/** Get pending sync records for admin visibility. */
+export function getPendingSyncRecords(): PendingRecord[] {
+  return getPendingSync();
 }
 
 /** Fire-and-forget Neon sync helpers (imported lazily to avoid SSR issues). */
@@ -290,6 +300,7 @@ async function _neonBulkTasks(rows: Task[]) {
         blocker: r.blocker,
         updated: r.updated,
         createdBy: r.createdBy,
+        assigner: r.assigner ?? r.createdBy,
         photo: r.photo,
         location: r.location,
       })),
@@ -347,6 +358,7 @@ async function _neonInsertTask(r: Task) {
       blocker: r.blocker,
       updated: r.updated,
       createdBy: r.createdBy,
+      assigner: r.assigner ?? r.createdBy,
       photo: r.photo,
       location: r.location,
     },
@@ -548,6 +560,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           due: r.due ?? "", status: r.status ?? "Việc cần làm",
           support: r.support ?? "", blocker: r.blocker ?? "",
           updated: r.updated, createdBy: r.created_by ?? "",
+          assigner: r.assigner ?? r.created_by ?? "",
           photo: r.photo ?? undefined, location: r.location ?? "",
         }));
         const neonProposals: Proposal[] = (prp as any[]).map((r) => ({
@@ -687,9 +700,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   currentName: () => {
     const id = get().currentUserId;
     return get().employees.find((e) => e.id === id)?.name ?? "Phạm Kiên Cường";
-  },
-
-  addTask: (t) => {
+  },    addTask: (t) => {
     const now = `${todayIso()} ${nowTime().slice(0, 5)}`;
     const task: Task = { ...t, id: uid("nv"), created: now, updated: now };
     set((s) => ({ tasks: [task, ...s.tasks] }));

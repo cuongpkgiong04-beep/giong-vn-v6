@@ -132,9 +132,10 @@ export const loadTasks = createServerFn({ method: "GET" })
       blocker: string;
       updated: string;
       created_by: string;
+      assigner: string;
       photo: string | null;
       location: string;
-    }>`SELECT *, created_by as "createdBy" FROM tasks ORDER BY created DESC LIMIT 200`;
+    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`;
   });
 
 export const insertTask = createServerFn({ method: "POST" })
@@ -150,6 +151,7 @@ export const insertTask = createServerFn({ method: "POST" })
       blocker?: string;
       updated: string;
       createdBy?: string;
+      assigner?: string;
       photo?: string;
       location?: string;
     }) => data,
@@ -157,11 +159,11 @@ export const insertTask = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
-      INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, photo, location)
+      INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, assigner, photo, location)
       VALUES (${data.id}, ${data.assignee}, ${data.title}, ${data.created},
               ${data.due ?? ""}, ${data.status ?? "Việc cần làm"},
               ${data.support ?? ""}, ${data.blocker ?? ""}, ${data.updated},
-              ${data.createdBy ?? ""}, ${data.photo ?? null}, ${data.location ?? ""})
+              ${data.createdBy ?? ""}, ${data.assigner ?? data.createdBy ?? ""}, ${data.photo ?? null}, ${data.location ?? ""})
       ON CONFLICT (id) DO NOTHING
     `;
   });
@@ -222,6 +224,7 @@ export const bulkInsertTasks = createServerFn({ method: "POST" })
         blocker?: string;
         updated: string;
         createdBy?: string;
+        assigner?: string;
         photo?: string;
         location?: string;
       }>;
@@ -231,11 +234,11 @@ export const bulkInsertTasks = createServerFn({ method: "POST" })
     const sql = await getSql();
     for (const r of data.rows) {
       await sql`
-        INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, photo, location)
+        INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, assigner, photo, location)
         VALUES (${r.id}, ${r.assignee}, ${r.title}, ${r.created},
                 ${r.due ?? ""}, ${r.status ?? "Việc cần làm"},
                 ${r.support ?? ""}, ${r.blocker ?? ""}, ${r.updated},
-                ${r.createdBy ?? ""}, ${r.photo ?? null}, ${r.location ?? ""})
+                ${r.createdBy ?? ""}, ${r.assigner ?? r.createdBy ?? ""}, ${r.photo ?? null}, ${r.location ?? ""})
         ON CONFLICT (id) DO NOTHING
       `;
     }

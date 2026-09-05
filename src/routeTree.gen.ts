@@ -23,9 +23,13 @@ import { Route as HuongDanRouteImport } from './routes/huong-dan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NhanSuRouteImport } from './routes/nhan-su'
 import { Route as NhiemVuRouteImport } from './routes/nhiem-vu'
+import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as TrungTamRouteImport } from './routes/trung-tam'
 import { Route as AdminApprovalsRouteImport } from './routes/admin/approvals'
 import { Route as AdminPermissionsRouteImport } from './routes/admin/permissions'
+import { Route as BaoCaoBangChamCongRouteImport } from './routes/bao-cao/bang-cham-cong'
+import { Route as BaoCaoBangCheckInRouteImport } from './routes/bao-cao/bang-check-in'
+import { Route as BaoCaoBangNhiemVuRouteImport } from './routes/bao-cao/bang-nhiem-vu'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -98,6 +102,11 @@ const NhiemVuRoute = NhiemVuRouteImport.update({
   path: '/nhiem-vu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviewRoute = PreviewRouteImport.update({
+  id: '/preview',
+  path: '/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrungTamRoute = TrungTamRouteImport.update({
   id: '/trung-tam',
   path: '/trung-tam',
@@ -113,6 +122,21 @@ const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   path: '/admin/permissions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BaoCaoBangChamCongRoute = BaoCaoBangChamCongRouteImport.update({
+  id: '/bang-cham-cong',
+  path: '/bang-cham-cong',
+  getParentRoute: () => BaoCaoRoute,
+} as any)
+const BaoCaoBangCheckInRoute = BaoCaoBangCheckInRouteImport.update({
+  id: '/bang-check-in',
+  path: '/bang-check-in',
+  getParentRoute: () => BaoCaoRoute,
+} as any)
+const BaoCaoBangNhiemVuRoute = BaoCaoBangNhiemVuRouteImport.update({
+  id: '/bang-nhiem-vu',
+  path: '/bang-nhiem-vu',
+  getParentRoute: () => BaoCaoRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -121,7 +145,7 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/bao-cao': typeof BaoCaoRoute
+  '/bao-cao': typeof BaoCaoRouteWithChildren
   '/cham-cong': typeof ChamCongRoute
   '/change-password': typeof ChangePasswordRoute
   '/chat': typeof ChatRoute
@@ -134,14 +158,18 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
+  '/preview': typeof PreviewRoute
   '/trung-tam': typeof TrungTamRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
+  '/bao-cao/bang-check-in': typeof BaoCaoBangCheckInRoute
+  '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bao-cao': typeof BaoCaoRoute
+  '/bao-cao': typeof BaoCaoRouteWithChildren
   '/cham-cong': typeof ChamCongRoute
   '/change-password': typeof ChangePasswordRoute
   '/chat': typeof ChatRoute
@@ -154,15 +182,19 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
+  '/preview': typeof PreviewRoute
   '/trung-tam': typeof TrungTamRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
+  '/bao-cao/bang-check-in': typeof BaoCaoBangCheckInRoute
+  '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/bao-cao': typeof BaoCaoRoute
+  '/bao-cao': typeof BaoCaoRouteWithChildren
   '/cham-cong': typeof ChamCongRoute
   '/change-password': typeof ChangePasswordRoute
   '/chat': typeof ChatRoute
@@ -175,9 +207,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/nhan-su': typeof NhanSuRoute
   '/nhiem-vu': typeof NhiemVuRoute
+  '/preview': typeof PreviewRoute
   '/trung-tam': typeof TrungTamRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
+  '/bao-cao/bang-check-in': typeof BaoCaoBangCheckInRoute
+  '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -197,9 +233,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
+    | '/preview'
     | '/trung-tam'
     | '/admin/approvals'
     | '/admin/permissions'
+    | '/bao-cao/bang-cham-cong'
+    | '/bao-cao/bang-check-in'
+    | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -217,9 +257,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
+    | '/preview'
     | '/trung-tam'
     | '/admin/approvals'
     | '/admin/permissions'
+    | '/bao-cao/bang-cham-cong'
+    | '/bao-cao/bang-check-in'
+    | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -237,15 +281,19 @@ export interface FileRouteTypes {
     | '/login'
     | '/nhan-su'
     | '/nhiem-vu'
+    | '/preview'
     | '/trung-tam'
     | '/admin/approvals'
     | '/admin/permissions'
+    | '/bao-cao/bang-cham-cong'
+    | '/bao-cao/bang-check-in'
+    | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BaoCaoRoute: typeof BaoCaoRoute
+  BaoCaoRoute: typeof BaoCaoRouteWithChildren
   ChamCongRoute: typeof ChamCongRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   ChatRoute: typeof ChatRoute
@@ -258,6 +306,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NhanSuRoute: typeof NhanSuRoute
   NhiemVuRoute: typeof NhiemVuRoute
+  PreviewRoute: typeof PreviewRoute
   TrungTamRoute: typeof TrungTamRoute
   AdminApprovalsRoute: typeof AdminApprovalsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
@@ -364,6 +413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NhiemVuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preview': {
+      id: '/preview'
+      path: '/preview'
+      fullPath: '/preview'
+      preLoaderRoute: typeof PreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trung-tam': {
       id: '/trung-tam'
       path: '/trung-tam'
@@ -385,6 +441,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPermissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bao-cao/bang-cham-cong': {
+      id: '/bao-cao/bang-cham-cong'
+      path: '/bang-cham-cong'
+      fullPath: '/bao-cao/bang-cham-cong'
+      preLoaderRoute: typeof BaoCaoBangChamCongRouteImport
+      parentRoute: typeof BaoCaoRoute
+    }
+    '/bao-cao/bang-check-in': {
+      id: '/bao-cao/bang-check-in'
+      path: '/bang-check-in'
+      fullPath: '/bao-cao/bang-check-in'
+      preLoaderRoute: typeof BaoCaoBangCheckInRouteImport
+      parentRoute: typeof BaoCaoRoute
+    }
+    '/bao-cao/bang-nhiem-vu': {
+      id: '/bao-cao/bang-nhiem-vu'
+      path: '/bang-nhiem-vu'
+      fullPath: '/bao-cao/bang-nhiem-vu'
+      preLoaderRoute: typeof BaoCaoBangNhiemVuRouteImport
+      parentRoute: typeof BaoCaoRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -395,9 +472,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BaoCaoRouteChildren {
+  BaoCaoBangChamCongRoute: typeof BaoCaoBangChamCongRoute
+  BaoCaoBangCheckInRoute: typeof BaoCaoBangCheckInRoute
+  BaoCaoBangNhiemVuRoute: typeof BaoCaoBangNhiemVuRoute
+}
+
+const BaoCaoRouteChildren: BaoCaoRouteChildren = {
+  BaoCaoBangChamCongRoute: BaoCaoBangChamCongRoute,
+  BaoCaoBangCheckInRoute: BaoCaoBangCheckInRoute,
+  BaoCaoBangNhiemVuRoute: BaoCaoBangNhiemVuRoute,
+}
+
+const BaoCaoRouteWithChildren =
+  BaoCaoRoute._addFileChildren(BaoCaoRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BaoCaoRoute: BaoCaoRoute,
+  BaoCaoRoute: BaoCaoRouteWithChildren,
   ChamCongRoute: ChamCongRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   ChatRoute: ChatRoute,
@@ -410,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NhanSuRoute: NhanSuRoute,
   NhiemVuRoute: NhiemVuRoute,
+  PreviewRoute: PreviewRoute,
   TrungTamRoute: TrungTamRoute,
   AdminApprovalsRoute: AdminApprovalsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,

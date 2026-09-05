@@ -30,10 +30,13 @@ function TasksPage() {
   const updateTask = useAppStore((s) => s.updateTask);
   const removeTask = useAppStore((s) => s.removeTask);
   const me = useAppStore((s) => s.currentName());
+  const currentUserName = useAppStore((s) => s.currentUserId ?? "");
   // Reactive: subscribe to employees so this re-renders when DB data loads
   const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const currentUser = currentEmployee ?? EMPLOYEES[0];
   const canCreateForOthers = canCreateTaskForOthers(currentEmployee);
+  // Người giao nhiệm vụ mặc định = user đang login
+  const defaultAssigner = currentUser.name;
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
   const [filterAssignee, setFilterAssignee] = useState("");
@@ -50,7 +53,7 @@ function TasksPage() {
       setTitle("");
       setAssignee(currentUser.username);
       setDue("");
-      setSupport("");
+      setSupportList([]);
       setBlocker("");
       setPhoto(null);
       setLocation("");
@@ -59,7 +62,7 @@ function TasksPage() {
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState(currentUser.username);
   const [due, setDue] = useState("");
-  const [support, setSupport] = useState("");
+  const [supportList, setSupportList] = useState<string[]>([]);
   const [blocker, setBlocker] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [location, setLocation] = useState("");
@@ -129,7 +132,7 @@ function TasksPage() {
         assignee,
         title: title.trim(),
         due: due ? `${due} 18:00` : "",
-        support,
+        support: supportList.join(", "),
         blocker,
         photo: photo ?? undefined,
         location,
@@ -141,9 +144,10 @@ function TasksPage() {
         title: title.trim(),
         due: due ? `${due} 18:00` : "",
         status: "Việc cần làm",
-        support,
+        support: supportList.join(", "),
         blocker,
         createdBy: me,
+        assigner: defaultAssigner,
         photo: photo ?? undefined,
         location,
       });
@@ -252,6 +256,7 @@ function TasksPage() {
                         <p className={`mt-2 text-xs ${overdue ? "text-red-300" : col === "Đã xong" ? "text-green-600" : "text-muted"}`}>
                           {t.assignee || "Chưa gán"}: {formatDate(t.created)} - {formatDate(t.due)}
                         </p>
+                        {t.assigner ? <p className="mt-1 text-xs text-muted">Người giao: {t.assigner}</p> : null}
                         {t.support ? <p className="mt-1 text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
                         {t.blocker ? <p className="mt-2 line-clamp-2 text-xs text-warn">⚠ {t.blocker}</p> : null}
                         {t.photo ? <img src={t.photo} alt="Ảnh" className="mt-2 h-12 w-12 rounded object-cover" /> : null}
@@ -275,7 +280,7 @@ function TasksPage() {
                                 setTitle(t.title);
                                 setAssignee(t.assignee);
                                 setDue(t.due ? t.due.split(" ")[0] : "");
-                                setSupport(t.support);
+                                setSupportList(t.support ? t.support.split(", ").filter(Boolean) : []);
                                 setBlocker(t.blocker);
                                 setPhoto(t.photo ?? null);
                                 setLocation(t.location ?? "");
@@ -305,7 +310,8 @@ function TasksPage() {
             );
           })}
         </div>
-      ) : (            <Card className="overflow-hidden p-0">
+      ) : (
+        <Card className="overflow-hidden p-0">
           {filtered.length === 0 ? (
             <div className="p-4">
               <EmptyState title="Không có nhiệm vụ" />
@@ -325,6 +331,7 @@ function TasksPage() {
                       <p className={`text-sm ${overdue ? "text-red-300" : t.status === "Đã xong" ? "text-green-600" : "text-muted"}`}>
                         {t.assignee}: {formatDate(t.created)} - {formatDate(t.due)}
                       </p>
+                      {t.assigner ? <p className="text-xs text-muted">Người giao: {t.assigner}</p> : null}
                       {t.support ? <p className="text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
                       {t.blocker ? <p className="text-xs text-warn">⚠ {t.blocker}</p> : null}
                     </div>
@@ -377,19 +384,24 @@ function TasksPage() {
             </div>
             <div>
               <Label htmlFor="s">Người hỗ trợ</Label>
-              <select
-                id="s"
-                value={support}
-                onChange={(e) => setSupport(e.target.value)}
-                className="mt-1 h-11 w-full rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
-              >
-                <option value="">Không có</option>
+              <div className="mt-1 flex flex-col gap-1">
                 {vpEmployees.map((e) => (
-                  <option key={e.id} value={e.name}>
-                    {e.name} ({e.username})
-                  </option>
+                  <label key={e.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={supportList.includes(e.name)}
+                      onChange={() => {
+                        const updated = supportList.includes(e.name)
+                          ? supportList.filter((n) => n !== e.name)
+                          : [...supportList, e.name];
+                        setSupportList(updated);
+                      }}
+                      className="size-4 accent-accent"
+                    />
+                    <span className="text-ink">{e.name} ({e.username})</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
             <div>
               <Label htmlFor="d">Ngày đến hạn</Label>
