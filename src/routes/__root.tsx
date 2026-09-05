@@ -25,11 +25,10 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", href: "/giong-vina-logo.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
-      { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/icon-192.png" },
+      { rel: "apple-touch-icon", href: "/giong-vina-logo.png" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { rel: "stylesheet", href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" },
