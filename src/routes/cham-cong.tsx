@@ -476,6 +476,7 @@ function ChamCongPage() {
     setPhotoPreview(null);
     setPhotoStamped(false);
     setGpsCoords(null);
+    // Request location trong nền — không chờ (tránh chặn mở dialog)
     requestLocation();
     // Start camera after a short delay — nếu fail thì vẫn mở dialog được
     setTimeout(async () => {

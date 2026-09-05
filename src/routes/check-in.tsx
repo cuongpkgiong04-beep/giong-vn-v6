@@ -144,7 +144,7 @@ function CheckInPage() {
       );
     });
   }  async function handleOpenDialog() {
-    // Luôn mở dialog trước — camera chỉ là bổ sung
+    // Luôn mở dialog trước — camera và GPS chỉ là bổ sung
     setIsDialogOpen(true);
     setGps("");
     setAddress("");
@@ -156,12 +156,13 @@ function CheckInPage() {
     setPhotoStamped(false);
     stopCamera();
 
-    // Request GPS immediately
-    const ok = await requestLocation();
-    if (!ok) {
-      toast.warning("Không lấy được vị trí GPS. Vui lòng bật định vị để check-in.");
-    }
-    
+    // Request GPS trong nền — không chờ (tránh chặn mở dialog)
+    requestLocation().then(ok => {
+      if (!ok) {
+        toast.warning("Không lấy được vị trí GPS. Vui lòng bật định vị để check-in.");
+      }
+    });
+
     // Mở camera sau khi dialog render xong — nếu fail thì không ảnh hưởng dialog
     setTimeout(async () => {
       try {
