@@ -455,7 +455,7 @@ function CheckInPage() {
           title="Check-in địa điểm"
           desc="Ghi nhận vị trí khi đi công tác, giám sát điểm tiêm hoặc điều phối giữa các trung tâm."
           actions={
-            <Button onClick={handleOpenDialog}>
+            <Button onClick={() => { console.log('[check-in] Button clicked, calling handleOpenDialog'); handleOpenDialog(); }}>
               <MapPin />
               Check-in mới
             </Button>
@@ -602,6 +602,8 @@ function CheckInPage() {
         )}
 
         {/* Check-in Dialog */}
+        {isDialogOpen && <div style={{ background: 'red', color: 'white', padding: '10px' }}>DIALOG OPEN TRUE</div>}
+        {console.log('[check-in] Rendering Dialog, isDialogOpen:', isDialogOpen)}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogTitle>Check-in địa điểm</DialogTitle>
