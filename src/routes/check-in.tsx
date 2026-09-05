@@ -144,7 +144,6 @@ function CheckInPage() {
       );
     });
   }  async function handleOpenDialog() {
-    console.log('[check-in] handleOpenDialog called, setIsDialogOpen(true)');
     // Luôn mở dialog trước — camera và GPS chỉ là bổ sung
     setIsDialogOpen(true);
     setGps("");
@@ -455,7 +454,7 @@ function CheckInPage() {
           title="Check-in địa điểm"
           desc="Ghi nhận vị trí khi đi công tác, giám sát điểm tiêm hoặc điều phối giữa các trung tâm."
           actions={
-            <Button onClick={() => { console.log('[check-in] Button clicked, calling handleOpenDialog'); handleOpenDialog(); }}>
+            <Button onClick={handleOpenDialog}>
               <MapPin />
               Check-in mới
             </Button>
@@ -602,8 +601,6 @@ function CheckInPage() {
         )}
 
         {/* Check-in Dialog */}
-        {isDialogOpen && <div style={{ background: 'red', color: 'white', padding: '10px' }}>DIALOG OPEN TRUE</div>}
-        {console.log('[check-in] Rendering Dialog, isDialogOpen:', isDialogOpen)}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogTitle>Check-in địa điểm</DialogTitle>
