@@ -144,6 +144,7 @@ function CheckInPage() {
       );
     });
   }  async function handleOpenDialog() {
+    // Luôn mở dialog trước — camera chỉ là bổ sung
     setIsDialogOpen(true);
     setGps("");
     setAddress("");
@@ -160,12 +161,15 @@ function CheckInPage() {
     if (!ok) {
       toast.warning("Không lấy được vị trí GPS. Vui lòng bật định vị để check-in.");
     }
-    // Mở camera sau khi dialog render xong (nếu không được thì vẫn cho chọn ảnh từ gallery)
-    setTimeout(() => {
-      startCamera().catch(() => {
-        // Camera không available — user vẫn có thể chọn ảnh từ gallery nếu có input fallback
-        console.log('[check-in] Camera không available, user có thể chọn ảnh từ nơi khác');
-      });
+    
+    // Mở camera sau khi dialog render xong — nếu fail thì không ảnh hưởng dialog
+    setTimeout(async () => {
+      try {
+        await startCamera();
+      } catch (err) {
+        console.log('[check-in] Camera không available:', err?.message || err);
+        // Dialog vẫn mở, user có thể chọn ảnh từ thư viện
+      }
     }, 400);
   }
 

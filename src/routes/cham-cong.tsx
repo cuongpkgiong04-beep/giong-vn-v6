@@ -477,8 +477,14 @@ function ChamCongPage() {
     setPhotoStamped(false);
     setGpsCoords(null);
     requestLocation();
-    // Start camera after a short delay to let dialog render
-    setTimeout(() => startCamera(), 400);
+    // Start camera after a short delay — nếu fail thì vẫn mở dialog được
+    setTimeout(async () => {
+      try {
+        await startCamera();
+      } catch (err) {
+        console.log('[cham-cong] Camera không available:', err?.message || err);
+      }
+    }, 400);
   }
 
   // Reverse geocode coordinates → actual Vietnamese address (server-side)
