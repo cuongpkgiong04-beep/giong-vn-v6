@@ -14,22 +14,42 @@ const COLS = ["Việc cần làm", "Quá hạn", "Đã xong"];
 
 function TiếnĐộNhiệmVụ() {
   const tasks = useAppStore((s) => s.tasks);
-  const [assigneeFilter, setAssigneeFilter] = useState("");
-  const [assignerFilter, setAssignerFilter] = useState("");
+  const [q, setQ] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [filterAssigner, setFilterAssigner] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [mine, setMine] = useState(false);
   const currentUser = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? EMPLOYEES[0]);
   const isAdmin = isAdminRole(currentUser?.role);
   const vpEmployees = useAppStore((s) => s.employees).filter((e) => e.center === "VP" || e.center === "Văn phòng");
 
   // Filter tasks
   const filtered = useMemo(() => {
+    const currentUserName = currentUser?.name?.toLowerCase() ?? "";
     return tasks.filter((t) => {
-      if (assigneeFilter && t.assignee !== assigneeFilter) return false;
-      if (assignerFilter && t.assigner !== assignerFilter) return false;
+      if (mine) {
+        if (t.assignee?.toLowerCase() !== currentUserName && t.createdBy?.toLowerCase() !== currentUserName) return false;
+      }
+      if (filterAssignee && t.assignee !== filterAssignee) return false;
+      if (filterAssigner && t.assigner !== filterAssigner) return false;
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (dateFrom) {
+        const taskDate = t.created.slice(0, 10);
+        if (taskDate < dateFrom) return false;
+      }
+      if (dateTo) {
+        const taskDate = t.created.slice(0, 10);
+        if (taskDate > dateTo) return false;
+      }
+      if (q.trim()) {
+        const s = q.toLowerCase();
+        return t.title.toLowerCase().includes(s) || t.assignee.toLowerCase().includes(s);
+      }
       return true;
     });
-  }, [tasks, assigneeFilter, assignerFilter, statusFilter]);
+  }, [tasks, q, filterAssignee, filterAssigner, statusFilter, dateFrom, dateTo, mine, currentUser]);
 
   // Statistics by status
   const statusStats = useMemo(() => {
@@ -94,35 +114,60 @@ function TiếnĐộNhiệmVụ() {
         eyebrow="Báo cáo"
         title="Báo cáo nhiệm vụ"
         desc="Thống kê tiến độ kế hoạch theo người phụ trách và trạng thái."
+        actions={
+          <Button onClick={() => {}}>
+            Export
+          </Button>
+        }
       />
 
       {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
         <Input
-          value={assigneeFilter}
-          onChange={(e) => setAssigneeFilter(e.target.value)}
-          placeholder="Lọc theo người phụ trách..."
-          className="w-48"
-        />
-        <Input
-          value={assignerFilter}
-          onChange={(e) => setAssignerFilter(e.target.value)}
-          placeholder="Lọc theo người giao..."
-          className="w-48"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm việc, người phụ trách…"
+          className="sm:max-w-sm"
         />
         <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] w-40"
+          value={filterAssignee}
+          onChange={(e) => setFilterAssignee(e.target.value)}
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px]"
         >
-          <option value="all">Tất cả trạng thái</option>
-          {COLS.map((c) => (
-            <option key={c} value={c}>{c}</option>
+          <option value="">Tất cả phụ trách</option>
+          {vpEmployees.map((e) => (
+            <option key={e.id} value={e.name}>{e.name}</option>
           ))}
         </select>
-        <div className="text-sm text-muted ml-auto">
-          Tổng: <strong>{filtered.length}</strong> nhiệm vụ
+        <select
+          value={filterAssigner}
+          onChange={(e) => setFilterAssigner(e.target.value)}
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px]"
+        >
+          <option value="">Tất cả người giao</option>
+          {vpEmployees.map((e) => (
+            <option key={e.id} value={e.name}>{e.name}</option>
+          ))}
+        </select>
+        <div className="flex items-center gap-1.5">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+          />
+          <span className="text-muted">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+          />
         </div>
+        <label className="flex h-11 items-center gap-2 text-sm text-ink">
+          <input type="checkbox" checked={isAdmin ? mine : true} onChange={(e) => isAdmin && setMine(e.target.checked)} disabled={!isAdmin} className="size-4 accent-accent" />
+          {currentUser?.name} {!isAdmin && "(chỉ của bạn)"}
+        </label>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
