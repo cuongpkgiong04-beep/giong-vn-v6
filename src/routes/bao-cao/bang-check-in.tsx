@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Download, Layers, MapPin, Satellite, Map as MapIcon } from "lucide-react";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { ClientOnly } from "@/components/client-only";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";

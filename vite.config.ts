@@ -165,6 +165,13 @@ export default defineConfig(({ command, isPreview }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
+  build: {
+    // Externalize Leaflet — it is imported dynamically in ClientOnly components
+    // and cannot be bundled by Rolldown in SSR/SSG context.
+    rolldownOptions: {
+      external: ["leaflet", "leaflet/dist/leaflet.css"],
+    },
+  },
   plugins: [
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
