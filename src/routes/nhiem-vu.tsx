@@ -305,8 +305,7 @@ function TasksPage() {
             );
           })}
         </div>
-      ) : (
-        <Card className="overflow-hidden p-0">
+      ) : (            <Card className="overflow-hidden p-0">
           {filtered.length === 0 ? (
             <div className="p-4">
               <EmptyState title="Không có nhiệm vụ" />
@@ -314,21 +313,14 @@ function TasksPage() {
           ) : (
             <ul className="divide-y divide-line">
               {filtered.slice(0, 60).sort((a, b) => {
-                const aCol = colOf(a);
-                const bCol = colOf(b);
-                if (aCol !== bCol) {
-                  const order = ["Việc cần làm", "Quá hạn", "Đã xong"];
-                  return order.indexOf(aCol) - order.indexOf(bCol);
-                }
-                if (aCol === "Việc cần làm") return (b.created || "").localeCompare(a.created || "");
-                if (aCol === "Quá hạn") return (a.due || "").localeCompare(b.due || "");
-                if (aCol === "Đã xong") return (b.updated || "").localeCompare(a.updated || "");
-                return 0;
+                // Sắp xếp theo ngày khởi tạo (mới nhất lên trên)
+                return (b.created || "").localeCompare(a.created || "");
               }).map((t) => {
-                const overdue = isOverdue(t);
+                const col = colOf(t);
+                const overdue = col === "Quá hạn";
                 return (
-                  <li key={t.id} className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${overdue ? "bg-red-50/50" : t.status === "Đã xong" ? "bg-green-100/50" : ""}`}>
-                    <div className="min-w-0">
+                  <li key={t.id} className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${overdue ? "bg-red-50/50" : t.status === "Đã xong" ? "bg-green-100/50" : ""}`}>
+                    <div className="min-w-0 flex-1">
                       <p className={`font-medium ${overdue ? "text-red-400" : t.status === "Đã xong" ? "text-green-700" : "text-ink"}`}>{t.title}</p>
                       <p className={`text-sm ${overdue ? "text-red-300" : t.status === "Đã xong" ? "text-green-600" : "text-muted"}`}>
                         {t.assignee}: {formatDate(t.created)} - {formatDate(t.due)}
@@ -336,9 +328,13 @@ function TasksPage() {
                       {t.support ? <p className="text-xs text-muted">Hỗ trợ: {t.support}</p> : null}
                       {t.blocker ? <p className="text-xs text-warn">⚠ {t.blocker}</p> : null}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {t.photo ? <img src={t.photo} alt="Ảnh" className="h-10 w-10 rounded object-cover" /> : null}
-                      <StatusBadge value={overdue ? "Quá hạn" : t.status} />
+                      {/* Cột trạng thái rộng hơn, không xuống dòng */}
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap min-w-[90px] justify-center
+                        ${overdue ? "bg-red-100 text-red-700" : col === "Đã xong" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                        {col}
+                      </span>
                     </div>
                   </li>
                 );
