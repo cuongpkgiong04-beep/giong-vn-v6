@@ -37,39 +37,37 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "1.0.0";
+const DEFAULT_VERSION = "0.0.0";
 
-function getVersionValue() {
-  if (typeof window === "undefined") return DEFAULT_VERSION;
+/** Get app version from Vite env (injected from package.json version during build).
+ * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
+ * On first load with VITE_APP_VERSION, saves to localStorage for consistency.
+ */
+function getAppVersion() {
+  if (typeof window === "undefined") {
+    // Server-side / build time: use env var or default
+    return import.meta.env.VITE_APP_VERSION ?? DEFAULT_VERSION;
+  }
 
+  // Client-side:
+  const envVersion = import.meta.env.VITE_APP_VERSION;
   const saved = window.localStorage.getItem(VERSION_STORAGE_KEY);
-  if (!saved) {
-    window.localStorage.setItem(VERSION_STORAGE_KEY, DEFAULT_VERSION);
-    return DEFAULT_VERSION;
+
+  // If env version is set (new build), use it and sync to localStorage
+  if (envVersion && envVersion !== saved) {
+    window.localStorage.setItem(VERSION_STORAGE_KEY, envVersion);
+    return envVersion;
   }
 
-  const parts = saved.split(".").map(Number);
-  if (parts.length !== 3 || parts.some(Number.isNaN)) {
-    window.localStorage.setItem(VERSION_STORAGE_KEY, DEFAULT_VERSION);
-    return DEFAULT_VERSION;
+  // Fallback to saved version or default
+  if (saved) {
+    const parts = saved.split(".").map(Number);
+    if (parts.length === 3 && !parts.some(Number.isNaN)) {
+      return saved;
+    }
   }
 
-  let [major, minor, patch] = parts;
-
-  if (patch < 9) {
-    patch += 1;
-  } else if (minor < 9) {
-    minor += 1;
-    patch = 0;
-  } else {
-    major += 1;
-    minor = 0;
-    patch = 0;
-  }
-
-  const nextVersion = `${major}.${minor}.${patch}`;
-  window.localStorage.setItem(VERSION_STORAGE_KEY, nextVersion);
-  return nextVersion;
+  return DEFAULT_VERSION;
 }
 
 const NAV: NavItem[] = [
@@ -207,7 +205,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [appVersion, setAppVersion] = useState(DEFAULT_VERSION);
   const [isRefreshing, setIsRefreshing] = useState(false);
   useEffect(() => {
-    setAppVersion(getVersionValue());
+    setAppVersion(getAppVersion());
   }, []);
   const employees = useAppStore((s) => s.employees);
   // Resolve current employee: ALWAYS use store userId (stable across server/client)

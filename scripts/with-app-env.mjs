@@ -121,13 +121,32 @@ export function isMainModule(moduleUrl) {
   }
 }
 
+function readPackageVersion() {
+  try {
+    const pkgPath = join(projectRoot(), "package.json");
+    const { version } = JSON.parse(readFileSync(pkgPath, "utf8"));
+    if (typeof version === "string" && /^(\d+\.)?(\d+\.)?(\d+)$/.test(version)) {
+      return version;
+    }
+  } catch {
+    return "0.0.0";
+  }
+  return "0.0.0";
+}
+
 function main(argv) {
   const [command, ...args] = argv;
   if (!command) {
     console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
     process.exit(2);
   }
-  const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
+  const appEnv = mergeAppEnv(readAppEnv(projectRoot()), process.env);
+  // Inject VITE_APP_VERSION from package.json — makes version available to client via
+  // import.meta.env.VITE_APP_VERSION.
+  const env = {
+    ...appEnv,
+    VITE_APP_VERSION: readPackageVersion(),
+  };
   const { command: resolvedCommand, args: resolvedArgs } = normalizeCommandForSpawn(command, args);
   const child = spawn(resolvedCommand, resolvedArgs, { stdio: "inherit", env });
   // The dev server is long-running and is stopped by signalling this wrapper.

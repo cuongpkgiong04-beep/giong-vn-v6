@@ -12,6 +12,22 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
 
+// Read app version from package.json — injects into VITE_APP_VERSION for client.
+function readPackageVersion() {
+  try {
+    const { version } = JSON.parse(
+      readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+    );
+    if (typeof version === "string" && /^(\d+\.)?(\d+\.)?(\d+)$/.test(version)) {
+      return version;
+    }
+  } catch {
+    // ignore — use default
+  }
+  return "0.0.0";
+}
+
+
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
   try {
