@@ -366,7 +366,7 @@ Vercel tự động deploy sau mỗi push.
 | `0fb884a` | fix: permissions page + registration approval auth |
 | `4ffb476` | fix: admin pages redirect về / trước khi session resolve |
 | `ac76f38` | fix: xóa duplicate useAppStore import trong approvals.tsx |
-| `5ea27cf` | fix: admin auth fails khi auth disabled (dev mode) |
+| `5ea27cf` | fix: admin pages không detect admin user khi auth disabled (dev mode) |
 | `5733127` | fix: admin pages không detect admin user khi auth disabled |
 | `d09e548` | fix: app-shell admin check dùng EMPLOYEES Proxy bị lỗi + non-reactive lookups |
 
@@ -516,11 +516,8 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 **A:** KHÔNG, trừ khi Đại ca yêu cầu rõ ràng.
 
 **Q:** Em có thể tự xem Vercel logs không?
-**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.
+**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.### Giai đoạn 16: Attendance Data Fix & Mobile UI (2026-09-03)
 
----
-
-### Giai đoạn 16: Attendance Data Fix & Mobile UI (2026-09-03)
 | Commit | Thay đổi |
 |---|---|
 | `57f6560` | fix(cham-cong): visibleAttendance filter dùng currentName fallback khi employee null |
@@ -643,7 +640,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 > **LESSON LEARNED — Better Auth hashPassword format (2026-09-03):**
 > KHÔNG hash password thủ công bằng `hashPassword()` + SQL INSERT.
-> Better Auth signIn dùng format hash riêng → hash thủ công không khớp → “Sai mật khẩu”.
+> Better Auth signIn dùng format hash riêng → hash thủ công không khớp → "Sai mật khẩu".
 > **Luôn dùng `auth.api.signUpEmail()`** để Better Auth tự xử lý hash đúng cách.
 > Khi user đã tồn tại → xóa user + session + account → gọi signUpEmail lại.
 >
@@ -661,7 +658,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **LESSON LEARNED — Forgot password cho employee-only users (2026-09-03):**
 > Employee có trong `employees` table nhưng chưa có trong Better Auth `user` table.
-> Flow: 
+> Flow:
 > 1. Tìm employee theo email
 > 2. Dùng `auth.api.signUpEmail()` tạo user + account (hash đúng)
 > 3. Nếu user đã tồn tại → xóa user + session + account → signUpEmail lại
@@ -734,7 +731,9 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 **A:** KHÔNG, trừ khi Đại ca yêu cầu rõ ràng.
 
 **Q:** Em có thể tự xem Vercel logs không?
-**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.### Giai đoạn 20: Check-in Module Upgrade (2026-09-04)
+**A:** CÓ. Dùng `vercel logs --limit 50` hoặc `vercel logs --follow` (xem real-time). Đã cấu hình project `giong-vn-v6`.
+
+### Giai đoạn 20: Check-in Module Upgrade (2026-09-04)
 
 | Commit | Thay đổi |
 |---|---|
@@ -941,5 +940,20 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > - Chấm công hoạt động bình thường, không còn lỗi `isAdmin is not defined`.
 > - Build local thành công, Vercel deploy thành công.
 
-*Cập nhật lần cuối: 2026-09-05 (Fix chấm công — Favicon + Build + isAdmin)*
+### Giai đoạn 26: UI Fix — Người hỗ trợ dropdown + Nguyên tắc mới (2026-09-05)
+
+| Commit | Thay đổi |
+|---|---|
+| `ae8df6a` | feat(nhiem-vu): chuyển Người hỗ trợ từ checkbox list sang dropdown multi-select compact |
+| `a3e0a7c` | docs(agents): thêm 3 nguyên tắc mới vào AGENTS.md |
+
+> **LESSON LEARNED — Người hỗ trợ dropdown compact (2026-09-05):**
+> Danh sách checkbox "Người hỗ trợ" chiếm quá nhiều chỗ trong dialog tạo/sửa nhiệm vụ.
+> **Fix:** Dùng Radix Popover (`@radix-ui/react-popover`) làm dropdown multi-select.
+> - Button hiển thị "Chọn người hỗ trợ…" hoặc "N người đã chọn"
+> - Mở dropdown → scrollable checkbox list (max-height 64 = ~16 items)
+> - Chọn xong → hiện tags removable bên dưới button
+> - Tiết kiệm ~200px vertical space trong dialog
+
+*Cập nhật lần cuối: 2026-09-05 (Giai đoạn 26 — Người hỗ trợ dropdown + Nguyên tắc mới)*
 *Người cập nhật: Trợ lý lập trình*
