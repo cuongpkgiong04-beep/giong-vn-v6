@@ -25,7 +25,7 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "icon", type: "image/png", href: "/giong-vina-logo.png" },
+      { rel: "icon", type: "image/png", href: "/giong-vina-logo.png" }, // favicon logo Giong (giống sidebar)
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "apple-touch-icon", href: "/giong-vina-logo.png" },
