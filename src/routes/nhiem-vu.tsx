@@ -72,8 +72,15 @@ function TasksPage() {
   const isAdmin = isAdminRole(currentEmployee?.role);
   // Reactive: subscribe to employees list so dropdown updates after DB load
   const allEmployees = useAppStore((s) => s.employees);
-  // Dropdown: only "Văn phòng" center employees
-  const vpEmployees = useMemo(() => allEmployees.filter((e) => e.center === "VP" || e.center === "Văn phòng"), [allEmployees]);
+  // Dropdown: only "Văn phòng" center employees (guard khi store chưa sẵn)
+  const vpEmployees = useMemo(() => {
+    try {
+      if (!allEmployees) return [];
+      return allEmployees.filter((e) => e.center === "VP" || e.center === "Văn phòng");
+    } catch {
+      return [];
+    }
+  }, [allEmployees]);
 
   // Check if task is overdue: due date < now and status is "Việc cần làm"
   function isOverdue(t: Task): boolean {
@@ -391,10 +398,10 @@ function TasksPage() {
                       type="checkbox"
                       checked={supportList.includes(e.name)}
                       onChange={() => {
-                        const updated = supportList.includes(e.name)
+                        const next = supportList.includes(e.name)
                           ? supportList.filter((n) => n !== e.name)
                           : [...supportList, e.name];
-                        setSupportList(updated);
+                        setSupportList(next);
                       }}
                       className="size-4 accent-accent"
                     />
