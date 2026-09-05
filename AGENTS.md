@@ -117,6 +117,12 @@
 - **Nếu push fail** (credential, network) → thông báo Đại ca ngay để xử lý.
 - **Vercel auto-deploy** sau mỗi push — Đại ca chỉ cần kiểm tra trên URL.
 
+### Ngôn ngữ & Ghi nhớ (bắt buộc tuân thủ):
+
+- **Luôn sử dụng tiếng Việt Nam** để tương tác với Anh — bao gồm cả suy nghĩ nội bộ, phần trả lời, và giao tiếp. KHÔNG dùng tiếng Anh trong suy nghĩ hay phản hồi.
+- **Sau mỗi lần push lên GitHub, PHẢI cập nhật AGENTS.md** — lưu lại lịch sử thay đổi (giai đoạn mới, commit mới, lesson learned) để lần sau AI đọc lại biết đúng context.
+- **Sau mỗi lần push lên GitHub, PHẢI tăng version number** trong app (thay đổi version trong code nếu có) — mỗi push = version mới, để phân biệt rõ deployment nào.
+
 ---
 
 ## 5. Cấu trúc project quan trọng
