@@ -986,5 +986,155 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-05 (Giai đoạn 27 — Camera Live + Overlay Đóng Dấu Ảnh Chấm Công)*
+*Cập nhật lần cuối: 2026-09-06 (Giai đoạn 29 — Mặc định camera trước + Fallback overlay)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### Giai đoạn 28: Camera 2 loại + Font nhỏ + Stamp Check-in (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `e316d69` | feat: chọn 2 loại camera (front/back) + font nhỏ + overlay stamp check-in |
+
+> **Thay đổi:**
+> - **Cham-cong:** `startCamera()` hỗ trợ `facingMode: 'user'` (camera trước) + `'environment'` (camera sau). Nút switch camera trong dialog. Mặc định `'environment'`.
+> - **Chấm công:** Giảm `bigTime` từ 9%→6.5% chiều rộng ảnh, `smFont` từ 2.6%→2.2%. Nội dung vẫn bottom-left, không bị lấn.
+> - **Check-in:** Thay `<input type="file" capture>` bằng camera live + canvas overlay + stamp giống chấm công. Có nút chụp, switch camera, retake. Overlay bottom-left, font nhỏ.
+> - **Style stamp:** Giống hệt chấm công — company name, tên NV, địa chỉ/GPS, ngày+thứ, giờ lớn, đường xanh lá cạnh trái, không dark bar.
+
+*Commit mới: `e316d69`*
+
+---
+
+### Giai đoạn 29: Mặc định camera trước + Fallback overlay (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `7c7b0cd` | fix: mặc định camera trước + fallback dimensions overlay khi videoWidth=0 |
+
+> **Thay đổi:**
+> - **Mặc định camera trước:** `facingMode` mặc định thành `'user'` cho cả chấm công và check-in.
+> - **Fallback dimensions:** `drawOverlay`/`doStamp` nếu `videoWidth/videoHeight <= 100` (chưa ready) → dùng `clientWidth/clientHeight` hoặc fallback 640x480. Fix overlay không hiển thị khi metadata chưa load.
+
+*Commit mới: `7c7b0cd`*
+
+---
+
+### Giai đoạn 30: Z-index overlay canvas + Console log debug (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `fa82567` | fix: z-index overlay canvas + console log để debug camera |
+
+> **Thay đổi:**
+> - **Z-index:** Thêm `zIndex: 10` cho overlay canvas (chắc chắn phủ lên video element).
+> - **Console log:** Thêm `console.log` vào `drawOverlay` và `useEffect` để debug — xem có chạy loop không, video paused không, dimensions ra sao.
+> - **Mục tiêu:** Xác định nguyên nhân overlay không hiện trên điện thoại thật.
+
+*Commit mới: `fa82567`*
+
+---
+
+### Giai đoạn 31: Xử lý lỗi camera + Fallback chọn ảnh (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `439d873` | fix: xử lý lỗi camera không crash component + fallback chọn ảnh từ thư viện |
+
+> **Thay đổi:**
+> - **startCamera:** `catch` error không rethrow — component không crash khi camera không available (NotFoundError).
+> - **handleOpenDialog:** `setTimeout` gọi `startCamera().catch()` để không crash nếu camera fail.
+> - **Fallback UI:** Khi `!cameraActive && !photoPreview`, hiện thêm nút "Chọn ảnh từ thư viện" (input file hidden) — user vẫn check-in được khi camera không mở được.
+> - Áp dụng cho cả `cham-cong.tsx` và `check-in.tsx`.
+
+*Commit mới: `439d873`*
+
+---
+
+### Giai đoạn 32: Đảm bảo dialog mở dù camera fail (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `1b8d30d` | fix: đảm bảo dialog mở dù camera fail — bọc startCamera trong try-catch |
+
+> **Thay đổi:**
+> - **handleOpenDialog / handlePunchOpen:** Bọc `startCamera()` trong `try-catch` riêng.
+> - Đảm bảo dialog luôn mở (setIsDialogOpen(true)) dù camera có fail hay không.
+> - Trước đây lỗi camera có thể khiến dialog không mở → giờ vẫn mở và hiện nút "Chọn ảnh từ thư viện".
+> - Áp dụng cho cả `cham-cong.tsx` và `check-in.tsx`.
+
+*Commit mới: `1b8d30d`*
+
+---
+
+### Giai đoạn 32: Đảm bảo dialog mở dù camera fail (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `1b8d30d` | fix: đảm bảo dialog mở dù camera fail — bọc startCamera trong try-catch |
+
+> **Thay đổi:**
+> - **handleOpenDialog / handlePunchOpen:** Bọc `startCamera()` trong `try-catch` riêng.
+> - Đảm bảo dialog luôn mở (setIsDialogOpen(true)) dù camera có fail hay không.
+> - Trước đây lỗi camera có thể khiến dialog không mở → giờ vẫn mở và hiện nút "Chọn ảnh từ thư viện".
+> - Áp dụng cho cả `cham-cong.tsx` và `check-in.tsx`.
+
+*Commit mới: `1b8d30d`*
+
+---
+
+### Giai đoạn 33: Mở dialog nhanh — không chờ GPS (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `efb1443` | fix: không chờ requestLocation để mở dialog nhanh hơn |
+
+> **Thay đổi:**
+> - **handleOpenDialog / handlePunchOpen:** `requestLocation()` chạy trong nền (`requestLocation().then()`) — không `await`.
+> - Trước đây `await requestLocation()` chờ đến 15 giây (timeout GPS) → dialog không mở ngay.
+> - Giờ dialog mở ngay lập tức, GPS và camera chạy nền.
+> - Áp dụng cho cả `cham-cong.tsx` và `check-in.tsx`.
+
+*Commit mới: `efb1443`*
+
+---
+
+### Giai đoạn 34: Fix overlay dialog — bg-black/40 thay vì bg-ink/40 (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `be5e34b` | fix: dialog overlay khả dụng — dùng bg-black/40 thay vì bg-ink/40 |
+
+> **Nguyên nhân:**
+> - Tailwind v4 dùng CSS variables cho màu sắc (`--color-ink: #12211c`).
+> - Lớp `bg-ink/40` không được Tailwind v4 recognize vì không có color nào tên `ink` trong default config.
+> - Đổi thành `bg-black/40` → overlay hiện ra.
+> - Ngoài ra cũng removed debug logging và indicator đỏ từ check-in.tsx.*Commit mới: `be5e34b`*
+
+---
+
+### Giai đoạn 35: Stamp layout chỉnh khung ảnh (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `4b19b85` | feat: stamp layout chỉnh khung ảnh — nội dung nằm trong khung, font vừa, dòng xanh cạnh trái |
+
+> **Thay đổi:**
+> - Dùng chung `buildStampLayout()` cho `cham-cong.tsx` và `check-in.tsx`.
+> - Stamp block bottom-left, chiều rộng ~28% ảnh (max 220px), nằm trong khung ảnh.
+> - Font size tỉ lệ width nhưng có giới hạn để không vượt biên.
+> - Địa chỉ tự cắt ngắn theo chiều rộng khung.
+> - Fixed TS catch blocks trong `handleOpenDialog` / `handlePunchOpen`.
+> - Version bump: `package.json` + `DEFAULT_VERSION` trong `app-shell.tsx` → `0.1.1`.
+
+*Commit mới: `4b19b85`*
+
+---
+
+### Version
+
+- `package.json`: `0.1.1`
+- `DEFAULT_VERSION` (app-side): `0.1.1` (`src/components/app-shell.tsx`)
+
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.1`.
