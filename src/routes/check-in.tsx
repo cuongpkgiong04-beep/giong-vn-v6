@@ -167,8 +167,9 @@ function CheckInPage() {
     setTimeout(async () => {
       try {
         await startCamera();
-      } catch (err) {
-        console.log('[check-in] Camera không available:', err?.message || err);
+      } catch (err: unknown) {
+        const msg = err && typeof err === 'object' && 'message' in err ? (err as { message: unknown }).message : err;
+        console.log('[check-in] Camera không available:', msg);
         // Dialog vẫn mở, user có thể chọn ảnh từ thư viện
       }
     }, 400);
@@ -288,59 +289,91 @@ function CheckInPage() {
     startCamera();
   }, [startCamera]);
 
+  // Stamp layout helper — dùng chung cho drawOverlay và doStamp
+  function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
+    const scale = Math.max(1, w / 640);
+    const maxStampWidth = Math.min(Math.round(w * 0.28), 220);
+    const bigTimeMaxWidth = Math.max(28, Math.min(Math.round(w * 0.075), 46));
+    const smFontMaxWidth = Math.max(10, Math.min(Math.round(w * 0.026), 16));
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+    const dateStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+    const weekdayStr = now.toLocaleDateString("vi-VN", { weekday: "long" });
+    const companyText = "Công ty: Cổ Phần Giong Việt Nam";
+    const nameText = `Tên: ${currentName}`;
+    const addrRaw = address.length > 0 ? address : gps;
+    const charsPerLine = Math.max(14, Math.min(46, Math.round(maxStampWidth / (smFontMaxWidth * 0.55))));
+    const addrText = addrRaw.length > charsPerLine ? addrRaw.slice(0, charsPerLine - 1) + "..." : addrRaw;
+    const dateText = `${dateStr} ${weekdayStr}`;
+    return {
+      w, h, scale,
+      lines: [
+        { text: companyText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: nameText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: addrText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: dateText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
+      ],
+      maxStampWidth,
+    };
+  }
+
   const drawOverlay = useCallback(() => {
     const video = videoRef.current;
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
-    // Fallback: nếu videoWidth/videoHeight chưa ready, dùng clientWidth/Height hoặc default
+
     const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
     ctx.drawImage(video, 0, 0, w, h);
-    const scale = Math.max(1, w / 640);
-    const pad = Math.round(16 * scale);
-    const lineX = pad;
-    const textX = lineX + Math.round(8 * scale);
-    // Font nhỏ hơn chấm công một chút để nội dung không bị lấn
-    const bigTime = Math.max(28, Math.round(w * 0.065));
-    const smFont = Math.max(11, Math.round(w * 0.022));
-    function drawText(text: string, x: number, y: number, size: number, color = "#ffffff", bold = false) {
-      ctx.font = `${bold ? "bold " : ""}${size}px Arial, Helvetica, sans-serif`;
-      ctx.textAlign = "left";
-      ctx.fillStyle = "rgba(0,0,0,0.7)";
-      ctx.fillText(text, x + 1, y + 1);
-      ctx.fillStyle = color;
-      ctx.fillText(text, x, y);
-    }
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
-    const dateStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
-    const weekdayStr = now.toLocaleDateString("vi-VN", { weekday: "long" });
-    const addrText = address.length > 40 ? address.slice(0, 37) + "..." : address;
-    const infoLines: Array<{ text: string; size: number; bold: boolean }> = [
-      { text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, bold: false },
-      { text: `Tên: ${currentName}`, size: smFont, bold: false },
-      { text: addrText || gps, size: smFont, bold: false },
-      { text: `${dateStr} ${weekdayStr}`, size: smFont, bold: false },
-      { text: timeStr, size: bigTime, bold: true },
-    ];
+
+    const layout = buildStampLayout(w, h, currentName, address, gps);
+    const { lines, scale } = layout;
+
+    ctx.textAlign = "left";
+
     let totalH = 0;
-    for (const l of infoLines) totalH += l.size + Math.round(3 * scale);
-    let y = h - pad;
-    const greenLineTop = y - totalH - Math.round(4 * scale);
+    for (const l of lines) {
+      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+      totalH += l.size + Math.round(3 * scale);
+    }
+
+    const margin = Math.round(12 * scale);
+    const boxBottom = h - margin;
+    const boxLeft = margin;
+    let y = boxBottom;
+
+    const lineX = boxLeft;
+    const textX = lineX + Math.round(6 * scale);
+    const lineWidth = Math.round(3 * scale);
+    const lineTop = y - totalH - Math.round(4 * scale);
+    const lineHeight = totalH + Math.round(6 * scale);
+
     ctx.fillStyle = "#22c55e";
-    ctx.fillRect(lineX, greenLineTop, Math.round(3 * scale), totalH + Math.round(6 * scale));
-    for (const l of infoLines) {
+    ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
+
+    for (const l of lines) {
       y -= l.size;
-      drawText(l.text, textX, y, l.size, "#ffffff", l.bold);
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillText(l.text, textX + 1, y + 1);
+      ctx.fillStyle = l.color;
+      ctx.fillText(l.text, textX, y);
       y -= Math.round(3 * scale);
     }
-    console.log('[check-in] drawOverlay called — w:', w, 'h:', h, 'ctx:', !!ctx);
+
     requestAnimationFrame(drawOverlay);
-  }, [currentName, address, gps]);
+  }, [currentName, gps, address]);
 
   useEffect(() => {
     console.log('[check-in] useEffect cameraActive:', cameraActive, 'photoPreview:', !!photoPreview);
@@ -356,46 +389,50 @@ function CheckInPage() {
   }, [cameraActive, drawOverlay, photoPreview]);
 
   const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
-    // Fallback: nếu videoWidth/videoHeight chưa ready, dùng clientWidth/Height hoặc default
     const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
     ctx.drawImage(video, 0, 0, w, h);
-    const scale = Math.max(1, w / 640);
-    const pad = Math.round(16 * scale);
-    const lineX = pad;
-    const textX = lineX + Math.round(8 * scale);
-    const bigTime = Math.max(28, Math.round(w * 0.065));
-    const smFont = Math.max(11, Math.round(w * 0.022));
-    function drawText(text: string, x: number, y: number, size: number, color = "#ffffff", bold = false) {
-      ctx.font = `${bold ? "bold " : ""}${size}px Arial, Helvetica, sans-serif`;
-      ctx.textAlign = "left";
-      ctx.fillStyle = "rgba(0,0,0,0.7)";
-      ctx.fillText(text, x + 1, y + 1);
-      ctx.fillStyle = color;
-      ctx.fillText(text, x, y);
-    }
-    const infoLines: Array<{ text: string; size: number; bold: boolean }> = [
-      { text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, bold: false },
-      { text: `Tên: ${currentName}`, size: smFont, bold: false },
-      { text: addrStr || gpsStr, size: smFont, bold: false },
-      { text: `${dateStr} ${weekdayStr}`, size: smFont, bold: false },
-      { text: timeStr, size: bigTime, bold: true },
-    ];
+
+    const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
+    const { lines, scale } = layout;
+
+    ctx.textAlign = "left";
+
     let totalH = 0;
-    for (const l of infoLines) totalH += l.size + Math.round(3 * scale);
-    let y = h - pad;
-    const greenLineTop = y - totalH - Math.round(4 * scale);
+    for (const l of lines) {
+      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+      totalH += l.size + Math.round(3 * scale);
+    }
+
+    const margin = Math.round(12 * scale);
+    const boxBottom = h - margin;
+    const boxLeft = margin;
+    let y = boxBottom;
+
+    const lineX = boxLeft;
+    const textX = lineX + Math.round(6 * scale);
+    const lineWidth = Math.round(3 * scale);
+    const lineTop = y - totalH - Math.round(4 * scale);
+    const lineHeight = totalH + Math.round(6 * scale);
+
     ctx.fillStyle = "#22c55e";
-    ctx.fillRect(lineX, greenLineTop, Math.round(3 * scale), totalH + Math.round(6 * scale));
-    for (const l of infoLines) {
+    ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
+
+    for (const l of lines) {
       y -= l.size;
-      drawText(l.text, textX, y, l.size, "#ffffff", l.bold);
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillText(l.text, textX + 1, y + 1);
+      ctx.fillStyle = l.color;
+      ctx.fillText(l.text, textX, y);
       y -= Math.round(3 * scale);
     }
+
     const stamped = canvas.toDataURL("image/jpeg", 0.85);
     setPhotoPreview(stamped);
     setPhotoStamped(true);
@@ -417,6 +454,7 @@ function CheckInPage() {
         setGps(`${lat}, ${lng}`);
         setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
         doStamp(video, canvas, freshTime, freshDate, freshWeekday, `${lat}, ${lng}`, address);
+
       },
       () => {
         doStamp(video, canvas, freshTime, freshDate, freshWeekday, gps, address);
