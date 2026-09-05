@@ -230,7 +230,7 @@ export const GUIDES = [
 export const REPORTS = [
   { id: "bc1", name: "Bảng chấm công", desc: "Công vào/tan ca theo ngày, người, trung tâm", href: "/bao-cao/bang-cham-cong" },
   { id: "bc7", name: "Bảng Check-in", desc: "Lượt check-in vị trí theo ngày, người, trung tâm + bản đồ", href: "/bao-cao/bang-check-in" },
-  { id: "bc2", name: "Báo cáo nhiệm vụ", desc: "Tiến độ kế hoạch theo người phụ trách", href: "/nhiem-vu" },
+  { id: "bc2", name: "Báo cáo nhiệm vụ", desc: "Tiến độ kế hoạch theo người phụ trách", href: "/bao-cao/bang-nhiem-vu" },
 
   { id: "bc6", name: "Đề nghị chờ duyệt", desc: "Hàng đợi phê duyệt của quản lý", href: "/de-nghi" },
 ];
