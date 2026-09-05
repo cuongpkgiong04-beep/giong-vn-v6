@@ -69,6 +69,7 @@ function ChamCongPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
   // Refresh pending records periodically
   useEffect(() => {
@@ -245,11 +246,12 @@ function ChamCongPage() {
     setCameraActive(false);
   }, []);
 
-  // Start camera stream
-  const startCamera = useCallback(async () => {
+  // Start camera stream (facingMode: environment=back, user=front)
+  const startCamera = useCallback(async (mode?: "environment" | "user") => {
+    if (mode) setFacingMode(mode);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -263,7 +265,7 @@ function ChamCongPage() {
       console.error("[cham-cong] Camera error:", err);
       toast.error("Không thể mở camera. Vui lòng cho phép truy cập camera.");
     }
-  }, []);
+  }, [facingMode]);
 
   // Draw overlay on canvas (live preview)
   const drawOverlay = useCallback(() => {
@@ -284,9 +286,9 @@ function ChamCongPage() {
     const pad = Math.round(16 * scale);
     const lineX = pad; // left edge for green accent line
     const textX = lineX + Math.round(8 * scale); // text starts after green line
-    // Font sizes
-    const bigTime = Math.max(36, Math.round(w * 0.09)); // Large clock time
-    const smFont = Math.max(13, Math.round(w * 0.026)); // Small info text
+    // Font sizes — nhỏ hơn để nội dung không bị lấn (bottom-left)
+    const bigTime = Math.max(28, Math.round(w * 0.065)); // Large clock time (6.5% width)
+    const smFont = Math.max(11, Math.round(w * 0.022));  // Small info text (2.2% width)
     // Helper: draw text with shadow
     function drawText(text: string, x: number, y: number, size: number, color = "#ffffff", bold = false) {
       ctx.font = `${bold ? "bold " : ""}${size}px Arial, Helvetica, sans-serif`;
@@ -298,40 +300,36 @@ function ChamCongPage() {
       ctx.fillStyle = color;
       ctx.fillText(text, x, y);
     }
-    // Build info lines (bottom-up)
-    const lines: Array<{ text: string; size: number; color: string; bold: boolean }[]> = [];
+    // Build info lines (bottom-up, all ở dưới-phải của ảnh)
+    const lines: Array<{ text: string; size: number; color: string; bold: boolean }> = [];
     // Company name
-    lines.push([{ text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, color: "#ffffff", bold: false }]);
+    lines.push({ text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, color: "#ffffff", bold: false });
     // Employee name
-    lines.push([{ text: `Tên: ${currentName}`, size: smFont, color: "#ffffff", bold: false }]);
-    // Address
-    const addrText = address.length > 50 ? address.slice(0, 47) + "..." : address;
-    lines.push([{ text: addrText, size: smFont, color: "#ffffff", bold: false }]);
+    lines.push({ text: `Tên: ${currentName}`, size: smFont, color: "#ffffff", bold: false });
+    // Address (shortened if too long)
+    const addrText = address.length > 40 ? address.slice(0, 37) + "..." : address;
+    lines.push({ text: addrText, size: smFont, color: "#ffffff", bold: false });
     // Date + weekday
     const now = new Date();
     const dateStr = `${formatPunchDate()} ${formatPunchWeekday()}`;
-    lines.push([{ text: dateStr, size: smFont, color: "#ffffff", bold: false }]);
-    // Large time (clock style)
-    lines.push([{ text: formatPunchTime(), size: bigTime, color: "#ffffff", bold: true }]);
+    lines.push({ text: dateStr, size: smFont, color: "#ffffff", bold: false });
+    // Large time (clock style, cuối cùng = trên cùng của khối nội dung)
+    lines.push({ text: formatPunchTime(), size: bigTime, color: "#ffffff", bold: true });
     // Measure total height needed
     let totalH = 0;
-    for (const group of lines) {
-      for (const l of group) totalH += l.size + Math.round(4 * scale);
-    }
+    for (const l of lines) totalH += l.size + Math.round(3 * scale);
     // Draw from bottom-left
     let y = h - pad;
-    // Draw green accent line on left
+    // Draw green accent line on left (chạy dọc cạnh nội dung)
     const greenLineTop = y - totalH - Math.round(4 * scale);
-    const greenLineH = totalH + Math.round(8 * scale);
+    const greenLineH = totalH + Math.round(6 * scale);
     ctx.fillStyle = "#22c55e";
-    ctx.fillRect(lineX, greenLineTop, Math.round(4 * scale), greenLineH);
+    ctx.fillRect(lineX, greenLineTop, Math.round(3 * scale), greenLineH);
     // Draw each line bottom-up
-    for (const group of lines) {
-      for (const l of group) {
-        y -= l.size;
-        drawText(l.text, textX, y, l.size, l.color, l.bold);
-        y -= Math.round(4 * scale);
-      }
+    for (const l of lines) {
+      y -= l.size;
+      drawText(l.text, textX, y, l.size, l.color, l.bold);
+      y -= Math.round(3 * scale);
     }
     // Request next frame
     requestAnimationFrame(drawOverlay);
@@ -402,8 +400,8 @@ function ChamCongPage() {
     const pad = Math.round(16 * scale);
     const lineX = pad;
     const textX = lineX + Math.round(8 * scale);
-    const bigTime = Math.max(36, Math.round(w * 0.09));
-    const smFont = Math.max(13, Math.round(w * 0.026));
+    const bigTime = Math.max(28, Math.round(w * 0.065)); // 6.5% width — nhỏ hơn
+    const smFont = Math.max(11, Math.round(w * 0.022));  // 2.2% width — nhỏ hơn
     function drawText(text: string, x: number, y: number, size: number, color = "#ffffff", bold = false) {
       ctx.font = `${bold ? "bold " : ""}${size}px Arial, Helvetica, sans-serif`;
       ctx.textAlign = "left";
@@ -412,8 +410,9 @@ function ChamCongPage() {
       ctx.fillStyle = color;
       ctx.fillText(text, x, y);
     }
+    // Nội dung ví filepath stamp cũng bottom-left, font nhỏ
     const infoLines: Array<{ text: string; size: number; bold: boolean }> = [
-      { text: `Công ty: ${addrStr.length > 0 ? "Cổ Phần Giong Việt Nam" : "Cổ Phần Giong Việt Nam"}`, size: smFont, bold: false },
+      { text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, bold: false },
       { text: `Tên: ${currentName}`, size: smFont, bold: false },
       { text: addrStr || gpsStr, size: smFont, bold: false },
       { text: `${dateStr} ${weekdayStr}`, size: smFont, bold: false },
@@ -421,17 +420,17 @@ function ChamCongPage() {
     ];
     // Measure total height
     let totalH = 0;
-    for (const l of infoLines) totalH += l.size + Math.round(4 * scale);
+    for (const l of infoLines) totalH += l.size + Math.round(3 * scale);
     // Draw from bottom-left
     let y = h - pad;
     // Green accent line
     const greenLineTop = y - totalH - Math.round(4 * scale);
     ctx.fillStyle = "#22c55e";
-    ctx.fillRect(lineX, greenLineTop, Math.round(4 * scale), totalH + Math.round(8 * scale));
+    ctx.fillRect(lineX, greenLineTop, Math.round(3 * scale), totalH + Math.round(6 * scale));
     for (const l of infoLines) {
       y -= l.size;
       drawText(l.text, textX, y, l.size, "#ffffff", l.bold);
-      y -= Math.round(4 * scale);
+      y -= Math.round(3 * scale);
     }
     // Get stamped image as base64
     const stamped = canvas.toDataURL("image/jpeg", 0.85);
@@ -440,7 +439,13 @@ function ChamCongPage() {
     stopCamera();
   }
 
-  // Retake: discard stamped photo, reopen camera
+  // Switch camera (front <-> back)
+  function switchCamera() {
+    const next = facingMode === "environment" ? "user" : "environment";
+    startCamera(next);
+  }
+
+  // Retake: discard stamped photo, reopen camera (keep current facing mode)
   function retakePhoto() {
     setPhotoPreview(null);
     setPhotoStamped(false);
@@ -927,8 +932,16 @@ function ChamCongPage() {
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
                     style={{ maxHeight: 400, objectFit: "cover" }}
                   />
-                  {/* Capture button */}
-                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                  {/* Capture button + camera switch */}
+                  <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={switchCamera}
+                      className="size-10 rounded-full border-2 border-white/70 bg-black/40 backdrop-blur-sm flex items-center justify-center transition hover:bg-black/60"
+                      title="Ảnh trước / Ảnh sau"
+                    >
+                      <Camera className="size-5" />
+                    </button>
                     <button
                       type="button"
                       onClick={capturePhoto}

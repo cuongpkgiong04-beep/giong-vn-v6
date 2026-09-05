@@ -7,7 +7,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { ClientOnly } from "@/components/client-only";
-import { useRef, useEffect, useMemo, useState } from "react";
+import { useRef, useEffect, useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { GpsMap } from "@/components/gps-map";
@@ -64,6 +64,14 @@ function CheckInPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  // Camera live state (giống chấm công)
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const captureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [photoStamped, setPhotoStamped] = useState(false);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
   const [detailRecord, setDetailRecord] = useState<(typeof checkins)[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -146,22 +154,16 @@ function CheckInPage() {
     setPhotoPreview(null);
     setNote("");
     setSelectedCenter(currentEmployee?.center ?? "VP");
+    setPhotoStamped(false);
+    stopCamera();
 
     // Request GPS immediately
     const ok = await requestLocation();
     if (!ok) {
       toast.warning("Không lấy được vị trí GPS. Vui lòng bật định vị để check-in.");
     }
-  }
-
-  function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoPreview(typeof reader.result === "string" ? reader.result : null);
-    };
-    reader.readAsDataURL(file);
+    // Mở camera sau khi dialog render xong
+    setTimeout(() => startCamera(), 400);
   }
 
   async function resolveAddress(): Promise<string> {
@@ -235,6 +237,179 @@ function CheckInPage() {
     setIsDetailOpen(false);
     toast.success("Đã xóa lượt check-in", { description: detailRecord.name });
   }
+
+  // ── Camera live (giống chấm công) ──
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  }, []);
+
+  const startCamera = useCallback(async (mode?: "environment" | "user") => {
+    if (mode) setFacingMode(mode);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraActive(true);
+      setPhotoStamped(false);
+    } catch (err: any) {
+      console.error("[check-in] Camera error:", err);
+      toast.error("Không thể mở camera. Vui lòng cho phép truy cập camera.");
+    }
+  }, [facingMode]);
+
+  const switchCamera = useCallback(() => {
+    const next = facingMode === "environment" ? "user" : "environment";
+    startCamera(next);
+  }, [facingMode, startCamera]);
+
+  const retakePhoto = useCallback(() => {
+    setPhotoPreview(null);
+    setPhotoStamped(false);
+    startCamera();
+  }, [startCamera]);
+
+  const drawOverlay = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = overlayCanvasRef.current;
+    if (!video || !canvas || video.paused || video.ended) return;
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, w, h);
+    const scale = Math.max(1, w / 640);
+    const pad = Math.round(16 * scale);
+    const lineX = pad;
+    const textX = lineX + Math.round(8 * scale);
+    // Font nhỏ hơn chấm công một chút để nội dung không bị lấn
+    const bigTime = Math.max(28, Math.round(w * 0.065));
+    const smFont = Math.max(11, Math.round(w * 0.022));
+    function drawText(text: string, x: number, y: number, size: number, color = "#ffffff", bold = false) {
+      ctx.font = `${bold ? "bold " : ""}${size}px Arial, Helvetica, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillText(text, x + 1, y + 1);
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+    }
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+    const dateStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+    const weekdayStr = now.toLocaleDateString("vi-VN", { weekday: "long" });
+    const addrText = address.length > 40 ? address.slice(0, 37) + "..." : address;
+    const infoLines: Array<{ text: string; size: number; bold: boolean }> = [
+      { text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, bold: false },
+      { text: `Tên: ${currentName}`, size: smFont, bold: false },
+      { text: addrText || gps, size: smFont, bold: false },
+      { text: `${dateStr} ${weekdayStr}`, size: smFont, bold: false },
+      { text: timeStr, size: bigTime, bold: true },
+    ];
+    let totalH = 0;
+    for (const l of infoLines) totalH += l.size + Math.round(3 * scale);
+    let y = h - pad;
+    const greenLineTop = y - totalH - Math.round(4 * scale);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(lineX, greenLineTop, Math.round(3 * scale), totalH + Math.round(6 * scale));
+    for (const l of infoLines) {
+      y -= l.size;
+      drawText(l.text, textX, y, l.size, "#ffffff", l.bold);
+      y -= Math.round(3 * scale);
+    }
+    requestAnimationFrame(drawOverlay);
+  }, [currentName, address, gps]);
+
+  useEffect(() => {
+    if (cameraActive && videoRef.current && !photoPreview) {
+      const timer = setTimeout(() => {
+        if (videoRef.current && !videoRef.current.paused) {
+          requestAnimationFrame(drawOverlay);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [cameraActive, drawOverlay, photoPreview]);
+
+  const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, w, h);
+    const scale = Math.max(1, w / 640);
+    const pad = Math.round(16 * scale);
+    const lineX = pad;
+    const textX = lineX + Math.round(8 * scale);
+    const bigTime = Math.max(28, Math.round(w * 0.065));
+    const smFont = Math.max(11, Math.round(w * 0.022));
+    function drawText(text: string, x: number, y: number, size: number, color = "#ffffff", bold = false) {
+      ctx.font = `${bold ? "bold " : ""}${size}px Arial, Helvetica, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(0,0,0,0.7)";
+      ctx.fillText(text, x + 1, y + 1);
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+    }
+    const infoLines: Array<{ text: string; size: number; bold: boolean }> = [
+      { text: `Công ty: Cổ Phần Giong Việt Nam`, size: smFont, bold: false },
+      { text: `Tên: ${currentName}`, size: smFont, bold: false },
+      { text: addrStr || gpsStr, size: smFont, bold: false },
+      { text: `${dateStr} ${weekdayStr}`, size: smFont, bold: false },
+      { text: timeStr, size: bigTime, bold: true },
+    ];
+    let totalH = 0;
+    for (const l of infoLines) totalH += l.size + Math.round(3 * scale);
+    let y = h - pad;
+    const greenLineTop = y - totalH - Math.round(4 * scale);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(lineX, greenLineTop, Math.round(3 * scale), totalH + Math.round(6 * scale));
+    for (const l of infoLines) {
+      y -= l.size;
+      drawText(l.text, textX, y, l.size, "#ffffff", l.bold);
+      y -= Math.round(3 * scale);
+    }
+    const stamped = canvas.toDataURL("image/jpeg", 0.85);
+    setPhotoPreview(stamped);
+    setPhotoStamped(true);
+    stopCamera();
+  }, [currentName, stopCamera]);
+
+  const capturePhoto = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = captureCanvasRef.current;
+    if (!video || !canvas) return;
+    const now = new Date();
+    const freshTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+    const freshDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+    const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        setGps(`${lat}, ${lng}`);
+        setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, `${lat}, ${lng}`, address);
+      },
+      () => {
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gps, address);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
+    );
+  }, [address, gps, gpsCoords, doStamp]);
 
   // Center stats
   const centerStats = useMemo(() => {
@@ -473,39 +648,72 @@ function CheckInPage() {
               className="mb-3"
             />
 
-            {/* Photo */}
+            {/* Photo: camera live + stamp */}
             <div className="mb-3">
               <label className="mb-1 block text-xs font-medium text-muted uppercase">
                 Ảnh xác nhận *
               </label>
-              {photoPreview ? (
-                <div className="relative">
-                  <img
-                    src={photoPreview}
-                    alt="preview"
-                    className="h-40 w-full rounded-xl object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPhotoPreview(null)}
-                    className="absolute top-2 right-2 size-7 rounded-lg bg-black/60 text-white"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                <label className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-line bg-surface-2 transition hover:border-accent">
-                  <Camera className="mb-2 size-8 text-muted" />
-                  <span className="text-sm text-muted">Chụp ảnh xác nhận</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                  />
-                </label>
-              )}
+              <div className="relative overflow-hidden rounded-2xl border border-line bg-black">
+                {!photoPreview ? (
+                  <>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full rounded-2xl"
+                      style={{ maxHeight: 400, objectFit: "cover" }}
+                    />
+                    <canvas
+                      ref={overlayCanvasRef}
+                      className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
+                      style={{ maxHeight: 400, objectFit: "cover" }}
+                    />
+                    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={switchCamera}
+                        className="size-10 rounded-full border-2 border-white/70 bg-black/40 backdrop-blur-sm flex items-center justify-center transition hover:bg-black/60"
+                        title="Ảnh trước / Ảnh sau"
+                      >
+                        <Camera className="size-5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={capturePhoto}
+                        className="size-16 rounded-full border-4 border-white bg-white/30 backdrop-blur-sm flex items-center justify-center transition active:scale-90 hover:bg-white/50"
+                        title="Chụp ảnh"
+                      >
+                        <div className="size-12 rounded-full bg-white" />
+                      </button>
+                    </div>
+                    {!cameraActive && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
+                        <Loader2 className="mb-3 size-8 animate-spin" />
+                        <span className="text-sm">Đang mở camera...</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="relative">
+                    <img
+                      src={photoPreview}
+                      alt="Ảnh check-in đã đóng dấu"
+                      className="w-full rounded-2xl"
+                      style={{ maxHeight: 400, objectFit: "cover" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={retakePhoto}
+                      className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-sm hover:bg-black/80"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Chụp lại
+                    </button>
+                  </div>
+                )}
+                <canvas ref={captureCanvasRef} className="hidden" />
+              </div>
             </div>
 
             {/* Submit */}
