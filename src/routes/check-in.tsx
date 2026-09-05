@@ -143,9 +143,7 @@ function CheckInPage() {
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
       );
     });
-  }
-
-  async function handleOpenDialog() {
+  }  async function handleOpenDialog() {
     setIsDialogOpen(true);
     setGps("");
     setAddress("");
@@ -162,8 +160,13 @@ function CheckInPage() {
     if (!ok) {
       toast.warning("Không lấy được vị trí GPS. Vui lòng bật định vị để check-in.");
     }
-    // Mở camera sau khi dialog render xong
-    setTimeout(() => startCamera(), 400);
+    // Mở camera sau khi dialog render xong (nếu không được thì vẫn cho chọn ảnh từ gallery)
+    setTimeout(() => {
+      startCamera().catch(() => {
+        // Camera không available — user vẫn có thể chọn ảnh từ gallery nếu có input fallback
+        console.log('[check-in] Camera không available, user có thể chọn ảnh từ nơi khác');
+      });
+    }, 400);
   }
 
   async function resolveAddress(): Promise<string> {
@@ -265,6 +268,7 @@ function CheckInPage() {
     } catch (err: any) {
       console.error("[check-in] Camera error:", err);
       toast.error("Không thể mở camera. Vui lòng cho phép truy cập camera.");
+      // Không rethrow — component vẫn hoạt động được
     }
   }, [facingMode]);
 
@@ -696,6 +700,30 @@ function CheckInPage() {
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
                         <Loader2 className="mb-3 size-8 animate-spin" />
                         <span className="text-sm">Đang mở camera...</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Fallback: cho phép chọn ảnh từ gallery khi camera không available
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'image/*';
+                            input.capture = 'environment';
+                            input.onchange = (e: any) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = () => setPhotoPreview(reader.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            };
+                            input.click();
+                          }
+                          }
+                          className="mt-3 text-sm text-white underline"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white' }}
+                        >
+                          Chọn ảnh từ thư viện
+                        </button>
                       </div>
                     )}
                   </>
