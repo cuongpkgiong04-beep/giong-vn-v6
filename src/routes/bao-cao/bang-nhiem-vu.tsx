@@ -5,24 +5,31 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/status-badge";
 import { useAppStore } from "@/lib/store";
 import { formatDate } from "@/lib/format";
+import { EMPLOYEES, isAdminRole } from "@/lib/catalog";
 const COLS = ["Việc cần làm", "Quá hạn", "Đã xong"];
 
 function TiếnĐộNhiệmVụ() {
   const tasks = useAppStore((s) => s.tasks);
   const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [assignerFilter, setAssignerFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const currentUser = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? EMPLOYEES[0]);
+  const isAdmin = isAdminRole(currentUser?.role);
+  const vpEmployees = useAppStore((s) => s.employees).filter((e) => e.center === "VP" || e.center === "Văn phòng");
 
   // Filter tasks
   const filtered = useMemo(() => {
     return tasks.filter((t) => {
       if (assigneeFilter && t.assignee !== assigneeFilter) return false;
+      if (assignerFilter && t.assigner !== assignerFilter) return false;
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
       return true;
     });
-  }, [tasks, assigneeFilter, statusFilter]);
+  }, [tasks, assigneeFilter, assignerFilter, statusFilter]);
 
   // Statistics by status
   const statusStats = useMemo(() => {
@@ -95,6 +102,12 @@ function TiếnĐộNhiệmVụ() {
           value={assigneeFilter}
           onChange={(e) => setAssigneeFilter(e.target.value)}
           placeholder="Lọc theo người phụ trách..."
+          className="w-48"
+        />
+        <Input
+          value={assignerFilter}
+          onChange={(e) => setAssignerFilter(e.target.value)}
+          placeholder="Lọc theo người giao..."
           className="w-48"
         />
         <select
@@ -177,6 +190,7 @@ function TiếnĐộNhiệmVụ() {
                     </p>
                     <p className="text-sm text-muted">
                       {t.assignee || "Chưa gán"}: {formatDate(t.created)} — {formatDate(t.due || "")}
+                      {t.assigner ? ` · Người giao: ${t.assigner}` : ""}
                       {t.support ? ` · Hỗ trợ: ${t.support}` : ""}
                     </p>
                   </div>
