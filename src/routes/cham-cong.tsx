@@ -112,6 +112,7 @@ function ChamCongPage() {
   }, [currentEmployee]);
 
   const canViewAll = hasPermission(currentEmployee, "attendance:view_all");
+  const isAdmin = isAdminRole(currentEmployee?.role);
   // Delete allowed for admins (any record) or the record owner
   const canDeleteRecord = detailRecord
     ? canViewAll || detailRecord.name === (currentEmployee?.name ?? currentName)
@@ -406,7 +407,7 @@ function ChamCongPage() {
               <div className="mb-3 flex items-center gap-4 text-sm">
                 <span className="text-muted">Tổng: <strong className="text-ink">{syncStats.total}</strong></span>
                 <span className="text-muted">Đang retry: <strong className="text-amber-600">{syncStats.retrying}</strong></span>
-                <span className="text-muted">Lỗi >5 lần: <strong className="text-red-500">{syncStats.failed}</strong></span>
+                <span className="text-muted">Lỗi &gt;5 lần: <strong className="text-red-500">{syncStats.failed}</strong></span>
               </div>
               <div className="max-h-60 overflow-y-auto">
                 <table className="w-full text-left text-xs">
@@ -451,7 +452,7 @@ function ChamCongPage() {
                 </table>
               </div>
               <p className="mt-3 text-xs text-faint">
-                Bản ghi tự động retry mỗi 30 giây. Lỗi >5 lần cần kiểm tra DB hoặc network.
+                Bản ghi tự động retry mỗi 30 giây. Lỗi &gt;5 lần cần kiểm tra DB hoặc network.
               </p>
             </div>
           )}
