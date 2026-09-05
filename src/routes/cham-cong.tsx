@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, TimerReset, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { GpsMap } from "@/components/gps-map";
@@ -62,6 +62,13 @@ function ChamCongPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingRecords, setPendingRecords] = useState<Array<{ collection: string; data: any; attempts?: number }>>([]);
   const [showSyncDashboard, setShowSyncDashboard] = useState(false);
+  // Camera state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const captureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [photoStamped, setPhotoStamped] = useState(false);
 
   // Refresh pending records periodically
   useEffect(() => {
@@ -229,6 +236,192 @@ function ChamCongPage() {
     );
   }
 
+  // Stop camera stream
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  }, []);
+
+  // Start camera stream
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraActive(true);
+      setPhotoStamped(false);
+    } catch (err: any) {
+      console.error("[cham-cong] Camera error:", err);
+      toast.error("Không thể mở camera. Vui lòng cho phép truy cập camera.");
+    }
+  }, []);
+
+  // Draw overlay on canvas (live preview)
+  const drawOverlay = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = overlayCanvasRef.current;
+    if (!video || !canvas || video.paused || video.ended) return;
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // Draw video frame
+    ctx.drawImage(video, 0, 0, w, h);
+    // Semi-transparent overlay bar at bottom
+    const barH = Math.round(h * 0.22);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(0, h - barH, w, barH);
+    // Text settings
+    const fontSize = Math.max(14, Math.round(w * 0.022));
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+    ctx.textAlign = "left";
+    const lineH = fontSize + 6;
+    let y = h - barH + lineH + 4;
+    const x = 12;
+    // Company name (green, live preview)
+    ctx.font = `bold ${fontSize + 2}px Arial, sans-serif`;
+    ctx.fillStyle = "#4ade80";
+    ctx.fillText("Công ty Cổ Phần Giong Việt Nam", x, y);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+    y += lineH + 2;
+    // Employee name
+    ctx.fillText(`NV: ${currentName}`, x, y);
+    y += lineH;
+    // Date + weekday
+    ctx.fillText(`${formatPunchDate()} — ${formatPunchWeekday()}`, x, y);
+    y += lineH;
+    // Time (live — updates every frame)
+    ctx.fillText(formatPunchTime(), x, y);
+    y += lineH;
+    // GPS coordinates
+    ctx.fillText(`GPS: ${gps}`, x, y);
+    y += lineH;
+    // Address (truncate if too long)
+    const addrText = address.length > 60 ? address.slice(0, 57) + "..." : address;
+    ctx.fillText(addrText, x, y);
+    // Request next frame
+    requestAnimationFrame(drawOverlay);
+  }, [currentName, gps, address]);
+
+  // Start overlay loop when camera is active
+  useEffect(() => {
+    if (cameraActive && videoRef.current && !photoPreview) {
+      const timer = setTimeout(() => {
+        if (videoRef.current && !videoRef.current.paused) {
+          requestAnimationFrame(drawOverlay);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [cameraActive, drawOverlay, photoPreview]);
+
+  // Capture photo with overlay stamped — GPS + time are FRESH at this moment
+  function capturePhoto() {
+    const video = videoRef.current;
+    const canvas = captureCanvasRef.current;
+    if (!video || !canvas) return;
+    // ── Get FRESH GPS + timestamp at capture moment ──
+    const now = new Date();
+    const freshTime = now.toLocaleTimeString("en-US", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
+    });
+    const freshDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
+    const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
+    const freshGps = gps; // latest from GPS sensor
+    const freshAddr = address;
+    // Re-fetch GPS for fresh coordinates
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        setGps(`${lat}, ${lng}`);
+        setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, `${lat}, ${lng}`, freshAddr);
+      },
+      () => {
+        // GPS failed, use current values
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, freshGps, freshAddr);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
+    );
+  }
+
+  function doStamp(
+    video: HTMLVideoElement,
+    canvas: HTMLCanvasElement,
+    timeStr: string,
+    dateStr: string,
+    weekdayStr: string,
+    gpsStr: string,
+    addrStr: string,
+  ) {
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    // Draw video frame
+    ctx.drawImage(video, 0, 0, w, h);
+    // Semi-transparent overlay bar at bottom
+    const barH = Math.round(h * 0.22);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(0, h - barH, w, barH);
+    // Text settings
+    const fontSize = Math.max(14, Math.round(w * 0.022));
+    ctx.textAlign = "left";
+    const lineH = fontSize + 6;
+    let y = h - barH + lineH + 4;
+    const x = 12;
+    // Company name (green)
+    ctx.font = `bold ${fontSize + 2}px Arial, sans-serif`;
+    ctx.fillStyle = "#4ade80";
+    ctx.fillText("Công ty Cổ Phần Giong Việt Nam", x, y);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+    y += lineH + 2;
+    // Employee name
+    ctx.fillText(`NV: ${currentName}`, x, y);
+    y += lineH;
+    // Date + weekday
+    ctx.fillText(`${dateStr} — ${weekdayStr}`, x, y);
+    y += lineH;
+    // Time (fresh at capture moment)
+    ctx.fillText(timeStr, x, y);
+    y += lineH;
+    // GPS coordinates (fresh)
+    ctx.fillText(`GPS: ${gpsStr}`, x, y);
+    y += lineH;
+    // Address
+    const addrText = addrStr.length > 60 ? addrStr.slice(0, 57) + "..." : addrStr;
+    ctx.fillText(addrText, x, y);
+    // Get stamped image as base64
+    const stamped = canvas.toDataURL("image/jpeg", 0.85);
+    setPhotoPreview(stamped);
+    setPhotoStamped(true);
+    stopCamera();
+  }
+
+  // Retake: discard stamped photo, reopen camera
+  function retakePhoto() {
+    setPhotoPreview(null);
+    setPhotoStamped(false);
+    startCamera();
+  }
+
   function handlePunchOpen(type: "Điểm danh vào ca" | "Điểm danh tan ca") {
     // Validate attendance rules
     if (type === "Điểm danh vào ca" && !canPunchIn) {
@@ -245,18 +438,11 @@ function ChamCongPage() {
     setAddress("Đang xác định vị trí...");
     setLocationStatus("Đang xác định vị trí...");
     setPhotoPreview(null);
+    setPhotoStamped(false);
     setGpsCoords(null);
     requestLocation();
-  }
-
-  function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoPreview(typeof reader.result === "string" ? reader.result : null);
-    };
-    reader.readAsDataURL(file);
+    // Start camera after a short delay to let dialog render
+    setTimeout(() => startCamera(), 400);
   }
 
   // Reverse geocode coordinates → actual Vietnamese address (server-side)
@@ -696,80 +882,96 @@ function ChamCongPage() {
           <DialogTitle>{punchType}</DialogTitle>
           <DialogDesc>Ghi nhận chấm công. <span className="font-medium text-danger">Yêu cầu:</span> chụp ảnh + bật định vị GPS.</DialogDesc>
 
-          <div className="mt-5 space-y-5">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-medium tracking-[0.12em] text-muted uppercase">Ảnh chụp <span className="text-danger">*</span></label>
-                <label className="flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-surface-2 p-4 text-center text-sm text-muted transition hover:border-accent/50 hover:bg-accent-soft">
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Ảnh chấm công" className="h-full max-h-52 w-full rounded-xl object-cover" />
-                  ) : (
-                    <>
-                      <Camera className="mb-3 size-8 text-accent" />
-                      <span>Chụp ảnh từ điện thoại</span>
-                      <span className="mt-1 text-xs text-faint">Hệ thống sẽ lưu ảnh cùng vị trí</span>
-                    </>
+          <div className="mt-5 space-y-4">
+            {/* Camera / Preview area */}
+            <div className="relative overflow-hidden rounded-2xl border border-line bg-black">
+              {!photoPreview ? (
+                <>
+                  {/* Live camera view */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full rounded-2xl"
+                    style={{ maxHeight: 400, objectFit: "cover" }}
+                  />
+                  {/* Overlay canvas draws on top of video */}
+                  <canvas
+                    ref={overlayCanvasRef}
+                    className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
+                    style={{ maxHeight: 400, objectFit: "cover" }}
+                  />
+                  {/* Capture button */}
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={capturePhoto}
+                      className="size-16 rounded-full border-4 border-white bg-white/30 backdrop-blur-sm flex items-center justify-center transition active:scale-90 hover:bg-white/50"
+                      title="Chụp ảnh"
+                    >
+                      <div className="size-12 rounded-full bg-white" />
+                    </button>
+                  </div>
+                  {/* Camera status */}
+                  {!cameraActive && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
+                      <Loader2 className="mb-3 size-8 animate-spin" />
+                      <span className="text-sm">Đang mở camera...</span>
+                    </div>
                   )}
-                  <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
-                </label>
-              </div>
-
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-line bg-surface-2 p-3">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Tên nhân sự</p>
-                  <p className="mt-2 text-lg font-semibold text-ink">{currentName}</p>
+                </>
+              ) : (
+                /* Stamped photo preview */
+                <div className="relative">
+                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "cover" }} />
+                  {/* Retake button */}
+                  <button
+                    type="button"
+                    onClick={retakePhoto}
+                    className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-sm hover:bg-black/80"
+                  >
+                    <RotateCcw className="size-3.5" />
+                    Chụp lại
+                  </button>
                 </div>
-                <div className="rounded-2xl border border-line bg-surface-2 p-3">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Thời gian</p>
-                  <p className="mt-2 text-lg font-semibold text-ink">{formatPunchTime()}</p>
-                </div>
-                <div className="rounded-2xl border border-line bg-surface-2 p-3">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Thứ trong tuần</p>
-                  <p className="mt-2 text-base font-medium text-ink">{formatPunchWeekday()}</p>
-                </div>
-                <div className="rounded-2xl border border-line bg-surface-2 p-3">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Ngày điểm danh</p>
-                  <p className="mt-2 text-base font-medium text-ink">{formatPunchDate()}</p>
-                </div>
-              </div>
+              )}
+              {/* Hidden capture canvas (offscreen) */}
+              <canvas ref={captureCanvasRef} className="hidden" />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-2xl border border-line bg-surface-2 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Định vị GPS</p>
-                  <div className="flex items-center gap-1 text-xs text-muted">
-                    <MapPin className="size-3.5" />
-                    {locationStatus}
-                  </div>
-                </div>
-                <GpsMap
-                  coords={gpsCoords}
-                  fallback={
-                    <>
-                      <MapPin className="mr-2 size-4" />
-                      Đang tải bản đồ...
-                    </>
-                  }
-                />
-                <p className="mt-3 text-sm font-medium text-ink">{gps}</p>
+            {/* Info panels */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-line bg-surface-2 p-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Tên nhân sự</p>
+                <p className="mt-1 text-base font-semibold text-ink">{currentName}</p>
               </div>
-
-              <div className="rounded-2xl border border-line bg-surface-2 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Địa chỉ</p>
-                  <TimerReset className="size-4 text-muted" />
+              <div className="rounded-xl border border-line bg-surface-2 p-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Thời gian</p>
+                <p className="mt-1 text-base font-semibold text-ink">{formatPunchTime()} — {formatPunchWeekday()}</p>
+                <p className="text-xs text-faint">{formatPunchDate()}</p>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-line bg-surface-2 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Định vị GPS</p>
+                  <span className="flex items-center gap-1 text-xs text-muted"><MapPin className="size-3" />{locationStatus}</span>
                 </div>
-                <p className="text-sm leading-6 text-ink">{address}</p>
+                <p className="mt-1 text-sm font-medium text-ink">{gps}</p>
+              </div>
+              <div className="rounded-xl border border-line bg-surface-2 p-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Địa chỉ</p>
+                <p className="mt-1 text-sm leading-5 text-ink">{address}</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+          <div className="mt-5 flex justify-end gap-3">
+            <Button variant="outline" onClick={() => { setIsDialogOpen(false); stopCamera(); }} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button onClick={confirmPunch} disabled={isSubmitting}>
+            <Button onClick={confirmPunch} disabled={isSubmitting || !photoPreview}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
