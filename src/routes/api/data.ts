@@ -121,6 +121,7 @@ export const loadDeletedAttendanceIds = createServerFn({ method: "GET" })
 export const loadTasks = createServerFn({ method: "GET" })
   .handler(async () => {
     const sql = await getSql();
+    // Fallback nếu cột assigner chưa có (migration 0016 chưa chạy)
     return sql<{
       id: string;
       assignee: string;
@@ -135,7 +136,22 @@ export const loadTasks = createServerFn({ method: "GET" })
       assigner: string;
       photo: string | null;
       location: string;
-    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`;
+    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`
+      .catch(() => sql<{
+        id: string;
+        assignee: string;
+        title: string;
+        created: string;
+        due: string;
+        status: string;
+        support: string;
+        blocker: string;
+        updated: string;
+        created_by: string;
+        assigner: string;
+        photo: string | null;
+        location: string;
+      }>`SELECT *, created_by as "createdBy", '' as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`);
   });
 
 export const insertTask = createServerFn({ method: "POST" })
