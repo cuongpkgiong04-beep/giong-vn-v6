@@ -333,13 +333,16 @@ function ChamCongPage() {
       y -= Math.round(3 * scale);
     }
     // Request next frame
+    console.log('[cham-cong] drawOverlay frame — w:', w, 'h:', h);
     requestAnimationFrame(drawOverlay);
   }, [currentName, gps, address]);
 
   // Start overlay loop when camera is active
   useEffect(() => {
+    console.log('[cham-cong] useEffect cameraActive:', cameraActive, 'photoPreview:', !!photoPreview);
     if (cameraActive && videoRef.current && !photoPreview) {
       const timer = setTimeout(() => {
+        console.log('[cham-cong] Starting drawOverlay loop, video.paused:', videoRef.current?.paused);
         if (videoRef.current && !videoRef.current.paused) {
           requestAnimationFrame(drawOverlay);
         }
@@ -932,7 +935,7 @@ function ChamCongPage() {
                   <canvas
                     ref={overlayCanvasRef}
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                    style={{ maxHeight: 400, objectFit: "cover" }}
+                    style={{ maxHeight: 400, objectFit: "cover", zIndex: 10 }}
                   />
                   {/* Capture button + camera switch */}
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">

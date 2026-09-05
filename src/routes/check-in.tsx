@@ -329,12 +329,15 @@ function CheckInPage() {
       drawText(l.text, textX, y, l.size, "#ffffff", l.bold);
       y -= Math.round(3 * scale);
     }
+    console.log('[check-in] drawOverlay called — w:', w, 'h:', h, 'ctx:', !!ctx);
     requestAnimationFrame(drawOverlay);
   }, [currentName, address, gps]);
 
   useEffect(() => {
+    console.log('[check-in] useEffect cameraActive:', cameraActive, 'photoPreview:', !!photoPreview);
     if (cameraActive && videoRef.current && !photoPreview) {
       const timer = setTimeout(() => {
+        console.log('[check-in] Starting drawOverlay loop, video.paused:', videoRef.current?.paused);
         if (videoRef.current && !videoRef.current.paused) {
           requestAnimationFrame(drawOverlay);
         }
@@ -669,7 +672,7 @@ function CheckInPage() {
                     <canvas
                       ref={overlayCanvasRef}
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                      style={{ maxHeight: 400, objectFit: "cover" }}
+                      style={{ maxHeight: 400, objectFit: "cover", zIndex: 10 }}
                     />
                     <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
                       <button
