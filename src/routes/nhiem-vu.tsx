@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Edit, MapPin, Plus, Trash2 } from "lucide-react";
+import { Camera, Edit, MapPin, Plus, Trash2, ChevronDown, X } from "lucide-react";
+import * as Popover from "@radix-ui/react-popover";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -402,25 +403,70 @@ function TasksPage() {
               </select>
             </div>
             <div>
-              <Label htmlFor="s">Người hỗ trợ</Label>
-              <div className="mt-1 flex flex-col gap-1">
-                {vpEmployees.map((e) => (
-                  <label key={e.id} className="flex items-center gap-2 cursor-pointer text-sm">
-                    <input
-                      type="checkbox"
-                      checked={supportList.includes(e.name)}
-                      onChange={() => {
-                        const next = supportList.includes(e.name)
-                          ? supportList.filter((n) => n !== e.name)
-                          : [...supportList, e.name];
-                        setSupportList(next);
-                      }}
-                      className="size-4 accent-accent"
-                    />
-                    <span className="text-ink">{e.name} ({e.username})</span>
-                  </label>
-                ))}
-              </div>
+              <Label>Người hỗ trợ</Label>
+              <Popover.Root>
+                <Popover.Trigger asChild>
+                  <button
+                    type="button"
+                    className="mt-1 flex h-11 w-full items-center justify-between rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] hover:bg-surface-2"
+                  >
+                    <span className={supportList.length === 0 ? "text-muted" : "text-ink"}>
+                      {supportList.length === 0
+                        ? "Chọn người hỗ trợ…"
+                        : `${supportList.length} người đã chọn`}
+                    </span>
+                    <ChevronDown className="size-4 text-muted" />
+                  </button>
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Content
+                    className="z-50 max-h-64 w-[var(--radix-popover-trigger-width)] overflow-y-auto rounded-lg border bg-white p-2 shadow-lg"
+                    sideOffset={4}
+                    align="start"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      {vpEmployees.map((e) => (
+                        <label
+                          key={e.id}
+                          className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-surface-2 ${supportList.includes(e.name) ? "bg-surface-2" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={supportList.includes(e.name)}
+                            onChange={() => {
+                              const next = supportList.includes(e.name)
+                                ? supportList.filter((n) => n !== e.name)
+                                : [...supportList, e.name];
+                              setSupportList(next);
+                            }}
+                            className="size-4 accent-accent"
+                          />
+                          <span className="text-ink">{e.name} ({e.username})</span>
+                        </label>
+                      ))}
+                    </div>
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
+              {supportList.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {supportList.map((name) => (
+                    <span
+                      key={name}
+                      className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent"
+                    >
+                      {name}
+                      <button
+                        type="button"
+                        onClick={() => setSupportList(supportList.filter((n) => n !== name))}
+                        className="rounded-full p-0.5 hover:bg-accent/20"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="d">Ngày đến hạn</Label>
