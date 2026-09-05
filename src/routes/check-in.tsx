@@ -71,7 +71,7 @@ function CheckInPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
 
   const [detailRecord, setDetailRecord] = useState<(typeof checkins)[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -283,8 +283,9 @@ function CheckInPage() {
     const video = videoRef.current;
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
+    // Fallback: nếu videoWidth/videoHeight chưa ready, dùng clientWidth/Height hoặc default
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
@@ -343,8 +344,9 @@ function CheckInPage() {
   }, [cameraActive, drawOverlay, photoPreview]);
 
   const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
+    // Fallback: nếu videoWidth/videoHeight chưa ready, dùng clientWidth/Height hoặc default
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");

@@ -69,7 +69,7 @@ function ChamCongPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
 
   // Refresh pending records periodically
   useEffect(() => {
@@ -272,8 +272,9 @@ function ChamCongPage() {
     const video = videoRef.current;
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
+    // Fallback: nếu videoWidth/videoHeight chưa ready, dùng clientWidth/Height hoặc default
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
@@ -387,8 +388,9 @@ function ChamCongPage() {
     gpsStr: string,
     addrStr: string,
   ) {
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
+    // Fallback: nếu videoWidth/videoHeight chưa ready, dùng clientWidth/Height hoặc default
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
