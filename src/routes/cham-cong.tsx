@@ -434,13 +434,13 @@ function ChamCongPage() {
     canvas: HTMLCanvasElement,
     timeStr: string,
     dateStr: string,
-    weekdayStr: string,
     gpsStr: string,
     addrStr: string,
   ) {
     // Dùng kích thước giống drawOverlay — stamp nhất quán trước và sau chụp
     const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
+    console.log('[doStamp] canvas:', w, 'x', h, 'video:', video.videoWidth, 'x', video.videoHeight, 'client:', video.clientWidth, 'x', video.clientHeight, 'readyState:', video.readyState);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
@@ -448,6 +448,7 @@ function ChamCongPage() {
 
     // Vẽ video frame lên canvas
     ctx.drawImage(video, 0, 0, w, h);
+    console.log('[doStamp] drawImage done, toDataURL length:', canvas.toDataURL('image/jpeg', 0.95).length);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
