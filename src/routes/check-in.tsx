@@ -332,8 +332,9 @@ function CheckInPage() {
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
 
-    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
-    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
+    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
+    const w = video.clientWidth || 640;
+    const h = video.clientHeight || 480;
     canvas.width = w;
     canvas.height = h;
 
@@ -397,16 +398,16 @@ function CheckInPage() {
   }, [cameraActive, drawOverlay, photoPreview]);
 
   const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
-    // Dùng kích thước giống drawOverlay — stamp nhất quán trước và sau chụp
-    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
-    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
+    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
+    const w = video.clientWidth || 640;
+    const h = video.clientHeight || 480;
     canvas.width = w;
     canvas.height = h;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame lên canvas
+    // Vẽ video frame lên canvas (fill toàn bộ)
     ctx.drawImage(video, 0, 0, w, h);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);

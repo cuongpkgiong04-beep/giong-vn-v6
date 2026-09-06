@@ -313,8 +313,10 @@ function ChamCongPage() {
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
 
-    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
-    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
+    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
+    // Giữ nhất quán với doStamp
+    const w = video.clientWidth || 640;
+    const h = video.clientHeight || 480;
     canvas.width = w;
     canvas.height = h;
 
@@ -437,18 +439,17 @@ function ChamCongPage() {
     gpsStr: string,
     addrStr: string,
   ) {
-    // Dùng kích thước giống drawOverlay — stamp nhất quán trước và sau chụp
-    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
-    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    console.log('[doStamp] canvas:', w, 'x', h, 'video:', video.videoWidth, 'x', video.videoHeight, 'client:', video.clientWidth, 'x', video.clientHeight, 'readyState:', video.readyState);
+    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
+    // KHÔNG dùng videoWidth/videoHeight vì img objectFit:cover sẽ crop phần dưới
+    const w = video.clientWidth || 640;
+    const h = video.clientHeight || 480;
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame lên canvas
+    // Vẽ video frame lên canvas (fill toàn bộ)
     ctx.drawImage(video, 0, 0, w, h);
-    console.log('[doStamp] drawImage done, toDataURL length:', canvas.toDataURL('image/jpeg', 0.95).length);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
