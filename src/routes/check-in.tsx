@@ -430,7 +430,7 @@ function CheckInPage() {
     }
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
 
-    const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
+    const layout = buildStampLayout(cw, ch, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
 
     ctx.textAlign = "left";
@@ -444,7 +444,7 @@ function CheckInPage() {
     }
 
     const margin = Math.round(14 * scale);
-    const boxBottom = h - margin;
+    const boxBottom = ch - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
@@ -769,7 +769,7 @@ function CheckInPage() {
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
                       style={{ maxHeight: 400, zIndex: 10 }}
                     />
-                    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
+                    <div className="absolute top-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
                       <button
                         type="button"
                         onClick={switchCamera}

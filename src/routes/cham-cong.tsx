@@ -477,7 +477,7 @@ function ChamCongPage() {
     }
     ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
 
-    const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
+    const layout = buildStampLayout(cw, ch, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
 
     ctx.textAlign = "left";
@@ -494,7 +494,7 @@ function ChamCongPage() {
 
     // Khung stamp bottom-left
     const margin = Math.round(14 * scale);
-    const boxBottom = h - margin;
+    const boxBottom = ch - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
