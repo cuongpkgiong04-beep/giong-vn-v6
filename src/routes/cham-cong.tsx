@@ -312,20 +312,20 @@ function ChamCongPage() {
     const charsPerLine = Math.max(16, Math.min(70, Math.round(maxStampWidth / (smFontMaxWidth * 0.52))));
     const addrLines = wrapStampText(addrRaw, charsPerLine);
 
-    // Drawing bottom-up: groups[0]=bottom, groups[N]=top
-    // Visual top→bottom: Cụm1(Giờ+Ngày) → Cụm2(Địa chỉ) → Cụm3(Tên+Công ty)
+    // Drawing bottom-up: first item = LOWEST, last item = HIGHEST
+    // So within each group, reverse order: last in array = visually on top
     const groups: { text: string; size: number; bold: boolean; color: string }[][] = [
-      // Cụm 3 — dưới cùng: Tên (bold) + Công ty
+      // Cụm 3 — dưới cùng (drawn first = lowest)
       [
-        { text: nameText, size: smFontMaxWidth, bold: true, color: "#ffffff" },
         { text: companyText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: nameText, size: smFontMaxWidth, bold: true, color: "#ffffff" },
       ],
       // Cụm 2 — giữa: Địa chỉ đầy đủ (wrap nhiều dòng)
-      addrLines.map(t => ({ text: t, size: smFontMaxWidth, bold: false, color: "#ffffff" })),
-      // Cụm 1 — trên cùng: Giờ (lớn, bold) + Thứ ngày tháng
+      addrLines.map(t => ({ text: t, size: smFontMaxWidth, bold: false, color: "#ffffff" })).reverse(),
+      // Cụm 1 — trên cùng (drawn last = highest)
       [
-        { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
         { text: dateText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
       ],
     ];
     return { w, h, scale, groups, groupGap, maxStampWidth };
