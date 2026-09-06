@@ -320,8 +320,8 @@ function ChamCongPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw video frame
-    ctx.drawImage(video, 0, 0, w, h);
+    // Không vẽ video frame — giữ canvas trong suốt, chỉ vẽ stamp text
+    // Video đã hiển thị qua <video> element bên dưới
 
     const layout = buildStampLayout(w, h, currentName, address, gps);
     const { lines, scale } = layout;
@@ -427,7 +427,7 @@ function ChamCongPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw video frame
+    // Vẽ video frame lên captureCanvas (cần cho static photo output)
     ctx.drawImage(video, 0, 0, w, h);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
@@ -969,7 +969,7 @@ function ChamCongPage() {
                   <canvas
                     ref={overlayCanvasRef}
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                    style={{ maxHeight: 400, objectFit: "cover", zIndex: 10 }}
+                    style={{ maxHeight: 400, zIndex: 10 }}
                   />
                   {/* Capture button + camera switch */}
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
