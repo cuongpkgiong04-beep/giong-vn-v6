@@ -789,7 +789,7 @@ function CheckInPage() {
                       src={photoPreview}
                       alt="Ảnh check-in đã đóng dấu"
                       className="w-full rounded-2xl"
-                      style={{ maxHeight: 400, objectFit: "cover" }}
+                      style={{ maxHeight: 400, objectFit: "contain" }}
                     />
                     <button
                       type="button"
@@ -888,7 +888,7 @@ function CheckInPage() {
                     <img
                       src={detailRecord.photo}
                       alt="check-in"
-                      className="h-48 w-full rounded-xl object-cover"
+                      className="h-48 w-full rounded-xl object-contain"
                     />
                   )}
 

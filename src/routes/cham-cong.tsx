@@ -1028,7 +1028,7 @@ function ChamCongPage() {
               ) : (
                 /* Stamped photo preview */
                 <div className="relative">
-                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "cover" }} />
+                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "contain" }} />
                   {/* Retake button */}
                   <button
                     type="button"
@@ -1102,7 +1102,7 @@ function ChamCongPage() {
             <div className="mt-4 space-y-4">
               {detailRecord.photo && (
                 <div className="overflow-hidden rounded-xl border border-line">
-                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-cover" style={{ maxHeight: 300 }} />
+                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-contain" style={{ maxHeight: 300 }} />
                 </div>
               )}
 
