@@ -219,8 +219,12 @@ function ChamCongPage() {
         const coordinateText = `${lat}, ${lng}`;
         setGps(coordinateText);
         setGpsCoords([position.coords.latitude, position.coords.longitude]);
-        setAddress(coordinateText);
+        setAddress(coordinateText); // tạm thời, sẽ resolve ngay bên dưới
         setLocationStatus("Vị trí đã xác định");
+        // Resolve địa chỉ ngay khi có GPS để overlay hiển thị tên đường
+        reverseGeocode({ data: { lat, lng } })
+          .then((addr) => { if (addr) setAddress(addr); })
+          .catch(() => {}); // giữ coordinateText nếu fail
       },
       () => {
         const fallback = "0.000000, 0.000000";
@@ -269,25 +273,14 @@ function ChamCongPage() {
     }
   }, [facingMode]);
 
-  // Mã máy — giữ nguyên cho mỗi thiết bị (localStorage)
-  const deviceId = useMemo(() => {
-    let id = localStorage.getItem('giong-vn-device-id');
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 12).toUpperCase();
-      localStorage.setItem('giong-vn-device-id', id);
-    }
-    return id;
-  }, []);
-
-  // Stamp layout helper — giống mẫu ảnh: time lớn trên cùng, ma may dưới cùng
+  // Stamp layout helper — 1/4 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    // Khung stamp: bottom-left, chiều rộng ~30% chiều rộng ảnh, không quá 260px
-    const maxStampWidth = Math.min(Math.round(w * 0.30), 260);
-    // Font sizes tỉ lệ width
-    const bigTimeMaxWidth = Math.max(32, Math.min(Math.round(w * 0.09), 56));
-    const smFontMaxWidth = Math.max(11, Math.min(Math.round(w * 0.028), 18));
-    const tinyFontMaxWidth = Math.max(9, Math.min(Math.round(w * 0.020), 13));
+    // Khung stamp: 1/4 khung hình bên trái dưới → 50% chiều rộng ảnh
+    const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
+    // Font sizes tỉ lệ width — to hơn vì dùng 1/4 khung
+    const bigTimeMaxWidth = Math.max(40, Math.min(Math.round(w * 0.12), 72));
+    const smFontMaxWidth = Math.max(14, Math.min(Math.round(w * 0.038), 26));
     // Định dạng thời gian + ngày
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
@@ -302,13 +295,11 @@ function ChamCongPage() {
     const companyText = `Công ty: Cổ Phần Giong Việt Nam`;
     const nameText = `Tên: ${currentName}`;
     const addrRaw = address.length > 0 ? address : gps;
-    const charsPerLine = Math.max(14, Math.min(46, Math.round(maxStampWidth / (smFontMaxWidth * 0.55))));
+    const charsPerLine = Math.max(14, Math.min(60, Math.round(maxStampWidth / (smFontMaxWidth * 0.55))));
     const addrText = addrRaw.length > charsPerLine ? addrRaw.slice(0, charsPerLine - 1) + "..." : addrRaw;
     const dateText = `${weekdayStr}, ${dateStr}`;
-    const deviceIdText = `Mã máy: ${deviceId}`;
-    // Thứ tự từ dưới lên (bottom-up drawing): Ma may → Công ty → Tên → Địa chỉ → Ngày → Giờ
+    // Thứ tự từ dưới lên (bottom-up drawing): Công ty → Tên → Địa chỉ → Ngày → Giờ
     const lines = [
-      { text: deviceIdText, size: tinyFontMaxWidth, bold: false, color: "rgba(255,255,255,0.8)" },
       { text: companyText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
       { text: nameText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
       { text: addrText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
