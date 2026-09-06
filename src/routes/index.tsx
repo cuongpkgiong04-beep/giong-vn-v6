@@ -20,7 +20,6 @@ import {
 import { ClientOnly } from "@/components/client-only";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
-import { seedDaily } from "@/data";
 import { findEmployeeByLooseText } from "@/lib/catalog";
 import { formatDate, formatLongDate, greetingVi, todayIso } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
@@ -80,16 +79,26 @@ function Dashboard() {
   );
   const todayIn = todayInPeople.size;
 
+  // "14 phiên đông" = 14 ngày có nhiều lượt vào/ra nhất, tính từ data chấm công thật
   const attChart = useMemo(() => {
-    return seedDaily
-      .filter((d) => d.in + d.out >= 8)
-      .slice(-14)
+    const byDate = new Map<string, { in: number; out: number }>();
+    for (const a of attendance) {
+      const bucket = byDate.get(a.date) ?? { in: 0, out: 0 };
+      if (a.status.includes("vào")) bucket.in += 1;
+      if (a.status.includes("tan")) bucket.out += 1;
+      byDate.set(a.date, bucket);
+    }
+    return [...byDate.entries()]
+      .map(([date, b]) => ({ date, ...b, total: b.in + b.out }))
+      .sort((x, y) => y.total - x.total) // đông nhất lên trước
+      .slice(0, 14) // lấy đúng 14 phiên đông
+      .sort((x, y) => (x.date < y.date ? -1 : 1)) // hiển thị theo thứ tự thời gian
       .map((d) => ({
         day: d.date.slice(5).replace("-", "/"),
         vào: d.in,
         ra: d.out,
       }));
-  }, []);
+  }, [attendance]);
 
   const firstName = userName.split(" ").slice(-1)[0];
   const pending = proposals.filter((p) => p.status === "Chờ duyệt").length;
@@ -160,19 +169,25 @@ function Dashboard() {
           </CardHeader>
           <ClientOnly>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={attChart} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <CartesianGrid stroke="#d3ddd8" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fill: "#5a6b65", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "#5a6b65", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 12, border: "none", boxShadow: "var(--shadow-card)" }}
-                    labelStyle={{ color: "#12211c" }}
-                  />
-                  <Area type="monotone" dataKey="vào" stroke={CHART} fill={CHART} fillOpacity={0.18} strokeWidth={2} />
-                  <Area type="monotone" dataKey="ra" stroke={CHART_2} fill={CHART_2} fillOpacity={0.12} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              {attChart.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-muted">
+                  Chưa có dữ liệu chấm công — biểu đồ sẽ hiển thị khi có lượt vào ca / tan ca.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={attChart} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                    <CartesianGrid stroke="#d3ddd8" strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fill: "#5a6b65", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#5a6b65", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 12, border: "none", boxShadow: "var(--shadow-card)" }}
+                      labelStyle={{ color: "#12211c" }}
+                    />
+                    <Area type="monotone" dataKey="vào" stroke={CHART} fill={CHART} fillOpacity={0.18} strokeWidth={2} />
+                    <Area type="monotone" dataKey="ra" stroke={CHART_2} fill={CHART_2} fillOpacity={0.12} strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </ClientOnly>
         </Card>

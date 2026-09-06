@@ -1305,9 +1305,33 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
+### Giai đoạn 43: Fix biểu đồ Dashboard trống (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(dashboard): biểu đồ "Chấm công 14 phiên đông" lấy data thật từ store thay vì seed rỗng |
+| (mới) | chore: tăng version 0.1.2 → 0.1.3 |
+
+> **LESSON LEARNED — Seed data rỗng làm chart dashboard trống (2026-09-07):**
+> Biểu đồ "Chấm công 14 phiên đông" trên Dashboard lấy data từ `seedDaily`
+> (`src/data/attendance.json`) — file này đã bị reset rỗng `{"records": [], "daily": []}`
+> từ giai đoạn dọn data → biểu đồ không vẽ được gì (khung trống).
+>
+> **Fix:** Tính trực tiếp từ `attendance` trong store (Neon + pending sync — cùng nguồn
+> với trang Chấm công):
+> - Gom lượt theo ngày: `status.includes("vào")` → in, `status.includes("tan")` → out
+> - Sort theo tổng (in+out) giảm dần → `slice(0, 14)` → sort lại theo ngày tăng dần
+> - Khi rỗng: hiện text "Chưa có dữ liệu chấm công..." thay vì khung trống
+> - Trục Y `allowDecimals={false}` (đếm lượt, không có số lẻ)
+>
+> **Lưu ý:** `seedDaily` vẫn còn được dùng ở `bao-cao.tsx` (card "Chấm công trung bình")
+> — card đó cũng sẽ hiện số 0 cho tới khi đổi sang data thật (chưa sửa trong phiên bản này).
+
+---
+
 ### Version
 
-- `package.json`: `0.1.2`
-- `DEFAULT_VERSION` (app-side): `0.1.2` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.3`
+- `DEFAULT_VERSION` (app-side): `0.1.3` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.2`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.3`.
