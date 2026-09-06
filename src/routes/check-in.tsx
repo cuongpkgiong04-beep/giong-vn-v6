@@ -73,6 +73,7 @@ function CheckInPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
+  const startCameraRunningRef = useRef(false);
 
   const [detailRecord, setDetailRecord] = useState<(typeof checkins)[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -265,11 +266,16 @@ function CheckInPage() {
   const startCamera = useCallback(async (mode?: "environment" | "user") => {
     const effectiveMode = mode ?? facingMode;
     if (mode) setFacingMode(mode);
+    // Guard against overlapping calls
+    if (startCameraRunningRef.current) return;
+    startCameraRunningRef.current = true;
     // Dừng stream cũ trước khi mở stream mới
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+    // Đợi camera release trên mobile (150ms)
+    await new Promise(r => setTimeout(r, 150));
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: effectiveMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
@@ -286,6 +292,8 @@ function CheckInPage() {
       console.error("[check-in] Camera error:", err);
       toast.error("Không thể mở camera. Vui lòng cho phép truy cập camera.");
       // Không rethrow — component vẫn hoạt động được
+    } finally {
+      startCameraRunningRef.current = false;
     }
   }, [facingMode]);
 
@@ -294,11 +302,11 @@ function CheckInPage() {
     startCamera(next);
   }, [facingMode, startCamera]);
 
-  const retakePhoto = useCallback(() => {
+  function retakePhoto() {
     setPhotoPreview(null);
     setPhotoStamped(false);
-    startCamera();
-  }, [startCamera]);
+    setTimeout(() => startCamera(), 50);
+  }
 
   // Stamp layout helper — 1/2 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
@@ -458,7 +466,7 @@ function CheckInPage() {
     setIsCapturing(false);
   }, [currentName, stopCamera]);
 
-  const capturePhoto = useCallback(() => {
+  function capturePhoto() {
     if (isCapturing) return;
     const video = videoRef.current;
     const canvas = captureCanvasRef.current;
@@ -508,7 +516,7 @@ function CheckInPage() {
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
     );
-  }, [address, gps, gpsCoords, doStamp]);
+  }
 
   // Center stats
   const centerStats = useMemo(() => {
