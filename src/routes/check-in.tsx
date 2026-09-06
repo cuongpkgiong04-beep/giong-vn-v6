@@ -758,7 +758,7 @@ function CheckInPage() {
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
                       style={{ maxHeight: 400, zIndex: 10 }}
                     />
-                    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
+                    <div className="absolute top-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
                       <button
                         type="button"
                         onClick={switchCamera}
