@@ -296,10 +296,9 @@ function CheckInPage() {
   // Stamp layout helper — 1/2 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    // Khung stamp: nhỏ gọn, sát bên trái phía dưới (giảm 50% so với trước)
-    const maxStampWidth = Math.min(Math.round(w * 0.25), 240);
-    const bigTimeMaxWidth = Math.max(24, Math.min(Math.round(w * 0.08), 48));
-    const smFontMaxWidth = Math.max(10, Math.min(Math.round(w * 0.035), 24));
+    const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
+    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
+    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -333,9 +332,8 @@ function CheckInPage() {
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
 
-    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
-    const w = video.clientWidth || 640;
-    const h = video.clientHeight || 480;
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
 
@@ -399,16 +397,14 @@ function CheckInPage() {
   }, [cameraActive, drawOverlay, photoPreview]);
 
   const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
-    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
-    const w = video.clientWidth || 640;
-    const h = video.clientHeight || 480;
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame lên canvas (fill toàn bộ)
     ctx.drawImage(video, 0, 0, w, h);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
@@ -464,9 +460,21 @@ function CheckInPage() {
     const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
     const freshAddr = address;
 
-    // Stamp ngay — doStamp dùng clientWidth/clientHeight
+    // Đợi video metadata load xong rồi mới stamp
     function doStampWithGps(gpsVal: string, addrVal: string) {
-      doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+      if (video.videoWidth > 100 && video.videoHeight > 100) {
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+      } else {
+        const timeout = setTimeout(() => {
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        }, 3000);
+        const onLoaded = () => {
+          clearTimeout(timeout);
+          video.removeEventListener('loadedmetadata', onLoaded);
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        };
+        video.addEventListener('loadedmetadata', onLoaded, { once: true });
+      }
     }
 
     navigator.geolocation.getCurrentPosition(
@@ -750,7 +758,7 @@ function CheckInPage() {
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
                       style={{ maxHeight: 400, zIndex: 10 }}
                     />
-                    <div className="absolute top-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
+                    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
                       <button
                         type="button"
                         onClick={switchCamera}
@@ -781,7 +789,7 @@ function CheckInPage() {
                       src={photoPreview}
                       alt="Ảnh check-in đã đóng dấu"
                       className="w-full rounded-2xl"
-                      style={{ maxHeight: 400, objectFit: "cover" }}
+                      style={{ maxHeight: 400, objectFit: "contain" }}
                     />
                     <button
                       type="button"
@@ -793,7 +801,7 @@ function CheckInPage() {
                     </button>
                   </div>
                 )}
-                <canvas ref={captureCanvasRef} style={{ position: 'absolute', left: -9999, top: 0, pointerEvents: 'none' }} />
+                <canvas ref={captureCanvasRef} className="hidden" />
               </div>
             </div>
 
@@ -880,7 +888,7 @@ function CheckInPage() {
                     <img
                       src={detailRecord.photo}
                       alt="check-in"
-                      className="h-48 w-full rounded-xl object-cover"
+                      className="h-48 w-full rounded-xl object-contain"
                     />
                   )}
 

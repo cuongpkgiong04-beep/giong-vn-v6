@@ -271,14 +271,14 @@ function ChamCongPage() {
     }
   }, [facingMode]);
 
-  // Stamp layout helper — 1/2 khung hình bên trái dưới
+  // Stamp layout helper — 1/4 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    // Khung stamp: nhỏ gọn, sát bên trái phía dưới (giảm 50% so với trước)
-    const maxStampWidth = Math.min(Math.round(w * 0.25), 240);
-    // Font sizes tỉ lệ width — nhỏ hơn
-    const bigTimeMaxWidth = Math.max(24, Math.min(Math.round(w * 0.08), 48));
-    const smFontMaxWidth = Math.max(10, Math.min(Math.round(w * 0.035), 24));
+    // Khung stamp: 1/2 khung hình bên trái dưới
+    const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
+    // Font sizes tỉ lệ width — to hơn
+    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
+    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
     // Định dạng thời gian + ngày
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
@@ -313,10 +313,8 @@ function ChamCongPage() {
     const canvas = overlayCanvasRef.current;
     if (!video || !canvas || video.paused || video.ended) return;
 
-    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
-    // Giữ nhất quán với doStamp
-    const w = video.clientWidth || 640;
-    const h = video.clientHeight || 480;
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
 
@@ -402,9 +400,21 @@ function ChamCongPage() {
     const freshGps = gps;
     const freshAddr = address;
 
-    // Stamp ngay — doStamp dùng clientWidth/clientHeight (không cần videoWidth)
+    // Đợi video metadata load xong rồi mới stamp — đảm bảo canvas đúng kích thước thật
     function doStampWithGps(gpsVal: string, addrVal: string) {
-      doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+      if (video.videoWidth > 100 && video.videoHeight > 100) {
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+      } else {
+        const timeout = setTimeout(() => {
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        }, 3000);
+        const onLoaded = () => {
+          clearTimeout(timeout);
+          video.removeEventListener('loadedmetadata', onLoaded);
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        };
+        video.addEventListener('loadedmetadata', onLoaded, { once: true });
+      }
     }
 
     // Re-fetch GPS for fresh coordinates
@@ -436,19 +446,18 @@ function ChamCongPage() {
     canvas: HTMLCanvasElement,
     timeStr: string,
     dateStr: string,
+    weekdayStr: string,
     gpsStr: string,
     addrStr: string,
   ) {
-    // Dùng clientWidth/clientHeight — kích thước hiển thị thực tế
-    // KHÔNG dùng videoWidth/videoHeight vì img objectFit:cover sẽ crop phần dưới
-    const w = video.clientWidth || 640;
-    const h = video.clientHeight || 480;
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame lên canvas (fill toàn bộ)
+    // Vẽ video frame lên captureCanvas (cần cho static photo output)
     ctx.drawImage(video, 0, 0, w, h);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
@@ -1017,7 +1026,7 @@ function ChamCongPage() {
               ) : (
                 /* Stamped photo preview */
                 <div className="relative">
-                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "cover" }} />
+                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "contain" }} />
                   {/* Retake button */}
                   <button
                     type="button"
@@ -1030,7 +1039,7 @@ function ChamCongPage() {
                 </div>
               )}
               {/* Hidden capture canvas (offscreen) */}
-              <canvas ref={captureCanvasRef} style={{ position: 'absolute', left: -9999, top: 0, pointerEvents: 'none' }} />
+              <canvas ref={captureCanvasRef} className="hidden" />
             </div>
 
             {/* Info panels */}
@@ -1091,7 +1100,7 @@ function ChamCongPage() {
             <div className="mt-4 space-y-4">
               {detailRecord.photo && (
                 <div className="overflow-hidden rounded-xl border border-line">
-                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-cover" style={{ maxHeight: 300 }} />
+                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-contain" style={{ maxHeight: 300 }} />
                 </div>
               )}
 
