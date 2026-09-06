@@ -23,7 +23,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  CENTERS,
   findEmployeeByLooseText,
   isAdminRole,
 } from "@/lib/catalog";
@@ -51,6 +50,7 @@ function CheckInPage() {
     (s) => s.employees.find((e) => e.id === s.currentUserId) ?? null,
   );
   const currentName = useAppStore((s) => s.currentName());
+  const centers = useAppStore((s) => s.centers);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [gps, setGps] = useState("");
@@ -509,7 +509,7 @@ function CheckInPage() {
   // Center stats
   const centerStats = useMemo(() => {
     const map = new Map<string, number>();
-    for (const c of CENTERS) {
+    for (const c of centers) {
       if (
         !currentEmployee ||
         isAdminRole(currentEmployee.role) ||
@@ -568,7 +568,7 @@ function CheckInPage() {
                 }`}
               >
                 <p className={`font-medium ${filterCenter === s.code ? "text-accent" : "text-ink"}`}>
-                  {CENTERS.find((c) => c.code === s.code)?.short ?? s.code}
+                  {centers.find((c) => c.code === s.code)?.short ?? s.code}
                 </p>
                 <p className="text-xs text-muted">
                   <strong>{s.count}</strong> lượt
@@ -639,7 +639,7 @@ function CheckInPage() {
                       <p className="font-medium text-ink">{c.name}</p>
                     </td>
                     <td className="px-4 py-3 text-muted">
-                      {CENTERS.find((ct) => ct.code === c.centerCode)?.short ??
+                      {centers.find((ct) => ct.code === c.centerCode)?.short ??
                         c.centerCode ?? "VP"}
                     </td>
                     <td className="px-4 py-3">
@@ -727,7 +727,7 @@ function CheckInPage() {
                 onChange={(e) => setSelectedCenter(e.target.value)}
                 className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm"
               >
-                {CENTERS.map((c) => (
+                {centers.map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.short} ({c.code})
                   </option>
@@ -871,7 +871,7 @@ function CheckInPage() {
                     <p className="text-sm text-muted">
                       Trung tâm:{" "}
                       <strong>
-                        {CENTERS.find(
+                        {centers.find(
                           (c) => c.code === detailRecord.centerCode,
                         )?.short ?? detailRecord.centerCode}
                       </strong>
