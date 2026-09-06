@@ -293,12 +293,12 @@ function CheckInPage() {
     startCamera();
   }, [startCamera]);
 
-  // Stamp layout helper — 1/4 khung hình bên trái dưới
+  // Stamp layout helper — 1/2 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    const bigTimeMaxWidth = Math.max(40, Math.min(Math.round(w * 0.12), 72));
-    const smFontMaxWidth = Math.max(14, Math.min(Math.round(w * 0.038), 26));
+    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
+    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
       hour: "2-digit",

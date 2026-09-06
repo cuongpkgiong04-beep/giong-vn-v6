@@ -276,11 +276,11 @@ function ChamCongPage() {
   // Stamp layout helper — 1/4 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    // Khung stamp: 1/4 khung hình bên trái dưới → 50% chiều rộng ảnh
+    // Khung stamp: 1/2 khung hình bên trái dưới
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    // Font sizes tỉ lệ width — to hơn vì dùng 1/4 khung
-    const bigTimeMaxWidth = Math.max(40, Math.min(Math.round(w * 0.12), 72));
-    const smFontMaxWidth = Math.max(14, Math.min(Math.round(w * 0.038), 26));
+    // Font sizes tỉ lệ width — to hơn
+    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
+    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
     // Định dạng thời gian + ngày
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
