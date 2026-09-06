@@ -271,12 +271,12 @@ function ChamCongPage() {
     }
   }, [facingMode]);
 
-  // Stamp layout helper — 1/4 khung hình bên trái dưới
+  // Stamp layout helper — 1/2 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
     // Khung stamp: 1/2 khung hình bên trái dưới
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    // Font sizes tỉ lệ width — to hơn
+    // Font sizes tỉ lệ width
     const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
     const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
     // Định dạng thời gian + ngày
@@ -438,46 +438,18 @@ function ChamCongPage() {
     gpsStr: string,
     addrStr: string,
   ) {
-    // Dùng kích thước hiển thị thực tế của video (không dùng videoWidth/videoHeight
-    // vì video dùng objectFit:cover → kích thước thật bị khác với hiển thị)
-    const dw = video.clientWidth || 640;
-    const dh = video.clientHeight || 480;
-    // Tỷ lệ video gốc (thường 16:9)
-    const srcAspect = (video.videoWidth && video.videoWidth > 100)
-      ? video.videoWidth / video.videoHeight
-      : dw / dh;
-    // Canvas giữ tỷ lệ video gốc, nhưng scale vừa khung hiển thị
-    let cw: number, ch: number;
-    if (dw / dh > srcAspect) {
-      // Container rộng hơn video → fit theo chiều rộng, canvas cao hơn
-      ch = Math.round(dh * 2);
-      cw = Math.round(ch * srcAspect);
-    } else {
-      // Container cao hơn video → fit theo chiều cao, canvas rộng hơn
-      cw = Math.round(dw * 2);
-      ch = Math.round(cw / srcAspect);
-    }
-    canvas.width = cw;
-    canvas.height = ch;
+    // Dùng kích thước giống drawOverlay — stamp nhất quán trước và sau chụp
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame — fill canvas, crop nếu cần (giống objectFit:cover)
-    const vidAspect = srcAspect;
-    const canAspect = cw / ch;
-    let sx = 0, sy = 0, sw = video.videoWidth || cw, sh = video.videoHeight || ch;
-    if (vidAspect > canAspect) {
-      // Video rộng hơn canvas → crop ngang
-      sw = sh * canAspect;
-      sx = ((video.videoWidth || cw) - sw) / 2;
-    } else {
-      // Video cao hơn canvas → crop dọc
-      sh = sw / canAspect;
-      sy = ((video.videoHeight || ch) - sh) / 2;
-    }
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
+    // Vẽ video frame lên canvas
+    ctx.drawImage(video, 0, 0, w, h);
 
-    const layout = buildStampLayout(cw, ch, currentName, addrStr, gpsStr);
+    const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
 
     ctx.textAlign = "left";
@@ -494,7 +466,7 @@ function ChamCongPage() {
 
     // Khung stamp bottom-left
     const margin = Math.round(14 * scale);
-    const boxBottom = ch - margin;
+    const boxBottom = h - margin;
     const boxLeft = margin;
     let y = boxBottom;
 

@@ -397,40 +397,19 @@ function CheckInPage() {
   }, [cameraActive, drawOverlay, photoPreview]);
 
   const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
-    // Dùng kích thước hiển thị thực tế của video (objectFit:cover)
-    const dw = video.clientWidth || 640;
-    const dh = video.clientHeight || 480;
-    const srcAspect = (video.videoWidth && video.videoWidth > 100)
-      ? video.videoWidth / video.videoHeight
-      : dw / dh;
-    let cw: number, ch: number;
-    if (dw / dh > srcAspect) {
-      ch = Math.round(dh * 2);
-      cw = Math.round(ch * srcAspect);
-    } else {
-      cw = Math.round(dw * 2);
-      ch = Math.round(cw / srcAspect);
-    }
-    canvas.width = cw;
-    canvas.height = ch;
+    // Dùng kích thước giống drawOverlay — stamp nhất quán trước và sau chụp
+    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
+    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
+    canvas.width = w;
+    canvas.height = h;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video fill canvas, crop nếu cần (giống objectFit:cover)
-    const vidAspect = srcAspect;
-    const canAspect = cw / ch;
-    let sx = 0, sy = 0, sw = video.videoWidth || cw, sh = video.videoHeight || ch;
-    if (vidAspect > canAspect) {
-      sw = sh * canAspect;
-      sx = ((video.videoWidth || cw) - sw) / 2;
-    } else {
-      sh = sw / canAspect;
-      sy = ((video.videoHeight || ch) - sh) / 2;
-    }
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
+    // Vẽ video frame lên canvas
+    ctx.drawImage(video, 0, 0, w, h);
 
-    const layout = buildStampLayout(cw, ch, currentName, addrStr, gpsStr);
+    const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
 
     ctx.textAlign = "left";
@@ -444,7 +423,7 @@ function CheckInPage() {
     }
 
     const margin = Math.round(14 * scale);
-    const boxBottom = ch - margin;
+    const boxBottom = h - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
