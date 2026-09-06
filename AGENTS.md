@@ -79,9 +79,10 @@
 ```
 1. Đại ca yêu cầu → Em phân tích, hỏi lại nếu chưa rõ
 2. Em sửa code (surgical — chỉ đúng chỗ cần sửa)
-3. Em commit + push lên GitHub
-4. Vercel tự động deploy
-5. Đại ca kiểm tra trên Vercel (không cần local)
+3. Em HỎI Đại ca trước khi push (xem Nguyên tắc Push bên dưới)
+4. Thực hiện theo lựa chọn của Đại ca
+5. Vercel tự động deploy
+6. Đại ca kiểm tra trên Vercel (không cần local)
 ```
 
 ### Quy tắc code (tuân thủ CLAUDE.md):
@@ -90,7 +91,7 @@
 - **HỎI** trước khi hành động nếu chưa chắc
 - **Surgical** — sửa đúng dòng cần sửa, không đụng dòng khác
 - **Minimal Change Policy** — tối thiểu thay đổi cần thiết
-- **AUTO COMMIT + PUSH** — Sau mỗi lần sửa code, em TỰ ĐỘNG commit + push lên GitHub. KHÔNG cần hỏi Đại ca. Chỉ thông báo "Đã push thành công".
+- **PHẢI HỎI TRƯỚC KHI PUSH** — Sau khi sửa code xong, PHẢI hỏi Đại ca lựa chọn trước khi push (xem bên dưới).
 
 ### Quy tắc CLAUDE.md (bắt buộc tuân thủ):
 
@@ -113,20 +114,38 @@
 - **KHÔNG** có khu vực code nào "cấm động" — em có quyền sửa bất kỳ file nào
 - Khi cần test: ưu tiên test tự động (unit) viết trong `*.test.ts` hoặc `*.test.mjs`
 
-### Nguyên tắc Auto Push (bắt buộc tuân thủ):
+### Nguyên tắc Push (bắt buộc tuân thủ — có hiệu lực từ 2026-09-07):
+
+> **SAU KHI SỬA CODE XONG, EM PHẢI HỎI ĐẠI CA 1 TRONG 3 LỰA CHỌN TRƯỚC KHI PUSH:**
+>
+> 1️⃣ **Em sẽ Push lên GitHub bây giờ**
+> → Chỉ commit + push, KHÔNG cập nhật AGENTS.md hay version.
+>
+> 2️⃣ **Em sẽ ghi lại lịch sử và tăng số Version lên**
+> → Cập nhật AGENTS.md (giai đoạn mới, lesson learned) + tăng version ở `package.json` và `app-shell.tsx`.
+>
+> 3️⃣ **Anh muốn cả 2 điều trên**
+> → Push lên GitHub + cập nhật AGENTS.md + tăng version.
+>
+> **Em KHÔNG tự ý push mà KHÔNG hỏi.**
+> **Em KHÔNG tự ý tăng version mà KHÔNG được Đại ca đồng ý.**
 
 - **GitHub repo:** `https://github.com/cuongpkgiong04-beep/giong-vn-v6`
-- **Sau MỖI lần sửa code, em PHẢI tự động commit + push lên GitHub.**
-- **KHÔNG** cần hỏi Đại ca trước khi push — em tự push rồi thông báo.
 - **Commit message** phải rõ ràng, mô tả chính xác thay đổi (feat/fix/refactor + mô tả).
 - **Nếu push fail** (credential, network) → thông báo Đại ca ngay để xử lý.
 - **Vercel auto-deploy** sau mỗi push — Đại ca chỉ cần kiểm tra trên URL.
 
+### Cách tăng Version:
+
+- **2 nơi cần sửa:**
+  1. `package.json` → field `"version": "x.y.z"`
+  2. `src/components/app-shell.tsx` → `const DEFAULT_VERSION = "x.y.z"`
+- **Quy tắc tăng:** Patch (x.y.Z+1) cho fix nhỏ, Minor (x.Y.0+1) cho feature mới.
+
 ### Ngôn ngữ & Ghi nhớ (bắt buộc tuân thủ):
 
 - **Luôn sử dụng tiếng Việt Nam** để tương tác với Anh — bao gồm cả suy nghĩ nội bộ, phần trả lời, và giao tiếp. KHÔNG dùng tiếng Anh trong suy nghĩ hay phản hồi.
-- **Sau mỗi lần push lên GitHub, PHẢI cập nhật AGENTS.md** — lưu lại lịch sử thay đổi (giai đoạn mới, commit mới, lesson learned) để lần sau AI đọc lại biết đúng context.
-- **Sau mỗi lần push lên GitHub, PHẢI tăng version number** trong app (thay đổi version trong code nếu có) — mỗi push = version mới, để phân biệt rõ deployment nào.
+- **Sau mỗi lần push lên GitHub (nếu Đại ca chọn mục 2 hoặc 3), PHẢI cập nhật AGENTS.md** — lưu lại lịch sử thay đổi (giai đoạn mới, commit mới, lesson learned) để lần sau AI đọc lại biết đúng context.
 
 ---
 
@@ -991,7 +1010,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 41 — Xóa postal code khỏi địa chỉ)*
+*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 42 — Nguyên tắc Push mới + Version check)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1268,9 +1287,27 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
+### Giai đoạn 42: Nguyên tắc Push mới + Version check (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs: cập nhật nguyên tắc push — PHẢI hỏi Đại ca trước khi push + cách tăng version |
+| (mới) | chore: tăng version 0.1.1 → 0.1.2 |
+
+> **LESSON LEARNED — Version không tự tăng (2026-09-07):**
+> Version bị kẹt ở `0.1.1` suốt nhiều chục commits vì không ai cập nhật.
+> **Fix:** Thêm nguyên tắc mới — sau khi sửa code, PHẢI hỏi Đại ca 1 trong 3 lựa chọn:
+> 1. Push lên GitHub ngay (chỉ push)
+> 2. Ghi lại lịch sử + tăng Version
+> 3. Cả hai
+>
+> **2 nơi cần tăng version:** `package.json` + `app-shell.tsx DEFAULT_VERSION`.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.1`
-- `DEFAULT_VERSION` (app-side): `0.1.1` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.2`
+- `DEFAULT_VERSION` (app-side): `0.1.2` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.1`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.2`.
