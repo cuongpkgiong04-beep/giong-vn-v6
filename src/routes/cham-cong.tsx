@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
+import { Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -475,10 +475,6 @@ function ChamCongPage() {
   }
 
   // Switch camera (front <-> back)
-  function switchCamera() {
-    const next = facingMode === "environment" ? "user" : "environment";
-    startCamera(next);
-  }
 
   // Retake: discard stamped photo, reopen camera (keep current facing mode)
   function retakePhoto() {
@@ -977,14 +973,6 @@ function ChamCongPage() {
                   />
                   {/* Capture button + camera switch */}
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
-                    <button
-                      type="button"
-                      onClick={switchCamera}
-                      className="size-10 rounded-full border-2 border-white/70 bg-black/40 backdrop-blur-sm flex items-center justify-center transition hover:bg-black/60"
-                      title="Ảnh trước / Ảnh sau"
-                    >
-                      <Camera className="size-5" />
-                    </button>
                     <button
                       type="button"
                       onClick={capturePhoto}
