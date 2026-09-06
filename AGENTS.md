@@ -67,6 +67,11 @@
 - Test lại flow check-in/chấm công trên điện thoại sau khi fix sync
 - Xác nhận admin thấy data check-in của user khác trên desktop
 
+### ✅ Hoàn thành mới (2026-09-07)
+- Fix camera switch check-in — chuyển capturePhoto/retakePhoto sang plain function, thêm guard race condition, delay camera release
+- Stamp layout redesign — 3 cụm (Giờ+Ngày / Địa chỉ / Tên+Công ty), wrap địa chỉ đầy đủ, groupGap 18px
+- Xóa postal code (VD: 11110) khỏi tất cả hiển thị địa chỉ — cleanAddress trong reverseGeocode + display-time
+
 ---
 
 ## 4. Workflow làm việc
@@ -986,7 +991,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-06 (Giai đoạn 38 — Revert về bản 17a1c94)*
+*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 41 — Xóa postal code khỏi địa chỉ)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1180,6 +1185,86 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 > **Quyết định:** Đại ca không ưng ý các thay đổi stamp quá to/phóng đại. Quay lại bản ổn định `17a1c94`.
 > **Bản 17a1c94** có stamp layout ổn định (buildStampLayout ~28% width, font vừa).
+
+---
+
+### Giai đoạn 39: Fix camera switch Check-in (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| `e28bf6b` | fix(check-in): chuyển capturePhoto/retakePhoto sang plain function + guard race condition |
+
+> **LESSON LEARNED — capturePhoto/retakePhoto stale closure (2026-09-07):**
+> Trong check-in.tsx, `capturePhoto` và `retakePhoto` là `useCallback` với deps.
+> Sau khi switch camera (facingMode thay đổi), `startCamera` được recreate →
+> nhưng `capturePhoto` giữ closure cũ → có thể dùng giá trị stale.
+> **Fix:** Chuyển cả hai thành plain function (giống cham-cong.tsx).
+>
+> **LESSON LEARNED — startCamera overlap race condition (2026-09-07):**
+> Nếu user click "Chụp lại" rồi nhanh chóng click switch camera,
+> 2 call `startCamera` chạy đồng thời → stream bị overwrite.
+> **Fix:** Thêm `startCameraRunningRef` guard — reject call thứ 2 nếu call thứ nhất chưa xong.
+>
+> **LESSON LEARNED — Camera release delay trên mobile (2026-09-07):**
+> Trên mobile, sau khi stop stream, camera cần 100-200ms để release.
+> Gọi `getUserMedia` ngay lập tức có thể fail.
+> **Fix:** Thêm `await new Promise(r => setTimeout(r, 150))` sau khi stop stream.
+>
+> **LESSON LEARNED — retakePhoto cần setTimeout (2026-09-07):**
+> `retakePhoto` gọi `setPhotoPreview(null)` rồi gọi `startCamera()`.
+> Nhưng React batch state updates → video DOM element chưa render khi `startCamera` chạy.
+> **Fix:** `setTimeout(() => startCamera(), 50)` để React commit DOM trước.
+
+---
+
+### Giai đoạn 40: Stamp layout redesign — 3 cụm (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| `2d7c717` | fix(stamp): chỉnh layout đóng dấu ảnh — 3 cụm, đủ địa chỉ, bôi đậm ngày |
+| `fed4853` | fix(stamp): sắp xếp lại stamp theo đúng thứ tự từ trên xuống |
+| `45baee1` | fix(stamp): đảo thứ tự dòng trong mỗi cụm — vẽ bottom-up nên array phải reverse |
+
+> **LESSON LEARNED — Canvas bottom-up drawing vs visual order (2026-09-07):**
+> Canvas stamp vẽ từ dưới lên (`y -= size`).
+> Phần tử `[0]` trong mảng = dòng **thấp nhất** (ở dưới cùng thị giác).
+> Phần tử `[N]` trong mảng = dòng **cao nhất** (ở trên cùng thị giác).
+> **Fix:** Reverse thứ tự trong array so với thứ tự thị giác muốn hiển thị.
+>
+> **LESSON LEARNED — wrapStampText thay vì truncate (2026-09-07):**
+> Trước đây: `addrRaw.slice(0, charsPerLine) + "..."` → cắt địa chỉ.
+> **Fix:** `wrapStampText()` chia theo word boundary → hiển thị đầy đủ nội dung.
+>
+> **Layout stamp mới (3 cụm, groupGap = 18px * scale):**
+> - **Cụm 1 (trên):** Giờ (lớn, bold) → Thứ ngày tháng
+> - **Cụm 2 (giữa):** Địa chỉ đầy đủ wrap nhiều dòng
+> - **Cụm 3 (dưới):** Tên (bôi đậm) → Công ty
+> - Áp dụng cả `cham-cong.tsx` và `check-in.tsx`.
+
+---
+
+### Giai đoạn 41: Xóa postal code khỏi địa chỉ (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| `f5fc068` | fix(address): xóa postal code khỏi tất cả hiển thị địa chỉ trong dự án |
+
+> **LESSON LEARNED — Postal code từ Nominatim (2026-09-07):**
+> `reverseGeocode` dùng Nominatim OSM → `display_name` chứa postal code (VD: "11110").
+> Postal code nằm giữa tên thành phố và tên quốc gia:
+> `"Hà Nội 11110, Việt Nam"` → cần xóa.
+>
+> **Fix:**
+> 1. Thêm `cleanAddress()` trong `data.ts` — áp dụng ngay trong `reverseGeocode` handler.
+> 2. Regex mới: xóa 4-6 chữ số postal code ở mọi format:
+>    - `/`,?\s*\d{4,6}\s*(?=,|$)/g` — postal code đứng riêng giữa dấu phẩy
+>    - `/(\S)\s+\d{4,6}(?=,)/g` — postal code dính sau tên thành phố
+> 3. Áp dụng `cleanAddress` khi hiển thị từ DB (data cũ trong DB vẫn có postal code):
+>    - Bảng danh sách (cham-cong, check-in)
+>    - Dialog chi tiết
+>    - Báo cáo + popup bản đồ
+>
+> **Files sửa:** data.ts, cham-cong.tsx, check-in.tsx, bang-check-in.tsx, bang-cham-cong.tsx
 
 ---
 
