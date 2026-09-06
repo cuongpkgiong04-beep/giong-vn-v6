@@ -248,10 +248,11 @@ function ChamCongPage() {
 
   // Start camera stream (facingMode: environment=back, user=front)
   const startCamera = useCallback(async (mode?: "environment" | "user") => {
+    const effectiveMode = mode ?? facingMode;
     if (mode) setFacingMode(mode);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: effectiveMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -975,7 +976,7 @@ function ChamCongPage() {
                     style={{ maxHeight: 400, objectFit: "cover", zIndex: 10 }}
                   />
                   {/* Capture button + camera switch */}
-                  <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
+                  <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
                     <button
                       type="button"
                       onClick={switchCamera}
@@ -1004,7 +1005,7 @@ function ChamCongPage() {
                           const input = document.createElement('input');
                           input.type = 'file';
                           input.accept = 'image/*';
-                          input.capture = 'environment';
+                          input.capture = 'user';
                           input.onchange = (e: any) => {
                             const file = e.target.files?.[0];
                             if (file) {
