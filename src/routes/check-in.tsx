@@ -791,7 +791,7 @@ function CheckInPage() {
                     </button>
                   </div>
                 )}
-                <canvas ref={captureCanvasRef} className="hidden" />
+                <canvas ref={captureCanvasRef} style={{ position: 'absolute', left: -9999, top: 0, pointerEvents: 'none' }} />
               </div>
             </div>
 

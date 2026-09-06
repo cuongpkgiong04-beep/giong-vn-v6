@@ -1028,7 +1028,7 @@ function ChamCongPage() {
                 </div>
               )}
               {/* Hidden capture canvas (offscreen) */}
-              <canvas ref={captureCanvasRef} className="hidden" />
+              <canvas ref={captureCanvasRef} style={{ position: 'absolute', left: -9999, top: 0, pointerEvents: 'none' }} />
             </div>
 
             {/* Info panels */}
