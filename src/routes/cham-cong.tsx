@@ -272,40 +272,59 @@ function ChamCongPage() {
     }
   }, [facingMode]);
 
-  // Stamp layout helper — 1/4 khung hình bên trái dưới
+  /** Wrap text into lines that fit within maxChars */
+  function wrapStampText(text: string, maxChars: number): string[] {
+    if (text.length <= maxChars) return [text];
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let cur = "";
+    for (const word of words) {
+      if (cur.length + word.length + 1 > maxChars) {
+        if (cur) lines.push(cur);
+        cur = word;
+      } else {
+        cur = cur ? cur + " " + word : word;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.length > 0 ? lines : [text];
+  }
+
+  // Stamp layout helper — 3 cụm: Giờ+Ngày / Địa chỉ / Tên+Công ty
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    // Khung stamp: 1/2 khung hình bên trái dưới
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    // Font sizes tỉ lệ width — to hơn
     const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
     const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
-    // Định dạng thời gian + ngày
+    const groupGap = Math.round(18 * scale);
+
     const now = new Date();
-    const timeStr = now.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
+    const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
     const dateStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     const weekdayStr = now.toLocaleDateString("vi-VN", { weekday: "long" });
-    // Nội dung
+
     const companyText = `Công ty: Cổ Phần Giong Việt Nam`;
     const nameText = `Tên: ${currentName}`;
     const addrRaw = address.length > 0 ? address : gps;
-    const charsPerLine = Math.max(14, Math.min(60, Math.round(maxStampWidth / (smFontMaxWidth * 0.55))));
-    const addrText = addrRaw.length > charsPerLine ? addrRaw.slice(0, charsPerLine - 1) + "..." : addrRaw;
     const dateText = `${weekdayStr}, ${dateStr}`;
-    // Thứ tự từ dưới lên (bottom-up drawing): Công ty → Tên → Địa chỉ → Ngày → Giờ
-    const lines = [
-      { text: companyText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
-      { text: nameText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
-      { text: addrText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
-      { text: dateText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
-      { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
+
+    // Wrap địa chỉ thành nhiều dòng, KHÔNG cắt
+    const charsPerLine = Math.max(16, Math.min(70, Math.round(maxStampWidth / (smFontMaxWidth * 0.52))));
+    const addrLines = wrapStampText(addrRaw, charsPerLine);
+
+    // 3 cụm: [0]=bottom (Giờ+Ngày), [1]=middle (Địa chỉ), [2]=top (Tên+Công ty)
+    const groups: { text: string; size: number; bold: boolean; color: string }[][] = [
+      [
+        { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
+        { text: dateText, size: smFontMaxWidth, bold: true, color: "#ffffff" },
+      ],
+      addrLines.map(t => ({ text: t, size: smFontMaxWidth, bold: false, color: "#ffffff" })),
+      [
+        { text: nameText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+        { text: companyText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
+      ],
     ];
-    return { w, h, scale, lines, maxStampWidth };
+    return { w, h, scale, groups, groupGap, maxStampWidth };
   }
 
   // Draw overlay on canvas (live preview)
@@ -326,27 +345,26 @@ function ChamCongPage() {
     // Video đã hiển thị qua <video> element bên dưới
 
     const layout = buildStampLayout(w, h, currentName, address, gps);
-    const { lines, scale } = layout;
+    const { groups, groupGap, scale } = layout;
 
     ctx.textAlign = "left";
-
-    // Khoảng cách dòng — thoáng như mẫu ảnh
     const lineGap = Math.round(10 * scale);
 
-    // Đo chiều cao thực tế
+    // Đo chiều cao (bao gồm groupGap giữa các cụm)
     let totalH = 0;
-    for (const l of lines) {
-      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-      totalH += l.size + lineGap;
+    for (let gi = 0; gi < groups.length; gi++) {
+      for (const l of groups[gi]) {
+        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+        totalH += l.size + lineGap;
+      }
+      if (gi < groups.length - 1) totalH += groupGap;
     }
 
-    // Khung stamp bottom-left
     const margin = Math.round(14 * scale);
     const boxBottom = h - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
-    // Đường kẻ xanh lá cạnh trái
     const lineX = boxLeft;
     const textX = lineX + Math.round(7 * scale);
     const lineWidth = Math.round(3 * scale);
@@ -356,17 +374,18 @@ function ChamCongPage() {
     ctx.fillStyle = "#22c55e";
     ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
 
-    // Vẽ từng dòng từ dưới lên (bottom-up)
-    for (const l of lines) {
-      y -= l.size;
-      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-      // Shadow
-      ctx.fillStyle = "rgba(0,0,0,0.7)";
-      ctx.fillText(l.text, textX + 1, y + 1);
-      // Text
-      ctx.fillStyle = l.color;
-      ctx.fillText(l.text, textX, y);
-      y -= lineGap;
+    // Vẽ từng cụm từ dưới lên
+    for (let gi = 0; gi < groups.length; gi++) {
+      for (const l of groups[gi]) {
+        y -= l.size;
+        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillText(l.text, textX + 1, y + 1);
+        ctx.fillStyle = l.color;
+        ctx.fillText(l.text, textX, y);
+        y -= lineGap;
+      }
+      if (gi < groups.length - 1) y -= groupGap;
     }
 
     requestAnimationFrame(drawOverlay);
@@ -464,21 +483,20 @@ function ChamCongPage() {
     ctx.drawImage(video, 0, 0, w, h);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
-    const { lines, scale } = layout;
+    const { groups, groupGap, scale } = layout;
 
     ctx.textAlign = "left";
-
-    // Khoảng cách dòng — thoáng như mẫu ảnh
     const lineGap = Math.round(10 * scale);
 
-    // Đo chiều cao thực tế
     let totalH = 0;
-    for (const l of lines) {
-      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-      totalH += l.size + lineGap;
+    for (let gi = 0; gi < groups.length; gi++) {
+      for (const l of groups[gi]) {
+        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+        totalH += l.size + lineGap;
+      }
+      if (gi < groups.length - 1) totalH += groupGap;
     }
 
-    // Khung stamp bottom-left
     const margin = Math.round(14 * scale);
     const boxBottom = h - margin;
     const boxLeft = margin;
@@ -490,19 +508,20 @@ function ChamCongPage() {
     const lineTop = y - totalH - Math.round(4 * scale);
     const lineHeight = totalH + Math.round(6 * scale);
 
-    // Đường kẻ xanh lá cạnh trái
     ctx.fillStyle = "#22c55e";
     ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
 
-    // Vẽ từng dòng bottom-up
-    for (const l of lines) {
-      y -= l.size;
-      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-      ctx.fillStyle = "rgba(0,0,0,0.7)";
-      ctx.fillText(l.text, textX + 1, y + 1);
-      ctx.fillStyle = l.color;
-      ctx.fillText(l.text, textX, y);
-      y -= lineGap;
+    for (let gi = 0; gi < groups.length; gi++) {
+      for (const l of groups[gi]) {
+        y -= l.size;
+        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillText(l.text, textX + 1, y + 1);
+        ctx.fillStyle = l.color;
+        ctx.fillText(l.text, textX, y);
+        y -= lineGap;
+      }
+      if (gi < groups.length - 1) y -= groupGap;
     }
 
     const stamped = canvas.toDataURL("image/jpeg", 0.95);
