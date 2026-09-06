@@ -743,30 +743,6 @@ function CheckInPage() {
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
                         <Loader2 className="mb-3 size-8 animate-spin" />
                         <span className="text-sm">Đang mở camera...</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Fallback: cho phép chọn ảnh từ gallery khi camera không available
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/*';
-                            input.capture = 'environment';
-                            input.onchange = (e: any) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onload = () => setPhotoPreview(reader.result as string);
-                                reader.readAsDataURL(file);
-                              }
-                            };
-                            input.click();
-                          }
-                          }
-                          className="mt-3 text-sm text-white underline"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'white' }}
-                        >
-                          Chọn ảnh từ thư viện
-                        </button>
                       </div>
                     )}
                   </>
