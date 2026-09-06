@@ -986,7 +986,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-06 (Giai đoạn 29 — Mặc định camera trước + Fallback overlay)*
+*Cập nhật lần cuối: 2026-09-06 (Giai đoạn 38 — Revert về bản 17a1c94)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1129,6 +1129,57 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > - Version bump: `package.json` + `DEFAULT_VERSION` trong `app-shell.tsx` → `0.1.1`.
 
 *Commit mới: `4b19b85`*
+
+---
+
+### Giai đoạn 36: Loại bỏ fallback ảnh từ thư viện + Bỏ switch camera chấm công (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `e0fa88e` | fix: xóa nút 'Chọn ảnh từ thư viện' — chỉ cho phép chụp hình từ camera |
+| `56f48f3` | fix(cham-cong): bỏ nút chuyển đổi camera trước/sau — chỉ dùng camera mặc định |
+
+> **LESSON LEARNED:**
+> - Bỏ fallback 'Chọn ảnh từ thư viện' ở cả cham-cong và check-in — chỉ cho phép chụp từ camera.
+> - Bỏ switch camera (front/back) ở chấm công — giữ lại ở check-in.
+
+---
+
+### Giai đoạn 37: Overlay stamp live + Vấn đề doStamp (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `918c387` | fix: overlay canvas trong suốt — chỉ vẽ stamp text, không vẽ video frame |
+| `6b0a93f` | feat(stamp): redesign overlay theo mẫu — thoáng hơn, thêm mã máy, thứ tự mới |
+| `c477771` | feat(stamp): 1/4 khung hình, bỏ mã máy, resolve địa chỉ real-time |
+| `3927397` | feat(stamp): tăng font size — time 16%, text 6.9% width |
+
+> **LESSON LEARNED — drawOverlay vs doStamp stamp không đồng nhất:**
+> - drawOverlay chạy trên overlayCanvasRef (visible, CSS inset-0 w-full h-full).
+> - doStamp chạy trên captureCanvasRef (className='hidden' → display:none).
+> - **display:none gây lỗi render** — browser không render đúng drawImage/fillText trên canvas ẩn → stamp bị cắt.
+> - **Fix:** captureCanvas dùng position:absolute; left:-9999px thay vì display:none.
+>
+> **LESSON LEARNED — videoWidth vs clientWidth:**
+> - drawOverlay dùng videoWidth/videoHeight (kích thước thật 1920x1080) nhưng canvas overlay được CSS scale xuống container.
+> - doStamp cũng dùng videoWidth/videoHeight → canvas 1920x1080 nhưng img objectFit:cover crops phần dưới → stamp bị cắt.
+> - **Cả drawOverlay VÀ doStamp phải dùng clientWidth/clientHeight** (kích thước hiển thị thực tế) để stamp nhất quán.
+>
+> **LESSON LEARNED — objectFit cover vs contain:**
+> - Ảnh preview dùng objectFit:cover → crop phần dưới (nơi stamp nằm) → mất thông tin.
+> - objectFit:contain giữ đầy đủ nhưng có viền đen.
+> - **Giải pháp tốt nhất:** dùng clientWidth/clientHeight cho canvas → stamp vừa khung hiển thị → objectFit:cover hoạt động đúng.
+
+---
+
+### Giai đoạn 38: Revert về bản 17a1c94 (2026-09-06)
+
+| Commit | Thay đổi |
+|---|---|
+| `934d392` | revert: quay lại bản 17a1c94 — bỏ tất cả thay đổi stamp sau đó |
+
+> **Quyết định:** Đại ca không ưng ý các thay đổi stamp quá to/phóng đại. Quay lại bản ổn định `17a1c94`.
+> **Bản 17a1c94** có stamp layout ổn định (buildStampLayout ~28% width, font vừa).
 
 ---
 
