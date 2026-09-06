@@ -262,10 +262,16 @@ function CheckInPage() {
   }, []);
 
   const startCamera = useCallback(async (mode?: "environment" | "user") => {
+    const effectiveMode = mode ?? facingMode;
     if (mode) setFacingMode(mode);
+    // Dừng stream cũ trước khi mở stream mới
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: effectiveMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       });
       streamRef.current = stream;
