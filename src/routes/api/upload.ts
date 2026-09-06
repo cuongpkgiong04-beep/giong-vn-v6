@@ -24,9 +24,9 @@ export const uploadImage = createServerFn({ method: "POST" })
     }) => data,
   )
   .handler(async ({ data }) => {
-    // If Cloudinary not configured, return base64 as-is (fallback)
+    // If Cloudinary not configured, throw error — no base64 fallback
     if (!isConfigured()) {
-      return { url: data.base64, provider: "base64" as const };
+      throw new Error("Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.");
     }
 
     // Dynamic import to avoid issues if cloudinary is not installed
