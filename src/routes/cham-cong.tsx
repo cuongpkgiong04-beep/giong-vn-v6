@@ -399,20 +399,45 @@ function ChamCongPage() {
     });
     const freshDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
-    const freshGps = gps; // latest from GPS sensor
+    const freshGps = gps;
     const freshAddr = address;
+
+    // Đợi video metadata load xong rồi mới stamp — đảm bảo canvas đúng kích thước thật
+    function doStampWithGps(gpsVal: string, addrVal: string) {
+      if (video.videoWidth > 100 && video.videoHeight > 100) {
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+      } else {
+        const timeout = setTimeout(() => {
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        }, 3000);
+        const onLoaded = () => {
+          clearTimeout(timeout);
+          video.removeEventListener('loadedmetadata', onLoaded);
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        };
+        video.addEventListener('loadedmetadata', onLoaded, { once: true });
+      }
+    }
+
     // Re-fetch GPS for fresh coordinates
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude.toFixed(6);
         const lng = pos.coords.longitude.toFixed(6);
-        setGps(`${lat}, ${lng}`);
+        const freshGpsVal = `${lat}, ${lng}`;
+        setGps(freshGpsVal);
         setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
-        doStamp(video, canvas, freshTime, freshDate, freshWeekday, `${lat}, ${lng}`, freshAddr);
+        // Resolve địa chỉ trước khi stamp
+        reverseGeocode({ data: { lat, lng } })
+          .then((addr) => {
+            const resolvedAddr = addr || freshAddr;
+            if (addr) setAddress(addr);
+            doStampWithGps(freshGpsVal, resolvedAddr);
+          })
+          .catch(() => doStampWithGps(freshGpsVal, freshAddr));
       },
       () => {
-        // GPS failed, use current values
-        doStamp(video, canvas, freshTime, freshDate, freshWeekday, freshGps, freshAddr);
+        doStampWithGps(freshGps, freshAddr);
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
     );
@@ -479,7 +504,7 @@ function ChamCongPage() {
       y -= lineGap;
     }
 
-    const stamped = canvas.toDataURL("image/jpeg", 0.85);
+    const stamped = canvas.toDataURL("image/jpeg", 0.95);
     setPhotoPreview(stamped);
     setPhotoStamped(true);
     stopCamera();

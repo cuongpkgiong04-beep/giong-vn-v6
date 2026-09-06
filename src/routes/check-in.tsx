@@ -444,7 +444,7 @@ function CheckInPage() {
       y -= lineGap;
     }
 
-    const stamped = canvas.toDataURL("image/jpeg", 0.85);
+    const stamped = canvas.toDataURL("image/jpeg", 0.95);
     setPhotoPreview(stamped);
     setPhotoStamped(true);
     stopCamera();
@@ -458,17 +458,43 @@ function CheckInPage() {
     const freshTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
     const freshDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
+    const freshAddr = address;
+
+    // Đợi video metadata load xong rồi mới stamp
+    function doStampWithGps(gpsVal: string, addrVal: string) {
+      if (video.videoWidth > 100 && video.videoHeight > 100) {
+        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+      } else {
+        const timeout = setTimeout(() => {
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        }, 3000);
+        const onLoaded = () => {
+          clearTimeout(timeout);
+          video.removeEventListener('loadedmetadata', onLoaded);
+          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
+        };
+        video.addEventListener('loadedmetadata', onLoaded, { once: true });
+      }
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude.toFixed(6);
         const lng = pos.coords.longitude.toFixed(6);
-        setGps(`${lat}, ${lng}`);
+        const freshGpsVal = `${lat}, ${lng}`;
+        setGps(freshGpsVal);
         setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
-        doStamp(video, canvas, freshTime, freshDate, freshWeekday, `${lat}, ${lng}`, address);
-
+        // Resolve địa chỉ trước khi stamp
+        reverseGeocode({ data: { lat, lng } })
+          .then((addr) => {
+            const resolvedAddr = addr || freshAddr;
+            if (addr) setAddress(addr);
+            doStampWithGps(freshGpsVal, resolvedAddr);
+          })
+          .catch(() => doStampWithGps(freshGpsVal, freshAddr));
       },
       () => {
-        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gps, address);
+        doStampWithGps(gps, freshAddr);
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
     );
