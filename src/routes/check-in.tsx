@@ -296,9 +296,10 @@ function CheckInPage() {
   // Stamp layout helper — 1/2 khung hình bên trái dưới
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
-    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
+    // Khung stamp: nhỏ gọn, sát bên trái phía dưới (giảm 50% so với trước)
+    const maxStampWidth = Math.min(Math.round(w * 0.25), 240);
+    const bigTimeMaxWidth = Math.max(24, Math.min(Math.round(w * 0.08), 48));
+    const smFontMaxWidth = Math.max(10, Math.min(Math.round(w * 0.035), 24));
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
