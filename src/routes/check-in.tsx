@@ -289,12 +289,23 @@ function CheckInPage() {
     startCamera();
   }, [startCamera]);
 
-  // Stamp layout helper — dùng chung cho drawOverlay và doStamp
+  // Mã máy — giữ nguyên cho mỗi thiết bị
+  const deviceId = useMemo(() => {
+    let id = localStorage.getItem('giong-vn-device-id');
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 12).toUpperCase();
+      localStorage.setItem('giong-vn-device-id', id);
+    }
+    return id;
+  }, []);
+
+  // Stamp layout helper — giống mẫu ảnh
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
-    const maxStampWidth = Math.min(Math.round(w * 0.28), 220);
-    const bigTimeMaxWidth = Math.max(28, Math.min(Math.round(w * 0.075), 46));
-    const smFontMaxWidth = Math.max(10, Math.min(Math.round(w * 0.026), 16));
+    const maxStampWidth = Math.min(Math.round(w * 0.30), 260);
+    const bigTimeMaxWidth = Math.max(32, Math.min(Math.round(w * 0.09), 56));
+    const smFontMaxWidth = Math.max(11, Math.min(Math.round(w * 0.028), 18));
+    const tinyFontMaxWidth = Math.max(9, Math.min(Math.round(w * 0.020), 13));
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -304,15 +315,17 @@ function CheckInPage() {
     });
     const dateStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     const weekdayStr = now.toLocaleDateString("vi-VN", { weekday: "long" });
-    const companyText = "Công ty: Cổ Phần Giong Việt Nam";
+    const companyText = `Công ty: Cổ Phần Giong Việt Nam`;
     const nameText = `Tên: ${currentName}`;
     const addrRaw = address.length > 0 ? address : gps;
     const charsPerLine = Math.max(14, Math.min(46, Math.round(maxStampWidth / (smFontMaxWidth * 0.55))));
     const addrText = addrRaw.length > charsPerLine ? addrRaw.slice(0, charsPerLine - 1) + "..." : addrRaw;
-    const dateText = `${dateStr} ${weekdayStr}`;
+    const dateText = `${weekdayStr}, ${dateStr}`;
+    const deviceIdText = `Mã máy: ${deviceId}`;
     return {
       w, h, scale,
       lines: [
+        { text: deviceIdText, size: tinyFontMaxWidth, bold: false, color: "rgba(255,255,255,0.8)" },
         { text: companyText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
         { text: nameText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
         { text: addrText, size: smFontMaxWidth, bold: false, color: "#ffffff" },
@@ -344,19 +357,21 @@ function CheckInPage() {
 
     ctx.textAlign = "left";
 
+    const lineGap = Math.round(10 * scale);
+
     let totalH = 0;
     for (const l of lines) {
       ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-      totalH += l.size + Math.round(3 * scale);
+      totalH += l.size + lineGap;
     }
 
-    const margin = Math.round(12 * scale);
+    const margin = Math.round(14 * scale);
     const boxBottom = h - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
     const lineX = boxLeft;
-    const textX = lineX + Math.round(6 * scale);
+    const textX = lineX + Math.round(7 * scale);
     const lineWidth = Math.round(3 * scale);
     const lineTop = y - totalH - Math.round(4 * scale);
     const lineHeight = totalH + Math.round(6 * scale);
@@ -366,11 +381,12 @@ function CheckInPage() {
 
     for (const l of lines) {
       y -= l.size;
+      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
       ctx.fillStyle = "rgba(0,0,0,0.7)";
       ctx.fillText(l.text, textX + 1, y + 1);
       ctx.fillStyle = l.color;
       ctx.fillText(l.text, textX, y);
-      y -= Math.round(3 * scale);
+      y -= lineGap;
     }
 
     requestAnimationFrame(drawOverlay);
@@ -405,19 +421,21 @@ function CheckInPage() {
 
     ctx.textAlign = "left";
 
+    const lineGap = Math.round(10 * scale);
+
     let totalH = 0;
     for (const l of lines) {
       ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-      totalH += l.size + Math.round(3 * scale);
+      totalH += l.size + lineGap;
     }
 
-    const margin = Math.round(12 * scale);
+    const margin = Math.round(14 * scale);
     const boxBottom = h - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
     const lineX = boxLeft;
-    const textX = lineX + Math.round(6 * scale);
+    const textX = lineX + Math.round(7 * scale);
     const lineWidth = Math.round(3 * scale);
     const lineTop = y - totalH - Math.round(4 * scale);
     const lineHeight = totalH + Math.round(6 * scale);
@@ -427,11 +445,12 @@ function CheckInPage() {
 
     for (const l of lines) {
       y -= l.size;
+      ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
       ctx.fillStyle = "rgba(0,0,0,0.7)";
       ctx.fillText(l.text, textX + 1, y + 1);
       ctx.fillStyle = l.color;
       ctx.fillText(l.text, textX, y);
-      y -= Math.round(3 * scale);
+      y -= lineGap;
     }
 
     const stamped = canvas.toDataURL("image/jpeg", 0.85);
