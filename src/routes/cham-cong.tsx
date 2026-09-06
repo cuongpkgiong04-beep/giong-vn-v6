@@ -121,10 +121,8 @@ function ChamCongPage() {
 
   const canViewAll = hasPermission(currentEmployee, "attendance:view_all");
   const isAdmin = isAdminRole(currentEmployee?.role);
-  // Delete allowed for admins (any record) or the record owner
-  const canDeleteRecord = detailRecord
-    ? canViewAll || detailRecord.name === (currentEmployee?.name ?? currentName)
-    : false;
+  // Chỉ admin mới được quyền xóa lượt chấm công
+  const canDeleteRecord = detailRecord ? canViewAll : false;
 
   const visibleAttendance = useMemo(() => {
     return attendance.filter((record) => {
