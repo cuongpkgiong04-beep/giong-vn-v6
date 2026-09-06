@@ -397,15 +397,38 @@ function CheckInPage() {
   }, [cameraActive, drawOverlay, photoPreview]);
 
   const doStamp = useCallback((video: HTMLVideoElement, canvas: HTMLCanvasElement, timeStr: string, dateStr: string, weekdayStr: string, gpsStr: string, addrStr: string) => {
-    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
-    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    canvas.width = w;
-    canvas.height = h;
+    // Dùng kích thước hiển thị thực tế của video (objectFit:cover)
+    const dw = video.clientWidth || 640;
+    const dh = video.clientHeight || 480;
+    const srcAspect = (video.videoWidth && video.videoWidth > 100)
+      ? video.videoWidth / video.videoHeight
+      : dw / dh;
+    let cw: number, ch: number;
+    if (dw / dh > srcAspect) {
+      ch = Math.round(dh * 2);
+      cw = Math.round(ch * srcAspect);
+    } else {
+      cw = Math.round(dw * 2);
+      ch = Math.round(cw / srcAspect);
+    }
+    canvas.width = cw;
+    canvas.height = ch;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.drawImage(video, 0, 0, w, h);
+    // Vẽ video fill canvas, crop nếu cần (giống objectFit:cover)
+    const vidAspect = srcAspect;
+    const canAspect = cw / ch;
+    let sx = 0, sy = 0, sw = video.videoWidth || cw, sh = video.videoHeight || ch;
+    if (vidAspect > canAspect) {
+      sw = sh * canAspect;
+      sx = ((video.videoWidth || cw) - sw) / 2;
+    } else {
+      sh = sw / canAspect;
+      sy = ((video.videoHeight || ch) - sh) / 2;
+    }
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
@@ -460,21 +483,9 @@ function CheckInPage() {
     const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
     const freshAddr = address;
 
-    // Đợi video metadata load xong rồi mới stamp
+    // Stamp ngay — doStamp dùng clientWidth/clientHeight
     function doStampWithGps(gpsVal: string, addrVal: string) {
-      if (video.videoWidth > 100 && video.videoHeight > 100) {
-        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
-      } else {
-        const timeout = setTimeout(() => {
-          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
-        }, 3000);
-        const onLoaded = () => {
-          clearTimeout(timeout);
-          video.removeEventListener('loadedmetadata', onLoaded);
-          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
-        };
-        video.addEventListener('loadedmetadata', onLoaded, { once: true });
-      }
+      doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
     }
 
     navigator.geolocation.getCurrentPosition(
@@ -789,7 +800,7 @@ function CheckInPage() {
                       src={photoPreview}
                       alt="Ảnh check-in đã đóng dấu"
                       className="w-full rounded-2xl"
-                      style={{ maxHeight: 400, objectFit: "contain" }}
+                      style={{ maxHeight: 400, objectFit: "cover" }}
                     />
                     <button
                       type="button"
@@ -888,7 +899,7 @@ function CheckInPage() {
                     <img
                       src={detailRecord.photo}
                       alt="check-in"
-                      className="h-48 w-full rounded-xl object-contain"
+                      className="h-48 w-full rounded-xl object-cover"
                     />
                   )}
 

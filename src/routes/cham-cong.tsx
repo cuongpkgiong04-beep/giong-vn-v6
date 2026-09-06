@@ -400,21 +400,9 @@ function ChamCongPage() {
     const freshGps = gps;
     const freshAddr = address;
 
-    // Đợi video metadata load xong rồi mới stamp — đảm bảo canvas đúng kích thước thật
+    // Stamp ngay — doStamp dùng clientWidth/clientHeight (không cần videoWidth)
     function doStampWithGps(gpsVal: string, addrVal: string) {
-      if (video.videoWidth > 100 && video.videoHeight > 100) {
-        doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
-      } else {
-        const timeout = setTimeout(() => {
-          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
-        }, 3000);
-        const onLoaded = () => {
-          clearTimeout(timeout);
-          video.removeEventListener('loadedmetadata', onLoaded);
-          doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
-        };
-        video.addEventListener('loadedmetadata', onLoaded, { once: true });
-      }
+      doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
     }
 
     // Re-fetch GPS for fresh coordinates
@@ -450,15 +438,44 @@ function ChamCongPage() {
     gpsStr: string,
     addrStr: string,
   ) {
-    const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
-    const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    canvas.width = w;
-    canvas.height = h;
+    // Dùng kích thước hiển thị thực tế của video (không dùng videoWidth/videoHeight
+    // vì video dùng objectFit:cover → kích thước thật bị khác với hiển thị)
+    const dw = video.clientWidth || 640;
+    const dh = video.clientHeight || 480;
+    // Tỷ lệ video gốc (thường 16:9)
+    const srcAspect = (video.videoWidth && video.videoWidth > 100)
+      ? video.videoWidth / video.videoHeight
+      : dw / dh;
+    // Canvas giữ tỷ lệ video gốc, nhưng scale vừa khung hiển thị
+    let cw: number, ch: number;
+    if (dw / dh > srcAspect) {
+      // Container rộng hơn video → fit theo chiều rộng, canvas cao hơn
+      ch = Math.round(dh * 2);
+      cw = Math.round(ch * srcAspect);
+    } else {
+      // Container cao hơn video → fit theo chiều cao, canvas rộng hơn
+      cw = Math.round(dw * 2);
+      ch = Math.round(cw / srcAspect);
+    }
+    canvas.width = cw;
+    canvas.height = ch;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame lên captureCanvas (cần cho static photo output)
-    ctx.drawImage(video, 0, 0, w, h);
+    // Vẽ video frame — fill canvas, crop nếu cần (giống objectFit:cover)
+    const vidAspect = srcAspect;
+    const canAspect = cw / ch;
+    let sx = 0, sy = 0, sw = video.videoWidth || cw, sh = video.videoHeight || ch;
+    if (vidAspect > canAspect) {
+      // Video rộng hơn canvas → crop ngang
+      sw = sh * canAspect;
+      sx = ((video.videoWidth || cw) - sw) / 2;
+    } else {
+      // Video cao hơn canvas → crop dọc
+      sh = sw / canAspect;
+      sy = ((video.videoHeight || ch) - sh) / 2;
+    }
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { lines, scale } = layout;
@@ -1026,7 +1043,7 @@ function ChamCongPage() {
               ) : (
                 /* Stamped photo preview */
                 <div className="relative">
-                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "contain" }} />
+                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "cover" }} />
                   {/* Retake button */}
                   <button
                     type="button"
@@ -1100,7 +1117,7 @@ function ChamCongPage() {
             <div className="mt-4 space-y-4">
               {detailRecord.photo && (
                 <div className="overflow-hidden rounded-xl border border-line">
-                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-contain" style={{ maxHeight: 300 }} />
+                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-cover" style={{ maxHeight: 300 }} />
                 </div>
               )}
 
