@@ -868,7 +868,7 @@ function ChamCongPage() {
                           <span className="mt-0.5 block text-xs text-faint">{a.weekday}</span>
                         </td>
                         <td className="px-4 py-3 tabular text-ink">{a.time}</td>
-                        <td className="max-w-xs truncate px-4 py-3 text-muted">{a.address || a.gps || "—"}</td>
+                        <td className="max-w-xs truncate px-4 py-3 text-muted">{cleanAddress(a.address) || a.gps || "—"}</td>
                       </tr>
                     );
                   })
@@ -1166,7 +1166,7 @@ function ChamCongPage() {
                   <div>
                     <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Vị trí GPS</p>
                     <GpsMap coords={[lat, lng]} address={detailRecord.address} />
-                    <p className="mt-2 text-sm text-ink">{detailRecord.address || detailRecord.gps}</p>
+                    <p className="mt-2 text-sm text-ink">{cleanAddress(detailRecord.address) || detailRecord.gps}</p>
                   </div>
                 );
               })()}

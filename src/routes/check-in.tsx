@@ -695,7 +695,7 @@ function CheckInPage() {
                     </td>
                     <td className="px-4 py-3 tabular text-ink">{c.time}</td>
                     <td className="max-w-[200px] truncate px-4 py-3 text-muted">
-                      {c.address || c.gps || "—"}
+                      {cleanAddress(c.address) || c.gps || "—"}
                     </td>
                     <td className="px-4 py-3">
                       {c.photo ? (
@@ -929,7 +929,7 @@ function CheckInPage() {
                   )}
 
                   {detailRecord.address && (
-                    <p className="text-sm text-ink">{detailRecord.address}</p>
+                    <p className="text-sm text-ink">{cleanAddress(detailRecord.address)}</p>
                   )}
                   {detailRecord.gps && (
                     <p className="font-mono text-xs text-faint">

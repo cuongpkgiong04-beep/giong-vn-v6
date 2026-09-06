@@ -8,6 +8,15 @@ import { useAppStore } from "@/lib/store";
 import { findEmployeeByLooseText, isAdminRole } from "@/lib/catalog";
 import { formatDate } from "@/lib/format";
 
+/** Remove postal/zip codes from address strings */
+function cleanAddress(addr: string): string {
+  if (!addr) return addr;
+  let cleaned = addr.replace(/,?\s*\d{4,6}\s*(?=,|$)/g, "");
+  cleaned = cleaned.replace(/(\S)\s+\d{4,6}(?=,)/g, "$1");
+  cleaned = cleaned.replace(/,\s*,/g, ",").replace(/^\s*,|,\s*$/g, "");
+  return cleaned.trim();
+}
+
 export const Route = createFileRoute("/bao-cao/bang-cham-cong")({
   component: BangChamCongReport,
 });

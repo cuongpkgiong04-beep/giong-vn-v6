@@ -11,6 +11,15 @@ import { useAppStore } from "@/lib/store";
 import { findEmployeeByLooseText, isAdminRole, CENTERS } from "@/lib/catalog";
 import { formatDate } from "@/lib/format";
 
+/** Remove postal/zip codes from address strings */
+function cleanAddress(addr: string): string {
+  if (!addr) return addr;
+  let cleaned = addr.replace(/,?\s*\d{4,6}\s*(?=,|$)/g, "");
+  cleaned = cleaned.replace(/(\S)\s+\d{4,6}(?=,)/g, "$1");
+  cleaned = cleaned.replace(/,\s*,/g, ",").replace(/^\s*,|,\s*$/g, "");
+  return cleaned.trim();
+}
+
 export const Route = createFileRoute("/bao-cao/bang-check-in")({
   component: BangCheckInReport,
 });
@@ -97,7 +106,7 @@ function CheckInMap({
             <p style="font-weight:600;margin:0 0 4px 0">${p.name}</p>
             <p style="font-size:12px;color:#666;margin:0 0 2px 0">${formatDate(p.date)} · ${p.time}</p>
             <p style="font-size:12px;color:#666;margin:0 0 2px 0">Trung tâm: ${centerShort}</p>
-            ${p.address ? `<p style="font-size:12px;color:#666;margin:0 0 2px 0">${p.address}</p>` : ""}
+            ${p.address ? `<p style="font-size:12px;color:#666;margin:0 0 2px 0">${cleanAddress(p.address)}</p>` : ""}
             ${related?.title ? `<p style="font-size:11px;color:#999;margin:2px 0 0 0">${related.title}</p>` : ""}
           </div>`,
         );
@@ -449,7 +458,7 @@ function BangCheckInReport() {
                   </td>
                   <td className="px-4 py-3 tabular">{r.time}</td>
                   <td className="max-w-[200px] truncate px-4 py-3 text-muted">
-                    {r.address}
+                    {cleanAddress(r.address)}
                   </td>
                   <td className="px-4 py-3">
                     {r.photo ? (

@@ -516,6 +516,18 @@ export const isTableEmpty = createServerFn({ method: "GET" })
 
 /* ─────────── Reverse Geocoding (server-side) ─────────── */
 
+/** Remove postal/zip codes (e.g. "11110") from address strings */
+function cleanAddress(raw: string): string {
+  if (!raw) return raw;
+  // Remove standalone postal codes (4-6 digits) that appear between commas or at end
+  let cleaned = raw.replace(/,?\s*\d{4,6}\s*(?=,|$)/g, "");
+  // Also handle format like "Hà Nội 11110, Việt Nam" (digit cluster after city name)
+  cleaned = cleaned.replace(/(\S)\s+\d{4,6}(?=,)/g, "$1");
+  // Clean up double commas/spaces
+  cleaned = cleaned.replace(/,\s*,/g, ",").replace(/^\s*,|,\s*$/g, "");
+  return cleaned.trim();
+}
+
 export const reverseGeocode = createServerFn({ method: "GET" })
   .validator((d: { lat: number; lng: number }) => d)
   .handler(async ({ data }) => {
@@ -530,7 +542,7 @@ export const reverseGeocode = createServerFn({ method: "GET" })
         },
       );
       const json = await res.json();
-      return json.display_name || "";
+      return cleanAddress(json.display_name || "");
     } catch {
       return "";
     }
