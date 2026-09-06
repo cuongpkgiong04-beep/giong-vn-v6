@@ -63,6 +63,7 @@ function CheckInPage() {
   const [note, setNote] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const submittingRef = useRef(false);
   // Camera live state (giống chấm công)
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -454,12 +455,15 @@ function CheckInPage() {
     setPhotoPreview(stamped);
     setPhotoStamped(true);
     stopCamera();
+    setIsCapturing(false);
   }, [currentName, stopCamera]);
 
   const capturePhoto = useCallback(() => {
+    if (isCapturing) return;
     const video = videoRef.current;
     const canvas = captureCanvasRef.current;
     if (!video || !canvas) return;
+    setIsCapturing(true);
     const now = new Date();
     const freshTime = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
     const freshDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
@@ -776,10 +780,15 @@ function CheckInPage() {
                       <button
                         type="button"
                         onClick={capturePhoto}
-                        className="size-16 rounded-full border-4 border-white bg-white/30 backdrop-blur-sm flex items-center justify-center transition active:scale-90 hover:bg-white/50"
-                        title="Chụp ảnh"
+                        disabled={isCapturing}
+                        className={`size-16 rounded-full border-4 border-white backdrop-blur-sm flex items-center justify-center transition ${isCapturing ? 'bg-white/10 cursor-not-allowed' : 'bg-white/30 active:scale-90 hover:bg-white/50'}`}
+                        title={isCapturing ? 'Đang xử lý...' : 'Chụp ảnh'}
                       >
-                        <div className="size-12 rounded-full bg-white" />
+                        {isCapturing ? (
+                          <Loader2 className="size-8 text-white animate-spin" />
+                        ) : (
+                          <div className="size-12 rounded-full bg-white" />
+                        )}
                       </button>
                     </div>
                     {!cameraActive && (

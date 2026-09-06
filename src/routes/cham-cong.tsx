@@ -60,6 +60,7 @@ function ChamCongPage() {
   // Chỉ cho phép xác nhận 1 lần — ref chặn mọi double-tap trước khi re-render
   const submittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [pendingRecords, setPendingRecords] = useState<Array<{ collection: string; data: any; attempts?: number }>>([]);
   const [showSyncDashboard, setShowSyncDashboard] = useState(false);
   // Camera state
@@ -387,9 +388,11 @@ function ChamCongPage() {
 
   // Capture photo with overlay stamped — GPS + time are FRESH at this moment
   function capturePhoto() {
+    if (isCapturing) return; // chống double-tap
     const video = videoRef.current;
     const canvas = captureCanvasRef.current;
     if (!video || !canvas) return;
+    setIsCapturing(true);
     // ── Get FRESH GPS + timestamp at capture moment ──
     const now = new Date();
     const freshTime = now.toLocaleTimeString("en-US", {
@@ -506,6 +509,7 @@ function ChamCongPage() {
     setPhotoPreview(stamped);
     setPhotoStamped(true);
     stopCamera();
+    setIsCapturing(false);
   }
 
   // Switch camera (front <-> back)
@@ -1010,10 +1014,15 @@ function ChamCongPage() {
                     <button
                       type="button"
                       onClick={capturePhoto}
-                      className="size-16 rounded-full border-4 border-white bg-white/30 backdrop-blur-sm flex items-center justify-center transition active:scale-90 hover:bg-white/50"
-                      title="Chụp ảnh"
+                      disabled={isCapturing}
+                      className={`size-16 rounded-full border-4 border-white backdrop-blur-sm flex items-center justify-center transition ${isCapturing ? 'bg-white/10 cursor-not-allowed' : 'bg-white/30 active:scale-90 hover:bg-white/50'}`}
+                      title={isCapturing ? 'Đang xử lý...' : 'Chụp ảnh'}
                     >
-                      <div className="size-12 rounded-full bg-white" />
+                      {isCapturing ? (
+                        <Loader2 className="size-8 text-white animate-spin" />
+                      ) : (
+                        <div className="size-12 rounded-full bg-white" />
+                      )}
                     </button>
                   </div>
                   {/* Camera status */}                      {!cameraActive && (
