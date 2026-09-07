@@ -517,7 +517,7 @@ function CheckInPage() {
         <Button onClick={handleOpenDialog} disabled={isSubmitting || isCapturing || checkins.length > 0 && lastStatus === "Check-in vào ca"}>
           + Thêm Check-in
         </Button>
-      }>
+      } />
 
       <Card className="p-4">
         <div className="flex flex-wrap items-center gap-2">
