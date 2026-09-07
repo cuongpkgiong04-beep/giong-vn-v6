@@ -71,6 +71,8 @@
 - Fix camera switch check-in — chuyển capturePhoto/retakePhoto sang plain function, thêm guard race condition, delay camera release
 - Stamp layout redesign — 3 cụm (Giờ+Ngày / Địa chỉ / Tên+Công ty), wrap địa chỉ đầy đủ, groupGap 18px
 - Xóa postal code (VD: 11110) khỏi tất cả hiển thị địa chỉ — cleanAddress trong reverseGeocode + display-time
+- Fix trang Check-in crash — thiếu import Textarea component
+- Fix bản đồ Check-in report — xóa duplicate code trong useEffect (L is not defined)
 
 ---
 
@@ -1010,7 +1012,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 44 — Fix camera live iOS cắt mặt)*
+*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 46 — Fix Check-in crash + Bản đồ report)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1399,9 +1401,31 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ---
 
+### Giai đoạn 46: Fix Check-in crash + Bản đồ report (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(check-in): thêm import Textarea — sửa lỗi "Textarea is not defined" crash trang |
+| (mới) | fix(bang-check-in): xóa duplicate code trong useEffect map — sửa lỗi "L is not defined" |
+
+> **LESSON LEARNED — Thiếu import component gây crash toàn trang (2026-09-07):**
+> File `check-in.tsx` dùng `<Textarea>` trong dialog ghi chú nhưng KHÔNG import.
+> Kết quả: "Something went wrong — Textarea is not defined" → toàn bộ trang Check-in crash.
+> **Fix:** Thêm `import { Textarea } from "@/components/ui/textarea"`.
+> **Lưu ý:** Component `Textarea` nằm trong `src/components/ui/textarea.tsx` — phải import đúng path.
+>
+> **LESSON LEARNED — Duplicate code trong useEffect (2026-09-07):**
+> File `bang-check-in.tsx` có useEffect khởi tạo Leaflet map. Bên trong block `.then()`, code
+> viết đúng (tạo map, tile layers, markers). Nhưng SAU block `.then()`, còn ~50 dòng code
+> **trùng lặp** refer đến biến `L`, `map`, `streetLayer` ở **ngoài scope** → ReferenceError.
+> **Fix:** Xóa toàn bộ code thừa. Đảm bảo KHÔNG có code nào ngoài block `.then()`.
+> **Root cause:** Có thể do merge conflict hoặc copy-paste không xóa hết.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.4`
-- `DEFAULT_VERSION` (app-side): `0.1.4` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.6`
+- `DEFAULT_VERSION` (app-side): `0.1.6` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.4`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.6`.

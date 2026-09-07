@@ -121,64 +121,7 @@ function CheckInMap({
 
       setTimeout(() => map.invalidateSize(), 200);
       mapRef.current = map;
-
-      return () => {
-        if (mapRef.current) {
-          mapRef.current.remove();
-          mapRef.current = null;
-        }
-      };
     }).catch(err => console.warn("[bang-check-in] map init failed", err));
-
-      const streetLayer = L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-          attribution: '&copy; <a href="https://osm.org/copyright">OSM</a>',
-          maxZoom: 19,
-        },
-      );
-
-      const satelliteLayer = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        {
-          attribution: '&copy; Esri',
-          maxZoom: 18,
-        },
-      );
-
-      streetLayer.addTo(map);
-      (map as any)._streetLayer = streetLayer;
-      (map as any)._satelliteLayer = satelliteLayer;
-
-      const markers = [];
-      for (const p of points) {
-        const coords = parseGps(p.gps);
-        if (!coords) continue;
-
-        const related = findEmployeeByLooseText(p.name);
-        const centerShort =
-          CENTERS.find((c) => c.code === p.centerCode)?.short ?? p.centerCode;
-
-        const marker = L.marker(coords).addTo(map);
-        marker.bindPopup(
-          `<div style="font-family:system-ui;min-width:180px">
-            <p style="font-weight:600;margin:0 0 4px 0">${p.name}</p>
-            <p style="font-size:12px;color:#666;margin:0 0 2px 0">${formatDate(p.date)} · ${p.time}</p>
-            <p style="font-size:12px;color:#666;margin:0 0 2px 0">Trung tâm: ${centerShort}</p>
-            ${p.address ? `<p style="font-size:12px;color:#666;margin:0 0 2px 0">${cleanAddress(p.address)}</p>` : ""}
-            ${related?.title ? `<p style="font-size:11px;color:#999;margin:2px 0 0 0">${related.title}</p>` : ""}
-          </div>`,
-        );
-        markers.push(marker);
-      }
-
-      if (markers.length > 0) {
-        const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.1));
-      }
-
-      setTimeout(() => map.invalidateSize(), 200);
-      mapRef.current = map;
 
     return () => {
       if (mapRef.current) {
