@@ -1333,6 +1333,44 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 | Commit | Thay đổi |
 |---|---|
+| (mới) | fix(camera): iOS camera preview hiện đủ khung, không viền đen 2 bên + fix lỗi build duplicate isIOS |
+
+> **LESSON LEARNED — iOS camera preview khung dọc bị cắt + viền đen (2026-09-07):**
+> iOS Safari trả MediaStream portrait (VD 1080x1920) khi cầm máy dọc.
+> Nếu dùng maxHeight + objectFit cover giống Android → video bị phóng to, cắt mặt trên/dưới.
+> Ngoài ra khung preview còn hiển thị 2 bên viền đen vì không khớp tỉ lệ khung → cần contain + cho phép chiều rộng khung bằng ảnh chụp.
+> **Fix:** tách style platform:
+> - Android: giữ maxHeight 400 + objectFit cover + maxWidth 400 + canh giữa.
+> - iOS: dùng contain, maxHeight 540, chiều rộng tự do khớp khung ảnh.
+> Áp dụng cho cả live preview video, overlay canvas, ảnh stamped preview.
+>
+> **LESSON LEARNED — Build fail duplicate declaration (2026-09-07):**
+> Trong lần sửa nhanh, `src/routes/check-in.tsx` bị khai báo 2 lần `const [isIOS] = useState(detectIOS)`.
+> TanStack router-generator fail trước khi build → Vercel deploy ERROR.
+> **Fix:** xóa dòng thừa, commit amend, force push. Luôn kiểm tra lỗi syntax trước khi push production.
+
+---
+
+### Giai đoạn 45: Version bump 0.1.5 (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | chore: tăng version 0.1.4 -> 0.1.5 + ghi lại lỗi build iOS + duplicate isIOS |
+
+> **LESSON LEARNED — Version bump:**
+> Mỗi lần sửa xong production, nên tăng version ở 2 chỗ: `package.json` và `app-shell.tsx DEFAULT_VERSION`.
+
+---
+
+### Version
+
+- `package.json`: `0.1.5`
+- `DEFAULT_VERSION` (app-side): `0.1.5` (`src/components/app-shell.tsx`)
+
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.5`.
+
+| Commit | Thay đổi |
+|---|---|
 | (mới) | fix(camera): live preview iOS xem đủ khung — bỏ objectFit:cover gây cắt mặt |
 | (mới) | chore: tăng version 0.1.3 → 0.1.4 |
 

@@ -1041,17 +1041,16 @@ function ChamCongPage() {
                     muted
                     className="w-full rounded-2xl"
                     style={isIOS
-                      ? { maxHeight: 520, objectFit: "contain" }
-                      : { maxHeight: 400, objectFit: "cover" }}
+                      ? { maxHeight: 540, objectFit: "contain" }
+                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto" }}
                   />
-                  {/* Overlay canvas draws on top of video */}
-                  <canvas
-                    ref={overlayCanvasRef}
-                    className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                    style={isIOS
-                      ? { zIndex: 10 }
-                      : { maxHeight: 400, zIndex: 10 }}
-                  />
+                  {/* Overlay canvas draws on top of video */}                    <canvas
+                      ref={overlayCanvasRef}
+                      className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
+                      style={isIOS
+                        ? { zIndex: 10, maxHeight: 540 }
+                        : { maxHeight: 400, width: 400, marginLeft: "auto", marginRight: "auto", zIndex: 10 }}
+                    />
                   {/* Capture button + camera switch */}
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
                     <button
@@ -1078,7 +1077,7 @@ function ChamCongPage() {
               ) : (
                 /* Stamped photo preview */
                 <div className="relative">
-                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl" style={{ maxHeight: 400, objectFit: "contain" }} />
+                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl mx-auto" style={{ maxHeight: 400, objectFit: "contain", maxWidth: isIOS ? "100%" : 400 }} />
                   {/* Retake button */}
                   <button
                     type="button"
