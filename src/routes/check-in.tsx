@@ -333,6 +333,9 @@ function CheckInPage() {
       return;
     }
 
+    // Vẽ video frame lên captureCanvas (cần cho static photo output)
+    ctx.drawImage(video, 0, 0, w, h);
+
     const timeStr = formatPunchTime();
     const dateStr = formatPunchDate();
     const weekdayStr = formatPunchWeekday();
