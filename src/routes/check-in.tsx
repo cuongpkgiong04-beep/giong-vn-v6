@@ -513,11 +513,11 @@ function CheckInPage() {
 
   return (
     <div className="min-w-0 space-y-5">
-      <PageHeader title="Check-in">
+      <PageHeader title="Check-in" actions={
         <Button onClick={handleOpenDialog} disabled={isSubmitting || isCapturing || checkins.length > 0 && lastStatus === "Check-in vào ca"}>
           + Thêm Check-in
         </Button>
-      </PageHeader>
+      }>
 
       <Card className="p-4">
         <div className="flex flex-wrap items-center gap-2">
