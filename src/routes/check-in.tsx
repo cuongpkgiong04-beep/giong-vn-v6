@@ -421,40 +421,47 @@ function CheckInPage() {
   }
 
   function requestLocation() {
-    return new Promise<[number, number]>((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error("Geolocation not available"));
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-          resolve(coords);
-        },
-        (err) => reject(err),
-        { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
-      );
-    });
+    if (!navigator.geolocation) {
+      setGps("GPS không hỗ trợ trên thiết bị này");
+      setAddress("Không thể xác định địa điểm.");
+      setLocationStatus("GPS không hỗ trợ");
+      return;
+    }
+    setLocationStatus("Đang xác định vị trí...");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        const coordinateText = `${lat}, ${lng}`;
+        setGps(coordinateText);
+        setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
+        setAddress(coordinateText); // tạm thời, resolve ngay bên dưới
+        setLocationStatus("Vị trí đã xác định");
+        // Resolve địa chỉ ngay khi có GPS để overlay hiển thị tên đường
+        reverseGeocode({ data: { lat, lng } })
+          .then((addr) => { if (addr) setAddress(addr); })
+          .catch(() => {}); // giữ coordinateText nếu fail
+      },
+      () => {
+        setGps("Không thể lấy vị trí");
+        setLocationStatus("Lỗi định vị");
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+    );
   }
 
-  async function handleOpenDialog() {
+  function handleOpenDialog() {
     setIsDialogOpen(true);
-    try {
-      const [coords] = await Promise.all([
-        requestLocation().then(r => [r]).catch(() => [[0, 0]]),
-        Promise.resolve(),
-      ]);
-      setGpsCoords(coords);
-      if (coords[0] !== 0) {
-        const res = await reverseGeocode({ data: { lat: coords[0], lng: coords[1] } });
-        setAddress(res);
-        setLocationStatus("Đã xác định");
-      } else {
-        setGps("Chưa lấy được vị trí");
-        setLocationStatus("Lỗi định vị");
-      }
-    } catch {
-      setGps("Không thể lấy vị trí");
-      setLocationStatus("Lỗi định vị");
-    }
-    startCamera().catch(() => {});
+    setGps("Đang lấy vị trí...");
+    setAddress("Đang xác định vị trí...");
+    setLocationStatus("Đang xác định vị trí...");
+    setPhotoPreview(null);
+    setPhotoStamped(false);
+    setGpsCoords(null);
+    // Request location trong nền — không chờ (tránh chặn mở dialog)
+    requestLocation();
+    // Start camera sau khi dialog mở
+    setTimeout(() => startCamera().catch(() => {}), 300);
   }
 
   async function confirmCheckin() {
