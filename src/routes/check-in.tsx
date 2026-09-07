@@ -42,6 +42,7 @@ function CheckInPage() {
   const checkins = useAppStore((s) => s.checkins);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const removeCheckin = useAppStore((s) => s.removeCheckin);
+  const addCheckin = useAppStore((s) => s.addCheckin);
   const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const currentName = useAppStore((s) => s.currentName());
   const [q, setQ] = useState("");
@@ -214,8 +215,8 @@ function CheckInPage() {
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
-    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
+    const bigTimeMaxWidth = Math.max(36, Math.min(Math.round(w * 0.09), 64));
+    const smFontMaxWidth = Math.max(16, Math.min(Math.round(w * 0.04), 32));
     const groupGap = Math.round(18 * scale);
 
     const now = new Date();
@@ -442,7 +443,7 @@ function CheckInPage() {
       ]);
       setGpsCoords(coords);
       if (coords[0] !== 0) {
-        const res = await reverseGeocode(coords[0], coords[1]);
+        const res = await reverseGeocode({ data: { lat: coords[0], lng: coords[1] } });
         setAddress(res);
         setLocationStatus("Đã xác định");
       } else {
@@ -461,18 +462,16 @@ function CheckInPage() {
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      const payload = {
-        name: currentName,
-        gps: gpsCoords[0] + "," + gpsCoords[1],
-        address: address,
-        photo: photoPreview,
-        center: currentEmployee?.center ?? "VP",
-        note: note || "",
-        status: "Check-in vào ca",
-        date: todayStr,
-        time: formatPunchTime(),
-      };
-      await uploadImage(payload);
+      const gpsStr = gpsCoords[0] + "," + gpsCoords[1];
+      // Upload photo to Cloudinary
+      let photoUrl = photoPreview;
+      try {
+        const result = await uploadImage({ data: { base64: photoPreview, folder: "giong-vn/check-in" } });
+        photoUrl = result.url;
+      } catch (err: any) {
+        console.warn("[check-in] Upload ảnh thất bại, dùng base64:", err?.message);
+      }
+      addCheckin(gpsStr, address, note || "", photoUrl, currentEmployee?.center ?? "VP");
       toast.success("Check-in thành công");
       setIsDialogOpen(false);
       setPhotoPreview(null);
@@ -491,17 +490,16 @@ function CheckInPage() {
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
-      const payload = {
-        name: currentName,
-        gps: gpsCoords[0] + "," + gpsCoords[1],
-        address: address,
-        photo: photoPreview,
-        center: currentEmployee?.center ?? "VP",
-        status: "Điểm danh tan ca",
-        date: todayStr,
-        time: formatPunchTime(),
-      };
-      await uploadImage(payload);
+      const gpsStr = gpsCoords[0] + "," + gpsCoords[1];
+      // Upload photo to Cloudinary
+      let photoUrl = photoPreview;
+      try {
+        const result = await uploadImage({ data: { base64: photoPreview, folder: "giong-vn/check-in" } });
+        photoUrl = result.url;
+      } catch (err: any) {
+        console.warn("[check-in] Upload ảnh thất bại, dùng base64:", err?.message);
+      }
+      addCheckin(gpsStr, address, "", photoUrl, currentEmployee?.center ?? "VP");
       toast.success("Điểm danh tan ca thành công");
       setIsDialogOpen(false);
       setPhotoPreview(null);
