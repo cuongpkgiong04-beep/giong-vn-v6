@@ -1010,7 +1010,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 42 — Nguyên tắc Push mới + Version check)*
+*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 44 — Fix camera live iOS cắt mặt)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1329,9 +1329,41 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 ---
 
+### Giai đoạn 44: Fix camera live bị cắt mặt trên iOS (2026-09-07)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(camera): live preview iOS xem đủ khung — bỏ objectFit:cover gây cắt mặt |
+| (mới) | chore: tăng version 0.1.3 → 0.1.4 |
+
+> **LESSON LEARNED — iOS Safari trả stream camera dạng KHUNG DỌC (2026-09-07):**
+> **Hiện tượng:** Trên iPhone, live preview camera chỉ thấy MỘT PHẦN mặt người chấm,
+> nhưng khi chụp + lưu thì ảnh ĐỦ toàn bộ mặt.
+>
+> **Nguyên nhân:** iOS Safari trả MediaStream dạng portrait (VD 1080×1920) khi cầm máy dọc.
+> Preview dùng `maxHeight: 400` + `objectFit: "cover"` → video bị phóng to để lấp đầy khung
+> rồi CẮT phần trên/dưới → mất mặt. Android trả stream landscape (1920×1080) nên khung
+> khớp tỉ lệ, không bị cắt.
+>
+> **Vì sao ảnh chụp không bị:** `doStamp()` vẽ canvas từ đúng `videoWidth/videoHeight`
+> (kích thước gốc của stream) → giữ nguyên toàn bộ khung.
+>
+> **Fix (surgical):** Thêm `detectIOS()` (check userAgent iPad|iPhone|iPod + iPadOS 13+
+> tự nhận Macintosh có maxTouchPoints > 1). Trên iOS:
+> - `<video>`: `objectFit: "contain"` + `maxHeight: 520` → thấy ĐỦ khung như ảnh chụp
+> - Overlay canvas: bỏ maxHeight (theo chiều cao thật của khung)
+> - Android: GIỮ NGUYÊN 100% style cũ (maxHeight: 400 + cover)
+>
+> **Files sửa:** `src/routes/cham-cong.tsx`, `src/routes/check-in.tsx` (cùng pattern).
+>
+> **LƯU Ý cho Đại ca khi test:** Mở trên iPhone → Vào ca → live preview phải thấy
+> ĐỦ mặt + vai (giống ảnh sau khi chụp), không còn bị cắt. Android không đổi gì.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.3`
-- `DEFAULT_VERSION` (app-side): `0.1.3` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.4`
+- `DEFAULT_VERSION` (app-side): `0.1.4` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.3`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.4`.

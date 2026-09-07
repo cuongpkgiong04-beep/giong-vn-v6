@@ -40,6 +40,20 @@ function cleanAddress(addr: string): string {
   return cleaned.trim();
 }
 
+/**
+ * Detect iOS (kể cả iPadOS 13+ tự nhận Macintosh nhưng có màn cảm ứng).
+ * iOS Safari trả stream camera dạng KHUNG DỌC khi cầm máy dọc → preview với
+ * maxHeight + objectFit:cover bị phóng to và CẮT MẤT phần trên/dưới (mặt người).
+ * Ảnh chụp không bị vì doStamp vẽ từ đúng videoWidth/videoHeight của stream.
+ */
+function detectIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const isIPhoneIPad = /iPad|iPhone|iPod/.test(ua);
+  const isModernIOS = ua.includes("Macintosh") && (navigator as any).maxTouchPoints > 1;
+  return isIPhoneIPad || isModernIOS;
+}
+
 export const Route = createFileRoute("/check-in")({ component: CheckInPage });
 
 function CheckInPage() {
@@ -73,6 +87,8 @@ function CheckInPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
+  // iOS: live preview phải xem ĐỦ KHUNG (contain) — Android giữ nguyên như cũ
+  const [isIOS] = useState(detectIOS);
   const startCameraRunningRef = useRef(false);
 
   const [detailRecord, setDetailRecord] = useState<(typeof checkins)[number] | null>(null);
@@ -802,12 +818,16 @@ function CheckInPage() {
                       playsInline
                       muted
                       className="w-full rounded-2xl"
-                      style={{ maxHeight: 400, objectFit: "cover" }}
+                      style={isIOS
+                        ? { maxHeight: 520, objectFit: "contain" }
+                        : { maxHeight: 400, objectFit: "cover" }}
                     />
                     <canvas
                       ref={overlayCanvasRef}
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                      style={{ maxHeight: 400, zIndex: 10 }}
+                      style={isIOS
+                        ? { zIndex: 10 }
+                        : { maxHeight: 400, zIndex: 10 }}
                     />
                     <div className="absolute top-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
                       <button
