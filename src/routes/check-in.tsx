@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
+import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
