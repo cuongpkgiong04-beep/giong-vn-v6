@@ -1012,7 +1012,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-07 (Giai đoạn 46 — Fix Check-in crash + Bản đồ report)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 47 — Check-in: chuyển cards trung tâm vào dropdown)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1423,9 +1423,31 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ---
 
+### Giai đoạn 47: Check-in — chuyển cards trung tâm vào dropdown (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | refactor(check-in): xóa danh sách cards trung tâm — lọc trung tâm chỉ qua dropdown |
+| (mới) | chore: tăng version 0.1.6 → 0.1.7 |
+
+> **LESSON LEARNED — 2 cơ chế lọc trung tâm trùng lặp trong check-in.tsx (2026-09-08):**
+> Trang Check-in có 2 cách lọc trung tâm song song:
+> 1. Dropdown "Tất cả trung tâm" — state `center`, lọc trong memo `rows`
+> 2. Danh sách cards trung tâm — state `selectedCenter`, lọc qua memo `selectedCenterRows`
+> **Vấn đề:** Bảng chỉ render `selectedCenterRows` (rỗng khi chưa click card) → chọn dropdown
+> không đổi được nội dung bảng → người dùng tưởng filter hỏng.
+> **Fix (theo yêu cầu Đại ca):** Xóa cards + state `selectedCenter` + 2 memo
+> `centerStats`/`selectedCenterRows`. Bảng render trực tiếp `rows` (đã gồm filter
+> dropdown trung tâm + loại vào/tan + date range + tìm kiếm).
+>
+> **LƯU Ý:** Trang `cham-cong.tsx` vẫn GIỮ cả 2 cơ chế (cards + dropdown) — không sửa vì
+> ngoài phạm vi yêu cầu. Nếu sau này muốn đồng bộ, áp dụng cùng pattern.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.6`
-- `DEFAULT_VERSION` (app-side): `0.1.6` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.7`
+- `DEFAULT_VERSION` (app-side): `0.1.7` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.6`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.7`.

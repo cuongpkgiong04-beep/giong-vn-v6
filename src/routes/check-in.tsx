@@ -48,7 +48,6 @@ function CheckInPage() {
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<"all" | "in" | "out">("all");
   const [center, setCenter] = useState("all");
-  const [selectedCenter, setSelectedCenter] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [note, setNote] = useState("");
   const [gps, setGps] = useState("Đang lấy vị trí...");
@@ -129,25 +128,6 @@ function CheckInPage() {
     });
   }, [checkins, currentEmployee, currentName, canViewAll]);
 
-  const centerStats = useMemo(() => {
-    const map = new Map<string, { in: number; out: number; total: number }>();
-    for (const c of CENTERS) {
-      if (!currentEmployee || isAdminRole(currentEmployee.role) || c.code === currentEmployee.center) {
-        map.set(c.code, { in: 0, out: 0, total: 0 });
-      }
-    }
-    for (const record of visibleCheckins) {
-      const related = findEmployeeByLooseText(record.name);
-      const place = related?.center ?? record.workplace ?? currentEmployee?.center ?? "VP";
-      const bucket = map.get(place) ?? { in: 0, out: 0, total: 0 };
-      bucket.total += 1;
-      if (record.status.includes("vào")) bucket.in += 1;
-      if (record.status.includes("tan")) bucket.out += 1;
-      map.set(place, bucket);
-    }
-    return [...map.entries()].map(([code, data]) => ({ code, ...data }));
-  }, [currentEmployee, visibleCheckins]);
-
   const rows = useMemo(() => {
     return visibleCheckins.filter((a) => {
       const related = findEmployeeByLooseText(a.name);
@@ -167,15 +147,6 @@ function CheckInPage() {
       return true;
     });
   }, [center, currentEmployee, kind, q, visibleCheckins, dateFrom, dateTo]);
-
-  const selectedCenterRows = useMemo(() => {
-    if (!selectedCenter) return [];
-    return rows.filter((a) => {
-      const related = findEmployeeByLooseText(a.name);
-      const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
-      return workplace === selectedCenter;
-    });
-  }, [currentEmployee, rows, selectedCenter]);
 
   function formatPunchTime(date = new Date()) {
     return date.toLocaleTimeString("en-US", {
@@ -565,19 +536,6 @@ function CheckInPage() {
           </select>
         </div>
 
-        <div className="mt-3 grid gap-2">
-          {centerStats.map(cs => (
-            <button
-              key={cs.code}
-              className={`rounded-lg border px-3 py-2 text-left transition ${selectedCenter === cs.code ? "border-primary bg-primary/10" : "border-line bg-surface"}`}
-              onClick={() => setSelectedCenter(selectedCenter === cs.code ? null : cs.code)}
-            >
-              <span className="font-medium">{CENTERS.find(c => c.code === cs.code)?.short ?? cs.code}</span>
-              <span className="ml-3 text-xs text-muted">{cs.in} vào · {cs.out} ra · {cs.total} tổng</span>
-            </button>
-          ))}
-        </div>
-
         <table className="w-full mt-3 border-collapse">
           <thead>
             <tr className="text-xs uppercase text-muted">
@@ -590,7 +548,7 @@ function CheckInPage() {
             </tr>
           </thead>
           <tbody>
-            {selectedCenterRows.map(a => {
+            {rows.map(a => {
               const related = findEmployeeByLooseText(a.name);
               const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
               return (
@@ -610,12 +568,12 @@ function CheckInPage() {
             })}
           </tbody>
         </table>
-        {selectedCenterRows.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="p-4">
             <EmptyState title="Không có check-in nào" desc="Thử đổi bộ lọc hoặc thêm check-in mới." />
           </div>
         ) : (
-          <p className="px-3 py-2 text-xs text-faint">Hiển thị {Math.min(80, selectedCenterRows.length)} / {selectedCenterRows.length} bản ghi</p>
+          <p className="px-3 py-2 text-xs text-faint">Hiển thị {Math.min(80, rows.length)} / {rows.length} bản ghi</p>
         )}
       </Card>
 
