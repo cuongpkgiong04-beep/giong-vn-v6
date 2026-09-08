@@ -1012,7 +1012,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 47 — Check-in: chuyển cards trung tâm vào dropdown)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 48 — Check-in: tiêu đề bảng giống Báo cáo Check-in)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1445,9 +1445,36 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ---
 
+### Giai đoạn 48: Check-in — tiêu đề bảng giống Báo cáo Check-in (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(check-in): đổi tiêu đề bảng + ô dữ liệu giống Báo cáo Check-in (8 cột) |
+| (mới) | chore: tăng version 0.1.7 → 0.1.8 |
+
+> **LESSON LEARNED — Đồng bộ tiêu đề bảng Check-in với Báo cáo (2026-09-08):**
+> Đại ca yêu cầu tiêu đề bảng Check-in giống phần tiêu đề của Báo cáo Check-in.
+> Trước: bảng Check-in có 6 cột `Người check-in | Địa chỉ / GPS | Trung tâm | Thời gian | Ghi chú | Ảnh`.
+> Sau: bảng Check-in có 8 cột giống hệt Báo cáo Check-in:
+> `STT | Nhân sự | Trung tâm | Ngày | Giờ | Địa điểm | Ảnh | Ghi chú`.
+> **Thay đổi ô dữ liệu cho khớp:**
+> - Thêm cột `STT` (số thứ tự `idx + 1`)
+> - `Nhân sự`: tên (font-medium) + chức danh `related.title` bên dưới
+> - `Trung tâm`: hiện tên ngắn `CENTERS.find(...)?.short ?? workplace`
+> - `Ngày`: `formatDate(a.date)` + thứ `a.weekday` bên dưới
+> - `Giờ`: `a.time` riêng (tabular)
+> - `Địa điểm`: `cleanAddress(a.address || a.gps)`
+> - `Ảnh`: ảnh nhỏ `size-8 object-cover` + dấu `—` khi không có ảnh
+> - `Ghi chú`: `a.note || "—"`
+>
+> **LƯU Ý:** Chỉ sửa `src/routes/check-in.tsx`. Trang `cham-cong.tsx` và `bang-cham-cong.tsx`
+> vẫn giữ layout cũ — không đổi vì ngoài phạm vi yêu cầu.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.7`
-- `DEFAULT_VERSION` (app-side): `0.1.7` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.8`
+- `DEFAULT_VERSION` (app-side): `0.1.8` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.7`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.8`.

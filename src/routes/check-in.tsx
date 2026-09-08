@@ -536,33 +536,46 @@ function CheckInPage() {
           </select>
         </div>
 
-        <table className="w-full mt-3 border-collapse">
-          <thead>
-            <tr className="text-xs uppercase text-muted">
-              <th className="text-left px-3 py-2">Người check-in</th>
-              <th className="text-left px-3 py-2">Địa chỉ / GPS</th>
-              <th className="text-left px-3 py-2">Trung tâm</th>
-              <th className="text-left px-3 py-2">Thời gian</th>
-              <th className="text-left px-3 py-2">Ghi chú</th>
-              <th className="text-left px-3 py-2">Ảnh</th>
+        <table className="w-full mt-3 border-collapse text-sm">
+          <thead className="bg-surface-2 text-left text-xs uppercase tracking-wider text-muted">
+            <tr>
+              <th className="px-4 py-3">STT</th>
+              <th className="px-4 py-3">Nhân sự</th>
+              <th className="px-4 py-3">Trung tâm</th>
+              <th className="px-4 py-3">Ngày</th>
+              <th className="px-4 py-3">Giờ</th>
+              <th className="px-4 py-3">Địa điểm</th>
+              <th className="px-4 py-3">Ảnh</th>
+              <th className="px-4 py-3">Ghi chú</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map(a => {
+            {rows.map((a, idx) => {
               const related = findEmployeeByLooseText(a.name);
               const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
               return (
                 <tr key={a.id} className="border-t border-line">
-                  <td className="max-w-xs truncate px-3 py-2">{a.name}</td>
-                  <td className="max-w-xs truncate px-3 py-2 text-muted">{cleanAddress(a.address || a.gps || "—")}</td>
-                  <td className="px-3 py-2 text-xs text-muted">{workplace}</td>
-                  <td className="px-3 py-2 text-xs text-muted">{a.time} — {a.date}</td>
-                  <td className="max-w-xs truncate px-3 py-2 text-muted">{a.note || "—"}</td>
-                  <td className="px-3 py-2">
-                    {a.photo && (
-                      <img src={a.photo} alt="ảnh checkin" className="h-16 w-auto rounded object-contain border" />
+                  <td className="px-4 py-3 tabular">{idx + 1}</td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-ink">{a.name}</p>
+                    {related?.title && <p className="text-xs text-muted">{related.title}</p>}
+                  </td>
+                  <td className="px-4 py-3 text-muted">{CENTERS.find((c) => c.code === workplace)?.short ?? workplace}</td>
+                  <td className="px-4 py-3">
+                    {formatDate(a.date)}
+                    <br />
+                    <span className="text-xs text-muted">{a.weekday ?? ""}</span>
+                  </td>
+                  <td className="px-4 py-3 tabular">{a.time}</td>
+                  <td className="max-w-[200px] truncate px-4 py-3 text-muted">{cleanAddress(a.address || a.gps || "—")}</td>
+                  <td className="px-4 py-3">
+                    {a.photo ? (
+                      <img src={a.photo} alt="ảnh checkin" className="size-8 rounded-md object-cover" />
+                    ) : (
+                      <span className="text-xs text-faint">—</span>
                     )}
                   </td>
+                  <td className="max-w-[150px] truncate px-4 py-3 text-muted">{a.note || "—"}</td>
                 </tr>
               );
             })}
