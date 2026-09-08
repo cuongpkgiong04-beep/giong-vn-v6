@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 60 — Fix tiêu đề 3 cột Nhiệm vụ chui dưới bộ lọc)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 61 — Tinh chỉnh khung cố định Nhiệm vụ: sát lệnh + 1 hàng bộ lọc)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,38 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.9`
-- `DEFAULT_VERSION` (app-side): `0.2.9` (`src/components/app-shell.tsx`)
+- `package.json`: `0.3.0`
+- `DEFAULT_VERSION` (app-side): `0.3.0` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 61: Tinh chỉnh khung cố định Nhiệm vụ — sát lệnh + 1 hàng bộ lọc (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(nhiem-vu): bỏ padding trên khối ghim (sát lên trên) + thu hẹp ô lọc desktop để Khối/Danh sách về chung 1 hàng với bộ lọc |
+| (mới) | chore: tăng version 0.2.9 → 0.3.0 (tròn chục minor) |
+
+> **Yêu cầu của Đại ca (2 điểm):**
+> 1. Phía trên cùng khung cố định còn khoảng trống → kéo sát lên để lấy diện tích cho phần dưới.
+> 2. Nút Khối / Danh sách ghép chung 1 hàng với bộ lọc — thu hẹp chiều ngang ô "Tìm việc,
+>    người phụ trách" để đủ chỗ.
+>
+> **Fix (surgical trong `src/routes/nhiem-vu.tsx` — KHÔNG đụng file khác):**
+> 1. Khối ghim bỏ `lg:pt-2` (nguồn khoảng trống trên) + giảm `lg:pb-3` → `lg:pb-2`.
+> 2. Thu hẹp các control CHỈ trên desktop (prefix `lg:`, mobile giữ nguyên):
+>    - Input tìm kiếm: `sm:max-w-sm` (~384px) → thêm `lg:max-w-[220px]`
+>    - 2 dropdown phụ trách/người giao: 200px → `lg:max-w-[170px]`
+>    - 2 ô date: auto → `lg:w-[135px]`
+>    → tiết kiệm ~250px → toggle Khối/Danh sách không còn rớt dòng.
+> 3. Chiều cao khối ghim đo động (ResizeObserver) → tiêu đề 3 cột tự bám sát vị trí mới,
+>    không cần sửa số cứng.
+>
+> **LESSON LEARNED — Padding trong khối sticky tạo khe hở nhìn như lỗi (2026-09-08):**
+> `lg:pt-2` thêm cho đẹp lúc ban đầu nhưng khi sticky lại tạo khoảng trống giữa header app
+> và nội dung ghim — người dùng thấy là "lỗi chưa sát lệnh". Với khối ghim, padding trên
+> nên = 0; muốn tách visual hãy dùng padding DƯỚI + nền. Ngoài ra control trong bộ lọc
+> cần đặt max-width tường minh theo breakpoint để hàng filters không wrap khi thiếu chỗ.
 
 ---
 
@@ -1834,4 +1864,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.9`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.0`.

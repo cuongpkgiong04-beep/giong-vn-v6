@@ -207,7 +207,7 @@ function TasksPage() {
   return (
     <div>
       {/* Desktop (lg+): ghim tiêu đề + bộ lọc + toggle view khi cuộn. Mobile: cuộn bình thường. */}
-      <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
+      <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pb-2">
       <PageHeader
         eyebrow="Vận hành"
         title="Nhiệm vụ"
@@ -221,11 +221,11 @@ function TasksPage() {
       />
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm việc, người phụ trách…" className="sm:max-w-sm" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm việc, người phụ trách…" className="sm:max-w-sm lg:max-w-[220px]" />
         <select
           value={filterAssignee}
           onChange={(e) => setFilterAssignee(e.target.value)}
-          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px]"
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px] lg:max-w-[170px]"
         >
           <option value="">Tất cả phụ trách</option>
           {vpEmployees.map((e) => (
@@ -237,20 +237,20 @@ function TasksPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] lg:w-[135px]"
           />
           <span className="text-muted">—</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)]"
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] lg:w-[135px]"
           />
         </div>
         <select
           value={filterAssigner}
           onChange={(e) => setFilterAssigner(e.target.value)}
-          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px]"
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:max-w-[200px] lg:max-w-[170px]"
         >
           <option value="">Tất cả người giao</option>
           {vpEmployees.map((e) => (
