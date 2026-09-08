@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 58 — Ghim tiêu đề + bộ lọc + tiêu đề bảng Check-in trên desktop)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 59 — Ghim tiêu đề + bộ lọc + tiêu đề 3 cột Nhiệm vụ trên desktop)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,41 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.7`
-- `DEFAULT_VERSION` (app-side): `0.2.7` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.8`
+- `DEFAULT_VERSION` (app-side): `0.2.8` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 59: Ghim tiêu đề + bộ lọc + tiêu đề 3 cột Nhiệm vụ trên desktop (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(nhiem-vu): sticky header desktop — tiêu đề + bộ lọc + toggle view + tiêu đề 3 cột board đứng yên khi cuộn (mobile giữ nguyên) |
+| (mới) | chore: tăng version 0.2.7 → 0.2.8 |
+
+> **Yêu cầu của Đại ca:** Chỉ sửa trong Nhiệm vụ — cố định khung tiêu đề "Nhiệm vụ" + bộ lọc
+> (tìm kiếm/phụ trách/ngày/người giao/checkbox) + toggle Khối/Danh sách + tiêu đề 3 cột board
+> (Việc cần làm / Quá hạn / Đã xong) khi cuộn trên desktop.
+>
+> **Fix (surgical trong `src/routes/nhiem-vu.tsx` — KHÔNG đụng file khác):**
+> 1. Bọc `PageHeader` + khối bộ lọc + toggle view trong
+>    `<div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">`.
+> 2. Tiêu đề cột board: div `mb-2 flex...` trong mỗi `<section>` thêm
+>    `lg:sticky lg:top-[calc(4rem+var(--nv-sticky-h,160px))] lg:z-[5] lg:bg-surface-2` —
+>    nền đục màu section để thẻ nhiệm vụ cuộn dưới không lộ xuyên qua chữ.
+> 3. Chiều cao khối ghim đo ĐỘNG bằng ResizeObserver → CSS var `--nv-sticky-h` đặt trên
+>    khối ghim. Var nằm TRÊN khối ghim là đủ vì tiêu đề cột nằm BÊN TRONG flow bình thường
+>    của body (grid) — khác với check-in (thead trong Card riêng phải đặt var trên cha chung).
+>
+> **LƯU Ý — Khác biệt với Check-in (Giai đoạn 58):**
+> - Nhiệm vụ: tiêu đề cột KHÔNG cần bọc parent — sticky hoạt động trong container section
+>   (không có ancestor overflow-hidden giữa title và viewport).
+> - Check-in: thead phải bọc Card `lg:overflow-visible` + wrapper `lg:overflow-x-visible`
+>   vì Card gốc có overflow-hidden (mobile cuộn ngang) — ancestor overflow phá sticky.
+> - Nhiệm vụ board dùng grid dọc tràn tự nhiên, không cuộn ngang → không cần mở overflow.
+>
+> **LƯU Ý:** Mobile (<1024px) giữ nguyên (tiền tố `lg:`). Chế độ Danh sách: khối ghim
+> (tiêu đề + bộ lọc + toggle) vẫn ghim; tiêu đề cột chỉ áp dụng cho chế độ board.
 
 ---
 
@@ -1772,4 +1805,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.7`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.8`.

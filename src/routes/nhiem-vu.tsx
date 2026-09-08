@@ -25,6 +25,18 @@ const COLS = ["Việc cần làm", "Quá hạn", "Đã xong"] as const;
 type TaskStatus = (typeof COLS)[number];
 
 function TasksPage() {
+  // Desktop (lg+): đo chiều cao khối ghim (tiêu đề + bộ lọc + toggle view) để ghim theo
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stickyHeaderRef.current;
+    if (!el) return;
+    const update = () => el.style.setProperty("--nv-sticky-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const tasks = useAppStore((s) => s.tasks);
   const addTask = useAppStore((s) => s.addTask);
   const setTaskStatus = useAppStore((s) => s.setTaskStatus);
@@ -189,6 +201,8 @@ function TasksPage() {
 
   return (
     <div>
+      {/* Desktop (lg+): ghim tiêu đề + bộ lọc + toggle view khi cuộn. Mobile: cuộn bình thường. */}
+      <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
       <PageHeader
         eyebrow="Vận hành"
         title="Nhiệm vụ"
@@ -251,6 +265,7 @@ function TasksPage() {
           </button>
         </div>
       </div>
+      </div>
 
       {view === "board" ? (
         <div className="grid gap-3 lg:grid-cols-3">
@@ -263,7 +278,7 @@ function TasksPage() {
             });
             return (
               <section key={col} className="rounded-xl bg-surface-2/70 p-3">
-                <div className="mb-2 flex items-center justify-between px-1">
+                <div className="mb-2 flex items-center justify-between px-1 lg:sticky lg:top-[calc(4rem+var(--nv-sticky-h,160px))] lg:z-[5] lg:bg-surface-2">
                   <h2 className={`text-sm font-semibold ${col === "Đã xong" ? "text-green-700" : "text-ink"}`}>{col}</h2>
                   <span className="text-xs tabular text-muted">{items.length}</span>
                 </div>
