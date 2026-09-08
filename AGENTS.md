@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 53 — Bộ lọc Check-in mobile + căn giữa Mobile Preview)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 54 — Fix dropdown "Tất cả trung tâm" Chấm công trống)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,40 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.2`
-- `DEFAULT_VERSION` (app-side): `0.2.2` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.3`
+- `DEFAULT_VERSION` (app-side): `0.2.3` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 54: Fix dropdown "Tất cả trung tâm" Chấm công trống (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(catalog): thêm trap 'has' cho Proxy CENTERS — sửa filter() trả rỗng khiến dropdown trung tâm trống |
+| (mới) | chore: tăng version 0.2.2 → 0.2.3 |
+
+> **LESSON LEARNED — Proxy array thiếu trap 'has' (2026-09-08):**
+> Trang Chấm công: dropdown "Tất cả trung tâm" mở ra nhưng KHÔNG có option nào.
+> **Nguyên nhân:** `CENTERS` trong `catalog.ts` là `Proxy` bọc store. Proxy chỉ có trap `get`
+> (và `Symbol.iterator`), KHÔNG có trap `has`. `Array.prototype.filter/reduce/every/...`
+> dùng `HasProperty(O, Pk)` trên từng index. Không có `has` trap → Proxy rơi về target
+> (mảng rỗng `[]`) → mọi index đều như "hole" → `filter()` trả về **mảng rỗng**.
+> Trong khi Check-in dùng `CENTERS.map(...)` → map cũng dùng HasProperty nhưng kết quả
+> map là mảng đúng (mỗi phần tử gọi Get trực tiếp, hole giữ nguyên) → vẫn hiển thị được.
+>
+> **Fix (surgical):** thêm trap `has` vào Proxy CENTERS:
+> ```ts
+> has(_, prop) { return prop in useAppStore.getState().centers; }
+> ```
+> → `filter()`/`map()`/`reduce()` trên `CENTERS` hoạt động đúng (kiểm tra `has` thật trên store).
+>
+> **Xác minh bằng unit test** (`scripts/test-proxy-has.mjs`):
+> - `filter` trên proxy KHÔNG has trap → 0 items (BUG)
+> - `filter` trên proxy CÓ has trap → 3 items (FIXED)
+> - `find` vẫn hoạt động dù không có `has` trap (find dùng `Get`, không dùng `HasProperty`)
+>
+> **LƯU Ý:** Nếu sau này tạo Proxy bọc mảng khác, NHỚ thêm trap `has` nếu cần `filter/map/reduce`.
+> `STAFF_BY_CENTER` proxy tương tự nhưng chỉ dùng `[code]` access (Get) → không cần `has`.
 
 ---
 

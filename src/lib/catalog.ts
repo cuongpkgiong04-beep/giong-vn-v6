@@ -145,6 +145,12 @@ export const CENTERS = new Proxy([] as { code: string; name: string; short: stri
     if (typeof prop === "string" && !Number.isNaN(Number(prop))) return ctrs[Number(prop)];
     return (ctrs as any)[prop];
   },
+  // Array.prototype.filter/reduce/every... use HasProperty on each index.
+  // Without a 'has' trap the proxy falls back to the EMPTY array target,
+  // so every index looks like a hole → filter() returns [] (dropdown trống).
+  has(_, prop) {
+    return prop in useAppStore.getState().centers;
+  },
 });
 
 /** Center code → display name. */
