@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 64 — Lightbox phóng to ảnh chấm công)*
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 65 — Lightbox ảnh Check-in + đổi nền trắng)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,31 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.3.3`
-- `DEFAULT_VERSION` (app-side): `0.3.3` (`src/components/app-shell.tsx`)
+- `package.json`: `0.3.4`
+- `DEFAULT_VERSION` (app-side): `0.3.4` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 65: Lightbox ảnh Check-in + đổi nền trắng (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(check-in): click ảnh trong dialog Chi tiết Check-in mở lightbox toàn màn hình + đổi nền đen thành trắng |
+| (mới) | chore: tăng version 0.3.3 → 0.3.4 |
+
+> **Yêu cầu của Đại ca (2 điểm):**
+> 1. Ảnh trong dialog Chi tiết Check-in không phóng to được → thêm lightbox giống Chấm công (GĐ 64).
+> 2. Nền đen bao quanh ảnh dọc → đổi thành nền TRẮNG.
+>
+> **Fix (surgical trong `src/routes/check-in.tsx` — KHÔNG đụng file khác):**
+> 1. State `lightboxPhoto` + ảnh dialog thêm `cursor-zoom-in`/`hover:opacity-90`/`title`/`onClick`.
+> 2. Khung ảnh dialog: `bg-black p-2` → **`bg-white p-2`**.
+> 3. Overlay lightbox: nền **`bg-white/95`** (khác Chấm công dùng đen) — nút × nền `bg-black/10
+>    text-ink` phù hợp nền sáng. z-index 60 > Radix Dialog z-50.
+> 4. Import thêm `X` từ lucide-react.
+>
+> **LƯU Ý:** Chấm công (GĐ 64) vẫn giữ lightbox nền ĐEN — nếu Đại ca muốn đồng bộ trắng cả
+> hai trang, chỉ cần đổi `bg-black/90` → `bg-white/95` + style nút × trong cham-cong.tsx.
 
 ---
 
@@ -1963,4 +1986,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.3`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.4`.

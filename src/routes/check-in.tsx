@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
+import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -56,6 +56,8 @@ function CheckInPage() {
   const [locationStatus, setLocationStatus] = useState("Đang xác định vị trí...");
   const [detailRecord, setDetailRecord] = useState<typeof checkins[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  // Lightbox xem ảnh check-in toàn màn hình (click ảnh trong dialog chi tiết để mở)
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const submittingRef = useRef(false);
@@ -765,8 +767,14 @@ function CheckInPage() {
                   <p className="mt-1 text-sm leading-5 text-ink">{cleanAddress(detailRecord.address || detailRecord.gps || "—")}</p>
                 </div>
                 {detailRecord.photo && (
-                  <div className="rounded-xl border border-line bg-black p-2">
-                    <img src={detailRecord.photo} alt="Ảnh checkin" className="h-40 w-auto mx-auto rounded object-contain" />
+                  <div className="rounded-xl border border-line bg-white p-2">
+                    <img
+                      src={detailRecord.photo}
+                      alt="Ảnh checkin"
+                      className="h-40 w-auto mx-auto cursor-zoom-in rounded object-contain transition hover:opacity-90"
+                      title="Bấm để phóng to"
+                      onClick={() => setLightboxPhoto(detailRecord.photo!)}
+                    />
                   </div>
                 )}
                 {detailRecord.note && (
@@ -792,6 +800,29 @@ function CheckInPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Lightbox: xem ảnh check-in toàn màn hình — bấm ảnh hoặc nền để đóng */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-[60] flex cursor-zoom-out items-center justify-center bg-white/95 p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <img
+            src={lightboxPhoto}
+            alt="Ảnh checkin (phóng to)"
+            className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            aria-label="Đóng"
+            className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-black/10 text-ink transition hover:bg-black/20"
+            onClick={() => setLightboxPhoto(null)}
+          >
+            <X className="size-6" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
