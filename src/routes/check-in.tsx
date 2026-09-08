@@ -554,7 +554,14 @@ function CheckInPage() {
               const related = findEmployeeByLooseText(a.name);
               const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
               return (
-                <tr key={a.id} className="border-t border-line">
+                <tr
+                  key={a.id}
+                  className="cursor-pointer border-t border-line transition hover:bg-surface-2/50"
+                  onClick={() => {
+                    setDetailRecord(a);
+                    setIsDetailOpen(true);
+                  }}
+                >
                   <td className="px-4 py-3 tabular">{idx + 1}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-ink">{a.name}</p>

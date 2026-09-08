@@ -5,6 +5,7 @@ import { ClientOnly } from "@/components/client-only";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/lib/store";
 import { findEmployeeByLooseText, isAdminRole, CENTERS } from "@/lib/catalog";
@@ -61,6 +62,7 @@ function parseGps(gps: string): [number, number] | null {
 /** Leaflet map component with satellite/street toggle */
 function CheckInMap({
   points,
+  onSelect,
 }: {
   points: Array<{
     name: string;
@@ -70,6 +72,14 @@ function CheckInMap({
     time: string;
     centerCode: string;
   }>;
+  onSelect?: (p: {
+    name: string;
+    address: string;
+    gps: string;
+    date: string;
+    time: string;
+    centerCode: string;
+  }) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -132,6 +142,7 @@ function CheckInMap({
             ${related?.title ? `<p style="font-size:11px;color:#999;margin:2px 0 0 0">${related.title}</p>` : ""}
           </div>`,
         );
+        marker.on("click", () => onSelect?.(p));
         markers.push(marker);
       }
 
@@ -240,6 +251,8 @@ function BangCheckInReport() {
   const [center, setCenter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [detailRow, setDetailRow] = useState<ReportRow | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const reportRows = useMemo(() => {
     const filtered = checkins.filter((c) => {
@@ -435,7 +448,18 @@ function BangCheckInReport() {
       {mapPoints.length > 0 && (
         <div className="mb-6">
           <ClientOnly>
-            <CheckInMap points={mapPoints} />
+            <CheckInMap
+              points={mapPoints}
+              onSelect={(p) => {
+                const row = reportRows.find(
+                  (r) => r.gps === p.gps && r.name === p.name && r.date === p.date && r.time === p.time,
+                );
+                if (row) {
+                  setDetailRow(row);
+                  setIsDetailOpen(true);
+                }
+              }}
+            />
           </ClientOnly>
         </div>
       )}
@@ -467,7 +491,14 @@ function BangCheckInReport() {
               </tr>
             ) : (
               reportRows.map((r) => (
-                <tr key={`${r.name}-${r.date}-${r.time}`} className="hover:bg-surface-2/50">
+                <tr
+                  key={`${r.name}-${r.date}-${r.time}`}
+                  className="cursor-pointer hover:bg-surface-2/50"
+                  onClick={() => {
+                    setDetailRow(r);
+                    setIsDetailOpen(true);
+                  }}
+                >
                   <td className="px-4 py-3 tabular">{r.stt}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-ink">{r.name}</p>
@@ -520,6 +551,55 @@ function BangCheckInReport() {
           )}
         </table>
       </div>
+
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="max-w-lg">
+          {detailRow && (
+            <>
+              <DialogTitle>Chi tiết Check-in</DialogTitle>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Nhân sự</p>
+                  <p className="mt-1 text-base font-semibold text-ink">{detailRow.name}</p>
+                  {detailRow.title && <p className="text-xs text-muted">{detailRow.title}</p>}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-line bg-surface-2 p-3">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Trung tâm</p>
+                    <p className="mt-1 text-base font-semibold text-ink">
+                      {CENTERS.find((c) => c.code === detailRow.center)?.short ?? detailRow.center}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-line bg-surface-2 p-3">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Thời gian</p>
+                    <p className="mt-1 text-base font-semibold text-ink">{detailRow.time}</p>
+                    <p className="text-xs text-muted">{formatDate(detailRow.date)} · {detailRow.weekday}</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">GPS</p>
+                  <p className="mt-1 text-sm font-medium text-ink">{detailRow.gps || "—"}</p>
+                </div>
+                <div className="rounded-xl border border-line bg-surface-2 p-3">
+                  <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Địa điểm</p>
+                  <p className="mt-1 text-sm leading-5 text-ink">{cleanAddress(detailRow.address)}</p>
+                </div>
+                {detailRow.photo && (
+                  <div className="rounded-xl border border-line bg-black p-2">
+                    <img src={detailRow.photo} alt="Ảnh check-in" className="h-40 w-auto mx-auto rounded object-contain" />
+                  </div>
+                )}
+                {detailRow.note && detailRow.note !== "—" && (
+                  <div className="rounded-xl border border-line bg-surface-2 p-3">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Ghi chú</p>
+                    <p className="mt-1 text-sm text-ink">{detailRow.note}</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

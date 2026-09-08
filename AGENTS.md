@@ -1012,7 +1012,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 49 — Fix bản đồ Báo cáo Check-in: load Leaflet từ CDN)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 50 — Click dòng/marker xem chi tiết Check-in)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1502,9 +1502,36 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ---
 
+### Giai đoạn 50: Click dòng/marker xem chi tiết Check-in (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(check-in): click dòng bảng mở dialog chi tiết (dialog có sẵn trước đây không có gì gọi được) |
+| (mới) | feat(bang-check-in): thêm dialog chi tiết + click dòng bảng + click marker bản đồ mở chi tiết |
+| (mới) | chore: tăng version 0.1.9 → 0.1.10 |
+
+> **Thay đổi theo yêu cầu Đại ca:** Ấn vào dòng chi tiết trong Check-in và Báo cáo Check-in,
+> và Ấn vào vị trí trên bản đồ của Báo cáo Check-in → hiện chi tiết dữ liệu đó.
+>
+> **Chi tiết 3 điểm sửa:**
+> 1. `check-in.tsx`: thêm `onClick` vào `<tr>` → mở dialog "Chi tiết Check-in" **có sẵn từ trước**
+>    (state `detailRecord`/`isDetailOpen` đã tồn tại nhưng không có gì gọi được — dead UI).
+> 2. `bang-check-in.tsx`: thêm state `detailRow`/`isDetailOpen` + dialog chi tiết mới
+>    (Nhân sự + chức danh, Trung tâm, Thời gian, GPS, Địa điểm, Ảnh, Ghi chú) + `onClick` dòng bảng.
+> 3. `bang-check-in.tsx`: `CheckInMap` nhận prop `onSelect`; `marker.on("click", ...)` →
+>    vừa hiện popup nhỏ (giữ nguyên), vừa mở dialog chi tiết. Tìm row theo
+>    `gps + name + date + time` khớp giữa mapPoints và reportRows.
+>
+> **LESSON LEARNED — Dialog có sẵn nhưng dead UI (2026-09-08):**
+> Trang Check-in đã có dialog chi tiết từ Giai đoạn 20 nhưng sau các lần refactor bảng,
+> không còn gì mở được nó. Khi thêm tính năng click-to-view, kiểm tra trước xem dialog
+> đã tồn tại chưa để tái sử dụng thay vì viết mới trùng lặp.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.9`
-- `DEFAULT_VERSION` (app-side): `0.1.9` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.10`
+- `DEFAULT_VERSION` (app-side): `0.1.10` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.9`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.10`.
