@@ -19,6 +19,31 @@ function cleanAddress(addr: string): string {
   return cleaned.trim();
 }
 
+/**
+ * Load Leaflet from CDN at runtime.
+ * `import("leaflet")` fails on production because vite.config.ts marks leaflet
+ * as external — the browser cannot resolve the bare specifier. Loading via
+ * <script> tag avoids the bundler entirely.
+ */
+let leafletPromise: Promise<any> | null = null;
+function loadLeaflet(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
+  if ((window as any).L) return Promise.resolve((window as any).L);
+  if (!leafletPromise) {
+    leafletPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = () => resolve((window as any).L);
+      script.onerror = () => {
+        leafletPromise = null;
+        reject(new Error("Không tải được Leaflet từ CDN"));
+      };
+      document.head.appendChild(script);
+    });
+  }
+  return leafletPromise;
+}
+
 export const Route = createFileRoute("/bao-cao/bang-check-in")({
   component: BangCheckInReport,
 });
@@ -53,9 +78,8 @@ function CheckInMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    // Fix Leaflet default marker icon — dynamic import avoids SSR module specifier error
-    import("leaflet").then(LMod => {
-      const L = LMod.default;
+    // Fix Leaflet default marker icon + init map — load Leaflet from CDN
+    loadLeaflet().then(L => {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl:
@@ -64,10 +88,7 @@ function CheckInMap({
         shadowUrl:
           "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
-    }).catch(err => console.warn("[bang-check-in] leaflet marker init failed", err));
-    
-    import("leaflet").then(LMod => {
-      const L = LMod.default;
+
       const map = L.map(containerRef.current, {
         center: [21.0285, 105.8542],
         zoom: 12,
@@ -131,13 +152,12 @@ function CheckInMap({
     };
   }, [points]);
 
-  // Handle layer toggle — lazy leaflet to avoid SSR module specifier error
+  // Handle layer toggle — Leaflet loaded from CDN
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    import("leaflet").then(LMod => {
-      const L = LMod.default;
+    loadLeaflet().then(L => {
       const streetMap = (map as any)._streetLayer;
       const satelliteMap = (map as any)._satelliteLayer;
 

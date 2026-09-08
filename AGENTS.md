@@ -1012,7 +1012,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 48 — Check-in: tiêu đề bảng giống Báo cáo Check-in)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 49 — Fix bản đồ Báo cáo Check-in: load Leaflet từ CDN)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1472,9 +1472,39 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ---
 
+### Giai đoạn 49: Fix bản đồ Báo cáo Check-in — load Leaflet từ CDN (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(bang-check-in): load Leaflet từ CDN thay vì import("leaflet") — bản đồ hoạt động trên production |
+| (mới) | chore: tăng version 0.1.8 → 0.1.9 |
+
+> **LESSON LEARNED — ROOT CAUSE bản đồ không hiển thị bấy lâu nay (2026-09-08):**
+> Debug bằng Playwright trên production: console browser lặp lỗi
+> `TypeError: Failed to resolve module specifier 'leaflet'` (bị nuốt vào console.warn nên không thấy).
+> **Nguyên nhân:** `vite.config.ts` đánh dấu `external: ["leaflet", "leaflet/dist/leaflet.css"]`
+> (thêm ở Giai đoạn 25 để fix build fail) → bundle client giữ nguyên bare specifier
+> `import("leaflet")` → **browser không resolve được bare module** → promise reject →
+> `.catch()` chỉ warn → bản đồ trắng, 0 tile, 0 marker.
+> **Đây chính là lý do tile "không load" từ trước tới nay — toàn bộ map chưa từng chạy trên production.**
+>
+> **Fix (theo lựa chọn của Đại ca — cách 1: CDN):**
+> Thêm hàm `loadLeaflet()` trong `bang-check-in.tsx` — chèn `<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">`
+> vào `<head>` lúc runtime, cache promise (1 lần load). Thay 3 chỗ `import("leaflet")`
+> bằng `loadLeaflet()`. CSS Leaflet đã load từ CDN trong `__root.tsx` sẵn — không đụng.
+> KHÔNG đụng `vite.config.ts` → không rủi ro tái diễn lỗi build Giai đoạn 25.
+>
+> **LƯU Ý:** `gps-map-inner.tsx` (dùng `import L from "leaflet"` tĩnh) hiện KHÔNG được import
+> ở đâu → nếu sau này muốn dùng lại, phải áp dụng cùng pattern CDN hoặc sửa external.
+>
+> **Cách debug tương tự khi cần:** script `scripts/test-map-debug.mjs` (login → mở trang →
+> đếm `.leaflet-container`/tiles/markers + full console logs).
+
+---
+
 ### Version
 
-- `package.json`: `0.1.8`
-- `DEFAULT_VERSION` (app-side): `0.1.8` (`src/components/app-shell.tsx`)
+- `package.json`: `0.1.9`
+- `DEFAULT_VERSION` (app-side): `0.1.9` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.8`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.9`.
