@@ -1557,8 +1557,35 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.5`
-- `DEFAULT_VERSION` (app-side): `0.2.5` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.6`
+- `DEFAULT_VERSION` (app-side): `0.2.6` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 57: Dropdown Đơn vị trong form Nhân sự (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(nhan-su): ô "Đơn vị (center)" đổi từ Input tự do sang dropdown chọn từ danh sách trung tâm |
+| (mới) | chore: tăng version 0.2.5 → 0.2.6 |
+
+> **Yêu cầu của Đại ca:** Form Thêm/Sửa nhân sự có ô "Đơn vị (center)" là ô nhập tự do —
+> gõ sai mã center sẽ gây lỗi FK khi lưu. Chuyển sang dropdown chọn từ danh sách trung tâm.
+>
+> **Fix (surgical trong `src/components/employee/employee-form.tsx`):**
+> 1. Import `useAppStore` — lấy `centers` bằng reactive selector `useAppStore((s) => s.centers)`
+>    (không dùng `CENTERS` Proxy — tránh lại lesson Giai đoạn 54 về trap `has`/`filter`).
+> 2. Thay `<Input value={form.center}>` bằng `<select>` — mỗi option hiển thị
+>    `MÃ — Tên` (VD: `VP — Văn phòng`), value vẫn là **mã center** (`c.code`),
+>    sắp xếp theo mã (`localeCompare`).
+> 3. Style dropdown giống hệt select Giới tính/Vai trò trong cùng form
+>    (`h-10 w-full rounded-md border border-line bg-surface px-3 text-sm`).
+>
+> **Giá trị không đổi:** Form vẫn gửi `center` = mã (VD `VP`) → server `insertEmployee`/
+> `updateEmployee` resolve mã → `center_id` UUID như Giai đoạn 52. Không đụng logic server.
+>
+> **LƯU Ý:** Form dùng chung cho Thêm + Sửa — dropdown tự chọn đúng đơn vị hiện tại khi sửa.
+> Danh sách trung tâm reactive từ store — thêm trung tâm mới ở module Trung tâm → dropdown cập nhật.
 
 ---
 
@@ -1710,4 +1737,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.0`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.6`.

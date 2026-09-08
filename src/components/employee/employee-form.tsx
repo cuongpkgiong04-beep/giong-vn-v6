@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAppStore } from "@/lib/store";
 import type { Employee } from "@/lib/types";
 import { insertEmployee, updateEmployee, resetEmployeePassword } from "@/routes/api/employee-crud";
 
@@ -26,6 +27,7 @@ export function EmployeeForm({ open, editing, onClose, onSaved }: Props) {
   const [form, setForm] = useState<Employee>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [pwd, setPwd] = useState("");
+  const centers = useAppStore((s) => s.centers);
 
   // Reset form when editing changes (proper useEffect, not in render body)
   useEffect(() => {
@@ -84,7 +86,7 @@ export function EmployeeForm({ open, editing, onClose, onSaved }: Props) {
           <div><Label>Giới tính</Label><select value={form.gender} onChange={(e) => set("gender", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"><option>Nam</option><option>Nữ</option></select></div>
           <div><Label>Chức danh</Label><Input value={form.title} onChange={(e) => set("title", e.target.value)} className="mt-1" /></div>
           <div><Label>Bộ phận</Label><Input value={form.dept} onChange={(e) => set("dept", e.target.value)} className="mt-1" /></div>
-          <div><Label>Đơn vị (center)</Label><Input value={form.center} onChange={(e) => set("center", e.target.value)} className="mt-1" /></div>
+          <div><Label>Đơn vị (center)</Label><select value={form.center} onChange={(e) => set("center", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm">{[...centers].sort((a, b) => a.code.localeCompare(b.code)).map((c) => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}</select></div>
           <div><Label>Vai trò</Label><select value={form.role} onChange={(e) => set("role", e.target.value)} className="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"><option>User</option><option>Admin</option><option>SuperAdmin</option></select></div>
         </div>
 
