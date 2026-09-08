@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 63 — Fix ROOT CAUSE khe hở Chấm công: ClientOnly nuốt callback của ref)*
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 64 — Lightbox phóng to ảnh chấm công)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,37 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.3.2`
-- `DEFAULT_VERSION` (app-side): `0.3.2` (`src/components/app-shell.tsx`)
+- `package.json`: `0.3.3`
+- `DEFAULT_VERSION` (app-side): `0.3.3` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 64: Lightbox phóng to ảnh chấm công (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(cham-cong): click ảnh trong dialog Chi tiết chấm công mở lightbox toàn màn hình |
+| (mới) | chore: tăng version 0.3.2 → 0.3.3 |
+
+> **Yêu cầu của Đại ca:** Ảnh trong dialog Chi tiết chấm công (thumnail maxHeight 300px)
+> không phóng to được → nhìn không rõ dấu thời gian + địa chỉ đóng trên ảnh. Cho phóng to
+> bằng khung hình của dialog chi tiết.
+>
+> **Fix (surgical trong `src/routes/cham-cong.tsx` — KHÔNG đụng file khác):**
+> 1. State `lightboxPhoto: string | null` — giữ URL ảnh đang xem full màn hình.
+> 2. Ảnh trong dialog thêm `cursor-zoom-in`, `hover:opacity-90`, `title="Bấm để phóng to"`,
+>    `onClick={() => setLightboxPhoto(detailRecord.photo!)}`.
+> 3. Overlay lightbox `fixed inset-0 z-[60] bg-black/90` — ảnh `max-h-full max-w-full
+>    object-contain`; bấm nền HOẶC nút × (icon X từ lucide) để đóng; `stopPropagation`
+>    trên ảnh để bấm nhầm vào ảnh không đóng lightbox.
+> 4. z-index 60 > dialog (Radix mặc định 50) → lightbox phủ trên dialog chi tiết.
+>
+> **LƯU Ý:** Ảnh gốc (thumnail 300px) giữ nguyên — chỉ thêm khả năng phóng to.
+> Overlay đặt TRONG ClientOnly (cuối JSX, sau Dialog chi tiết) — không phụ thuộc SSR.
+>
+> **LESSON LEARNED — z-index lightbox vs Radix Dialog (2026-09-09):**
+> Radix Dialog dùng z-50 mặc định. Overlay mở TỪ trong dialog cần z-index cao hơn (z-[60])
+> để phủ được. Nếu dùng portal riêng của Radix, kiểm tra kỹ thứ tự chồng lớp giữa các layer.
 
 ---
 
@@ -1934,4 +1963,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.2`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.3`.

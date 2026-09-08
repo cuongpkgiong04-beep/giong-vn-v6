@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2 } from "lucide-react";
+import { Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -69,6 +69,8 @@ function ChamCongPage() {
   const [locationStatus, setLocationStatus] = useState("Đang xác định vị trí...");
   const [detailRecord, setDetailRecord] = useState<typeof attendance[number] | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  // Lightbox xem ảnh chấm công toàn màn hình (click ảnh trong dialog chi tiết để mở)
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   // Chỉ cho phép xác nhận 1 lần — ref chặn mọi double-tap trước khi re-render
@@ -1176,7 +1178,14 @@ function ChamCongPage() {
             <div className="mt-4 space-y-4">
               {detailRecord.photo && (
                 <div className="overflow-hidden rounded-xl border border-line">
-                  <img src={detailRecord.photo} alt="Ảnh chấm công" className="w-full object-contain" style={{ maxHeight: 300 }} />
+                  <img
+                    src={detailRecord.photo}
+                    alt="Ảnh chấm công"
+                    className="w-full cursor-zoom-in object-contain transition hover:opacity-90"
+                    style={{ maxHeight: 300 }}
+                    title="Bấm để phóng to"
+                    onClick={() => setLightboxPhoto(detailRecord.photo!)}
+                  />
                 </div>
               )}
 
@@ -1230,6 +1239,29 @@ function ChamCongPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Lightbox: xem ảnh chấm công toàn màn hình — bấm ảnh hoặc nền để đóng */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-[60] flex cursor-zoom-out items-center justify-center bg-black/90 p-4"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <img
+            src={lightboxPhoto}
+            alt="Ảnh chấm công (phóng to)"
+            className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            aria-label="Đóng"
+            className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            onClick={() => setLightboxPhoto(null)}
+          >
+            <X className="size-6" />
+          </button>
+        </div>
+      )}
 
       </div>
     </ClientOnly>
