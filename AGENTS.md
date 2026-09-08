@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 55 — Ghim phần đầu trang Chấm công trên desktop)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 56 — Ghim thêm tiêu đề bảng Chấm công trên desktop)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,42 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.4`
-- `DEFAULT_VERSION` (app-side): `0.2.4` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.5`
+- `DEFAULT_VERSION` (app-side): `0.2.5` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 56: Ghim thêm tiêu đề bảng Chấm công trên desktop (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(cham-cong): thead sticky — tiêu đề bảng (Nhân sự/Trụ sở/...) đứng yên ngay dưới bộ lọc khi cuộn (desktop) |
+| (mới) | chore: tăng version 0.2.4 → 0.2.5 |
+
+> **Yêu cầu của Đại ca:** Giữ cả phần TIÊU ĐỀ BẢNG (hàng Nhân sự / Trụ sở / Trạng thái /
+> Ngày / Giờ / Địa điểm) khi cuộn danh sách chấm công trên desktop (bổ sung cho Giai đoạn 55).
+>
+> **Fix (surgical trong `src/routes/cham-cong.tsx`):**
+> 1. `thead` bảng chính thêm `lg:sticky lg:top-[calc(4rem+var(--cc-sticky-h,300px))] lg:z-[5]`:
+>    - `4rem` = chiều cao header tổng của app (h-16).
+>    - `--cc-sticky-h` = chiều cao khối ghim phía trên (tiêu đề + cards trung tâm + bộ lọc).
+>    - thead luôn nằm NGAY SÁT dưới bộ lọc, không hở khe, không bị đè.
+> 2. **Đo chiều cao khối ghim ĐỘNG bằng ResizeObserver** (useEffect + ref `stickyHeaderRef`):
+>    cards trung tâm cao/thấp thay đổi theo dữ liệu, offset tĩnh sẽ hỏng → set
+>    `--cc-sticky-h` trên chính container, thead đọc qua `var()`.
+> 3. **Mở overflow ở desktop:** Card bảng có `overflow-hidden` + div bảng có
+>    `overflow-x-auto` → ancestor có overflow KHÁC visible sẽ vô hiệu hóa sticky của thead.
+>    Fix: Card thêm `lg:overflow-visible`, div bảng thêm `lg:overflow-x-visible`.
+>    Mobile giữ nguyên cuộn ngang như cũ.
+>
+> **LESSON LEARNED — Sticky table header cần 2 điều kiện (2026-09-08):**
+> 1. **Tất cả ancestor** từ thead đến scroll container phải `overflow: visible` —
+>    bất kỳ `overflow-hidden/auto` nào cũng phá sticky (thường gặp nhất với bảng trong Card).
+> 2. **`top` phải tính đúng** = header app + tổng chiều cao các khối sticky phía trên —
+>    nếu các khối trên cao động thì đo bằng ResizeObserver + CSS var, đừng hardcode.
+>
+> **LƯU Ý:** Mobile không đổi (`lg:` prefix). Z-index thead (5) < z-index khối header (10)
+> < z-index header app (20) → thứ tự chồng lớp đúng khi cuộn.
 
 ---
 

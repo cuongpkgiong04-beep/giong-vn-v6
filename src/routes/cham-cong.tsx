@@ -141,6 +141,18 @@ function ChamCongPage() {
   // Chỉ admin mới được quyền xóa lượt chấm công
   const canDeleteRecord = detailRecord ? canViewAll : false;
 
+  // Đo chiều cao khối header ghim (desktop) để thead bảng sticky ngay bên dưới nó
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stickyHeaderRef.current;
+    if (!el) return;
+    const update = () => el.style.setProperty("--cc-sticky-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const visibleAttendance = useMemo(() => {
     return attendance.filter((record) => {
       // Admin/SuperAdmin can see all
@@ -689,7 +701,7 @@ function ChamCongPage() {
     <ClientOnly>
       <div>
         {/* Desktop (lg+): ghim phần đầu (tiêu đề + cards trung tâm + bộ lọc) khi cuộn bảng. Mobile: cuộn bình thường. */}
-        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
+        <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
         <PageHeader
         eyebrow="Vận hành"
         title="Chấm công toàn hệ thống"
@@ -959,10 +971,10 @@ function ChamCongPage() {
         </Card>
       ) : null}
 
-      <Card className="overflow-hidden p-0">
-        <div className="overflow-x-auto">
+      <Card className="overflow-hidden p-0 lg:overflow-visible">
+        <div className="overflow-x-auto lg:overflow-x-visible">
           <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-surface-2 text-xs font-medium tracking-wide text-muted uppercase">
+            <thead className="bg-surface-2 text-xs font-medium tracking-wide text-muted uppercase lg:sticky lg:top-[calc(4rem+var(--cc-sticky-h,300px))] lg:z-[5]">
               <tr>
                 <th className="px-4 py-3 font-medium">Nhân sự</th>
                 <th className="px-4 py-3 font-medium">Trụ sở</th>
