@@ -146,7 +146,12 @@ function ChamCongPage() {
   useEffect(() => {
     const el = stickyHeaderRef.current;
     if (!el) return;
-    const update = () => el.style.setProperty("--cc-sticky-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    const update = () => {
+      const h = `${Math.ceil(el.getBoundingClientRect().height)}px`;
+      el.style.setProperty("--cc-sticky-h", h);
+      // Đặt trên cha chung để thead (nằm NGOÀI khối ghim, trong Card riêng) cũng đọc được var
+      el.parentElement?.style.setProperty("--cc-sticky-h", h);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -701,7 +706,7 @@ function ChamCongPage() {
     <ClientOnly>
       <div>
         {/* Desktop (lg+): ghim phần đầu (tiêu đề + cards trung tâm + bộ lọc) khi cuộn bảng. Mobile: cuộn bình thường. */}
-        <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
+        <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pb-2">
         <PageHeader
         eyebrow="Vận hành"
         title="Chấm công toàn hệ thống"

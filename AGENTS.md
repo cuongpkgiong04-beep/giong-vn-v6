@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 61 — Tinh chỉnh khung cố định Nhiệm vụ: sát lệnh + 1 hàng bộ lọc)*
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 62 — Tinh chỉnh khung cố định Chấm công: sát lệnh + hết hở giữa 2 khối)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,42 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.3.0`
-- `DEFAULT_VERSION` (app-side): `0.3.0` (`src/components/app-shell.tsx`)
+- `package.json`: `0.3.1`
+- `DEFAULT_VERSION` (app-side): `0.3.1` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 62: Tinh chỉnh khung cố định Chấm công — sát lệnh + hết hở giữa 2 khối (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(cham-cong): bỏ padding trên khối ghim + đặt --cc-sticky-h trên cha chung — thead đọc đúng chiều cao, hết hở giữa 2 khối khi cuộn |
+| (mới) | chore: tăng version 0.3.0 → 0.3.1 |
+
+> **Yêu cầu của Đại ca (2 điểm):**
+> 1. Phía trên cùng khung cố định còn khoảng trống → kéo sát lên.
+> 2. Khối ghim (tiêu đề + cards + bộ lọc) và thead bảng không đồng nhất — khi cuộn hở
+>    một khoảng ở giữa.
+>
+> **Nguyên nhân điểm 2:** `--cc-sticky-h` chỉ đặt trên khối ghim; thead nằm trong Card riêng
+> NGOÀI khối ghim → không đọc được var → fallback 300px < chiều cao thật (~330px) →
+> thead ghim quá cao → hở khe giữa 2 khối. Cùng gốc lỗi với GĐ 58 (Check-in) và GĐ 60
+> (Nhiệm vụ) — Chấm công là trang ĐẦU TIÊN làm pattern sticky nên chưa có fix này.
+>
+> **Fix (surgical trong `src/routes/cham-cong.tsx` — KHÔNG đụng file khác):**
+> 1. Khối ghim bỏ `lg:pt-2` + giảm `lg:pb-3` → `lg:pb-2` (như Nhiệm vụ GĐ 61).
+> 2. ResizeObserver đặt var trên cả khối ghim VÀ `el.parentElement` (cha chung) —
+>    giống Check-in/Nhiệm vụ. Từ giờ cả 3 trang dùng chung 1 pattern thống nhất.
+>
+> **Trạng thái sticky 3 trang (đã đồng nhất):**
+> | Trang | Khối ghim | var | Đặt var trên cha chung |
+> |---|---|---|---|
+> | cham-cong | top-16, pb-2 | --cc-sticky-h | ✅ (GĐ 62) |
+> | check-in | top-16, pt-2/pb-3 | --ci-sticky-h | ✅ (GĐ 58) |
+> | nhiem-vu | top-16, pb-2 | --nv-sticky-h | ✅ (GĐ 60) |
+>
+> **LƯU Ý:** Check-in vẫn còn `lg:pt-2` trong khối ghim (GĐ 58 chưa bỏ) — nếu Đại ca
+> muốn Check-in cũng sát lệnh như Chấm công/Nhiệm vụ, chỉ cần bỏ `lg:pt-2` ở check-in.tsx.
 
 ---
 
@@ -1864,4 +1898,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.0`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.1`.
