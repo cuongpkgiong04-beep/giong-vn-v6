@@ -46,7 +46,6 @@ function CheckInPage() {
   const currentEmployee = useAppStore((s) => s.employees.find((e) => e.id === s.currentUserId) ?? null);
   const currentName = useAppStore((s) => s.currentName());
   const [q, setQ] = useState("");
-  const [kind, setKind] = useState<"all" | "in" | "out">("all");
   const [center, setCenter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -133,8 +132,6 @@ function CheckInPage() {
       const related = findEmployeeByLooseText(a.name);
       const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
       if (center !== "all" && workplace !== center) return false;
-      if (kind === "in" && !a.status.includes("vào")) return false;
-      if (kind === "out" && !a.status.includes("tan")) return false;
       if (dateFrom && a.date < dateFrom) return false;
       if (dateTo && a.date > dateTo) return false;
       if (q.trim()) {
@@ -146,7 +143,7 @@ function CheckInPage() {
       }
       return true;
     });
-  }, [center, currentEmployee, kind, q, visibleCheckins, dateFrom, dateTo]);
+  }, [center, currentEmployee, q, visibleCheckins, dateFrom, dateTo]);
 
   function formatPunchTime(date = new Date()) {
     return date.toLocaleTimeString("en-US", {
@@ -499,41 +496,34 @@ function CheckInPage() {
       } />
 
       <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={center}
             onChange={(e) => setCenter(e.target.value)}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
+            className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:w-56"
           >
             <option value="all">Tất cả trung tâm</option>
             {CENTERS.map(c => (
               <option key={c.code} value={c.code}>{c.short} ({c.code})</option>
             ))}
           </select>
-          <span className="text-xs text-faint">—</span>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
-          />
-          <span className="text-xs text-faint">—</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
-          />
-          <span className="text-xs text-faint ml-1">|</span>
-          <select
-            value={kind}
-            onChange={(e) => setKind(e.target.value as any)}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
-          >
-            <option value="all">Tất cả</option>
-            <option value="in">Chỉ vào ca</option>
-            <option value="out">Chỉ tan ca</option>
-          </select>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-9 w-[140px] rounded-md px-2 text-xs"
+              title="Từ ngày"
+            />
+            <span className="text-xs text-muted">—</span>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-9 w-[140px] rounded-md px-2 text-xs"
+              title="Đến ngày"
+            />
+          </div>
         </div>
 
         <table className="w-full mt-3 border-collapse text-sm">

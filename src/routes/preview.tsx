@@ -129,7 +129,7 @@ function PreviewPage() {
           </div>
         </div>
 
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-wrap gap-6 items-start justify-center">
           {/* Phone Mockup */}
           <div className="flex-shrink-0">
             <div className="relative">

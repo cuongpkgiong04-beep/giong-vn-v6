@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 52 — Fix lỗi thêm mới Nhân sự center_id NOT NULL)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 53 — Bộ lọc Check-in mobile + căn giữa Mobile Preview)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,33 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.1`
-- `DEFAULT_VERSION` (app-side): `0.2.1` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.2`
+- `DEFAULT_VERSION` (app-side): `0.2.2` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 53: Bộ lọc Check-in mobile + căn giữa Mobile Preview (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(check-in): bộ lọc mobile giống Chấm công — date range một dòng ngang + bỏ dropdown "Tất cả" |
+| (mới) | fix(preview): căn giữa toàn bộ giao diện Mobile Preview (justify-center + flex-wrap) |
+| (mới) | chore: tăng version 0.2.1 → 0.2.2 |
+
+> **LESSON LEARNED — Bộ lọc Check-in mobile (2026-09-08):**
+> Trang Check-in (bản deploy) hiển thị bộ lọc bị xếp dọc: date from / date to trên 2 dòng
+> riêng + còn dropdown "Tất cả" (loại vào/tan) ở dưới. Đại ca muốn giống trang Chấm công:
+> - **Date range trên một dòng ngang:** bọc 2 input date + dấu "—" trong
+>   `<div className="flex items-center gap-1.5">` (giống `cham-cong.tsx`).
+> - **Bỏ nút "Tất cả":** xóa dropdown loại vào/tan + state `kind` + logic filter `kind`
+>   trong memo `rows`. Chỉ giữ dropdown trung tâm + khoảng thời gian.
+> - File: `src/routes/check-in.tsx` (filter area ~dòng 500-521).
+>
+> **LESSON LEARNED — Căn giữa Mobile Preview (2026-09-08):**
+> Trang `/preview` có phone mockup bên trái + panel bên phải, bị canh trái.
+> **Fix:** đổi container `flex gap-6 items-start` → `flex flex-wrap gap-6 items-start justify-center`
+> để cả khung (mockup + panel) nằm giữa màn hình; `flex-wrap` tránh vỡ layout trên màn hình hẹp.
+> - File: `src/routes/preview.tsx`.
 
 ---
 
