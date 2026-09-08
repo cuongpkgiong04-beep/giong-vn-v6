@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 51 — Quy tắc tròn chục khi tăng Version)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 52 — Fix lỗi thêm mới Nhân sự center_id NOT NULL)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,7 +1557,35 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.0`
-- `DEFAULT_VERSION` (app-side): `0.2.0` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.1`
+- `DEFAULT_VERSION` (app-side): `0.2.1` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 52: Fix lỗi thêm mới Nhân sự — center_id NOT NULL (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(nhan-su): insertEmployee/updateEmployee resolve mã center → center_id (FK NOT NULL) |
+| (mới) | chore: tăng version 0.2.0 → 0.2.1 |
+
+> **LESSON LEARNED — insertEmployee thiếu center_id (2026-09-08):**
+> Khi Đại ca bấm "Thêm" nhân sự mới trong trang Nhân sự → toast đỏ:
+> `null value in column "center_id" of relation "employees" violates not-null constraint`.
+> **Nguyên nhân:** bảng `employees` có cột `center_id uuid NOT NULL` (FK tới `centers`)
+> nhưng server function `insertEmployee` trong `employee-crud.ts` chỉ INSERT cột `center`
+> (mã trung tâm, VD `'VP'`) mà KHÔNG truyền `center_id` → PostgreSQL từ chối.
+> Form `employee-form.tsx` gửi đúng `center: 'VP'` (mã), nhưng DB cần UUID của trung tâm.
+>
+> **Fix (surgical, 2 hàm trong `src/routes/api/employee-crud.ts`):**
+> 1. `insertEmployee`: tra mã `center` trong bảng `centers` để lấy `id`, rồi chèn thêm `center_id`.
+>    - Fallback về UUID trung tâm VP `33333333-3333-3333-3333-333333333331` nếu mã không tồn tại
+>      (vì `center_id` NOT NULL — không để null).
+> 2. `updateEmployee`: cập nhật luôn `center_id` khi đổi "Đơn vị" (trước đây chỉ đổi `center`,
+>    `center_id` bị lệch cũ).
+>
+> **LƯU Ý:** Cột `center` lưu mã (VD `VP`), cột `center_id` lưu UUID FK. Khi sửa form nhân sự
+> phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
+> đã truyền `center_id` đầy đủ.
 
 Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.0`.

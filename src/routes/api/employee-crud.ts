@@ -107,9 +107,14 @@ export const insertEmployee = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     const id = crypto.randomUUID();
+    // Resolve center code -> center UUID. center_id is NOT NULL FK to centers.
+    const centers = await sql<{ id: string }>`
+      SELECT id FROM centers WHERE code = ${data.center} LIMIT 1
+    `;
+    const centerId = centers[0]?.id ?? "33333333-3333-3333-3333-333333333331";
     await sql`
-      INSERT INTO employees (id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
-      VALUES (${id}, ${data.name}, ${data.username}, ${data.gender}, ${data.phone}, ${data.email}, ${data.department}, ${data.role}, ${data.title}, ${data.center}, 'active', CURRENT_DATE)
+      INSERT INTO employees (id, center_id, name, username, gender, phone, email, department, role, title, center, status, hire_date)
+      VALUES (${id}, ${centerId}, ${data.name}, ${data.username}, ${data.gender}, ${data.phone}, ${data.email}, ${data.department}, ${data.role}, ${data.title}, ${data.center}, 'active', CURRENT_DATE)
     `;
     return { id, ...data, status: "active" };
   });
@@ -119,11 +124,16 @@ export const updateEmployee = createServerFn({ method: "POST" })
   .validator((data: { id: string } & EmployeeInput) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
+    // Resolve center code -> center UUID so center_id stays consistent.
+    const centers = await sql<{ id: string }>`
+      SELECT id FROM centers WHERE code = ${data.center} LIMIT 1
+    `;
+    const centerId = centers[0]?.id ?? "33333333-3333-3333-3333-333333333331";
     await sql`
       UPDATE employees
       SET name = ${data.name}, username = ${data.username}, gender = ${data.gender},
           phone = ${data.phone}, email = ${data.email}, department = ${data.department},
-          role = ${data.role}, title = ${data.title}, center = ${data.center}
+          role = ${data.role}, title = ${data.title}, center = ${data.center}, center_id = ${centerId}
       WHERE id = ${data.id}
     `;
     return { success: true };
