@@ -688,6 +688,8 @@ function ChamCongPage() {
   return (
     <ClientOnly>
       <div>
+        {/* Desktop (lg+): ghim phần đầu (tiêu đề + cards trung tâm + bộ lọc) khi cuộn bảng. Mobile: cuộn bình thường. */}
+        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
         <PageHeader
         eyebrow="Vận hành"
         title="Chấm công toàn hệ thống"
@@ -832,6 +834,62 @@ function ChamCongPage() {
         })}
       </div>
 
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm tên nhân sự, địa chỉ, trụ sở…"
+          className="sm:max-w-sm"
+        />
+        <select
+          value={center}
+          onChange={(e) => setCenter(e.target.value)}
+          disabled={!isAdminRole(currentEmployee?.role)}
+          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:w-56 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <option value="all">Tất cả trung tâm</option>
+          {CENTERS.filter((c) => allowedCenters.includes(c.code)).map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.short} ({c.code})
+            </option>
+          ))}
+        </select>
+        <div className="flex items-center gap-1.5">
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-9 w-[140px] rounded-md px-2 text-xs"
+            title="Từ ngày"
+          />
+          <span className="text-xs text-muted">—</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-9 w-[140px] rounded-md px-2 text-xs"
+            title="Đến ngày"
+          />
+        </div>
+        <div className="flex rounded-md bg-surface p-1 shadow-[var(--shadow-card)]">
+          {([
+            ["all", "Tất cả"],
+            ["in", "Vào ca"],
+            ["out", "Tan ca"],
+          ] as const).map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setKind(k)}
+              className={`h-9 rounded-sm px-3 text-sm font-medium ${kind === k ? "bg-forest text-forest-fg" : "text-muted"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+        </div>
+
       {selectedCenter ? (
         <Card className="mb-4 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -900,61 +958,6 @@ function ChamCongPage() {
           </div>
         </Card>
       ) : null}
-
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Tìm tên nhân sự, địa chỉ, trụ sở…"
-          className="sm:max-w-sm"
-        />
-        <select
-          value={center}
-          onChange={(e) => setCenter(e.target.value)}
-          disabled={!isAdminRole(currentEmployee?.role)}
-          className="h-11 rounded-md bg-surface px-3 text-sm shadow-[var(--shadow-card)] sm:w-56 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <option value="all">Tất cả trung tâm</option>
-          {CENTERS.filter((c) => allowedCenters.includes(c.code)).map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.short} ({c.code})
-            </option>
-          ))}
-        </select>
-        <div className="flex items-center gap-1.5">
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-9 w-[140px] rounded-md px-2 text-xs"
-            title="Từ ngày"
-          />
-          <span className="text-xs text-muted">—</span>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-9 w-[140px] rounded-md px-2 text-xs"
-            title="Đến ngày"
-          />
-        </div>
-        <div className="flex rounded-md bg-surface p-1 shadow-[var(--shadow-card)]">
-          {([
-            ["all", "Tất cả"],
-            ["in", "Vào ca"],
-            ["out", "Tan ca"],
-          ] as const).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setKind(k)}
-              className={`h-9 rounded-sm px-3 text-sm font-medium ${kind === k ? "bg-forest text-forest-fg" : "text-muted"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <Card className="overflow-hidden p-0">
         <div className="overflow-x-auto">

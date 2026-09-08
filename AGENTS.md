@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 54 — Fix dropdown "Tất cả trung tâm" Chấm công trống)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 55 — Ghim phần đầu trang Chấm công trên desktop)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,39 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.3`
-- `DEFAULT_VERSION` (app-side): `0.2.3` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.4`
+- `DEFAULT_VERSION` (app-side): `0.2.4` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 55: Ghim phần đầu trang Chấm công trên desktop (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(cham-cong): sticky header desktop — tiêu đề + cards trung tâm + bộ lọc đứng yên khi cuộn bảng (mobile giữ nguyên) |
+| (mới) | chore: tăng version 0.2.3 → 0.2.4 |
+
+> **Yêu cầu của Đại ca:** Trên máy tính, khi cuộn xuống xem danh sách chấm công,
+> phần đầu trang (tiêu đề + thẻ trung tâm + bộ lọc) phải đứng yên — dữ liệu bên dưới
+> cuộn theo. KHÔNG áp dụng cho mobile.
+>
+> **Fix (surgical trong `src/routes/cham-cong.tsx`):**
+> 1. Bọc `PageHeader` + cards trung tâm + bộ lọc trong 1 container:
+>    `<div className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">`
+>    - `lg:top-16` = dưới header tổng của app (h-16).
+>    - `lg:bg-bg` + padding để nội dung cuộn phía dưới không lộ xuyên qua.
+>    - Tiền tố `lg:` → CHỈ áp dụng desktop (≥1024px), mobile cuộn bình thường.
+> 2. Dời khối bộ lọc (tìm kiếm/trung tâm/ngày/Tất cả-Vào-Tan) từ sau card chi tiết
+>    trung tâm LÊN TRƯỚC card đó — để nằm trong vùng ghim (vị trí hiển thị không đổi
+>    vì card chi tiết chỉ hiện khi chọn 1 trung tâm).
+>
+> **LƯU Ý:** Sticky chỉ hoạt động khi KHÔNG có ancestor có `overflow: hidden` —
+> root layout app không set overflow nên hoạt động bình thường.
+>
+> **LESSON LEARNED — Kiểm tra lỗi typecheck cũ trước khi sửa (2026-09-08):**
+> `cham-cong.tsx` có sẵn ~10 lỗi TS cũ (dòng 240/447/471... — video null, string→number).
+> Sau khi sửa, để chắc chắn thay đổi KHÔNG tạo lỗi mới: `git stash` → typecheck → so sánh
+> danh sách lỗi trước/sau → `git stash pop`. Hai danh sách phải GIỐNG NHAU.
 
 ---
 
