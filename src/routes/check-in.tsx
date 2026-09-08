@@ -72,6 +72,23 @@ function CheckInPage() {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
   const [isIOS] = useState(detectIOS);
 
+  // Desktop (lg+): đo chiều cao khối ghim (tiêu đề + bộ lọc) để thead bảng sticky ngay bên dưới
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = stickyHeaderRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = `${Math.ceil(el.getBoundingClientRect().height)}px`;
+      el.style.setProperty("--ci-sticky-h", h);
+      // Đặt trên cha chung để thead (nằm ngoài khối ghim) cũng đọc được var
+      el.parentElement?.style.setProperty("--ci-sticky-h", h);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     const refresh = () => setPendingRecords(getPendingSyncRecords());
     refresh();
@@ -489,6 +506,8 @@ function CheckInPage() {
 
   return (
     <div className="min-w-0 space-y-5">
+      {/* Desktop (lg+): ghim tiêu đề Check-in + bộ lọc khi cuộn bảng. Mobile: cuộn bình thường. */}
+      <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">
       <PageHeader title="Check-in" actions={
         <Button onClick={handleOpenDialog} disabled={isSubmitting || isCapturing || checkins.length > 0 && lastStatus === "Check-in vào ca"}>
           + Thêm Check-in
@@ -525,9 +544,13 @@ function CheckInPage() {
             />
           </div>
         </div>
+      </Card>
+      </div>
 
-        <table className="w-full mt-3 border-collapse text-sm">
-          <thead className="bg-surface-2 text-left text-xs uppercase tracking-wider text-muted">
+      <Card className="overflow-hidden p-0 lg:overflow-visible">
+        <div className="overflow-x-auto lg:overflow-x-visible">
+        <table className="w-full border-collapse text-sm">
+          <thead className="bg-surface-2 text-left text-xs uppercase tracking-wider text-muted lg:sticky lg:top-[calc(4rem+var(--ci-sticky-h,160px))] lg:z-[5]">
             <tr>
               <th className="px-4 py-3">STT</th>
               <th className="px-4 py-3">Nhân sự</th>
@@ -585,6 +608,7 @@ function CheckInPage() {
         ) : (
           <p className="px-3 py-2 text-xs text-faint">Hiển thị {Math.min(80, rows.length)} / {rows.length} bản ghi</p>
         )}
+        </div>
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

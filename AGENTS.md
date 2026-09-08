@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 56 — Ghim thêm tiêu đề bảng Chấm công trên desktop)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 58 — Ghim tiêu đề + bộ lọc + tiêu đề bảng Check-in trên desktop)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,43 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.6`
-- `DEFAULT_VERSION` (app-side): `0.2.6` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.7`
+- `DEFAULT_VERSION` (app-side): `0.2.7` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 58: Ghim tiêu đề + bộ lọc + tiêu đề bảng Check-in trên desktop (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(check-in): sticky header desktop — tiêu đề Check-in + bộ lọc + thead đứng yên khi cuộn bảng (mobile giữ nguyên) |
+| (mới) | chore: tăng version 0.2.6 → 0.2.7 |
+
+> **Yêu cầu của Đại ca:** Chỉ sửa trong Check-in — cố định khung tiêu đề "Check-in" + bộ lọc
+> (dropdown trung tâm + date range) + hàng tiêu đề bảng khi cuộn danh sách check-in trên desktop.
+>
+> **Fix (surgical trong `src/routes/check-in.tsx` — KHÔNG đụng file khác):**
+> 1. Bọc `PageHeader` + Card bộ lọc trong `<div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pt-2 lg:pb-3">`.
+> 2. Tách bảng ra Card riêng `overflow-hidden p-0 lg:overflow-visible` + wrapper `overflow-x-auto lg:overflow-x-visible` —
+>    ancestor overflow phải visible trên desktop thì thead sticky mới hoạt động (lesson Giai đoạn 56).
+> 3. thead thêm `lg:sticky lg:top-[calc(4rem+var(--ci-sticky-h,160px))] lg:z-[5]` — chiều cao khối ghim
+>    đo ĐỘNG bằng ResizeObserver, set CSS var `--ci-sticky-h` trên cả khối ghim VÀ parentElement của nó
+>    (thead nằm NGOÀI khối ghim nên phải đặt var trên cha chung mới đọc được).
+> 4. Table bỏ `mt-3` (đã có `space-y-5` của container) — tránh khoảng trống khi ghim.
+>
+> **LESSON LEARNED — CSS var cho sticky thead phải nằm trên cha chung (2026-09-08):**
+> Khác với cham-cong (var nằm trên khối ghim, bảng nằm cùng cấp trong 1 wrapper), check-in
+> tách bảng ra Card riêng → thead không phải hậu duệ của khối ghim → var đặt trên khối ghim
+> sẽ KHÔNG nhìn thấy từ thead. Fix: `el.parentElement?.style.setProperty(...)` đặt var trên
+> container `space-y-5` (cha chung của cả khối ghim lẫn Card bảng).
+>
+> **LESSON LEARNED — Sửa JSX lớn: git checkout revert an toàn hơn sửa tay (2026-09-08):**
+> Lần đầu áp dụng sticky đã làm hỏng cấu trúc thẻ mở/đóng Card-table (nhiều str_replace chồng
+> nhau trên cùng 1 vùng). Fix sạch nhất: `git checkout -- file` về bản HEAD rồi apply lại MỘT LẦN
+> duy nhất theo pattern đã chuẩn (copy từ cham-cong). Tránh chuỗi edit nhỏ trên cùng đoạn JSX.
+>
+> **LƯU Ý:** Mobile (<1024px) giữ nguyên cuộn như cũ (tiền tố `lg:`). Z-index: thead (5) <
+> khối ghim (10) < header app (20). Card bảng `overflow-hidden p-0` vẫn giữ cho mobile cuộn ngang.
 
 ---
 
@@ -1737,4 +1772,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.6`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.7`.
