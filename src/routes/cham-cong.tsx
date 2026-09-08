@@ -141,10 +141,15 @@ function ChamCongPage() {
   // Chỉ admin mới được quyền xóa lượt chấm công
   const canDeleteRecord = detailRecord ? canViewAll : false;
 
-  // Đo chiều cao khối header ghim (desktop) để thead bảng sticky ngay bên dưới nó
-  const stickyHeaderRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = stickyHeaderRef.current;
+  // Đo chiều cao khối header ghim (desktop) để thead bảng sticky ngay bên dưới nó.
+  // Dùng callback ref: trang bọc ClientOnly nên DOM mount SAU khi useEffect chạy —
+  // object ref sẽ là null lúc đó và effect (deps []) không chạy lại → var không bao giờ
+  // được gán → thead rơi về fallback → hở khe giữa 2 khối. Callback ref đo ngay lúc node mount.
+  const stickyHeaderRef = useRef<ResizeObserver | null>(null);
+  const stickyHeaderRefCb = useCallback((el: HTMLDivElement | null) => {
+    // Cleanup: ngắt observer của lần mount trước (nếu có)
+    stickyHeaderRef.current?.disconnect();
+    stickyHeaderRef.current = null;
     if (!el) return;
     const update = () => {
       const h = `${Math.ceil(el.getBoundingClientRect().height)}px`;
@@ -155,7 +160,7 @@ function ChamCongPage() {
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    stickyHeaderRef.current = ro;
   }, []);
 
   const visibleAttendance = useMemo(() => {
@@ -706,7 +711,7 @@ function ChamCongPage() {
     <ClientOnly>
       <div>
         {/* Desktop (lg+): ghim phần đầu (tiêu đề + cards trung tâm + bộ lọc) khi cuộn bảng. Mobile: cuộn bình thường. */}
-        <div ref={stickyHeaderRef} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pb-2">
+        <div ref={stickyHeaderRefCb} className="lg:sticky lg:top-16 lg:z-10 lg:bg-bg lg:pb-2">
         <PageHeader
         eyebrow="Vận hành"
         title="Chấm công toàn hệ thống"

@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 62 — Tinh chỉnh khung cố định Chấm công: sát lệnh + hết hở giữa 2 khối)*
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 63 — Fix ROOT CAUSE khe hở Chấm công: ClientOnly nuốt callback của ref)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,44 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.3.1`
-- `DEFAULT_VERSION` (app-side): `0.3.1` (`src/components/app-shell.tsx`)
+- `package.json`: `0.3.2`
+- `DEFAULT_VERSION` (app-side): `0.3.2` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 63: Fix ROOT CAUSE khe hở Chấm công — ClientOnly nuốt callback của ref (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(cham-cong): đổi sang callback ref — đo chiều cao khối ghim ngay lúc DOM mount, hết hở giữa 2 khối |
+| (mới) | chore: tăng version 0.3.1 → 0.3.2 |
+
+> **Hiện tượng:** Sau GĐ 62, khe hở giữa khối ghim và thead VẪN còn trên production.
+>
+> **Quy trình debug (curl-based, không cần Playwright):**
+> 1. `curl` trang → lấy tên CSS bundle + JS bundle từ `/assets/`.
+> 2. `grep` CSS bundle: `calc(4rem + var(--cc-sticky-h,300px))` ĐÃ được sinh ✅
+> 3. `grep` JS chunk `cham-cong-*.js`: code `parentElement?.style.setProperty` ĐÃ có ✅
+> 4. → Code mới đã lên production mà vẫn hở → biến KHÔNG được gán lúc runtime.
+>
+> **ROOT CAUSE:** Trang cham-cong bọc TOÀN BỘ trong `<ClientOnly>` (render skeleton
+> ở lần render đầu). useEffect với deps `[]` chạy NGAY SAU lần render đầu — lúc đó
+> khối ghim chưa mount → object ref `null` → effect return sớm và KHÔNG BAO GIỜ chạy lại
+> (ClientOnly re-render không kích hoạt lại effect deps rỗng) → ResizeObserver không bao
+> giờ gắn → `--cc-sticky-h` không gán → thead dùng fallback 300px < chiều cao thật → HỞ.
+> **Check-in + Nhiệm vụ không bị** vì 2 trang này KHÔNG bọc ClientOnly quanh khối ghim.
+>
+> **Fix (chỉ `src/routes/cham-cong.tsx`):** Thay useEffect + object ref bằng
+> **callback ref** (`useCallback((el) => {...})`) — đo + gắn ResizeObserver ngay lúc
+> DOM node gắn vào DOM tree (ClientOnly render xong), cleanup disconnect observer cũ.
+>
+> **LESSON LEARNED — ClientOnly + useEffect deps [] + object ref = ref null mãi mãi (2026-09-09):**
+> ClientOnly render fallback ở lần đầu → children mount ở lần 2. useEffect deps `[]`
+> chỉ chạy sau lần render ĐẦU → ref lúc đó là null → logic gắn observer/sự kiện mất.
+> **Giải pháp:** dùng callback ref cho mọi phần tử cần đo/gắn sự kiện bên trong ClientOnly,
+> hoặc thêm state `ready` vào deps. **Debug production không cần Playwright:** curl HTML →
+> tìm asset names → grep từng bundle để xác minh code đã deploy — nhanh và không phụ thuộc
+> npm install (máy này npm lỗi ghi file do đĩa Google Drive sync).
 
 ---
 
@@ -1898,4 +1934,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.1`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.2`.
