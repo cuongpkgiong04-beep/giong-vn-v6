@@ -1015,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 59 — Ghim tiêu đề + bộ lọc + tiêu đề 3 cột Nhiệm vụ trên desktop)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 60 — Fix tiêu đề 3 cột Nhiệm vụ chui dưới bộ lọc)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1557,8 +1557,37 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ### Version
 
-- `package.json`: `0.2.8`
-- `DEFAULT_VERSION` (app-side): `0.2.8` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.9`
+- `DEFAULT_VERSION` (app-side): `0.2.9` (`src/components/app-shell.tsx`)
+
+---
+
+### Giai đoạn 60: Fix tiêu đề 3 cột Nhiệm vụ chui dưới bộ lọc (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(nhiem-vu): đặt --nv-sticky-h trên cha chung — tiêu đề 3 cột đọc đúng chiều cao khối ghim, không còn bị đè |
+| (mới) | chore: tăng version 0.2.8 → 0.2.9 |
+
+> **Hiện tượng:** Sau Giai đoạn 59, hàng tiêu đề 3 cột (Việc cần làm / Quá hạn / Đã xong)
+> VẪN bị khối bộ lọc đè lên khi cuộn — trông như không ghim.
+>
+> **Nguyên nhân:** CSS var `--nv-sticky-h` chỉ được đặt trên khối ghim. Tiêu đề cột nằm
+> NGOÀI khối ghim (trong grid board) → không thuộc hậu duệ của khối ghim → không đọc được
+> var → fallback 160px < chiều cao thật ~270px → sticky top quá cao → bị đè.
+> Đây chính là lesson Giai đoạn 58 (Check-in đặt var trên cha chung) nhưng làm Nhiệm vụ
+> không áp dụng — chủ quan vì "grid không cần mở overflow" (đúng về overflow, SAI về var).
+>
+> **Fix (1 chỗ trong `src/routes/nhiem-vu.tsx`):** Trong ResizeObserver, đặt var trên cả
+> khối ghim VÀ `el.parentElement` (cha chung) — giống hệt pattern Check-in Giai đoạn 58.
+>
+> **LESSON LEARNED — 2 vấn đề độc lập khi sticky thead/column-title (2026-09-08):**
+> 1. **Overflow:** ancestor có overflow-hidden/auto phá sticky → cần mở overflow ở desktop.
+> 2. **CSS var scope:** custom property chỉ kế thừa XUỐNG DƯỚI trong cây DOM. Phần tử sticky
+>    nằm ngoài khối đo thì không đọc được var của khối đó → PHẢI đặt var trên cha chung
+>    (hoặc ancestor chung gần nhất) của cả khối đo lẫn phần tử sticky.
+> → Checklist sticky header: (a) không ancestor overflow-hidden; (b) top = header app +
+> chiều cao khối ghim trên; (c) var đặt ở ancestor chung của khối đo + phần tử sticky.
 
 ---
 
@@ -1805,4 +1834,4 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > phải map mã → UUID. Các chỗ khác INSERT vào `employees` (VD `syncApprovedToEmployees`)
 > đã truyền `center_id` đầy đủ.
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.8`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.9`.

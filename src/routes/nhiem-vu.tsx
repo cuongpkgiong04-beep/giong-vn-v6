@@ -30,7 +30,12 @@ function TasksPage() {
   useEffect(() => {
     const el = stickyHeaderRef.current;
     if (!el) return;
-    const update = () => el.style.setProperty("--nv-sticky-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    const update = () => {
+      const h = `${Math.ceil(el.getBoundingClientRect().height)}px`;
+      el.style.setProperty("--nv-sticky-h", h);
+      // Đặt trên cha chung để tiêu đề cột (nằm NGOÀI khối ghim) cũng đọc được var
+      el.parentElement?.style.setProperty("--nv-sticky-h", h);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
