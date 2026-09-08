@@ -143,6 +143,9 @@
   1. `package.json` → field `"version": "x.y.z"`
   2. `src/components/app-shell.tsx` → `const DEFAULT_VERSION = "x.y.z"`
 - **Quy tắc tăng:** Patch (x.y.Z+1) cho fix nhỏ, Minor (x.Y.0+1) cho feature mới.
+- **Quy tắc tròn chục:** Khi số sau tăng đến tròn chục thì số trước tăng 1 bậc, số sau về 0:
+  - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.9.9` → `2.0.0`
+  - Áp dụng cho cả 3 số: patch đầy (x.y.9→x.y+1.0), minor đầy (x.9.9→x+1.0.0).
 
 ### Ngôn ngữ & Ghi nhớ (bắt buộc tuân thủ):
 
@@ -1012,7 +1015,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 50 — Click dòng/marker xem chi tiết Check-in)*
+*Cập nhật lần cuối: 2026-09-08 (Giai đoạn 51 — Quy tắc tròn chục khi tăng Version)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -1529,9 +1532,32 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 ---
 
+### Giai đoạn 51: Quy tắc tròn chục khi tăng Version (2026-09-08)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): thêm quy tắc tròn chục vào mục Cách tăng Version |
+| (mới) | chore: tăng version 0.1.10 → 0.2.0 (đổi sang minor theo quy tắc — feature mới tiếp theo) |
+
+> **Quy tắc tròn chục (theo yêu cầu Đại ca):**
+> Khi số sau tăng đến tròn chục thì số trước tăng 1 bậc, số sau về 0:
+> - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.9.9` → `2.0.0`
+> - Áp dụng cho cả 3 số: patch đầy (`x.y.9` → `x.y+1.0`), minor đầy (`x.9.9` → `x+1.0.0`).
+>
+> **Kiểm tra logic version (2026-09-08):**
+> Chuỗi version gồm 3 lớp: `package.json` (nguồn chuẩn) → `with-app-env.mjs` đọc +
+> validate regex `/^(\d+\.)(\d+\.)(\d+)$/` + inject `VITE_APP_VERSION` lúc build →
+> `app-shell.tsx getAppVersion()` hiển thị ở sidebar (env → localStorage → DEFAULT_VERSION).
+> 2 nơi bắt buộc (`package.json` + `DEFAULT_VERSION`) đã khớp nhau ở mọi lần bump.
+>
+> **Quyết định của Đại ca:** Từ version tiếp theo tăng theo minor `0.2.0` để thẳng hàng
+> với quy tắc đã viết (feature mới = minor). Version hiện tại: **0.2.0**.
+
+---
+
 ### Version
 
-- `package.json`: `0.1.10`
-- `DEFAULT_VERSION` (app-side): `0.1.10` (`src/components/app-shell.tsx`)
+- `package.json`: `0.2.0`
+- `DEFAULT_VERSION` (app-side): `0.2.0` (`src/components/app-shell.tsx`)
 
-Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.1.10`.
+Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.2.0`.
