@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 72 — Nhóm chat kiểu Zalo: Admin tạo nhóm, mời/thêm thành viên)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 73 — Bottom bar mobile: nút Chat thay Đề nghị)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2920,3 +2920,37 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >   được; non-member không thấy nút quản lý.
 > - Nhắn tin trong nhóm → chỉ member nhận (poll 5s thiết bị khác).
 > - 4 kênh công khai hoạt động như cũ.
+
+---
+
+### Giai đoạn 73: Bottom bar mobile — nút Chat thay Đề nghị (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): thay nút "Đề nghị" bằng "Chat" trong MOBILE_PRIMARY — sidebar giữ nguyên toàn bộ module |
+| (mới) | chore: tăng version 0.9.0 → 0.9.1 |
+
+> **Yêu cầu của Đại ca:** Thêm nút "Chat" vào bottom bar mobile THAY cho nút
+> "Đề nghị" (GĐ 54 từng thay Chat bằng Đề nghị — giờ đổi lại vì Chat vừa nâng cấp
+> nhóm kiểu Zalo GĐ 72, dùng nhiều hơn). Sidebar KHÔNG xóa module gì hết.
+>
+> **Fix (1 dòng trong `src/components/app-shell.tsx` dòng 92):**
+> ```ts
+> // Trước (GĐ 54):
+> const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/de-nghi", "/nhiem-vu"];
+> // Sau:
+> const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/chat", "/nhiem-vu"];
+> ```
+>
+> **Cơ chế:** Bottom bar mobile lọc `visibleNav` theo `MOBILE_PRIMARY` rồi sort
+> theo thứ tự mảng. `/chat` có sẵn trong NAV (icon MessageCircle, group "Hệ thống")
+> → nút mới tự đúng icon + phân quyền: `chat: true` mặc định cho mọi user (GĐ 71)
+> → ai cũng thấy nút Chat.
+>
+> **LƯU Ý:** Module Đề nghị KHÔNG bị xóa — vẫn đầy đủ ở sidebar desktop + menu
+> hamburger mobile. Chỉ thay vị trí ưu tiên trong bottom bar (5 nút: Chấm công /
+> Check-in / Tổng quan / Chat / Nhiệm vụ).
+>
+> **Tiêu chí kiểm chứng:** Mobile bottom bar = ⏱ Chấm công · 📍 Check-in · 🏠 Tổng
+> quan · 💬 Chat · 📋 Nhiệm vụ. Bấm Chat → mở trang Chat kiểu Zalo. Sidebar vẫn
+> còn đầy đủ cả Đề nghị lẫn Chat.
