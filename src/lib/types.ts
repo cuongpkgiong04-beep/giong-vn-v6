@@ -118,6 +118,27 @@ export type ChatMessage = {
   updatedAt?: string;
   /** Tombstone — tin đã thu hồi */
   deletedAt?: string;
+  /** ID nhóm chat riêng (GĐ 72) — rỗng nếu kênh công khai hoặc 1-1 */
+  groupId?: string;
+};
+
+/** Nhóm chat riêng (GĐ 72) — kiểu Zalo: Admin tạo, thành viên mới thấy */
+export type ChatGroup = {
+  id: string;
+  name: string;
+  /** ID employee tạo nhóm (chủ nhóm) */
+  createdBy: string;
+  /** Danh sách member: employeeId + role */
+  members: ChatGroupMember[];
+  /** ISO timestamp — LWW */
+  updatedAt?: string;
+  /** Tombstone — nhóm đã giải tán */
+  deletedAt?: string;
+};
+
+export type ChatGroupMember = {
+  employeeId: string;
+  role: "owner" | "member" | string;
 };
 
 /** Loại hồ sơ tài liệu — danh sách cố định để lọc/thống kê (GĐ 66) */

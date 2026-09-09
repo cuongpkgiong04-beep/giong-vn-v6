@@ -555,6 +555,7 @@ type MessageRow = {
   attachments: unknown;
   updated_at: string | null;
   deleted_at: string | null;
+  group_id: string | null;
 };
 
 const MESSAGE_COLUMNS = `
@@ -573,6 +574,7 @@ function mapMessageRow(r: MessageRow) {
     attachments: Array.isArray(r.attachments) ? r.attachments : [],
     updatedAt: r.updated_at,
     deletedAt: r.deleted_at,
+    groupId: r.group_id ?? "",
   };
 }
 
@@ -585,7 +587,7 @@ export const loadAllMessages = createServerFn({ method: "GET" })
     const sql = await getSql();
     const rows = await sql<MessageRow>`
       SELECT id, from_name, text, at, channel, direct_key, created_by,
-             attachments, updated_at, deleted_at
+             attachments, updated_at, deleted_at, group_id
       FROM messages
       ORDER BY at DESC
       LIMIT 1000
@@ -600,7 +602,7 @@ export const loadMessagesSince = createServerFn({ method: "GET" })
     const sql = await getSql();
     const rows = await sql<MessageRow>`
       SELECT id, from_name, text, at, channel, direct_key, created_by,
-             attachments, updated_at, deleted_at
+             attachments, updated_at, deleted_at, group_id
       FROM messages
       WHERE at > ${data.since}
       ORDER BY at ASC
@@ -622,18 +624,20 @@ export const insertMessage = createServerFn({ method: "POST" })
       attachments?: string[];
       updatedAt?: string;
       deletedAt?: string;
+      groupId?: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
       INSERT INTO messages (id, from_name, text, at, channel, direct_key, created_by,
-                            attachments, updated_at, deleted_at)
+                            attachments, updated_at, deleted_at, group_id)
       VALUES (${data.id}, ${data.from}, ${data.text}, ${data.at}, ${data.channel},
               ${data.directKey ?? ""}, ${data.fromId ?? ""},
               ${JSON.stringify(data.attachments ?? [])}::jsonb,
               ${data.updatedAt ? new Date(data.updatedAt) : new Date()},
-              ${data.deletedAt ? new Date(data.deletedAt) : null})
+              ${data.deletedAt ? new Date(data.deletedAt) : null},
+              ${data.groupId ?? ""})
       ON CONFLICT (id) DO UPDATE SET
         deleted_at = EXCLUDED.deleted_at,
         updated_at = EXCLUDED.updated_at
@@ -647,6 +651,123 @@ export const deleteMessage = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`UPDATE messages SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.id}`;
+  });
+
+/* ─── Nhóm chat riêng (GĐ 72 — kiểu Zalo: Admin tạo, member mới thấy) ─── */
+
+type ChatGroupRow = {
+  id: string;
+  name: string;
+  created_by: string | null;
+  updated_at: string | null;
+  deleted_at: string | null;
+  employee_id: string | null;
+  member_role: string | null;
+};
+
+type ChatGroupFlat = {
+  id: string;
+  name: string;
+  createdBy: string;
+  updatedAt: string | null;
+  deletedAt: string | null;
+  members: Array<{ employeeId: string; role: string }>;
+};
+
+function mapChatGroupRow(r: ChatGroupRow): ChatGroupFlat {
+  return {
+    id: r.id,
+    name: r.name,
+    createdBy: r.created_by ?? "",
+    updatedAt: r.updated_at,
+    deletedAt: r.deleted_at,
+    members: r.employee_id
+      ? [{ employeeId: r.employee_id, role: r.member_role ?? "member" }]
+      : [],
+  };
+}
+
+/** Load mọi nhóm (kèm member rows) — UI tự lọc nhóm mà user là member.
+ *  JOIN 1-n: mỗi dòng = 1 member; nhóm không member chỉ còn owner vẫn hiện. */
+export const loadChatGroups = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    const rows = await sql<ChatGroupRow>`
+      SELECT g.id, g.name, g.created_by, g.updated_at, g.deleted_at,
+             m.employee_id, m.role as member_role
+      FROM chat_groups g
+      LEFT JOIN chat_group_members m ON m.group_id = g.id
+      ORDER BY g.created_at ASC
+      LIMIT 500
+    `;
+    // Gộp member rows theo group id
+    const map = new Map<string, ChatGroupFlat>();
+    for (const r of rows) {
+      const flat = mapChatGroupRow(r);
+      const existing = map.get(flat.id);
+      if (!existing) {
+        map.set(flat.id, flat);
+      } else {
+        existing.members.push(...flat.members);
+      }
+    }
+    return Array.from(map.values());
+  });
+
+/** Tạo nhóm mới — chỉ Admin gọi từ UI (kiểm tra quyền ở client + đây là server fn công khai). */
+export const createChatGroup = createServerFn({ method: "POST" })
+  .validator((data: { id: string; name: string; createdBy: string; memberIds: string[] }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO chat_groups (id, name, created_by) VALUES (${data.id}, ${data.name}, ${data.createdBy})
+    `;
+    // Owner + members
+    const all = new Set<string>([data.createdBy, ...data.memberIds]);
+    for (const empId of all) {
+      const role = empId === data.createdBy ? "owner" : "member";
+      await sql`
+        INSERT INTO chat_group_members (group_id, employee_id, role)
+        VALUES (${data.id}, ${empId}, ${role})
+        ON CONFLICT (group_id, employee_id) DO NOTHING
+      `;
+    }
+    return { success: true };
+  });
+
+/** Thêm thành viên vào nhóm — Owner hoặc Admin. */
+export const addChatGroupMembers = createServerFn({ method: "POST" })
+  .validator((data: { groupId: string; employeeIds: string[] }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    for (const empId of data.employeeIds) {
+      await sql`
+        INSERT INTO chat_group_members (group_id, employee_id, role)
+        VALUES (${data.groupId}, ${empId}, 'member')
+        ON CONFLICT (group_id, employee_id) DO NOTHING
+      `;
+    }
+    await sql`UPDATE chat_groups SET updated_at = now() WHERE id = ${data.groupId}`;
+    return { success: true };
+  });
+
+/** Xóa thành viên khỏi nhóm — Owner hoặc Admin (owner không thể tự xóa mình). */
+export const removeChatGroupMember = createServerFn({ method: "POST" })
+  .validator((data: { groupId: string; employeeId: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`DELETE FROM chat_group_members WHERE group_id = ${data.groupId} AND employee_id = ${data.employeeId} AND role <> 'owner'`;
+    await sql`UPDATE chat_groups SET updated_at = now() WHERE id = ${data.groupId}`;
+    return { success: true };
+  });
+
+/** Giải tán nhóm — tombstone (Owner hoặc Admin). Tin nhắn nhóm giữ nguyên trong DB. */
+export const deleteChatGroup = createServerFn({ method: "POST" })
+  .validator((data: { groupId: string; deletedAt: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE chat_groups SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.groupId}`;
+    return { success: true };
   });
 
 export const bulkInsertMessages = createServerFn({ method: "POST" })

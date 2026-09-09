@@ -1,18 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  CirclePlus,
+  Crown,
   ImagePlus,
+  LogOut,
   Paperclip,
   Search,
   Send,
+  UserPlus,
   Users,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDesc } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { EMPLOYEES, normalizePersonKey } from "@/lib/catalog";
+import { EMPLOYEES, isAdminRole, normalizePersonKey } from "@/lib/catalog";
 import { todayIso, weekdayVi } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 
@@ -95,14 +101,22 @@ function ChatPage() {
   const sendMessage = useAppStore((s) => s.sendMessage);
   const refreshMessages = useAppStore((s) => s.refreshMessages);
   const removeMessage = useAppStore((s) => s.removeMessage);
+  const addChatGroup = useAppStore((s) => s.addChatGroup);
+  const addGroupMembers = useAppStore((s) => s.addChatGroupMembers);
+  const removeGroupMember = useAppStore((s) => s.removeChatGroupMember);
+  const removeChatGroup = useAppStore((s) => s.removeChatGroup);
+  const chatGroups = useAppStore((s) => s.chatGroups);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const employees = useAppStore((s) => s.employees);
   const me = employees.find((e) => e.id === currentUserId) ?? null;
   const meName = me?.username ?? "";
+  const isAdmin = isAdminRole(me?.role);
 
   const [tab, setTab] = useState<"group" | "direct">("group");
   const [channel, setChannel] = useState("Chung");
   const [peerId, setPeerId] = useState<string | null>(null);
+  // Nhóm riêng đang mở (GĐ 72) — id trong chatGroups
+  const [groupId, setGroupId] = useState<string | null>(null);
   // Mobile: 1 khung tại 1 thời điểm — "list" (danh sách) hoặc "chat" (cửa sổ). Desktop luôn hiện cả 2.
   const [text, setText] = useState("");
   const [q, setQ] = useState("");
@@ -110,26 +124,38 @@ function ChatPage() {
   const [uploading, setUploading] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [lightbox, setLightbox] = useState<string | null>(null);
+  // Dialog tạo nhóm mới + dialog thành viên nhóm
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newMemberIds, setNewMemberIds] = useState<string[]>([]);
+  const [memberDialog, setMemberDialog] = useState<string | null>(null); // groupId đang xem
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const directKey = peerId ? [currentUserId, peerId].sort().join("|") : "";
+  const activeGroup = groupId ? chatGroups.find((g) => g.id === groupId) ?? null : null;
+
+  /* Nhóm mà tôi là member — chỉ những nhóm này hiện trong danh sách */
+  const myGroups = useMemo(
+    () => chatGroups.filter((g) => !g.deletedAt && g.members.some((m) => m.employeeId === currentUserId)),
+    [chatGroups, currentUserId],
+  );
 
   /* Tin nhắn của hội thoại đang mở */
   const activeMessages = useMemo(() => {
-    const list = messages.filter((m) =>
-      tab === "group"
-        ? m.channel === channel && !m.directKey
-        : m.directKey === directKey,
-    );
+    const list = messages.filter((m) => {
+      if (tab === "direct") return m.directKey === directKey;
+      if (groupId) return m.groupId === groupId;
+      return m.channel === channel && !m.directKey && !m.groupId;
+    });
     return list.sort((a, b) => (a.at > b.at ? 1 : a.at < b.at ? -1 : 0));
-  }, [messages, tab, channel, directKey]);
+  }, [messages, tab, channel, directKey, groupId]);
 
-  /* Danh sách hội thoại trái — kênh nhóm + 1-1 có tin */
+  /* Danh sách hội thoại trái — kênh công khai + nhóm riêng + 1-1 */
   const conversationList = useMemo(() => {
     if (tab === "group") {
-      return CHANNELS.map((c) => {
-        const msgs = messages.filter((m) => m.channel === c && !m.directKey);
+      const publicChannels = CHANNELS.map((c) => {
+        const msgs = messages.filter((m) => m.channel === c && !m.directKey && !m.groupId);
         const last = msgs[msgs.length - 1];
         return {
           key: `group:${c}`,
@@ -139,6 +165,19 @@ function ChatPage() {
           last,
         };
       });
+      // Nhóm riêng (GĐ 72) — chỉ nhóm tôi là member
+      const privateGroups = myGroups.map((g) => {
+        const msgs = messages.filter((m) => m.groupId === g.id);
+        const last = msgs[msgs.length - 1];
+        return {
+          key: `mygroup:${g.id}`,
+          type: "mygroup" as const,
+          id: g.id,
+          name: g.name,
+          last,
+        };
+      });
+      return [...publicChannels, ...privateGroups];
     }
     // Nhắn 1-1: mọi nhân sự khác (cả khi chưa có tin — để bắt đầu nhắn mới)
     return employees
@@ -163,7 +202,7 @@ function ChatPage() {
         if (ta !== tb) return ta > tb ? -1 : 1;
         return a.name.localeCompare(b.name);
       });
-  }, [tab, messages, employees, currentUserId]);
+  }, [tab, messages, employees, currentUserId, myGroups]);
 
   const filteredConversations = useMemo(() => {
     if (!q.trim()) return conversationList;
@@ -185,8 +224,13 @@ function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages.length, channel, peerId, tab]);
 
-  /* Nhắn với chính mình — chặn */
-  const canSend = tab === "group" || (peerId && peerId !== currentUserId);
+  /* Nhắn với chính mình — chặn; nhóm phải là member mới được nhắn */
+  const canSend =
+    tab === "direct"
+      ? Boolean(peerId && peerId !== currentUserId)
+      : groupId
+        ? Boolean(activeGroup?.members.some((m) => m.employeeId === currentUserId))
+        : true;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -195,6 +239,7 @@ function ChatPage() {
     // Gửi 1 tin duy nhất — text + đính kèm cùng tin (cột attachments trong DB)
     sendMessage(text.trim(), tab === "group" ? channel : "", {
       toId: tab === "direct" ? peerId! : undefined,
+      groupId: tab === "group" && groupId ? groupId : undefined,
       attachments: attachments.length > 0 ? attachments : undefined,
     });
     setText("");
@@ -281,6 +326,22 @@ function ChatPage() {
                 className="h-8 pl-8 text-sm"
               />
             </div>
+            {/* Tạo nhóm mới — chỉ Admin (GĐ 72) */}
+            {isAdmin && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2 w-full"
+                onClick={() => {
+                  setNewGroupName("");
+                  setNewMemberIds([]);
+                  setIsCreateOpen(true);
+                }}
+              >
+                <CirclePlus className="size-4" /> Nhóm mới
+              </Button>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-1.5">
@@ -291,7 +352,11 @@ function ChatPage() {
             ) : (
               filteredConversations.map((c) => {
                 const active =
-                  tab === "group" ? c.id === channel : c.id === peerId;
+                  tab === "group"
+                    ? c.type === "mygroup"
+                      ? c.id === groupId
+                      : c.id === channel && !groupId
+                    : c.id === peerId;
                 return (
                   <button
                     key={c.key}
@@ -301,9 +366,15 @@ function ChatPage() {
                         setTab("group");
                         setChannel(c.id);
                         setPeerId(null);
+                        setGroupId(null);
+                      } else if (c.type === "mygroup") {
+                        setTab("group");
+                        setGroupId(c.id);
+                        setPeerId(null);
                       } else {
                         setTab("direct");
                         setPeerId(c.id);
+                        setGroupId(null);
                       }
                       setMobileView("chat");
                     }}
@@ -313,6 +384,10 @@ function ChatPage() {
                   >
                     {c.type === "group" ? (
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-forest text-forest-fg">
+                        <Users className="size-4" />
+                      </span>
+                    ) : c.type === "mygroup" ? (
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-white">
                         <Users className="size-4" />
                       </span>
                     ) : (
@@ -372,15 +447,42 @@ function ChatPage() {
               <ArrowLeft className="size-4" />
             </button>
             {tab === "group" ? (
-              <>
-                <span className="flex size-8 items-center justify-center rounded-full bg-forest text-forest-fg">
-                  <Users className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-ink">{channel}</p>
-                  <p className="text-xs text-muted">Kênh nhóm</p>
-                </div>
-              </>
+              groupId && activeGroup ? (
+                <>
+                  <span className="flex size-8 items-center justify-center rounded-full bg-accent text-white">
+                    <Users className="size-4" />
+                  </span>
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => setMemberDialog(groupId)}
+                    title="Xem thành viên"
+                  >
+                    <p className="truncate text-sm font-semibold text-ink">{activeGroup.name}</p>
+                    <p className="text-xs text-muted">
+                      Nhóm riêng • {activeGroup.members.length} thành viên
+                    </p>
+                  </button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMemberDialog(groupId)}
+                  >
+                    <UserPlus className="size-4" /> Thành viên
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="flex size-8 items-center justify-center rounded-full bg-forest text-forest-fg">
+                    <Users className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">{channel}</p>
+                    <p className="text-xs text-muted">Kênh nhóm</p>
+                  </div>
+                </>
+              )
             ) : peerId ? (
               (() => {
                 const peer = employees.find((e) => e.id === peerId);
@@ -415,7 +517,9 @@ function ChatPage() {
                 <p className="py-12 text-center text-sm text-faint">
                   {tab === "direct"
                     ? "Chưa có tin nhắn — hãy bắt đầu trước."
-                    : "Chưa có tin trong kênh này."}
+                    : groupId
+                      ? "Chưa có tin trong nhóm — hãy nhắn đầu tiên."
+                      : "Chưa có tin trong kênh này."}
                 </p>
               )}
             {activeMessages.map((m, i) => {
@@ -615,7 +719,9 @@ function ChatPage() {
                     ? "Chọn một hội thoại..."
                     : tab === "direct"
                       ? `Nhắn ${employees.find((e) => e.id === peerId)?.name ?? ""}...`
-                      : `Nhắn kênh ${channel}...`
+                      : groupId
+                        ? `Nhắn nhóm ${activeGroup?.name ?? ""}...`
+                        : `Nhắn kênh ${channel}...`
                 }
                 disabled={!canSend}
               />
@@ -631,6 +737,190 @@ function ChatPage() {
           </form>
         </section>
       </div>
+
+      {/* ── Dialog tạo nhóm mới (chỉ Admin — GĐ 72) ── */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Tạo nhóm mới</DialogTitle>
+          <DialogDesc>Nhập tên nhóm và chọn thành viên — chỉ thành viên mới thấy nhóm.</DialogDesc>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!newGroupName.trim()) {
+                toast.error("Nhập tên nhóm");
+                return;
+              }
+              addChatGroup(newGroupName.trim(), newMemberIds);
+              toast.success(`Đã tạo nhóm "${newGroupName.trim()}"`);
+              setIsCreateOpen(false);
+            }}
+            className="mt-3 space-y-3"
+          >
+            <Input
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="Tên nhóm (VD: Nhóm Long Biên)"
+              autoFocus
+            />
+            <div>
+              <p className="mb-1.5 text-xs font-medium text-muted">
+                Thành viên ({newMemberIds.length} đã chọn)
+              </p>
+              <div className="max-h-56 space-y-0.5 overflow-y-auto rounded-md border border-line p-1.5">
+                {employees
+                  .filter((e) => e.id !== currentUserId)
+                  .map((e) => (
+                    <label
+                      key={e.id}
+                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-surface-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={newMemberIds.includes(e.id)}
+                        onChange={(ev) =>
+                          setNewMemberIds((prev) =>
+                            ev.target.checked
+                              ? [...prev, e.id]
+                              : prev.filter((id) => id !== e.id),
+                          )
+                        }
+                        className="size-4 accent-[var(--color-accent)]"
+                      />
+                      <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                        {e.name}
+                        <span className="ml-1.5 text-xs text-muted">{e.dept}</span>
+                      </span>
+                    </label>
+                  ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+                Hủy
+              </Button>
+              <Button type="submit">Tạo nhóm</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog thành viên nhóm (GĐ 72) ── */}
+      <Dialog
+        open={Boolean(memberDialog)}
+        onOpenChange={(open) => setMemberDialog(open ? memberDialog : null)}
+      >
+        <DialogContent className="max-w-md">
+          {(() => {
+            const g = chatGroups.find((x) => x.id === memberDialog);
+            if (!g) return null;
+            const amOwner = g.createdBy === currentUserId;
+            // Owner + Admin được thêm/xóa member (chốt của Đại ca)
+            const canManage = amOwner || isAdmin;
+            const nonMembers = employees.filter(
+              (e) => e.id !== currentUserId && !g.members.some((m) => m.employeeId === e.id),
+            );
+            return (
+              <>
+                <DialogTitle>{g.name}</DialogTitle>
+                <DialogDesc>
+                  Nhóm riêng • {g.members.length} thành viên
+                  {amOwner ? " • Bạn là chủ nhóm" : ""}
+                </DialogDesc>
+                <div className="mt-3 space-y-0.5">
+                  {g.members.map((m) => {
+                    const emp = employees.find((e) => e.id === m.employeeId);
+                    return (
+                      <div
+                        key={m.employeeId}
+                        className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-surface-2"
+                      >
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent/20 text-[10px] font-semibold text-accent">
+                          {(emp?.name ?? "?")
+                            .split(" ")
+                            .map((w) => w[0])
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .join("")}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                          {emp?.name ?? m.employeeId}
+                          <span className="ml-1.5 text-xs text-muted">{emp?.dept ?? ""}</span>
+                        </span>
+                        {m.role === "owner" && (
+                          <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                            <Crown className="size-3" /> Chủ nhóm
+                          </span>
+                        )}
+                        {canManage && m.role !== "owner" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              removeGroupMember(g.id, m.employeeId);
+                              toast.success(`Đã xóa ${emp?.name ?? "thành viên"} khỏi nhóm`);
+                            }}
+                            className="flex size-6 shrink-0 items-center justify-center rounded text-faint hover:bg-surface hover:text-ink"
+                            title="Xóa khỏi nhóm"
+                            aria-label="Xóa khỏi nhóm"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {canManage && nonMembers.length > 0 && (
+                  <div className="mt-3 border-t border-line pt-3">
+                    <p className="mb-1.5 text-xs font-medium text-muted">Thêm thành viên</p>
+                    <div className="max-h-40 space-y-0.5 overflow-y-auto">
+                      {nonMembers.map((e) => (
+                        <button
+                          key={e.id}
+                          type="button"
+                          onClick={() => {
+                            addGroupMembers(g.id, [e.id]);
+                            toast.success(`Đã thêm ${e.name} vào nhóm`);
+                          }}
+                          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-surface-2"
+                        >
+                          <UserPlus className="size-4 shrink-0 text-accent" />
+                          <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                            {e.name}
+                            <span className="ml-1.5 text-xs text-muted">{e.dept}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(amOwner || isAdmin) && (
+                  <div className="mt-3 flex justify-between border-t border-line pt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600"
+                      onClick={() => {
+                        if (confirm(`Giải tán nhóm "${g.name}"? Tin nhắn sẽ bị ẩn với mọi người.`)) {
+                          removeChatGroup(g.id);
+                          setMemberDialog(null);
+                          if (groupId === g.id) {
+                            setGroupId(null);
+                            setChannel("Chung");
+                          }
+                          toast.success(`Đã giải tán nhóm "${g.name}"`);
+                        }
+                      }}
+                    >
+                      <LogOut className="size-4" /> Giải tán nhóm
+                    </Button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Lightbox ảnh nền trắng (pattern GĐ 65) */}
       {lightbox && (

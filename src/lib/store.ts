@@ -6,6 +6,7 @@ import { deleteMessage } from "@/routes/api/data";
 import type {
   Attendance,
   Center,
+  ChatGroup,
   ChatMessage,
   CheckIn,
   Document,
@@ -28,6 +29,7 @@ type PersistSlice = {
   messages: ChatMessage[];
   checkins: CheckIn[];
   documents: Document[];
+  chatGroups: ChatGroup[];
   currentUserId: string;
   employees: Employee[];
   centers: Center[];
@@ -58,9 +60,13 @@ type Actions = {
   updateProposal: (id: string, data: Partial<Pick<Proposal, "kind" | "title" | "detail" | "dept" | "attachments">>) => void;
   removeProposal: (id: string) => void;
   setProposalStatus: (id: string, status: Proposal["status"], approver?: string) => void;
-  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[] }) => void;
+  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[]; groupId?: string }) => void;
   refreshMessages: () => Promise<void>;
   removeMessage: (id: string) => void;
+  addChatGroup: (name: string, memberIds: string[]) => void;
+  addChatGroupMembers: (groupId: string, employeeIds: string[]) => void;
+  removeChatGroupMember: (groupId: string, employeeId: string) => void;
+  removeChatGroup: (groupId: string) => void;
   addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
   removeCheckin: (id: string) => void;
   addDocument: (d: Omit<Document, "id" | "updatedAt">) => void;
@@ -77,6 +83,7 @@ function slice(s: PersistSlice): PersistSlice {
     messages: s.messages,
     checkins: s.checkins,
     documents: s.documents,
+    chatGroups: s.chatGroups,
     currentUserId: s.currentUserId,
     employees: s.employees,
     centers: s.centers,
@@ -152,6 +159,7 @@ const initial: PersistSlice = {
   messages: [],
   checkins: [],
   documents: [],
+  chatGroups: [],
   currentUserId: 'e0000000-0000-0000-0000-000000000003', // Phạm Kiên Cường UUID
   employees: FALLBACK_EMPLOYEES,
   centers: FALLBACK_CENTERS,
@@ -434,6 +442,7 @@ async function _neonInsertMessage(r: ChatMessage) {
       attachments: r.attachments ?? [],
       updatedAt: r.updatedAt,
       deletedAt: r.deletedAt,
+      groupId: r.groupId ?? "",
     },
   });
 }
@@ -569,6 +578,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadDocuments,
           loadNotes,
           loadAllMessages,
+          loadChatGroups,
           loadCheckins,
           loadDeletedAttendanceIds,
           loadDeletedCheckinIds,
@@ -589,9 +599,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           console.error("[store] Neon attendance load failed — keeping local attendance:", err);
         }
 
-        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [], docs: any[] = [];
+        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [], docs: any[] = [], grpRows: any[] = [];
         try {
-          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs, docs] = await Promise.all([
+          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs, docs, grpRows] = await Promise.all([
             loadTasks(),
             loadProposals(),
             loadNotes(),
@@ -600,6 +610,11 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             loadEmps(),
             loadCtrs(),
             loadDocuments(),
+            // Nhóm chat (GĐ 72) — load riêng, lỗi không chặn các module khác
+            loadChatGroups().catch((e) => {
+              console.warn("[store] loadChatGroups failed:", e);
+              return [];
+            }),
           ]);
         } catch (err) {
           console.error("[store] Neon other-module load failed — attendance still merged:", err);
@@ -664,8 +679,19 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             attachments: Array.isArray(r.attachments) ? r.attachments : [],
             updatedAt: isoStr(r.updatedAt) ?? r.at,
             deletedAt: isoStr(r.deletedAt) ?? undefined,
+            groupId: r.groupId ?? "",
           }))
           .filter((m) => !m.deletedAt); // tombstone — tin đã thu hồi không load
+
+        // Nhóm chat (GĐ 72) — server đã gộp member rows; lọc tombstone
+        const neonGroups: ChatGroup[] = (grpRows as any[])
+          .filter((g) => !g.deletedAt)
+          .map((g) => ({
+            id: g.id, name: g.name, createdBy: g.createdBy ?? "",
+            members: Array.isArray(g.members) ? g.members : [],
+            updatedAt: isoStr(g.updatedAt) ?? undefined,
+            deletedAt: isoStr(g.deletedAt) ?? undefined,
+          }));
         const neonDocuments: Document[] = (docs as any[])
           .filter((r) => !r.deleted_at) // tombstone — hồ sơ đã xóa không load
           .map((r) => ({
@@ -756,6 +782,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             .filter((d) => !d.deletedAt), // tombstone — hồ sơ đã xóa
           notes: mergeByTs(get().notes, neonNotes, notePendingIds, (r) => r.updatedAt ?? ""),
           messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
+          chatGroups: mergeByTs(get().chatGroups, neonGroups, new Set<string>(), (r) => r.updatedAt ?? "")
+            .filter((g) => !g.deletedAt),
           checkins: (() => {
             const deletedCheckinIds = new Set((delCks as any[]).map((r) => r.id));
             return mergeByTs(
@@ -993,6 +1021,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       fromId: get().currentUserId,
       directKey,
       attachments: opts?.attachments ?? [],
+      groupId: opts?.groupId ?? "",
       updatedAt: now.toISOString(),
     };
     set((s) => ({ messages: [...s.messages, msg] }));
@@ -1010,7 +1039,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         (max, m) => (m.at > max ? m.at : max),
         "",
       );
-      const { loadMessagesSince } = await import("@/routes/api/data");
+      const { loadMessagesSince, loadChatGroups } = await import(
+        "@/routes/api/data"
+      );
       const rows = (await loadMessagesSince({ data: { since: lastAt } })) as any[];
       const incoming: ChatMessage[] = rows
         .map((r) => ({
@@ -1020,6 +1051,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           attachments: Array.isArray(r.attachments) ? r.attachments : [],
           updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : r.at,
           deletedAt: r.deletedAt ?? undefined,
+          groupId: r.groupId ?? "",
         }))
         .filter((m) => !m.deletedAt);
       if (incoming.length === 0) return;
@@ -1031,6 +1063,27 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       merged.sort((a, b) => (a.at > b.at ? 1 : a.at < b.at ? -1 : a.id > b.id ? 1 : -1));
       set({ messages: merged });
       saveLs(get());
+
+      // GĐ 72: nhóm mới/thay đổi member cũng tự về — poll cùng nhịp 5s.
+      // Lỗi nhóm không chặn tin nhắn (đã set phía trên).
+      try {
+        const grpRows = (await loadChatGroups()) as any[];
+        const neonGroups: ChatGroup[] = grpRows
+          .filter((g) => !g.deletedAt)
+          .map((g) => ({
+            id: g.id, name: g.name, createdBy: g.createdBy ?? "",
+            members: Array.isArray(g.members) ? g.members : [],
+            updatedAt: typeof g.updatedAt === "string" ? g.updatedAt : undefined,
+            deletedAt: g.deletedAt ?? undefined,
+          }));
+        set((s) => ({
+          chatGroups: mergeByTs(s.chatGroups, neonGroups, new Set<string>(), (r) => r.updatedAt ?? "")
+            .filter((g) => !g.deletedAt),
+        }));
+        saveLs(get());
+      } catch (err) {
+        console.warn("[store] refresh chatGroups failed:", err);
+      }
     } catch (err) {
       console.warn("[store] refreshMessages failed:", err);
     }
@@ -1055,6 +1108,93 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     deleteMessage({ data: { id, deletedAt } })
       .then(() => clearPendingSync([id]))
       .catch(console.warn);
+  },
+
+  /** Tạo nhóm mới (GĐ 72 — chỉ Admin gọi từ UI). Owner = người tạo. */
+  addChatGroup: (name, memberIds) => {
+    const id = uid("cg");
+    const now = new Date().toISOString();
+    const group: ChatGroup = {
+      id,
+      name,
+      createdBy: get().currentUserId,
+      members: [
+        { employeeId: get().currentUserId, role: "owner" },
+        ...memberIds
+          .filter((m) => m !== get().currentUserId)
+          .map((employeeId) => ({ employeeId, role: "member" as const })),
+      ],
+      updatedAt: now,
+    };
+    set((s) => ({ chatGroups: [...s.chatGroups, group] }));
+    saveLs(get());
+    (async () => {
+      const { createChatGroup } = await import("@/routes/api/data");
+      await createChatGroup({
+        data: { id, name, createdBy: group.createdBy, memberIds },
+      });
+    })().catch(console.warn);
+  },
+
+  /** Thêm thành viên vào nhóm (Owner/Admin). */
+  addChatGroupMembers: (groupId, employeeIds) => {
+    if (employeeIds.length === 0) return;
+    set((s) => ({
+      chatGroups: s.chatGroups.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              members: [
+                ...g.members,
+                ...employeeIds
+                  .filter((id) => !g.members.some((m) => m.employeeId === id))
+                  .map((employeeId) => ({ employeeId, role: "member" as const })),
+              ],
+              updatedAt: new Date().toISOString(),
+            }
+          : g,
+      ),
+    }));
+    saveLs(get());
+    (async () => {
+      const { addChatGroupMembers } = await import("@/routes/api/data");
+      await addChatGroupMembers({ data: { groupId, employeeIds } });
+    })().catch(console.warn);
+  },
+
+  /** Xóa thành viên khỏi nhóm (Owner/Admin; owner không bị xóa — server chặn). */
+  removeChatGroupMember: (groupId, employeeId) => {
+    set((s) => ({
+      chatGroups: s.chatGroups.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              members: g.members.filter((m) => m.employeeId !== employeeId || m.role === "owner"),
+              updatedAt: new Date().toISOString(),
+            }
+          : g,
+      ),
+    }));
+    saveLs(get());
+    (async () => {
+      const { removeChatGroupMember } = await import("@/routes/api/data");
+      await removeChatGroupMember({ data: { groupId, employeeId } });
+    })().catch(console.warn);
+  },
+
+  /** Giải tán nhóm (Owner/Admin) — tombstone, tin nhắn giữ nguyên trong DB. */
+  removeChatGroup: (groupId) => {
+    const deletedAt = new Date().toISOString();
+    set((s) => ({
+      chatGroups: s.chatGroups.map((g) =>
+        g.id === groupId ? { ...g, deletedAt, updatedAt: deletedAt } : g,
+      ),
+    }));
+    saveLs(get());
+    (async () => {
+      const { deleteChatGroup } = await import("@/routes/api/data");
+      await deleteChatGroup({ data: { groupId, deletedAt } });
+    })().catch(console.warn);
   },
 
   addCheckin: (gps = "", address = "", note = "", photo = "", centerCode = "VP") => {

@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 71 — Full quyền mặc định trừ Preview Mobile + reset module_access)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 72 — Nhóm chat kiểu Zalo: Admin tạo nhóm, mời/thêm thành viên)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2862,3 +2862,61 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Thêm nhân sự mới ở Nhân sự (hoặc duyệt đăng ký) → đăng nhập lần đầu →
 >   full quyền ngay không cần bật tay.
 > - Admin/SuperAdmin: vẫn thấy Preview Mobile + 2 module quản trị.
+
+---
+
+### Giai đoạn 72: Nhóm chat kiểu Zalo — tạo nhóm + thêm thành viên (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0023_chat_groups.sql — bảng chat_groups + chat_group_members + messages.group_id |
+| (mới) | feat(chat): tạo nhóm mới (Admin) + dialog thành viên (Owner/Admin thêm/xóa/giải tán) + nhóm chỉ member thấy |
+| (mới) | feat(store): chatGroups state + 4 actions + hydrate/poll load nhóm |
+| (mới) | chore: tăng version 0.8.2 → 0.9.0 (feature lớn — minor) |
+
+> **Câu hỏi của Đại ca:** "Thêm nhóm mới thế nào? Thêm người vào nhóm thế nào?" —
+> Chat GĐ 69 chỉ có 4 kênh hardcoded, KHÔNG có nhóm thực sự. Đã chốt phương án:
+> chỉ Admin tạo nhóm; Owner + Admin thêm thành viên; giữ cả 4 kênh công khai.
+>
+> **Triển khai (5 file):**
+> 1. **Migration 0023:** `chat_groups` (id, name, created_by, deleted_at tombstone) +
+>    `chat_group_members` (group_id, employee_id, role owner|member, PK composite) +
+>    `messages.group_id` (rỗng với kênh công khai + 1-1) + backfill + 3 indexes.
+> 2. **data.ts:** `loadChatGroups` (JOIN 1-n, gộp member rows theo group id),
+>    `createChatGroup` (insert group + owner + members, ON CONFLICT DO NOTHING),
+>    `addChatGroupMembers`, `removeChatGroupMember` (chặn xóa owner ở WHERE),
+>    `deleteChatGroup` (tombstone). insertMessage/loadAllMessages/loadMessagesSince
+>    thêm group_id end-to-end.
+> 3. **store.ts:** state `chatGroups` + `addChatGroup`/`addChatGroupMembers`/
+>    `removeChatGroupMember`/`removeChatGroup` (optimistic + fire-and-forget Neon);
+>    hydrate load nhóm qua `.catch(() => [])` RIÊNG trong Promise.all (lesson GĐ 70 —
+>    một hàm lỗi không được kéo sập module khác); `refreshMessages` poll THÊM nhóm
+>    mỗi 5s (try/catch riêng, không chặn tin nhắn).
+> 4. **chat.tsx:** nút "＋ Nhóm mới" (chỉ isAdmin) + dialog tạo (tên + checkbox thành
+>    viên); bấm tiêu đề nhóm/nút "Thành viên" mở dialog thành viên (huy hiệu 👑 Chủ
+>    nhóm, thêm từ danh sách non-members, xóa từng member, Giải tán nhóm confirm);
+>    danh sách trái thêm loại `mygroup` (chỉ member thấy); `canSend` chặn non-member
+>    nhắn; placeholder riêng cho nhóm.
+> 5. **Phân quyền trong UI:** `isAdmin = isAdminRole(me?.role)`; `amOwner =
+>    g.createdBy === currentUserId`; canManage = amOwner || isAdmin.
+>
+> **LESSON LEARNED — JOIN 1-n gộp rows phía server function (2026-09-10):**
+> Load groups + members bằng 1 query JOIN trả về N dòng mỗi group (1 dòng/member).
+> Gộp trong handler bằng Map theo group id — trả về 1 object/group có mảng members.
+> Không dùng 2 query riêng (groups rồi members) — tốn 2 round-trip và khó khớp.
+>
+> **LƯU Ý cho Đại ca khi test:**
+> - Chỉ tài khoản Admin thấy nút "＋ Nhóm mới"; user thường chỉ thấy nhóm mình được
+>   thêm vào + không quản lý member được.
+> - Tạo nhóm trên máy A → thành viên mở Chat máy B → nhóm tự hiện trong ≤5s (poll).
+> - Thêm/xóa member → thiết bị khác tự cập nhật danh sách (poll 5s).
+> - Giải tán nhóm → nhóm biến mất ở mọi member; tin nhắn cũ vẫn nằm trong DB (ẩn).
+> - Owner không thể bị xóa khỏi nhóm mình (chặn cả client + server WHERE role <> 'owner').
+>
+> **Tiêu chí kiểm chứng:**
+> - Admin tạo nhóm "Test NH" + chọn 2 member → 2 người đó thấy nhóm trong tab Nhóm
+>   (dưới 4 kênh công khai), người ngoài không thấy.
+> - Bấm "Thành viên" → dialog hiện đúng member + huy hiệu chủ nhóm; thêm/xóa member
+>   được; non-member không thấy nút quản lý.
+> - Nhắn tin trong nhóm → chỉ member nhận (poll 5s thiết bị khác).
+> - 4 kênh công khai hoạt động như cũ.
