@@ -2526,5 +2526,36 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Hover Sidebar mở rộng: nút về căn trái, icon + chữ như cũ; nút active vẫn xanh đậm.
 > - Mobile menu không đổi.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 64 — Sidebar: nút nền xanh, active sáng, icon căn giữa)*
+---
+
+### Giai đoạn 65: Sidebar — nút không hoạt động về nền trong suốt (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(app-shell): nút menu không hoạt động về nền trong suốt như cũ — chỉ nút active giữ nền xanh accent |
+| (mới) | chore: tăng version 0.6.3 → 0.6.4 |
+
+> **Yêu cầu của Đại ca (ảnh kèm):** Nền các nút module trên Sidebar trở lại MÀU CŨ
+> (trong suốt) khi không hoạt động; khi hoạt động (module đang mở) thì giữ màu xanh
+> hiện tại đã chọn (GĐ 64).
+>
+> **Fix (1 dòng class trong `NavLink` — nhánh dark, trạng thái KHÔNG active):**
+> ```tsx
+> // Trước (GĐ 64): mọi nút đều có nền xanh
+> : "bg-accent/40 text-forest-fg/85 hover:bg-accent/65 hover:text-white"
+>
+> // Sau: nút không active về nền trong suốt như ban đầu
+> : "bg-transparent text-forest-muted hover:bg-forest-fg/5 hover:text-forest-fg"
+> ```
+>
+> **Kết quả cuối cùng (trạng thái nút Sidebar tối):**
+> - **Active:** `bg-accent` xanh đậm + icon trắng + shadow (GĐ 64) — GIỮ NGUYÊN
+> - **Không active:** nền trong suốt + chữ xám nhạt, hover nền trắng mờ — NHƯ CŨ ban đầu
+> - Icon căn giữa khi thu hẹp (GĐ 64) — GIỮ NGUYÊN
+> - Khối user nền xanh (GĐ 63) — GIỮ NGUYÊN
+>
+> **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
+> các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 65 — Sidebar: nút không active về nền trong suốt)*
 *Người cập nhật: Trợ lý lập trình*

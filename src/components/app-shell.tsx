@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.6.3";
+const DEFAULT_VERSION = "0.6.4";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -130,11 +130,12 @@ function NavLink({
         collapsed
           ? "w-full justify-center gap-0 px-0 group-hover:justify-start group-hover:gap-2.5 group-hover:px-2.5"
           : "justify-start gap-2.5 px-2.5",
-        // Nền xanh accent đồng nhất — module đang mở thì nền SÁNG lên (GĐ 64)
+        // Nền xanh accent CHỈ khi ACTIVE — module đang mở nền sáng + icon trắng (GĐ 64);
+        // nút không hoạt động về nền trong suốt như ban đầu (Đại ca yêu cầu 2026-09-10)
         dark
           ? active
             ? "bg-accent text-white shadow-sm shadow-accent/40"
-            : "bg-accent/40 text-forest-fg/85 hover:bg-accent/65 hover:text-white"
+            : "bg-transparent text-forest-muted hover:bg-forest-fg/5 hover:text-forest-fg"
           : active
             ? "bg-accent-soft text-accent"
             : "text-muted hover:bg-surface-2 hover:text-ink",
