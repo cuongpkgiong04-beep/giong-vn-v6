@@ -94,6 +94,7 @@
 - **Surgical** — sửa đúng dòng cần sửa, không đụng dòng khác
 - **Minimal Change Policy** — tối thiểu thay đổi cần thiết
 - **PHẢI HỎI TRƯỚC KHI PUSH** — Sau khi sửa code xong, PHẢI hỏi Đại ca lựa chọn trước khi push (xem bên dưới).
+- **Desktop + Mobile song song** (hiệu lực từ 2026-09-09) — Mọi sửa code từ giờ áp dụng đồng thời cho cả Desktop và Mobile, trừ khi Đại ca yêu cầu cụ thể khác.
 
 ### Quy tắc CLAUDE.md (bắt buộc tuân thủ):
 
@@ -2121,5 +2122,59 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Ở nhà/điện thoại mở Báo cáo Check-in → tab Đường phố → tile hiện đầy đủ
 > (không còn nền xám), marker đúng vị trí, Vệ tinh vẫn hoạt động như cũ.
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 55 — Fix bản đồ Đường phố: OSM → Esri)*
+---
+
+### Giai đoạn 56: Dashboard — 6 lối tắt + 4 bảng tóm tắt có dialog chi tiết (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(dashboard): thêm 2 lối tắt Check-in + Đề nghị — mobile 2 cột × 3 hàng, desktop 3 cột × 2 hàng |
+| (mới) | feat(dashboard): thêm 2 bảng tóm tắt Check-in + Đề nghị cạnh 2 bảng cũ (4 card) |
+| (mới) | feat(dashboard): cả 4 bảng tóm tắt bấm "Xem tất cả" mở dialog danh sách; bấm dòng mở dialog chi tiết + lightbox ảnh |
+| (mới) | docs(agents): thêm nguyên tắc Desktop + Mobile song song vào Quy tắc code |
+| (mới) | chore: tăng version 0.3.7 → 0.3.8 |
+
+> **Yêu cầu của Đại ca:** Thêm 2 nút "Check-in" + "Đề nghị" vào hàng lối tắt Dashboard;
+> mobile 6 nút xếp 2 cột × 3 hàng; thêm phần diễn giải ngắn dưới mỗi bảng như
+> "Chấm công gần đây"/"Nhiệm vụ đang mở"; click dữ liệu 4 bảng tóm tắt đều mở được
+> chi tiết để xem sâu hơn — áp dụng cả desktop và mobile.
+>
+> **Fix (chỉ `src/routes/index.tsx`):**
+> 1. **6 lối tắt:** mảng `shortcuts` thêm Check-in (desc: "X lượt hôm nay") + Đề nghị
+>    (desc: "X chờ duyệt"). Grid đổi `sm:grid-cols-2 lg:grid-cols-3` →
+>    `grid-cols-2 lg:grid-cols-3` — mobile 2 cột × 3 hàng, desktop 3 cột × 2 hàng.
+> 2. **4 bảng tóm tắt:** grid `lg:grid-cols-2` (desktop 2×2, mobile 1 cột). Thêm 2 card mới:
+>    - **Check-in gần đây:** tên + ngày giờ + badge tên rút gọn trung tâm (`centerShort`)
+>    - **Đề nghị gần đây:** tiêu đề + người đề nghị + ngày + badge trạng thái
+> 3. **Dialog danh sách (4 cái):** nút "Xem tất cả"/"Bảng việc" đổi từ `<Link>` sang
+>    `<button>` mở Dialog chứa TOÀN BỘ danh sách; bấm dòng → đóng list dialog + mở dialog chi tiết.
+> 4. **Dialog chi tiết (4 cái):**
+>    - Chấm công: trạng thái + loại, nhân sự, ngày (có thứ), giờ, trụ sở, địa điểm (cleanAddress),
+>      GPS, duyệt, ảnh (bấm phóng to)
+>    - Nhiệm vụ: trạng thái, tiêu đề, phụ trách, người giao, hỗ trợ, khởi tạo, hạn, vướng mắc,
+>      vị trí, ảnh
+>    - Check-in: trung tâm, nhân sự, ngày giờ, địa điểm, GPS, ghi chú, ảnh
+>    - Đề nghị: trạng thái + loại, tiêu đề, người đề nghị, ngày, đơn vị, nội dung
+>    - Ảnh trong dialog: `cursor-zoom-in` + click mở **lightbox nền trắng** (đồng bộ GĐ 65),
+>      z-[60] phủ trên Radix Dialog (z-50)
+> 5. **Dòng bảng tóm tắt** thêm `cursor-pointer` + `hover:bg-surface-2` để báo hiệu bấm được.
+>
+> **Nguyên tắc mới trong Quy tắc code (theo yêu cầu Đại ca):**
+> **"Mọi sửa code từ giờ áp dụng đồng thời cho cả Desktop và Mobile, trừ khi Đại ca yêu cầu cụ thể khác."**
+>
+> **LESSON LEARNED — Link → button khi mở dialog (2026-09-09):**
+> Header card tóm tắt dùng `<Link to>` điều hướng trang. Khi cần mở Dialog thay vì điều hướng,
+> phải đổi sang `<button>` — giữ nguyên style (`text-sm font-medium text-accent hover:underline`)
+> để UI không đổi. Radix Dialog bên trong `<Link>` sẽ điều hướng thay vì mở dialog.
+>
+> **LƯU Ý:** Kiểm tra phân quyền — 4 bảng tóm tắt đọc trực tiếp store (attendance/tasks/
+> checkins/proposals) vốn đã qua lớp lọc theo user ở hydrate → user thường chỉ thấy data của mình,
+> admin thấy tất cả. Không thêm logic phân quyền riêng trong Dashboard để tránh trùng lặp.
+>
+> **Tiêu chí kiểm chứng:**
+> - Desktop: 6 lối tắt 1 hàng 3 cột × 2 hàng; 4 bảng tóm tắt 2×2; bấm "Xem tất cả" mở dialog
+>   danh sách; bấm dòng mở chi tiết; ảnh phóng to được (lightbox nền trắng)
+> - Mobile: 6 lối tắt 2 cột × 3 hàng; 4 bảng 1 cột; dialog + lightbox hoạt động giống desktop
+
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 56 — Dashboard 6 lối tắt + 4 bảng tóm tắt có dialog chi tiết)*
 *Người cập nhật: Trợ lý lập trình*
