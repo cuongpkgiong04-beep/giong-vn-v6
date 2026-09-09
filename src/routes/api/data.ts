@@ -544,17 +544,66 @@ export const insertNote = createServerFn({ method: "POST" })
 
 /* ─────────────────── Messages ─────────────────── */
 
-export const loadMessages = createServerFn({ method: "GET" })
-  .validator((data: { channel: string }) => data)
+type MessageRow = {
+  id: string;
+  from_name: string;
+  text: string;
+  at: string;
+  channel: string | null;
+  direct_key: string | null;
+  created_by: string | null;
+  attachments: unknown;
+  updated_at: string | null;
+  deleted_at: string | null;
+};
+
+const MESSAGE_COLUMNS = `
+  id, from_name, text, at, channel, direct_key, created_by,
+  attachments, updated_at, deleted_at
+`;
+
+function mapMessageRow(r: MessageRow) {
+  return {
+    id: r.id,
+    from: r.from_name,
+    text: r.text,
+    at: r.at,
+    channel: r.channel ?? "Chung",
+    directKey: r.direct_key ?? "",
+    createdBy: r.created_by ?? "",
+    attachments: Array.isArray(r.attachments) ? r.attachments : [],
+    updatedAt: r.updated_at,
+    deletedAt: r.deleted_at,
+  };
+}
+
+/** Load TOÀN BỘ messages tin nhắn (mọi kênh + 1-1) — dùng cho hydrate + poll.
+ *  Giới hạn 1000 tin mới nhất (theo at DESC rồi đảo lại ASC). */
+export const loadAllMessages = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    const rows = await sql<MessageRow>`
+      SELECT ${sql.raw(MESSAGE_COLUMNS)}
+      FROM messages
+      ORDER BY at DESC
+      LIMIT 1000
+    `;
+    return rows.reverse().map(mapMessageRow);
+  });
+
+/** Poll tin mới: mọi tin có at > since — nhẹ, chạy mỗi 5s khi mở trang Chat. */
+export const loadMessagesSince = createServerFn({ method: "GET" })
+  .validator((data: { since: string }) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
-    return sql<{
-      id: string;
-      from_name: string;
-      text: string;
-      at: string;
-      channel: string;
-    }>`SELECT * FROM messages WHERE channel = ${data.channel} ORDER BY at ASC LIMIT 200`;
+    const rows = await sql<MessageRow>`
+      SELECT ${sql.raw(MESSAGE_COLUMNS)}
+      FROM messages
+      WHERE at > ${data.since}
+      ORDER BY at ASC
+      LIMIT 200
+    `;
+    return rows.map(mapMessageRow);
   });
 
 export const insertMessage = createServerFn({ method: "POST" })
@@ -565,15 +614,36 @@ export const insertMessage = createServerFn({ method: "POST" })
       text: string;
       at: string;
       channel: string;
+      fromId?: string;
+      directKey?: string;
+      attachments?: string[];
+      updatedAt?: string;
+      deletedAt?: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
-      INSERT INTO messages (id, from_name, text, at, channel)
-      VALUES (${data.id}, ${data.from}, ${data.text}, ${data.at}, ${data.channel})
-      ON CONFLICT (id) DO NOTHING
+      INSERT INTO messages (id, from_name, text, at, channel, direct_key, created_by,
+                            attachments, updated_at, deleted_at)
+      VALUES (${data.id}, ${data.from}, ${data.text}, ${data.at}, ${data.channel},
+              ${data.directKey ?? ""}, ${data.fromId ?? ""},
+              ${JSON.stringify(data.attachments ?? [])}::jsonb,
+              ${data.updatedAt ? new Date(data.updatedAt) : new Date()},
+              ${data.deletedAt ? new Date(data.deletedAt) : null})
+      ON CONFLICT (id) DO UPDATE SET
+        deleted_at = EXCLUDED.deleted_at,
+        updated_at = EXCLUDED.updated_at
+      WHERE messages.updated_at < EXCLUDED.updated_at
     `;
+  });
+
+/** Thu hồi tin nhắn — tombstone soft delete lan truyền mọi thiết bị. */
+export const deleteMessage = createServerFn({ method: "POST" })
+  .validator((data: { id: string; deletedAt: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE messages SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.id}`;
   });
 
 export const bulkInsertMessages = createServerFn({ method: "POST" })

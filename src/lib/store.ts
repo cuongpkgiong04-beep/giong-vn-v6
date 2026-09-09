@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { seedAttendance, seedNotes, seedTasks } from "@/data";
 
+import { deleteMessage } from "@/routes/api/data";
+
 import type {
   Attendance,
   Center,
@@ -56,7 +58,9 @@ type Actions = {
   updateProposal: (id: string, data: Partial<Pick<Proposal, "kind" | "title" | "detail" | "dept" | "attachments">>) => void;
   removeProposal: (id: string) => void;
   setProposalStatus: (id: string, status: Proposal["status"], approver?: string) => void;
-  sendMessage: (text: string, channel: string) => void;
+  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[] }) => void;
+  refreshMessages: () => Promise<void>;
+  removeMessage: (id: string) => void;
   addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
   removeCheckin: (id: string) => void;
   addDocument: (d: Omit<Document, "id" | "updatedAt">) => void;
@@ -425,6 +429,11 @@ async function _neonInsertMessage(r: ChatMessage) {
       text: r.text,
       at: r.at,
       channel: r.channel,
+      fromId: r.fromId ?? "",
+      directKey: r.directKey ?? "",
+      attachments: r.attachments ?? [],
+      updatedAt: r.updatedAt,
+      deletedAt: r.deletedAt,
     },
   });
 }
@@ -559,7 +568,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadProposals,
           loadDocuments,
           loadNotes,
-          loadMessages,
+          loadAllMessages,
           loadCheckins,
           loadDeletedAttendanceIds,
           loadDeletedCheckinIds,
@@ -586,7 +595,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             loadTasks(),
             loadProposals(),
             loadNotes(),
-            loadMessages({ data: { channel: "general" } }),
+            loadAllMessages(),
             loadCheckins(),
             loadEmps(),
             loadCtrs(),
@@ -647,9 +656,16 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           support: r.support ?? "", dept: r.dept ?? "", status: r.status ?? "",
           createdBy: r.created_by ?? "", updatedAt: isoStr(r.updated_at) ?? undefined,
         }));
-        const neonMessages: ChatMessage[] = (msgs as any[]).map((r) => ({
-          id: r.id, from: r.from_name, text: r.text, at: r.at, channel: r.channel,
-        }));
+        const neonMessages: ChatMessage[] = (msgs as any[])
+          .map((r) => ({
+            id: r.id, from: r.from ?? "", text: r.text, at: r.at,
+            channel: r.channel ?? "Chung", fromId: r.createdBy ?? "",
+            directKey: r.directKey ?? "",
+            attachments: Array.isArray(r.attachments) ? r.attachments : [],
+            updatedAt: isoStr(r.updatedAt) ?? r.at,
+            deletedAt: isoStr(r.deletedAt) ?? undefined,
+          }))
+          .filter((m) => !m.deletedAt); // tombstone — tin đã thu hồi không load
         const neonDocuments: Document[] = (docs as any[])
           .filter((r) => !r.deleted_at) // tombstone — hồ sơ đã xóa không load
           .map((r) => ({
@@ -962,21 +978,82 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       .catch(console.warn);
   },
 
-  sendMessage: (text, channel) => {
+  sendMessage: (text, channel, opts) => {
+    const me = get().employees.find((e) => e.id === get().currentUserId);
+    const directKey = opts?.toId
+      ? [get().currentUserId, opts.toId].sort().join("|")
+      : "";
+    const now = new Date();
     const msg: ChatMessage = {
       id: uid("m"),
-      from:
-        get().employees.find((e) => e.id === get().currentUserId)?.username ??
-        "CườngPK",
+      from: me?.username ?? "CườngPK",
       text,
       at: `${todayIso()} ${nowTime().slice(0, 5)}`,
       channel,
+      fromId: get().currentUserId,
+      directKey,
+      attachments: opts?.attachments ?? [],
+      updatedAt: now.toISOString(),
     };
     set((s) => ({ messages: [...s.messages, msg] }));
     saveLs(get());
     addPendingSync({ collection: "messages", data: msg });
     _neonInsertMessage(msg)
       .then(() => clearPendingSync([msg.id]))
+      .catch(console.warn);
+  },
+
+  /** Poll tin mới từ Neon (mỗi 5s khi mở trang Chat) — merge vào store, không ghi đè pending. */
+  refreshMessages: async () => {
+    try {
+      const lastAt = get().messages.reduce(
+        (max, m) => (m.at > max ? m.at : max),
+        "",
+      );
+      const { loadMessagesSince } = await import("@/routes/api/data");
+      const rows = (await loadMessagesSince({ data: { since: lastAt } })) as any[];
+      const incoming: ChatMessage[] = rows
+        .map((r) => ({
+          id: r.id, from: r.from ?? "", text: r.text, at: r.at,
+          channel: r.channel ?? "Chung", fromId: r.createdBy ?? "",
+          directKey: r.directKey ?? "",
+          attachments: Array.isArray(r.attachments) ? r.attachments : [],
+          updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : r.at,
+          deletedAt: r.deletedAt ?? undefined,
+        }))
+        .filter((m) => !m.deletedAt);
+      if (incoming.length === 0) return;
+      // Gộp theo id — tin mới từ thiết bị khác, không đụng tin pending của máy này
+      const pendingIds = new Set(
+        getPendingSync().filter((r) => r.collection === "messages").map((r) => r.data.id),
+      );
+      const merged = mergeByTs(get().messages, incoming, pendingIds, (r) => r.updatedAt ?? r.at);
+      merged.sort((a, b) => (a.at > b.at ? 1 : a.at < b.at ? -1 : a.id > b.id ? 1 : -1));
+      set({ messages: merged });
+      saveLs(get());
+    } catch (err) {
+      console.warn("[store] refreshMessages failed:", err);
+    }
+  },
+
+  /** Thu hồi tin nhắn — tombstone lan truyền mọi thiết bị. */
+  removeMessage: (id) => {
+    const deletedAt = new Date().toISOString();
+    const target = get().messages.find((m) => m.id === id);
+    if (!target) return;
+    const tombstoned: ChatMessage = { ...target, deletedAt, updatedAt: deletedAt };
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === id ? tombstoned : m,
+      ),
+    }));
+    saveLs(get());
+    addPendingSync({ collection: "messages", data: tombstoned });
+    _neonInsertMessage(tombstoned)
+      .then(() => clearPendingSync([id]))
+      .catch(console.warn);
+    deleteMessage(id, deletedAt)
+      .then(() => clearPendingSync([id]))
       .catch(console.warn);
   },
 

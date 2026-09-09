@@ -101,10 +101,23 @@ export type Proposal = {
 
 export type ChatMessage = {
   id: string;
+  /** Tên hiển thị người gửi (username — VD "CườngPK") */
   from: string;
   text: string;
+  /** Thời điểm gửi "YYYY-MM-DD HH:mm" — dùng cho sort + LWW merge */
   at: string;
+  /** Kênh nhóm ("Chung", "Kế toán"...) — rỗng nếu tin 1-1 */
   channel: string;
+  /** ID employee người gửi — chính xác hơn `from` (tên có thể trùng) */
+  fromId?: string;
+  /** Nhắn 1-1: "empA|empB" (2 ID sort tăng) — rỗng nếu kênh nhóm */
+  directKey?: string;
+  /** Danh sách tệp đính kèm (URL Cloudinary) */
+  attachments?: string[];
+  /** ISO timestamp — LWW merge offline */
+  updatedAt?: string;
+  /** Tombstone — tin đã thu hồi */
+  deletedAt?: string;
 };
 
 /** Loại hồ sơ tài liệu — danh sách cố định để lọc/thống kê (GĐ 66) */

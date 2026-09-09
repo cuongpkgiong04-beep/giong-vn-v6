@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 68 — Fix trang Ghi chú crash: timestamptz → ISO string lúc hydrate)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 69 — Nâng cấp Module Chat kiểu Zalo)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2693,3 +2693,71 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Vào trang Ghi chú không còn crash; danh sách sort đúng
 > (mới nhất lên trên trong cùng ngày); Đề nghị bấm duyệt/từ chối không lỗi
 > `approvedAt.slice`; mở trang trên thiết bị khác vẫn đồng bộ (merge LWW hoạt động).
+
+---
+
+### Giai đoạn 69: Nâng cấp Module Chat kiểu Zalo (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0021_chat_enhance.sql — messages thêm direct_key, attachments, created_by, updated_at, deleted_at |
+| (mới) | feat(chat): viết lại trang Chat kiểu Zalo — nhóm + 1-1, poll 5s, đính kèm Cloudinary, thu hồi tin, lightbox |
+| (mới) | feat(store): refreshMessages (poll LWW) + removeMessage (tombstone) + sendMessage mở rộng |
+| (mới) | chore: tăng version 0.7.2 → 0.8.0 (feature lớn — minor) |
+
+> **Bối cảnh:** Đại ca yêu cầu kiểm tra đồng bộ Module Chat + nâng cấp giống Zalo.
+>
+> **Đánh giá đồng bộ trước khi sửa:** Chat là module đồng bộ TỆ NHẤT hệ thống —
+> hydrate chỉ load `channel: "general"` nhưng `sendMessage` tạo tin với channel
+> "Chung"/"Kế toán"... → tin KHÔNG BAO GIỜ hiện ở thiết bị khác (lọc 2 đầu không khớp).
+> Không realtime, không nhắn riêng, không đính kèm. Quyền OK (chat: true mặc định).
+>
+> **Đã chốt với Đại ca:** Kênh nhóm + nhắn 1-1; poll tự động 5 giây; gửi ảnh + file.
+> (Giải thích: Cloudinary KHÔNG phải DB — text lưu Neon, ảnh/file lưu Cloudinary,
+> Neon chỉ lưu URL — cùng kiến trúc Đề nghị/Hồ sơ.)
+>
+> **Chi tiết triển khai (5 file):**
+> 1. **Migration 0021:** `direct_key` ("empA|empB" sort tăng — rỗng nếu kênh nhóm),
+>    `attachments` JSONB, `created_by`, `updated_at`, `deleted_at` + backfill tin cũ
+>    (direct_key='', created_by='', updated_at=created_at) + 2 indexes. Tự chạy khi build.
+> 2. **data.ts:** `loadAllMessages` (mọi kênh + 1-1, 1000 tin mới nhất — thay
+>    `loadMessages` chỉ load 1 kênh), `loadMessagesSince` (poll tin mới theo `at >`),
+>    `insertMessage` chuyển sang UPSERT LWW + đủ cột mới, `deleteMessage` tombstone.
+> 3. **store.ts:** `sendMessage(text, channel, {toId, attachments})` — gắn fromId +
+>    directKey + updatedAt; `refreshMessages` — poll merge LWW (tin pending của máy
+>    không bị ghi đè), sort theo at; `removeMessage` — tombstone; hydrate map đủ cột
+>    + chuẩn hóa isoStr + filter tombstone.
+> 4. **chat.tsx — viết lại kiểu Zalo:** cột trái = danh sách hội thoại (2 tab Nhóm /
+>    Tin nhắn riêng, avatar chữ cái đầu, tin cuối + giờ, search); cột phải = cửa sổ
+>    chat (bubble xanh phải = của mình, tên người gửi bên trái, ngăn cách theo ngày
+>    Hôm nay/Hôm qua, auto cuộn đáy); ô soạn tin + đính kèm ≤3 tệp (ảnh nén ≤800KB,
+>    file ≤2MB, folder `giong-vn/chat`); thu hồi tin (nút × hover, confirm);
+>    lightbox ảnh nền trắng (GĐ 65).
+> 5. **Mobile:** 1 khung tại 1 thời điểm — state `mobileView` ("list" / "chat"),
+>    nút Back về danh sách. Desktop (≥md) luôn hiện cả 2 cột.
+>
+> **LESSON LEARNED — Lọc 2 đầu không khớp = mất đồng bộ âm thầm (2026-09-10):**
+> Bug Chat tồn tại từ khi migrate sang Neon: ghi với channel "Chung" nhưng đọc
+> `WHERE channel = 'general'` — mỗi đầu tự đúng, ghép lại lệch. Đây là dạng lỗi
+> KHÔNG hiện ra trong test 1 thiết bị (tin vẫn nằm trong localStorage nên vẫn thấy).
+> **Quy tắc từ giờ:** khi thêm collection vào Neon, phải test cặp GHI/ĐỌC cùng lúc
+> (grep cả insert + load, so sánh giá trị lọc), và test trên 2 thiết bị khác nhau.
+>
+> **LESSON LEARNED — Polling là phương án realtime trên Vercel serverless (2026-09-10):**
+> Vercel Functions không giữ kết nối lâu (websocket/SSE cần server chạy liên tục —
+> Neon + Vercel free tier không hỗ trợ). Giải pháp gần-realtime ổn nhất: poll định kỳ
+> 5s bằng query nhẹ `WHERE at > since` (index theo at). Chỉ poll khi trang Chat mở
+> (clearInterval khi unmount) — không tốn tài nguyên khi rời trang.
+>
+> **LƯU Ý cho Đại ca khi test:**
+> - Migration 0021 tự chạy khi Vercel build — tin cũ giữ nguyên (coi như kênh Chung).
+> - Nhắn tin trên 1 thiết bị → mở trang Chat trên thiết bị khác → tin tự hiện sau ≤5s
+>   (không cần F5) — đây là tiêu chí đồng bộ quan trọng nhất.
+> - Tin 1-1 chỉ 2 người thấy; kênh nhóm mọi người trong kênh thấy.
+> - Thu hồi tin trên 1 máy → tin biến thành "Tin nhắn đã được thu hồi" ở máy khác.
+>
+> **Tiêu chí kiểm chứng:**
+> - Desktop: 2 cột — danh sách hội thoại + cửa sổ chat; Mobile: 1 khung + nút Back.
+> - Nhóm: 4 kênh; Riêng tư: mọi nhân sự (kể cả chưa từng nhắn — để bắt đầu tin mới).
+> - Gửi ảnh + PDF → hiện trong bubble; bấm ảnh phóng to lightbox nền trắng.
+> - Poll 5s: tin nhắn từ thiết bị khác tự hiện mà không refresh.
