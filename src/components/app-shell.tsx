@@ -30,14 +30,14 @@ import { getAllowedNavItems, setAllModuleAccessFromServer } from "@/lib/permissi
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, totalUnreadCount } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.9.1";
+const DEFAULT_VERSION = "0.9.2";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -108,6 +108,12 @@ function NavLink({
 }) {
   const Icon = item.icon;
   const navigate = useNavigate();
+  // GĐ 74: badge tin nhắn chưa đọc trên icon Chat (sidebar + hamburger).
+  // Selector đọc messages + currentUserId; _chatReadTick bump cũng chạy lại selector
+  // (state change) → count cập nhật ngay sau markConversationRead.
+  const unreadBadge = useAppStore(
+    (s) => (item.to === "/chat" ? totalUnreadCount(s.messages, s.currentUserId) : 0),
+  );
   return (
     <Link
       to={item.to}
@@ -141,7 +147,14 @@ function NavLink({
             : "text-muted hover:bg-surface-2 hover:text-ink",
       )}
     >
-      <Icon className={cn("size-4 shrink-0", dark && active && "text-white")} />
+      <span className="relative shrink-0">
+        <Icon className={cn("size-4", dark && active && "text-white")} />
+        {unreadBadge > 0 && (
+          <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
+            {unreadBadge > 99 ? "99+" : unreadBadge}
+          </span>
+        )}
+      </span>
       <span
         className={cn(
           "whitespace-nowrap transition-all duration-200",
@@ -217,6 +230,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     setAppVersion(getAppVersion());
   }, []);
   const employees = useAppStore((s) => s.employees);
+  // GĐ 74: tổng tin nhắn chưa đọc — badge đỏ trên icon Chat bottom bar mobile.
+  // _chatReadTick trong selector: markConversationRead bump counter → tính lại ngay.
+  const mobileChatUnread = useAppStore((s) =>
+    totalUnreadCount(s.messages, s.currentUserId) + (s._chatReadTick ?? 0) - (s._chatReadTick ?? 0),
+  );
   // Resolve current employee: ALWAYS use store userId (stable across server/client)
   // to avoid hydration mismatch. Auth email/name may differ between SSR and client.
   const byId = employees.find((e) => e.id === userId) ?? employees[0];
@@ -448,6 +466,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         {visibleNav.filter((n) => MOBILE_PRIMARY.includes(n.to)).sort((a, b) => MOBILE_PRIMARY.indexOf(a.to) - MOBILE_PRIMARY.indexOf(b.to)).map((item) => {
           const Icon = item.icon;
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+          // GĐ 74: badge chat — giá trị tính 1 lần ở AppShell body (hooks không được gọi trong map)
+          const unreadBadge = item.to === "/chat" ? mobileChatUnread : 0;
           return (
             <Link
               key={item.to}
@@ -458,7 +478,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                 active ? "text-accent" : "text-muted",
               )}
             >
-              <Icon className="size-6" />
+              <span className="relative">
+                <Icon className="size-6" />
+                {unreadBadge > 0 && (
+                  <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                    {unreadBadge > 99 ? "99+" : unreadBadge}
+                  </span>
+                )}
+              </span>
               {/* Chỉ nút đang mở mới hiện chữ — nút kia chỉ còn icon (yêu cầu Đại ca 2026-09-09) */}
               {active ? item.label : null}
             </Link>

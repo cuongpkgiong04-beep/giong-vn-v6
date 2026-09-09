@@ -20,13 +20,15 @@ import { Dialog, DialogContent, DialogTitle, DialogDesc } from "@/components/ui/
 import { Input } from "@/components/ui/input";
 import { EMPLOYEES, isAdminRole, normalizePersonKey } from "@/lib/catalog";
 import { todayIso, weekdayVi } from "@/lib/format";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, conversationKeyOf } from "@/lib/store";
 
 export const Route = createFileRoute("/chat")({ component: ChatPage });
 
 /* ───────────────────────── Helpers ───────────────────────── */
 
-const CHANNELS = ["Chung", "Kế toán", "Dược", "Marketing"];
+// GĐ 74: ĐÃ XÓA 4 kênh công khai Chung/Kế toán/Dược/Marketing theo yêu cầu Đại ca —
+// Chat giờ chỉ còn NHÓM RIÊNG (GĐ 72) + TIN NHẮN RIÊNG 1-1.
+// Tin cũ của kênh công khai vẫn nằm trong DB nhưng không còn UI hiển thị.
 
 /** Khoảng cách với tin cuối — tin mới hơn 5 phút thì hiện khối thời gian */
 const DAY_GAP_MS = 5 * 60 * 1000;
@@ -105,6 +107,7 @@ function ChatPage() {
   const addGroupMembers = useAppStore((s) => s.addChatGroupMembers);
   const removeGroupMember = useAppStore((s) => s.removeChatGroupMember);
   const removeChatGroup = useAppStore((s) => s.removeChatGroup);
+  const markConversationRead = useAppStore((s) => s.markConversationRead);
   const chatGroups = useAppStore((s) => s.chatGroups);
   const currentUserId = useAppStore((s) => s.currentUserId);
   const employees = useAppStore((s) => s.employees);
@@ -113,7 +116,6 @@ function ChatPage() {
   const isAdmin = isAdminRole(me?.role);
 
   const [tab, setTab] = useState<"group" | "direct">("group");
-  const [channel, setChannel] = useState("Chung");
   const [peerId, setPeerId] = useState<string | null>(null);
   // Nhóm riêng đang mở (GĐ 72) — id trong chatGroups
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -141,32 +143,29 @@ function ChatPage() {
     [chatGroups, currentUserId],
   );
 
+  /* GĐ 74: key hội thoại đang mở — khớp conversationKeyOf để markConversationRead */
+  const activeConvKey =
+    tab === "direct" && peerId
+      ? `direct:${peerId}`
+      : tab === "group" && groupId
+        ? `mygroup:${groupId}`
+        : "";
+
   /* Tin nhắn của hội thoại đang mở */
   const activeMessages = useMemo(() => {
     const list = messages.filter((m) => {
       if (tab === "direct") return m.directKey === directKey;
       if (groupId) return m.groupId === groupId;
-      return m.channel === channel && !m.directKey && !m.groupId;
+      return false; // GĐ 74: không còn kênh công khai
     });
     return list.sort((a, b) => (a.at > b.at ? 1 : a.at < b.at ? -1 : 0));
-  }, [messages, tab, channel, directKey, groupId]);
+  }, [messages, tab, directKey, groupId]);
 
-  /* Danh sách hội thoại trái — kênh công khai + nhóm riêng + 1-1 */
+  /* Danh sách hội thoại trái — nhóm riêng (GĐ 72) + 1-1. Kênh công khai đã xóa (GĐ 74). */
   const conversationList = useMemo(() => {
     if (tab === "group") {
-      const publicChannels = CHANNELS.map((c) => {
-        const msgs = messages.filter((m) => m.channel === c && !m.directKey && !m.groupId);
-        const last = msgs[msgs.length - 1];
-        return {
-          key: `group:${c}`,
-          type: "group" as const,
-          id: c,
-          name: c,
-          last,
-        };
-      });
-      // Nhóm riêng (GĐ 72) — chỉ nhóm tôi là member
-      const privateGroups = myGroups.map((g) => {
+      // Nhóm riêng — chỉ nhóm tôi là member
+      return myGroups.map((g) => {
         const msgs = messages.filter((m) => m.groupId === g.id);
         const last = msgs[msgs.length - 1];
         return {
@@ -177,7 +176,6 @@ function ChatPage() {
           last,
         };
       });
-      return [...publicChannels, ...privateGroups];
     }
     // Nhắn 1-1: mọi nhân sự khác (cả khi chưa có tin — để bắt đầu nhắn mới)
     return employees
@@ -222,22 +220,29 @@ function ChatPage() {
   /* Cuộn xuống đáy khi tin thay đổi / đổi hội thoại */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeMessages.length, channel, peerId, tab]);
+  }, [activeMessages.length, groupId, peerId, tab]);
+
+  /* GĐ 74: đang mở hội thoại → đánh dấu đã đọc (badge đỏ giảm đúng).
+     Chạy lại khi có tin mới về (poll 5s) → đang mở chat thì tin mới coi như đã đọc. */
+  useEffect(() => {
+    if (activeConvKey) markConversationRead(activeConvKey);
+  }, [activeConvKey, activeMessages.length, markConversationRead]);
 
   /* Nhắn với chính mình — chặn; nhóm phải là member mới được nhắn */
   const canSend =
     tab === "direct"
       ? Boolean(peerId && peerId !== currentUserId)
-      : groupId
-        ? Boolean(activeGroup?.members.some((m) => m.employeeId === currentUserId))
-        : true;
+      : Boolean(
+          groupId &&
+            activeGroup?.members.some((m) => m.employeeId === currentUserId),
+        );
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim() && attachments.length === 0) return;
     if (!canSend) return;
     // Gửi 1 tin duy nhất — text + đính kèm cùng tin (cột attachments trong DB)
-    sendMessage(text.trim(), tab === "group" ? channel : "", {
+    sendMessage(text.trim(), "", {
       toId: tab === "direct" ? peerId! : undefined,
       groupId: tab === "group" && groupId ? groupId : undefined,
       attachments: attachments.length > 0 ? attachments : undefined,
@@ -283,7 +288,7 @@ function ChatPage() {
       <PageHeader
         eyebrow="Hệ thống"
         title="Chat nội bộ"
-        desc="Trao đổi theo kênh nhóm và tin nhắn riêng — tự động cập nhật, lưu Neon + Cloudinary."
+        desc="Trao đổi trong nhóm riêng và tin nhắn 1-1 — tự động cập nhật, lưu Neon + Cloudinary."
       />
 
       <div className="flex h-[calc(100dvh-13rem)] min-h-[420px] gap-4 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-card)]">
@@ -352,22 +357,13 @@ function ChatPage() {
             ) : (
               filteredConversations.map((c) => {
                 const active =
-                  tab === "group"
-                    ? c.type === "mygroup"
-                      ? c.id === groupId
-                      : c.id === channel && !groupId
-                    : c.id === peerId;
+                  tab === "group" ? c.id === groupId : c.id === peerId;
                 return (
                   <button
                     key={c.key}
                     type="button"
                     onClick={() => {
-                      if (c.type === "group") {
-                        setTab("group");
-                        setChannel(c.id);
-                        setPeerId(null);
-                        setGroupId(null);
-                      } else if (c.type === "mygroup") {
+                      if (c.type === "mygroup") {
                         setTab("group");
                         setGroupId(c.id);
                         setPeerId(null);
@@ -382,11 +378,7 @@ function ChatPage() {
                       active ? "bg-accent/10" : "hover:bg-surface-2"
                     }`}
                   >
-                    {c.type === "group" ? (
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-forest text-forest-fg">
-                        <Users className="size-4" />
-                      </span>
-                    ) : c.type === "mygroup" ? (
+                    {c.type === "mygroup" ? (
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-white">
                         <Users className="size-4" />
                       </span>
@@ -473,15 +465,7 @@ function ChatPage() {
                   </Button>
                 </>
               ) : (
-                <>
-                  <span className="flex size-8 items-center justify-center rounded-full bg-forest text-forest-fg">
-                    <Users className="size-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">{channel}</p>
-                    <p className="text-xs text-muted">Kênh nhóm</p>
-                  </div>
-                </>
+                <p className="text-sm text-muted">Chọn một hội thoại để bắt đầu</p>
               )
             ) : peerId ? (
               (() => {
@@ -512,14 +496,12 @@ function ChatPage() {
 
           {/* Vùng tin nhắn */}
           <div className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
-            {(tab === "group" ? true : Boolean(peerId)) &&
+            {(tab === "direct" ? Boolean(peerId) : Boolean(groupId)) &&
               activeMessages.length === 0 && (
                 <p className="py-12 text-center text-sm text-faint">
                   {tab === "direct"
                     ? "Chưa có tin nhắn — hãy bắt đầu trước."
-                    : groupId
-                      ? "Chưa có tin trong nhóm — hãy nhắn đầu tiên."
-                      : "Chưa có tin trong kênh này."}
+                    : "Chưa có tin trong nhóm — hãy nhắn đầu tiên."}
                 </p>
               )}
             {activeMessages.map((m, i) => {
@@ -719,9 +701,7 @@ function ChatPage() {
                     ? "Chọn một hội thoại..."
                     : tab === "direct"
                       ? `Nhắn ${employees.find((e) => e.id === peerId)?.name ?? ""}...`
-                      : groupId
-                        ? `Nhắn nhóm ${activeGroup?.name ?? ""}...`
-                        : `Nhắn kênh ${channel}...`
+                      : `Nhắn nhóm ${activeGroup?.name ?? ""}...`
                 }
                 disabled={!canSend}
               />
@@ -906,7 +886,6 @@ function ChatPage() {
                           setMemberDialog(null);
                           if (groupId === g.id) {
                             setGroupId(null);
-                            setChannel("Chung");
                           }
                           toast.success(`Đã giải tán nhóm "${g.name}"`);
                         }

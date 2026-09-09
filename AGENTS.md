@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 73 — Bottom bar mobile: nút Chat thay Đề nghị)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 74 — Chat: xóa kênh công khai + badge tin chưa đọc kiểu Zalo)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2954,3 +2954,56 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Mobile bottom bar = ⏱ Chấm công · 📍 Check-in · 🏠 Tổng
 > quan · 💬 Chat · 📋 Nhiệm vụ. Bấm Chat → mở trang Chat kiểu Zalo. Sidebar vẫn
 > còn đầy đủ cả Đề nghị lẫn Chat.
+
+---
+
+### Giai đoạn 74: Chat — xóa 4 kênh công khai + badge tin nhắn chưa đọc (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(chat): xóa 4 kênh công khai Chung/Kế toán/Dược/Marketing — Chat chỉ còn nhóm riêng + tin nhắn 1-1 |
+| (mới) | feat(app-shell,store): badge đỏ số tin chưa đọc trên icon Chat (bottom bar mobile + sidebar + hamburger) — giống Zalo |
+| (mới) | chore: tăng version 0.9.1 → 0.9.2 |
+
+> **Yêu cầu của Đại ca (2 điểm):**
+> 1. Xóa 4 kênh công khai Chung/Kế toán/Dược/Marketing (nhìn rỗng "Chưa có tin" gây nhiễu).
+> 2. Số mầu trắng có dấu + nền đỏ trên icon Chat — đếm tin đến CHƯA ĐỌC (nhóm + 1-1);
+>    đọc hết → ẩn; mỗi tin +1, đọc trừ đi.
+>
+> **Chi tiết triển khai:**
+> 1. **chat.tsx:** gỡ state `channel` + mọi nhánh UI kênh công khai (danh sách,
+>    header, empty state, placeholder, canSend). Trang Chat giờ = tab Nhóm (nhóm
+>    riêng GĐ 72) + tab Tin nhắn riêng 1-1. Tin cũ kênh vẫn trong DB, không hiển thị.
+> 2. **store.ts — unread tracking:**
+>    - `conversationKeyOf(m, userId)`: `mygroup:{groupId}` / `direct:{peerId}` / `group:{channel}`.
+>    - `readLastReadMap(userId)` — localStorage `giong-vn-chat-read-{userId}` (mốc ISO per conversation).
+>    - `unreadCountFor()` — tin của người KHÁC, chưa xóa, mới hơn mốc lastRead.
+>    - `totalUnreadCount()` — tổng mọi hội thoại (badge icon Chat).
+>    - Action `markConversationRead(convKey)` — cập nhật mốc + bump `_chatReadTick`
+>      (state riêng, KHÔNG persist) để selector badge re-render ngay.
+>    - Effect trong chat.tsx: mở hội thoại → markRead; chạy lại khi tin mới về (poll 5s)
+>      → đang mở chat thì tin mới coi như đã đọc.
+> 3. **app-shell.tsx:** badge đỏ `bg-red-500` góc phải trên icon Chat — bottom bar
+>    mobile + NavLink sidebar + hamburger. Hook `mobileChatUnread` tính 1 lần ở body
+>    AppShell (Rules of Hooks — hooks không được gọi trong `.map()`).
+>
+> **LESSON LEARNED — Unread badge cục bộ, không cần DB (2026-09-10):**
+> Mốc đã-đọc là preference CỦA CHÍNH user trên thiết bị → localStorage per-user
+> đủ đúng nghiệp vụ, không cần thêm bảng/cột trong Neon (khác phân quyền GĐ 53 —
+> thứ đó ảnh hưởng user KHÁC nên phải nằm DB). Tin nhắn phải server-known (đã có).
+> Tiêu chí: "ai count" = tin người khác gửi sau mốc — đơn giản, Zalo-like, offline được.
+>
+> **LESSON LEARNED — Zustand selector cho giá trị tính toán + tick bump:**
+> Selector `(s) => totalUnreadCount(...)` chạy lại khi `s.messages` đổi (tin mới về
+> qua poll → badge tự tăng). Nhưng khi chỉ markRead (localStorage + `_chatReadTick`
+> đổi), `messages` không đổi → selector không re-run → badge không giảm. Fix: bump
+> `_chatReadTick` trong state + selector cộng/trừ tick (`+tick-tick` chỉ để đổi
+> identity tham chiếu). Sạch hơn: để selector trả `getUnread(tick, messages)`.
+>
+> **Tiêu chí kiểm chứng:**
+> - Trang Chat: tab Nhóm + Tin nhắn riêng — KHÔNG còn 4 kênh công khai.
+> - Người A nhắn B (1-1 hoặc nhóm chung) → máy B badge đỏ +N trên icon Chat (nhiều
+>   nơi: bottom bar + sidebar) trong ≤5 giây (poll).
+> - B mở đúng hội thoại → badge giảm đúng số tin vừa đọc; đọc hết toàn bộ → badge ẩn.
+> - Tin của chính mình không tăng badge. Badge mỗi user độc lập (localStorage per-user).
+> - Mobile 1 khung, desktop 2 cột — mọi thay đổi áp dụng cả 2 (nguyên tắc song song).

@@ -34,6 +34,8 @@ type PersistSlice = {
   employees: Employee[];
   centers: Center[];
   _neonReady: boolean;
+  /** GĐ 74: counter bump khi markConversationRead — buộc badge unread re-render. Không persist. */
+  _chatReadTick?: number;
 };
 
 type Actions = {
@@ -67,6 +69,8 @@ type Actions = {
   addChatGroupMembers: (groupId: string, employeeIds: string[]) => void;
   removeChatGroupMember: (groupId: string, employeeId: string) => void;
   removeChatGroup: (groupId: string) => void;
+  /** GĐ 74: đánh dấu đã đọc hội thoại (cập nhật lastReadAt) — giảm badge unread */
+  markConversationRead: (convKey: string) => void;
   addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
   removeCheckin: (id: string) => void;
   addDocument: (d: Omit<Document, "id" | "updatedAt">) => void;
@@ -160,6 +164,7 @@ const initial: PersistSlice = {
   checkins: [],
   documents: [],
   chatGroups: [],
+  _chatReadTick: 0,
   currentUserId: 'e0000000-0000-0000-0000-000000000003', // Phạm Kiên Cường UUID
   employees: FALLBACK_EMPLOYEES,
   centers: FALLBACK_CENTERS,
@@ -278,6 +283,64 @@ async function retryPendingSync() {
 /** Get pending sync records for admin visibility. */
 export function getPendingSyncRecords(): PendingRecord[] {
   return getPendingSync();
+}
+
+/* ── GĐ 74: Unread chat tracking ─────────────────────────────────────────── */
+
+/** Selector đọc counter bump — badge re-render khi markConversationRead. */
+export function _chatReadTickSelector(s: { _chatReadTick?: number }): number {
+  return s._chatReadTick ?? 0;
+}
+
+/** Key hội thoại cho 1 tin nhắn (theo user hiện tại) — đồng bộ với chat.tsx */
+export function conversationKeyOf(m: ChatMessage, userId: string): string {
+  if (m.groupId) return `mygroup:${m.groupId}`;
+  if (m.directKey) return `direct:${m.directKey.split("|").find((id) => id !== userId) ?? m.directKey}`;
+  return `group:${m.channel}`;
+}
+
+/** Đọc map lastReadAt per-user từ localStorage. */
+function readLastReadMap(userId: string): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(`giong-vn-chat-read-${userId}`);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Số tin nhắn CHƯA ĐỌC của 1 hội thoại — tin của người KHÁC gửi sau lastReadAt.
+ * Dùng cho badge đỏ trên icon Chat (bottom bar mobile + sidebar).
+ */
+export function unreadCountFor(
+  messages: ChatMessage[],
+  convKey: string,
+  userId: string,
+  lastReadMap: Record<string, string>,
+): number {
+  const lastRead = lastReadMap[convKey];
+  const lastReadTs = lastRead ? Date.parse(lastRead) || 0 : 0;
+  return messages.filter((m) => {
+    if (m.fromId === userId) return false; // tin của mình không tính
+    if (m.deletedAt) return false;
+    return conversationKeyOf(m, userId) === convKey && parseTs(m.updatedAt ?? m.at) > lastReadTs;
+  }).length;
+}
+
+/** Tổng unread TOÀN BỘ hội thoại (kênh + nhóm + 1-1) — badge tổng trên icon Chat. */
+export function totalUnreadCount(messages: ChatMessage[], userId: string): number {
+  const lastReadMap = readLastReadMap(userId);
+  const convKeys = new Set<string>();
+  for (const m of messages) {
+    if (m.deletedAt) continue;
+    convKeys.add(conversationKeyOf(m, userId));
+  }
+  let total = 0;
+  for (const key of convKeys) {
+    total += unreadCountFor(messages, key, userId, lastReadMap);
+  }
+  return total;
 }
 
 /** Fire-and-forget Neon sync helpers (imported lazily to avoid SSR issues). */
@@ -1195,6 +1258,22 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       const { deleteChatGroup } = await import("@/routes/api/data");
       await deleteChatGroup({ data: { groupId, deletedAt } });
     })().catch(console.warn);
+  },
+
+  /** GĐ 74: đánh dấu đã đọc hội thoại — lưu lastReadAt vào localStorage per-user.
+   *  Badge unread = số tin của người KHÁC mới hơn lastReadAt. */
+  markConversationRead: (convKey) => {
+    try {
+      const uidKey = `giong-vn-chat-read-${get().currentUserId}`;
+      const raw = localStorage.getItem(uidKey);
+      const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+      map[convKey] = new Date().toISOString();
+      localStorage.setItem(uidKey, JSON.stringify(map));
+    } catch {
+      /* quota */
+    }
+    // Bump để badge re-render ngay (state riêng, không nằm trong PersistSlice)
+    set((s) => ({ _chatReadTick: (s as any)._chatReadTick ? (s as any)._chatReadTick + 1 : 1 } as any));
   },
 
   addCheckin: (gps = "", address = "", note = "", photo = "", centerCode = "VP") => {
