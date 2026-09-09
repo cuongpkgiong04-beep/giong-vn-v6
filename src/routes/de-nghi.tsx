@@ -9,6 +9,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Undo2,
   X,
   XCircle,
 } from "lucide-react";
@@ -513,6 +514,20 @@ function DeNghiPage() {
                             </button>
                           </>
                         ) : null}
+                        {/* Mở lại — Admin đưa phiếu đã xử lý về Chờ duyệt để duyệt lại (yêu cầu Đại ca 2026-09-10) */}
+                        {isAdmin && p.status !== "Chờ duyệt" ? (
+                          <button
+                            type="button"
+                            title="Mở lại — đưa về Chờ duyệt"
+                            onClick={() => {
+                              setProposalStatus(p.id, "Chờ duyệt");
+                              toast.message("Đã mở lại — phiếu về Chờ duyệt");
+                            }}
+                            className="rounded-lg border border-line px-2 py-1 text-xs text-muted hover:bg-surface-2"
+                          >
+                            <Undo2 className="size-3.5" />
+                          </button>
+                        ) : null}
                         {canModify(p) ? (
                           <>
                             <button
@@ -697,7 +712,7 @@ function DeNghiPage() {
                   </div>
                 </div>
               ) : null}
-              {/* Duyệt / từ chối ngay trong dialog chi tiết */}
+              {/* Duyệt / từ chối / mở lại ngay trong dialog chi tiết */}
               {isAdmin && detailRow.status === "Chờ duyệt" ? (
                 <div className="mt-4 flex justify-end gap-2">
                   <Button
@@ -720,6 +735,22 @@ function DeNghiPage() {
                     }}
                   >
                     Phê duyệt
+                  </Button>
+                </div>
+              ) : null}
+              {isAdmin && detailRow.status !== "Chờ duyệt" ? (
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setProposalStatus(detailRow.id, "Chờ duyệt");
+                      toast.message("Đã mở lại — phiếu về Chờ duyệt");
+                      setDetailRow(null);
+                    }}
+                  >
+                    <Undo2 className="size-4" />
+                    Mở lại
                   </Button>
                 </div>
               ) : null}

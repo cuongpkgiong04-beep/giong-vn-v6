@@ -2372,5 +2372,46 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Vào trang Đề nghị không còn crash; Admin bấm ✓/✗ duyệt phiếu
 > Chờ duyệt được cả trong bảng lẫn dialog chi tiết.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 60 — Hotfix canApprove crash trang Đề nghị)*
+---
+
+### Giai đoạn 61: Module Đề nghị — nút Mở lại ↩️ + giải đáp nút duyệt (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(de-nghi): thêm nút Mở lại (Undo2) — Admin đưa phiếu đã duyệt/từ chối về Chờ duyệt, cả bảng + dialog chi tiết |
+| (mới) | chore: tăng version 0.5.1 → 0.5.2 |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Đăng nhập Admin nhưng không thấy nút duyệt
+> trong Đề nghị — Đề xuất.
+>
+> **Chẩn đoán — KHÔNG phải lỗi:** Card "Chờ duyệt" = 0 — nút ✓/✗ chỉ hiện trên phiếu
+> đang Chờ duyệt (thiết kế đã chốt GĐ 59: phiếu đã xử lý là chốt). Tất cả 8 phiếu đều đã
+> xử lý → không có nút nào hiện là ĐÚNG. Quyền Admin vẫn hoạt động (nút Sửa/Xóa hiện
+> trên mọi dòng — chỉ Admin mới thấy). Test: tạo phiếu mới → Chờ duyệt → nút ✓/✗ hiện.
+>
+> **Cải tiến theo yêu cầu mới của Đại ca:**
+> - **Nút Mở lại ↩️ (Undo2):** Admin thấy trên phiếu đã duyệt/từ chối — bấm đưa phiếu về
+>   "Chờ duyệt" (store `setProposalStatus(id, "Chờ duyệt")` tự xóa approver/approvedAt —
+>   đã xử lý sẵn từ GĐ 59). Có cả trong bảng + dialog chi tiết. Sau khi mở lại → nút ✓/✗
+>   hiện lại để duyệt/từ chối anew.
+> - **Nút Sửa giữ nguyên cho Admin** trên phiếu đã xử lý (Đại ca chọn giữ — linh hoạt
+>   hơn quy tắc chốt ban đầu).
+>
+> **GIẢI ĐÁP LƯU TRỮ (câu hỏi của Đại ca):** File đính kèm lưu **Cloudinary** (file gốc),
+> Neon chỉ lưu mảng URL trong cột `attachments` (JSONB). Ảnh nén client-side ≤800KB,
+> file ≤2MB, folder `giong-vn/proposals`. Cùng pattern ảnh Chấm công/Check-in từ GĐ 8 —
+> DB nhẹ, CDN nhanh. Free tier Cloudinary 25GB.
+>
+> **LESSON LEARNED — Tự nhận biệt "0 lỗi" giữa thay đổi lớn (2026-09-10):**
+> `tsc --noEmit` trên máy Drive-corrupt exit code 2 do 436 lỗi từ file .mjs lạ
+> (không thuộc dự án). Khi grep lọc "0 lỗi non-mjs" em tưởng sạch — nhưng phải PHÂN BIỆT:
+> exit code 2 + lỗi 100% nằm ở .mjs lạ = OK; exit code 2 + lỗi trong file TS/TSX dự án = FAIL.
+> Luôn tách nguồn lỗi trước khi kết luận, đừng chỉ nhìn con số tổng.
+>
+> **Tiêu chí kiểm chứng:**
+> - Phiếu Đã duyệt/Từ chối: Admin thấy nút ↩️ → bấm → phiếu về Chờ duyệt, người/ngày duyệt cũ xóa → ✓/✗ hiện lại.
+> - Phiếu Chờ duyệt: Admin thấy ✓/✗; user thường không thấy nút nào ngoài Sửa/Xóa phiếu của mình.
+> - Dialog chi tiết phiếu đã xử lý: nút "Mở lại" bên dưới.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 61 — Module Đề nghị: nút Mở lại + giải đáp lưu trữ Cloudinary)*
 *Người cập nhật: Trợ lý lập trình*
