@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 70 — Hotfix sự cố sql.raw làm trắng dữ liệu + xác nhận tsc CLI hỏng)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 71 — Full quyền mặc định trừ Preview Mobile + reset module_access)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2819,3 +2819,46 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Vào app mọi module có dữ liệu trở lại (Nhiệm vụ 74, Nhân sự,
 > Đề nghị...); trang Chat load tin nhắn bình thường; `node scripts/typecheck.mjs` báo
 > số lỗi KHÔNG ĐỔI so với baseline (26 lỗi cũ có sẵn, không thêm lỗi mới).
+
+---
+
+### Giai đoạn 71: Full quyền mặc định trừ Preview Mobile + reset module_access (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(permissions): default = FULL quyền 12 module cho mọi nhân sự mới, trừ Preview Mobile (chỉ Admin) |
+| (mới) | feat(migration): 0022_reset_module_access.sql — xóa sạch override cũ, mọi người về default mới |
+| (mới) | chore: tăng version 0.8.1 → 0.8.2 |
+
+> **Yêu cầu của Đại ca:** (1) Reset NGAY — tất cả nhân sự hiện có full quyền trong bảng
+> Phân quyền trừ Preview Mobile; (2) Nhân sự MỚI về sau cũng tự động full quyền trừ
+> Preview Mobile; (3) Giữ "Phân quyền" + "Duyệt đăng ký" mặc định của SuperAdmin/Admin.
+>
+> **Triển khai (2 file):**
+> 1. **permissions.ts — getDefaultModuleAccess():** bỏ phân quyền theo bộ phận
+>    (HCNS mới có proposals, Marketing mới có reports...). Default user thường =
+>    12 module bật (dashboard, attendance, checkin, tasks, proposals, hr, centers,
+>    documents, reports, notes, chat, guide) + `preview: false`. Admin giữ nguyên
+>    full + admin + preview. Module 'admin' KHÔNG nằm trong bảng toggle — chỉ
+>    isAdminRole được cấp (giữ nguyên).
+> 2. **Migration 0022:** `delete from module_access;` — override cũ (một số user
+>    bị hạn chế / grant thủ công từng lưu) xóa sạch → mọi người hiện có rơi về
+>    default mới. Tự chạy khi Vercel build.
+>
+> **LESSON LEARNED — Vercel Secret env không pull được qua CLI (2026-09-10):**
+> Muốn chạy SQL trực tiếp Neon từ local cần DATABASE_URL. `vercel env pull` với env
+> đánh dấu **Sensitive/Secret** chỉ trả về chuỗi `[SENSITIVE]` — KHÔNG lấy được giá trị
+> thật (tính năng bảo mật của Vercel). Phương án thay thế sạch hơn: viết migration
+> SQL (tự chạy khi build) hoặc dùng Playwright thao tác UI. ĐỪNG đánh dấu DATABASE_URL
+> sensitive nếu vẫn cần CLI pull — hoặc giữ migration làm đường chính.
+>
+> **LƯU Ý:** Trang Phân quyền hoạt động bình thường — lần bật/tắt tiếp theo ghi lại
+> override per-user mới (lên Neon, đồng bộ mọi thiết bị — cơ chế GĐ 53).
+>
+> **Tiêu chí kiểm chứng:**
+> - User thường (VD: Trần Mạnh Hùng): sidebar đầy đủ Đề nghị/Nhân sự/Trung tâm/
+>   Hồ sơ/Báo cáo — không thấy Preview Mobile.
+> - Trang Phân quyền: mọi toggle BẬT trừ Preview Mobile (TẮT với user thường).
+> - Thêm nhân sự mới ở Nhân sự (hoặc duyệt đăng ký) → đăng nhập lần đầu →
+>   full quyền ngay không cần bật tay.
+> - Admin/SuperAdmin: vẫn thấy Preview Mobile + 2 module quản trị.

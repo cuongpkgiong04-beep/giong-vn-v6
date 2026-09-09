@@ -161,23 +161,31 @@ export function resetUserModuleAccess(employeeId: string) {
   ensureSeeded();
   delete dbModuleAccess[employeeId];
   writeMirror(dbModuleAccess);
-}
-
+}/**
+ * Quyền mặc định khi thêm nhân sự mới (GĐ 71 — chốt của Đại ca):
+ * FULL QUYỀN mọi module trong bảng Phân quyền, TRỪ "Preview Mobile" (chỉ Admin).
+ * "Phân quyền" + "Duyệt đăng ký" (nhóm admin) không nằm trong bảng này — mặc định
+ * chỉ Admin role (xem getEffectiveModuleAccess + getAllowedNavItems).
+ */
 export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessMap {
   const defaultMap: ModuleAccessMap = {
     dashboard: true,
     attendance: true,
     checkin: true,
     tasks: true,
+    proposals: true,
+    hr: true,
+    centers: true,
+    documents: true,
+    reports: true,
     notes: true,
     chat: true,
     guide: true,
-    documents: true,
+    preview: false, // Preview Mobile — chỉ Admin (chốt GĐ 71)
   };
 
   if (!employee) return defaultMap;
 
-  const dept = employee.dept ?? "";
   const isAdmin = isAdminRole(employee.role);
 
   if (isAdmin) {
@@ -185,7 +193,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       dashboard: true,
       attendance: true,
       checkin: true,
-      tasks: true,    proposals: true,
+      tasks: true,	    proposals: true,
     hr: true,
       centers: true,
       documents: true,
@@ -196,19 +204,6 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       admin: true,
       preview: true,
     };
-  }
-
-  if (["Hành chính - Nhân sự", "HCNS", "Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
-    defaultMap.hr = true;
-    defaultMap.proposals = true;
-  }
-
-  if (["Ban giám đốc", "Quản lý", "Hệ thống", "Marketing"].includes(dept)) {
-    defaultMap.reports = true;
-  }
-
-  if (["Ban giám đốc", "Quản lý", "Hệ thống"].includes(dept)) {
-    defaultMap.centers = true;
   }
 
   return defaultMap;
