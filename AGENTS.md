@@ -2337,5 +2337,40 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Xóa → dialog xác nhận → phiếu mất, mở lại trên thiết bị khác cũng mất (tombstone).
 > - Bộ lọc: người đề nghị/người duyệt/loại/trạng thái/ngày/Của tôi — kết hợp được nhiều filter.
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 59 — Nâng cấp lớn Module Đề nghị)*
+---
+
+### Giai đoạn 60: Hotfix — trang Đề nghị crash "canApprove is not defined" (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(de-nghi): 3 chỗ dùng biến canApprove không khai báo → đổi thành isAdmin — hết crash trang |
+| (mới) | chore: tăng version 0.5.0 → 0.5.1 |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Vào trang Đề nghị → "Something went wrong —
+> canApprove is not defined" — toàn trang crash.
+>
+> **Nguyên nhân:** Khi viết lại trang (GĐ 59), em khai báo biến `isAdmin` (dòng 115,
+> dùng `canApproveProposals()`) nhưng còn 3 chỗ trong JSX dùng tên cũ `canApprove`
+> (nút duyệt/từ chối trong bảng, dòng "không có quyền", dialog chi tiết) → ReferenceError
+> khi render. **Đây là lần THỨ 2 project gặp lỗi kiểu này** — GĐ 25 từng có
+> "isAdmin is not defined" ở trang Chấm công.
+>
+> **Fix:** Đổi cả 3 chỗ `canApprove` → `isAdmin` (surgical — chỉ tên biến).
+>
+> **⚠️ LESSON LEARNED — Typecheck local KHÔNG ĐÁNG TIN trên máy Drive-corrupt (2026-09-10):**
+> Node_modules Google Drive corrupt (GĐ 53) khiến `tsc --noEmit` crash NGẦM — in ra
+> "0 lỗi" là KẾT QUẢ GIẢ (file lỗi không được parse đầy đủ). GĐ 59 đã push với typecheck
+> "sạch" mà thực tế có ReferenceError — TS BẮT được lỗi này nếu parse đúng
+> (TS2304: Cannot find name). **Quy trình verify bắt buộc từ giờ:**
+> 1. `grep -n "TênBiến" file.tsx` — đối chiếu MỌI chỗ dùng biến mới có khai báo không
+> 2. Đếm số lỗi typecheck: nếu output trông "quá sạch" so với thay đổi lớn → nghi ngờ
+>    tsc crash ngầm; chạy lại với output ĐẦY ĐỦ không qua grep để xem có warning của tsc
+> 3. Sau push: theo dõi Vercel build log
+> 4. Lỗi GĐ 25 + GĐ 60 cùng một mẫu: **đổi tên biến khi refactor nhưng sót chỗ dùng**.
+>    Khi refactor tên biến trong file lớn → grep TÊN CŨ sau khi sửa để chắc chắn còn sót.
+>
+> **Tiêu chí kiểm chứng:** Vào trang Đề nghị không còn crash; Admin bấm ✓/✗ duyệt phiếu
+> Chờ duyệt được cả trong bảng lẫn dialog chi tiết.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 60 — Hotfix canApprove crash trang Đề nghị)*
 *Người cập nhật: Trợ lý lập trình*

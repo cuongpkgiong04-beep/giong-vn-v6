@@ -487,7 +487,7 @@ function DeNghiPage() {
                     </td>
                     <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-1">
-                        {canApprove && p.status === "Chờ duyệt" ? (
+                        {isAdmin && p.status === "Chờ duyệt" ? (
                           <>
                             <button
                               type="button"
@@ -533,7 +533,7 @@ function DeNghiPage() {
                             </button>
                           </>
                         ) : null}
-                        {!canModify(p) && !(canApprove && p.status === "Chờ duyệt") ? (
+                        {!canModify(p) && !(isAdmin && p.status === "Chờ duyệt") ? (
                           <span className="text-xs text-faint">—</span>
                         ) : null}
                       </div>
@@ -698,7 +698,7 @@ function DeNghiPage() {
                 </div>
               ) : null}
               {/* Duyệt / từ chối ngay trong dialog chi tiết */}
-              {canApprove && detailRow.status === "Chờ duyệt" ? (
+              {isAdmin && detailRow.status === "Chờ duyệt" ? (
                 <div className="mt-4 flex justify-end gap-2">
                   <Button
                     variant="outline"
