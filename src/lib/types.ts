@@ -105,6 +105,39 @@ export type ChatMessage = {
   channel: string;
 };
 
+/** Loại hồ sơ tài liệu — danh sách cố định để lọc/thống kê (GĐ 66) */
+export const DOC_CATEGORIES = [
+  "Quy chế/Nội quy",
+  "Hợp đồng",
+  "Hồ sơ nhân sự",
+  "Tài chính",
+  "Hướng dẫn",
+  "Khác",
+] as const;
+
+export type DocCategory = (typeof DOC_CATEGORIES)[number];
+
+export type Document = {
+  id: string;
+  title: string;
+  category: string;
+  dept: string;
+  center: string;
+  summary: string;
+  /** Người tạo (tên hiển thị) */
+  creator: string;
+  /** ID employee người tạo — lọc "của tôi" chính xác */
+  createdBy: string;
+  /** Ngày hồ sơ (YYYY-MM-DD) */
+  date: string;
+  /** ISO timestamp lần sửa cuối — LWW merge offline */
+  updatedAt: string;
+  /** Tombstone — hồ sơ đã xóa */
+  deletedAt?: string;
+  /** Danh sách tệp đính kèm (URL Cloudinary) */
+  attachments: string[];
+};
+
 export type CheckIn = {
   id: string;
   name: string;

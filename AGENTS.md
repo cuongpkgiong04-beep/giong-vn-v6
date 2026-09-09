@@ -2557,5 +2557,51 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 65 — Sidebar: nút không active về nền trong suốt)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 66 — Nâng cấp Module Hồ sơ tài liệu + Báo cáo Hồ sơ)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### Giai đoạn 66: Nâng cấp Module Hồ sơ tài liệu + Báo cáo Hồ sơ (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(ho-so): nâng cấp toàn diện Module Hồ sơ — bảng DB + CRUD + upload + phân quyền + sticky header |
+| (mới) | feat(migration): 0019_documents.sql — bảng documents + seed 4 hồ sơ cũ |
+| (mới) | feat(bao-cao): trang báo cáo Hồ sơ /bao-cao/bang-ho-so + card trên trang Báo cáo |
+| (mới) | chore: tăng version 0.6.4 → 0.7.0 |
+
+> **Bối cảnh:** Module Hồ sơ vốn là 4 card tĩnh (DOCS hardcoded trong catalog.ts) — không DB,
+> không thêm/sửa/xóa, không đính kèm, không bộ lọc. Đại ca yêu cầu nâng cấp theo 5 điểm:
+> bố cục giống Chấm công (ghim tiêu đề), thêm trường/cột hợp lý, bộ lọc đa điều kiện,
+> sửa/xóa theo quyền (người tạo chỉ đụng của mình, Admin toàn quyền), đính kèm tệp/ảnh.
+>
+> **Kiến trúc mới (same pattern Đề nghị GĐ 59):**
+> - **Migration 0019:** bảng `documents` — id, title, category, dept, center, summary,
+>   creator, created_by, date, updated_at, deleted_at, attachments (JSONB) + indexes.
+>   Seed 4 hồ sơ cũ (Quy chế chấm công, Vay vốn VietinBank, Nội quy tiêm chủng,
+>   Hướng dẫn thu ngân) — data cũ không mất. Tự chạy khi Vercel build.
+> - **Trang /ho-so:** 4 card thống kê (bấm lọc) + khối lọc GHIM (tìm kiếm, loại, phòng ban,
+>   đơn vị, người tạo, ngày từ—đến, checkbox Của tôi) + bảng thead cố định + dialog tạo/sửa
+>   + dialog chi tiết + lightbox ảnh nền trắng (GĐ 65).
+> - **Quyền:** người tạo = tự điền từ user đăng nhập; sửa/xóa chỉ trên hồ sơ CỦA MÌNH;
+>   Admin toàn quyền mọi hồ sơ. Xóa có dialog xác nhận + tombstone.
+> - **Đính kèm:** ≤5 tệp — ảnh nén ≤800KB + PDF/Word/Excel ≤2MB qua upload Cloudinary
+>   (đã mở rộng ở GĐ 59); Neon chỉ lưu URL (JSONB).
+> - **Store:** state `documents` + actions add/update/remove + hydrate merge LWW theo
+>   `updatedAt` + lọc tombstone — offline-first đồng bộ mọi collection.
+> - **Báo cáo /bao-cao/bang-ho-so:** bộ lọc + 4 card thống kê + bảng + xuất CSV UTF-8
+>   + pie cơ cấu theo loại + bảng theo người tạo — CHỈ XEM (phân tách Nghiệp vụ/Báo cáo).
+> - "Loại hồ sơ" là DROPDOWN danh sách cố định (Quy chế/Nội quy · Hợp đồng · Hồ sơ nhân sự
+>   · Tài chính · Hướng dẫn · Khác) — theo chốt của Đại ca, dễ lọc/thống kê.
+>
+> **LESSON LEARNED — Copy pattern module hoàn chỉnh (2026-09-10):**
+> Lần 2 viết module full theo pattern Đề nghị (GĐ 59) — checklist đã chuẩn: migration →
+> types → server functions → store (state + actions + hydrate LWW + tombstone) → trang
+> (card bấm lọc + khối lọc ghim + bảng thead ghim + dialog CRUD + upload + lightbox) →
+> báo cáo (card + bảng + CSV + pie). Pattern này giờ là TEMPLATE cho mọi module danh mục
+> mới trong project.
+>
+> **Tiêu chí kiểm chứng:** /ho-so hiển thị bảng + 4 card + khối lọc ghim; tạo/sửa/xóa đúng
+> quyền; đính kèm ảnh/file hoạt động; 4 hồ sơ cũ nằm trong DB; báo cáo /bao-cao/bang-ho-so
+> lọc + CSV + pie hoạt động; typecheck sạch (tách lỗi .mjs).

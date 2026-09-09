@@ -239,6 +239,7 @@ export const REPORTS = [
   { id: "bc2", name: "Báo cáo nhiệm vụ", desc: "Tiến độ kế hoạch theo người phụ trách", href: "/bao-cao/bang-nhiem-vu" },
 
   { id: "bc6", name: "Đề nghị — Đề xuất", desc: "Tổng hợp đề nghị theo người, loại, trạng thái, thời gian + xuất CSV", href: "/bao-cao/bang-de-nghi" },
+  { id: "bc8", name: "Hồ sơ tài liệu", desc: "Tổng hợp hồ sơ theo loại, phòng ban, người tạo, thời gian + xuất CSV", href: "/bao-cao/bang-ho-so" },
 ];
 
 export const DOCS = [

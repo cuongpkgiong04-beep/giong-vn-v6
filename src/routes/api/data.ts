@@ -385,6 +385,113 @@ export const deleteProposal = createServerFn({ method: "POST" })
     await sql`UPDATE proposals SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.id}`;
   });
 
+/* ─────────────────── Documents (Hồ sơ tài liệu — GĐ 66) ─────────────────── */
+
+export const loadDocuments = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{
+      id: string;
+      title: string;
+      category: string;
+      dept: string;
+      center: string;
+      summary: string;
+      creator: string;
+      created_by: string | null;
+      date: string;
+      updated_at: string | null;
+      deleted_at: string | null;
+      attachments: unknown;
+    }>`
+      SELECT id, title, category, dept, center, summary, creator,
+             created_by, date, updated_at, deleted_at, attachments
+      FROM documents
+      ORDER BY date DESC, created_at DESC
+      LIMIT 500
+    `;
+  });
+
+export const insertDocument = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      title: string;
+      category?: string;
+      dept?: string;
+      center?: string;
+      summary?: string;
+      creator?: string;
+      createdBy?: string;
+      date: string;
+      updatedAt?: string;
+      deletedAt?: string;
+      attachments?: string[];
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO documents (id, title, category, dept, center, summary, creator,
+                             created_by, date, updated_at, deleted_at, attachments)
+      VALUES (${data.id}, ${data.title}, ${data.category ?? "Khác"}, ${data.dept ?? ""},
+              ${data.center ?? ""}, ${data.summary ?? ""}, ${data.creator ?? ""},
+              ${data.createdBy ?? ""}, ${data.date},
+              ${data.updatedAt ? new Date(data.updatedAt) : new Date()},
+              ${data.deletedAt ? new Date(data.deletedAt) : null},
+              ${JSON.stringify(data.attachments ?? [])}::jsonb)
+      ON CONFLICT (id) DO UPDATE SET
+        title = EXCLUDED.title,
+        category = EXCLUDED.category,
+        dept = EXCLUDED.dept,
+        center = EXCLUDED.center,
+        summary = EXCLUDED.summary,
+        creator = EXCLUDED.creator,
+        created_by = EXCLUDED.created_by,
+        date = EXCLUDED.date,
+        updated_at = EXCLUDED.updated_at,
+        deleted_at = EXCLUDED.deleted_at,
+        attachments = EXCLUDED.attachments
+      WHERE documents.updated_at < EXCLUDED.updated_at
+    `;
+  });
+
+export const updateDocument = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      title?: string;
+      category?: string;
+      dept?: string;
+      center?: string;
+      summary?: string;
+      attachments?: string[];
+      updatedAt: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE documents SET
+        title = COALESCE(${data.title ?? null}, title),
+        category = COALESCE(${data.category ?? null}, category),
+        dept = COALESCE(${data.dept ?? null}, dept),
+        center = COALESCE(${data.center ?? null}, center),
+        summary = COALESCE(${data.summary ?? null}, summary),
+        attachments = COALESCE(${data.attachments ? JSON.stringify(data.attachments) : null}::jsonb, attachments),
+        updated_at = ${new Date(data.updatedAt)}
+      WHERE id = ${data.id} AND updated_at < ${new Date(data.updatedAt)}
+    `;
+  });
+
+export const deleteDocument = createServerFn({ method: "POST" })
+  .validator((data: { id: string; deletedAt: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    // Tombstone — soft delete lan truyền mọi thiết bị
+    await sql`UPDATE documents SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.id}`;
+  });
+
 /* ─────────────────── Notes ─────────────────── */
 
 export const loadNotes = createServerFn({ method: "GET" })

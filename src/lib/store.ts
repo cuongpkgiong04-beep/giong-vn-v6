@@ -6,6 +6,7 @@ import type {
   Center,
   ChatMessage,
   CheckIn,
+  Document,
   Employee,
   Note,
   Proposal,
@@ -24,6 +25,7 @@ type PersistSlice = {
   proposals: Proposal[];
   messages: ChatMessage[];
   checkins: CheckIn[];
+  documents: Document[];
   currentUserId: string;
   employees: Employee[];
   centers: Center[];
@@ -57,6 +59,9 @@ type Actions = {
   sendMessage: (text: string, channel: string) => void;
   addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
   removeCheckin: (id: string) => void;
+  addDocument: (d: Omit<Document, "id" | "updatedAt">) => void;
+  updateDocument: (id: string, data: Partial<Pick<Document, "title" | "category" | "dept" | "center" | "summary" | "attachments">>) => void;
+  removeDocument: (id: string) => void;
 };
 
 function slice(s: PersistSlice): PersistSlice {
@@ -67,6 +72,7 @@ function slice(s: PersistSlice): PersistSlice {
     proposals: s.proposals,
     messages: s.messages,
     checkins: s.checkins,
+    documents: s.documents,
     currentUserId: s.currentUserId,
     employees: s.employees,
     centers: s.centers,
@@ -141,6 +147,7 @@ const initial: PersistSlice = {
   proposals: [],
   messages: [],
   checkins: [],
+  documents: [],
   currentUserId: 'e0000000-0000-0000-0000-000000000003', // Phạm Kiên Cường UUID
   employees: FALLBACK_EMPLOYEES,
   centers: FALLBACK_CENTERS,
@@ -475,6 +482,36 @@ async function _neonDeleteProposal(id: string, deletedAt: string) {
   await deleteProposal({ data: { id, deletedAt } });
 }
 
+async function _neonInsertDocument(r: Document) {
+  const { insertDocument } = await import("@/routes/api/data");
+  await insertDocument({
+    data: {
+      id: r.id,
+      title: r.title,
+      category: r.category,
+      dept: r.dept,
+      center: r.center,
+      summary: r.summary,
+      creator: r.creator,
+      createdBy: r.createdBy,
+      date: r.date,
+      updatedAt: r.updatedAt,
+      deletedAt: r.deletedAt,
+      attachments: r.attachments,
+    },
+  });
+}
+
+async function _neonUpdateDocument(id: string, data: Partial<Pick<Document, "title" | "category" | "dept" | "center" | "summary" | "attachments">> & { updatedAt: string }) {
+  const { updateDocument } = await import("@/routes/api/data");
+  await updateDocument({ data: { id, ...data } });
+}
+
+async function _neonDeleteDocument(id: string, deletedAt: string) {
+  const { deleteDocument } = await import("@/routes/api/data");
+  await deleteDocument({ data: { id, deletedAt } });
+}
+
 export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   ...initial,
 
@@ -518,6 +555,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadAttendance,
           loadTasks,
           loadProposals,
+          loadDocuments,
           loadNotes,
           loadMessages,
           loadCheckins,
@@ -540,9 +578,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           console.error("[store] Neon attendance load failed — keeping local attendance:", err);
         }
 
-        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [];
+        let tsk: any[] = [], prp: any[] = [], nts: any[] = [], msgs: any[] = [], cks: any[] = [], dbEmps: any[] = [], dbCtrs: any[] = [], docs: any[] = [];
         try {
-          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs] = await Promise.all([
+          [tsk, prp, nts, msgs, cks, dbEmps, dbCtrs, docs] = await Promise.all([
             loadTasks(),
             loadProposals(),
             loadNotes(),
@@ -550,6 +588,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             loadCheckins(),
             loadEmps(),
             loadCtrs(),
+            loadDocuments(),
           ]);
         } catch (err) {
           console.error("[store] Neon other-module load failed — attendance still merged:", err);
@@ -600,6 +639,17 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const neonMessages: ChatMessage[] = (msgs as any[]).map((r) => ({
           id: r.id, from: r.from_name, text: r.text, at: r.at, channel: r.channel,
         }));
+        const neonDocuments: Document[] = (docs as any[])
+          .filter((r) => !r.deleted_at) // tombstone — hồ sơ đã xóa không load
+          .map((r) => ({
+            id: r.id, title: r.title, category: r.category ?? "Khác",
+            dept: r.dept ?? "", center: r.center ?? "", summary: r.summary ?? "",
+            creator: r.creator ?? "", createdBy: r.created_by ?? "",
+            date: String(r.date).slice(0, 10),
+            updatedAt: r.updated_at ?? undefined,
+            deletedAt: r.deleted_at ?? undefined,
+            attachments: Array.isArray(r.attachments) ? r.attachments : [],
+          }));
         const neonCheckins: CheckIn[] = (cks as any[]).map((r) => ({
           id: r.id, name: r.name, time: r.time, date: r.date, weekday: r.weekday,
           gps: r.gps ?? "", address: r.address ?? "", note: r.note ?? "",
@@ -649,6 +699,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const proposalPendingIds = new Set(
           getPendingSync().filter((r) => r.collection === 'proposals').map((r) => r.data.id),
         );
+        const docPendingIds = new Set(
+          getPendingSync().filter((r) => r.collection === 'documents').map((r) => r.data.id),
+        );
         const messagePendingIds = new Set(
           getPendingSync().filter((r) => r.collection === 'messages').map((r) => r.data.id),
         );
@@ -672,6 +725,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated),
           proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds, (r) => r.updatedAt ?? "")
             .filter((p) => !p.deletedAt), // tombstone — loại phiếu đã xóa khỏi mọi thiết bị
+          documents: mergeByTs(get().documents, neonDocuments, docPendingIds, (r) => r.updatedAt ?? "")
+            .filter((d) => !d.deletedAt), // tombstone — hồ sơ đã xóa
           notes: mergeByTs(get().notes, neonNotes, notePendingIds),
           messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
           checkins: (() => {
@@ -939,5 +994,36 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     set((s) => ({ checkins: s.checkins.filter((c) => c.id !== id) }));
     saveLs(get());
     _neonDeleteCheckin(id).catch(console.warn);
+  },
+
+  /* ── Documents (Hồ sơ tài liệu — GĐ 66) ─────────────────────────────── */
+
+  addDocument: (d) => {
+    const doc: Document = { ...d, id: uid("hs"), updatedAt: new Date().toISOString() };
+    set((s) => ({ documents: [doc, ...s.documents] }));
+    saveLs(get());
+    addPendingSync({ collection: "documents", data: doc });
+    _neonInsertDocument(doc)
+      .then(() => clearPendingSync([doc.id]))
+      .catch(console.warn);
+  },
+
+  updateDocument: (id, data) => {
+    const updatedAt = new Date().toISOString();
+    set((s) => ({
+      documents: s.documents.map((x) => (x.id === id ? { ...x, ...data, updatedAt } : x)),
+    }));
+    saveLs(get());
+    _neonUpdateDocument(id, { ...data, updatedAt }).catch(console.warn);
+  },
+
+  removeDocument: (id) => {
+    const deletedAt = new Date().toISOString();
+    set((s) => ({ documents: s.documents.filter((x) => x.id !== id) }));
+    saveLs(get());
+    addPendingSync({ collection: "documents", data: { id, deletedAt, _tombstone: true } as any });
+    _neonDeleteDocument(id, deletedAt)
+      .then(() => clearPendingSync([id]))
+      .catch(console.warn);
   },
 }));
