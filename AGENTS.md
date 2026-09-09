@@ -2557,8 +2557,49 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 66 — Nâng cấp Module Hồ sơ tài liệu + Báo cáo Hồ sơ)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 67 — Nâng cấp Module Ghi chú: bộ lọc ghim + bảng + LWW)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### Giai đoạn 67: Nâng cấp Module Ghi chú (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(ghi-chu): nâng cấp Module Ghi chú — bộ lọc ghim + bảng thead ghim + 4 card bấm lọc + form đầy đủ |
+| (mới) | feat(migration): 0020_notes_enhance.sql — notes thêm created_by + updated_at + backfill |
+| (mới) | chore: tăng version 0.7.0 → 0.7.1 |
+
+> **Yêu cầu của Đại ca:** (1) kiểm tra sự đồng bộ của module; (2) mọi người đăng nhập đều
+> tạo mới; (3) dữ liệu lưu DB; (4) thêm thanh lọc ở trên + cố định thông tin khi cuộn.
+>
+> **Đánh giá đồng bộ trước khi sửa:** notes CÓ lưu Neon (insertNote/loadNotes + pending
+> queue + hydrate merge) nhưng là collection DUY NHẤT thiếu version field → mergeByTs
+> không có tsOf → Neon luôn thắng (không LWW). Cùng lRootElement: addNote hardcode
+> dept="Hệ thống", không lưu createdBy → không lọc "Của tôi" theo ID được.
+>
+> **Fix:**
+> - Migration 0020: `created_by text default ''` + `updated_at timestamptz` + backfill
+>   (created_by=author, updated_at=created_at) + indexes. Tự chạy khi Vercel build.
+> - types/data/store: bổ sung 2 field end-to-end; LIMIT 200→500; sort date DESC,
+>   created_at DESC; addNote gắn createdBy + updatedAt lúc tạo; hydrate mergeByTs LWW
+>   theo updatedAt — notes giờ đồng bộ đúng template mọi collection khác.
+> - Trang /ghi-chu viết lại theo template (pattern Đề nghị GĐ 59 + Nhân sự GĐ 58):
+>   4 card thống kê bấm lọc (Tổng/Của tôi/Còn hạn/Quá hạn) + khối lọc GHIM (tìm kiếm,
+>   người tạo, phòng ban, ngày từ—đến, Của tôi) + bảng thead ghim (8 cột) + dialog tạo
+>   đầy đủ (nội dung, hạn, người hỗ trợ, phòng ban — tự lấy dept của user) + dialog chi
+>   tiết. Hàng quá hạn chữ đỏ. Giữ nguyên quy tắc "không sửa, không xóa" (AppSheet gốc).
+>
+> **LESSON LEARNED — Template nâng cấp module đã hoàn chỉnh (2026-09-10):**
+> Lần 3 áp dụng template (Đề nghị GĐ 59 → Hồ sơ GĐ 66 → Ghi chú GĐ 67) chạy mượt:
+> migration → types → server functions → store (neon insert + hydrate map + merge LWW +
+> actions) → trang (4 card bấm lọc + khối lọc ghim callback ref + bảng thead ghim +
+> dialog CRUD/chi tiết). Chi phí mỗi module ≈ 1 phiên làm việc, typecheck sạch ngay.
+>
+> **Tiêu chí kiểm chứng:** /ghi-chu hiện bảng + 4 card + khối lọc ghim; tạo ghi chú mới
+> với hạn/hỗ trợ/phòng ban → lưu Neon (kiểm tra cột created_by/updated_at); lọc theo
+> người/phòng ban/ngày/Của tôi hoạt động; hàng quá hạn đỏ; cuộn trang khối lọc + thead
+> đứng yên (desktop + mobile).
 
 ---
 

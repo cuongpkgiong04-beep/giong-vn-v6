@@ -50,6 +50,8 @@ export type Note = {
   support: string;
   dept: string;
   status: string;
+  createdBy?: string;
+  updatedAt?: string;
 };
 
 export type Employee = {

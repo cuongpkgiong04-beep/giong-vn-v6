@@ -388,6 +388,8 @@ async function _neonInsertNote(r: Note) {
       support: r.support,
       dept: r.dept,
       status: r.status,
+      createdBy: r.createdBy ?? "",
+      updatedAt: r.updatedAt,
     },
   });
 }
@@ -635,6 +637,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           id: r.id, stt: r.stt ?? undefined, date: r.date, content: r.content,
           author: r.author ?? "", deploy: r.deploy ?? "", deadline: r.deadline ?? "",
           support: r.support ?? "", dept: r.dept ?? "", status: r.status ?? "",
+          createdBy: r.created_by ?? "", updatedAt: r.updated_at ?? undefined,
         }));
         const neonMessages: ChatMessage[] = (msgs as any[]).map((r) => ({
           id: r.id, from: r.from_name, text: r.text, at: r.at, channel: r.channel,
@@ -727,7 +730,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             .filter((p) => !p.deletedAt), // tombstone — loại phiếu đã xóa khỏi mọi thiết bị
           documents: mergeByTs(get().documents, neonDocuments, docPendingIds, (r) => r.updatedAt ?? "")
             .filter((d) => !d.deletedAt), // tombstone — hồ sơ đã xóa
-          notes: mergeByTs(get().notes, neonNotes, notePendingIds),
+          notes: mergeByTs(get().notes, neonNotes, notePendingIds, (r) => r.updatedAt ?? ""),
           messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
           checkins: (() => {
             const deletedCheckinIds = new Set((delCks as any[]).map((r) => r.id));
@@ -886,7 +889,12 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   },
 
   addNote: (n) => {
-    const note: Note = { ...n, id: uid("gc") };
+    const note: Note = {
+      ...n,
+      id: uid("gc"),
+      createdBy: n.createdBy || n.author,
+      updatedAt: new Date().toISOString(),
+    };
     set((s) => ({ notes: [note, ...s.notes] }));
     saveLs(get());
     addPendingSync({ collection: "notes", data: note });

@@ -508,7 +508,9 @@ export const loadNotes = createServerFn({ method: "GET" })
       support: string;
       dept: string;
       status: string;
-    }>`SELECT * FROM notes ORDER BY date DESC LIMIT 200`;
+      created_by: string | null;
+      updated_at: string | null;
+    }>`SELECT * FROM notes ORDER BY date DESC, created_at DESC LIMIT 500`;
   });
 
 export const insertNote = createServerFn({ method: "POST" })
@@ -524,15 +526,18 @@ export const insertNote = createServerFn({ method: "POST" })
       support?: string;
       dept?: string;
       status?: string;
+      createdBy?: string;
+      updatedAt?: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
-      INSERT INTO notes (id, stt, date, content, author, deploy, deadline, support, dept, status)
+      INSERT INTO notes (id, stt, date, content, author, deploy, deadline, support, dept, status, created_by, updated_at)
       VALUES (${data.id}, ${data.stt ?? null}, ${data.date}, ${data.content},
               ${data.author ?? ""}, ${data.deploy ?? ""}, ${data.deadline ?? ""},
-              ${data.support ?? ""}, ${data.dept ?? ""}, ${data.status ?? ""})
+              ${data.support ?? ""}, ${data.dept ?? ""}, ${data.status ?? ""},
+              ${data.createdBy ?? ""}, ${data.updatedAt ?? null})
       ON CONFLICT (id) DO NOTHING
     `;
   });
