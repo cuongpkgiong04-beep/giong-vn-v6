@@ -83,6 +83,18 @@ export type Proposal = {
   detail: string;
   status: "Chờ duyệt" | "Đã duyệt" | "Từ chối";
   dept: string;
+  /** Người duyệt (tên hiển thị) — trống nếu chưa duyệt */
+  approver?: string;
+  /** ISO timestamp lúc duyệt/từ chối */
+  approvedAt?: string;
+  /** ID employee khởi tạo — nguồn sự thật cho lọc "của tôi" */
+  createdBy?: string;
+  /** ISO timestamp lần sửa cuối — dùng cho LWW merge offline */
+  updatedAt?: string;
+  /** Tombstone — phiếu đã xóa (soft delete) */
+  deletedAt?: string;
+  /** Danh sách tệp đính kèm (URL Cloudinary) */
+  attachments?: string[];
 };
 
 export type ChatMessage = {

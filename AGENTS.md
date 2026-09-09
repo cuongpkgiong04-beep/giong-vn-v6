@@ -2257,5 +2257,85 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Lăn lên hết cỡ: PageHeader + 4 card số liệu hiện lại như ban đầu.
 > - Mobile: khối lọc + bảng ghim tương tự; bảng cuộn ngang trong khung để xem đủ 10 cột.
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 58 — Nhân sự: ghim khối lọc + tiêu đề bảng)*
+---
+
+### Giai đoạn 59: NÂNG CẤP LỚN Module Đề nghị — Đề xuất (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0018_enhance_proposals.sql — approver, approved_at, created_by, updated_at, deleted_at, attachments |
+| (mới) | feat(de-nghi): viết lại trang — bảng 10 cột giống Chấm công + 4 card bấm lọc + khối lọc ghim + dialog chi tiết/sửa/xóa + upload đính kèm |
+| (mới) | feat(upload): hỗ trợ file raw PDF/Word/Excel (resource_type=raw, giữ tên file) — ảnh vẫn nén 1200px |
+| (mới) | feat(store): updateProposal + removeProposal (tombstone) + setProposalStatus lưu approver + LWW merge theo updatedAt |
+| (mới) | chore: tăng version 0.4.0 → 0.5.0 (feature lớn — minor) |
+
+> **Bối cảnh:** Đại ca yêu cầu nâng cấp toàn diện module Đề nghị theo 5 điểm:
+> (1) bố cục giống Chấm công có ghim tiêu đề; (2) thêm trường/cột — người khởi tạo = người đề
+> nghị, Admin là người duyệt; (3) bộ lọc theo người tạo/duyệt/chủ đề/ngày/trạng thái; (4) thêm
+> sửa/xóa; (5) đính kèm tệp/file/ảnh.
+>
+> **Đã chốt với Đại ca:** Bảng giống Chấm công (không chế độ thẻ); User CHỈ thấy phiếu của
+> mình, Admin thấy tất cả; đính kèm ảnh + file văn phòng; chỉ sửa phiếu Chờ duyệt (đã duyệt =
+> chốt); 4 card tổng quan bấm lọc nhanh được.
+>
+> **Chi tiết triển khai (7 file):**
+> 1. **Migration 0018:** 6 cột mới + backfill (updated_at = date, created_by = requester cho
+>    dòng cũ) + 4 indexes. Tự chạy khi Vercel build (`npm run db:migrate`).
+> 2. **data.ts:** `loadProposals` SELECT đủ cột mới (LIMIT 500); `insertProposal` chuyển sang
+>    UPSERT LWW (`WHERE proposals.updated_at < EXCLUDED.updated_at` — pattern attendance
+>    GĐ 17); thêm `updateProposal` (COALESCE từng field + guard LWW WHERE) và
+>    `deleteProposal` (tombstone soft delete); `updateProposalStatus` nhận thêm `approver`,
+>    set `approved_at = now()`, giữ updated_at = now().
+> 3. **upload.ts:** detect resource type từ base64 header — video/* → video,
+>    application/* → **raw** (PDF/Word/Excel), còn lại → image. Raw KHÔNG dùng transformation
+>    ảnh (sẽ lỗi) + truyền `public_id` = tên file gốc (bỏ extension) để tải về đúng tên.
+> 4. **store.ts:** type Actions mở rộng; `_neonInsertProposal` gửi đủ cột mới;
+>    hydrate map đủ cột + filter `deleted_at`; merge LWW `mergeByTs(..., r => r.updatedAt)` +
+>    filter tombstone sau merge; `setProposalStatus(id, status, approver?)` cập nhật
+>    approver/approvedAt/updatedAt local; `removeProposal` dùng pending queue cho tombstone.
+> 5. **de-nghi.tsx — viết lại toàn trang:**
+>    - 4 card tổng quan (Tổng/Chờ duyệt/Đã duyệt/Từ chối) bấm lọc nhanh (ring-2 khi active,
+>      bấm lần nữa bỏ lọc)
+>    - Khối lọc GHIM top-16: search + 4 dropdown + date range (1 dòng ngang — GĐ 53) +
+>      checkbox "Của tôi"; đo động `--dn-sticky-h` (callback ref — pattern GĐ 58/63)
+>    - Bảng 10 cột thead sticky `top-[calc(4rem+var(--dn-sticky-h))]`; hàng Chờ duyệt sort
+>      lên đầu trước rồi mới theo ngày giảm dần; bấm dòng mở dialog chi tiết
+>    - Dialog tạo/sửa dùng chung (editingId) — Loại + Đơn vị (dropdown centers, tự chọn
+>      center của user), tiêu đề, chi tiết, đính kèm (≤5 tệp; ảnh nén ≤800KB client-side,
+>      raw ≤2MB; preview thumbnail; xóa từng tệp)
+>    - Dialog chi tiết: đủ thông tin + duyệt/từ chối ngay trong dialog (Admin) + đính kèm
+>      (ảnh lightbox nền trắng GĐ 65, file mở tab mới)
+>    - Dialog xóa xác nhận (pattern Nhiệm vụ GĐ 24: "Chắc xóa"/"Lưu lại")
+>    - Quyền: canModify = owner && Chờ duyệt, hoặc Admin; phiếu đã duyệt/từ chối chỉ Admin xóa
+>    - Thao tác trong bảng: ✓ duyệt / ✗ từ chối (Admin, phiếu Chờ duyệt), ✏ sửa, 🗑 xóa —
+>      stopPropagation để không mở dialog chi tiết
+>
+> **LESSON LEARNED — Cloudinary raw file (2026-09-09):**
+> `resource_type: "raw"` KHÔNG chấp nhận `transformation` ảnh (width/height/quality) —
+> upload sẽ fail. Phải truyền transformation có điều kiện chỉ khi resourceType === "image".
+> URL file raw có dạng `/raw/upload/...` — dùng regex này để phân biệt ảnh/file khi hiển thị.
+>
+> **LESSON LEARNED — UPSERT LWW cho bảng có created_at (2026-09-09):**
+> `loadProposals` ORDER BY date DESC, created_at DESC — cột created_at tồn tại sẵn trong bảng
+> proposals từ migration cũ. Khi thêm sort clause, PHẢI kiểm tra cột có tồn tại không
+> (migrations 0001-0017) — nếu không chắc, sort theo cột vừa thêm (updated_at) cho an toàn.
+>
+> **LƯU Ý cho Đại ca khi test:**
+> - Migration 0018 tự chạy khi Vercel build — dòng cũ tự backfill created_by = requester.
+> - Phiếu tạo TRƯỚC khi nâng cấp: không có createdBy ID → lọc "Của tôi" khớp theo TÊN
+>   (fallback requester) — vẫn hoạt động.
+> - User thường chỉ thấy phiếu của mình ở Dashboard table (bộ lọc data đã có sẵn ở hydrate
+>   theo quyền) — cần kiểm chứng trên cả 2 tài khoản Admin/User.
+>
+> **Tiêu chí kiểm chứng:**
+> - Desktop + Mobile: 4 card + khối lọc ghim dưới header; bảng cuộn thead đứng yên;
+>   phiếu Chờ duyệt lên đầu.
+> - Tạo phiếu mới: chọn Loại + Đơn vị (dropdown), tiêu đề, chi tiết, đính ảnh + PDF →
+>   gửi thành công, badge 📎 hiện trong bảng.
+> - Admin bấm ✓/✗ trong bảng → trạng thái đổi, người duyệt + ngày duyệt hiện trong chi tiết.
+> - Sửa phiếu Chờ duyệt (owner) → nội dung cập nhật; phiếu đã duyệt không còn nút sửa.
+> - Xóa → dialog xác nhận → phiếu mất, mở lại trên thiết bị khác cũng mất (tombstone).
+> - Bộ lọc: người đề nghị/người duyệt/loại/trạng thái/ngày/Của tôi — kết hợp được nhiều filter.
+
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 59 — Nâng cấp lớn Module Đề nghị)*
 *Người cập nhật: Trợ lý lập trình*

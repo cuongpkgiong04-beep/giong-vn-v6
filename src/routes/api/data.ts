@@ -258,9 +258,7 @@ export const bulkInsertTasks = createServerFn({ method: "POST" })
         ON CONFLICT (id) DO NOTHING
       `;
     }
-  });
-
-/* ─────────────────── Proposals ─────────────────── */
+  });/* ─────────────────── Proposals ─────────────────── */
 
 export const loadProposals = createServerFn({ method: "GET" })
   .handler(async () => {
@@ -274,7 +272,19 @@ export const loadProposals = createServerFn({ method: "GET" })
       detail: string;
       status: string;
       dept: string;
-    }>`SELECT * FROM proposals ORDER BY date DESC LIMIT 200`;
+      approver: string | null;
+      approved_at: string | null;
+      created_by: string | null;
+      updated_at: string | null;
+      deleted_at: string | null;
+      attachments: unknown;
+    }>`
+      SELECT id, kind, title, requester, date, detail, status, dept,
+             approver, approved_at, created_by, updated_at, deleted_at, attachments
+      FROM proposals
+      ORDER BY date DESC, created_at DESC
+      LIMIT 500
+    `;
   });
 
 export const insertProposal = createServerFn({ method: "POST" })
@@ -288,24 +298,91 @@ export const insertProposal = createServerFn({ method: "POST" })
       detail?: string;
       status?: string;
       dept?: string;
+      approver?: string;
+      approvedAt?: string;
+      createdBy?: string;
+      updatedAt?: string;
+      deletedAt?: string;
+      attachments?: string[];
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
-      INSERT INTO proposals (id, kind, title, requester, date, detail, status, dept)
+      INSERT INTO proposals (id, kind, title, requester, date, detail, status, dept,
+                             approver, approved_at, created_by, updated_at, deleted_at, attachments)
       VALUES (${data.id}, ${data.kind}, ${data.title}, ${data.requester ?? ""},
               ${data.date}, ${data.detail ?? ""}, ${data.status ?? "Chờ duyệt"},
-              ${data.dept ?? ""})
-      ON CONFLICT (id) DO NOTHING
+              ${data.dept ?? ""}, ${data.approver ?? ""},
+              ${data.approvedAt ? new Date(data.approvedAt) : null},
+              ${data.createdBy ?? ""},
+              ${data.updatedAt ? new Date(data.updatedAt) : new Date()},
+              ${data.deletedAt ? new Date(data.deletedAt) : null},
+              ${JSON.stringify(data.attachments ?? [])}::jsonb)
+      ON CONFLICT (id) DO UPDATE SET
+        kind = EXCLUDED.kind,
+        title = EXCLUDED.title,
+        requester = EXCLUDED.requester,
+        date = EXCLUDED.date,
+        detail = EXCLUDED.detail,
+        status = EXCLUDED.status,
+        dept = EXCLUDED.dept,
+        approver = EXCLUDED.approver,
+        approved_at = EXCLUDED.approved_at,
+        created_by = EXCLUDED.created_by,
+        updated_at = EXCLUDED.updated_at,
+        deleted_at = EXCLUDED.deleted_at,
+        attachments = EXCLUDED.attachments
+      WHERE proposals.updated_at < EXCLUDED.updated_at
+    `;
+  });
+
+export const updateProposal = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      kind?: string;
+      title?: string;
+      detail?: string;
+      dept?: string;
+      attachments?: string[];
+      updatedAt: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE proposals SET
+        kind = COALESCE(${data.kind ?? null}, kind),
+        title = COALESCE(${data.title ?? null}, title),
+        detail = COALESCE(${data.detail ?? null}, detail),
+        dept = COALESCE(${data.dept ?? null}, dept),
+        attachments = COALESCE(${data.attachments ? JSON.stringify(data.attachments) : null}::jsonb, attachments),
+        updated_at = ${new Date(data.updatedAt)}
+      WHERE id = ${data.id} AND updated_at < ${new Date(data.updatedAt)}
     `;
   });
 
 export const updateProposalStatus = createServerFn({ method: "POST" })
-  .validator((data: { id: string; status: string }) => data)
+  .validator((data: { id: string; status: string; approver?: string }) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
-    await sql`UPDATE proposals SET status = ${data.status} WHERE id = ${data.id}`;
+    await sql`
+      UPDATE proposals SET
+        status = ${data.status},
+        approver = ${data.approver ?? ""},
+        approved_at = ${data.status === "Chờ duyệt" ? null : new Date()},
+        updated_at = now()
+      WHERE id = ${data.id}
+    `;
+  });
+
+export const deleteProposal = createServerFn({ method: "POST" })
+  .validator((data: { id: string; deletedAt: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    // Tombstone — soft delete để xóa lan truyền mọi thiết bị (pattern attendance GĐ 17)
+    await sql`UPDATE proposals SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.id}`;
   });
 
 /* ─────────────────── Notes ─────────────────── */

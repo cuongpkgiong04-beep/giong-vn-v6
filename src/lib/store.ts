@@ -51,7 +51,9 @@ type Actions = {
   removeTask: (id: string) => void;
   addNote: (n: Omit<Note, "id">) => void;
   addProposal: (p: Omit<Proposal, "id">) => void;
-  setProposalStatus: (id: string, status: Proposal["status"]) => void;
+  updateProposal: (id: string, data: Partial<Pick<Proposal, "kind" | "title" | "detail" | "dept" | "attachments">>) => void;
+  removeProposal: (id: string) => void;
+  setProposalStatus: (id: string, status: Proposal["status"], approver?: string) => void;
   sendMessage: (text: string, channel: string) => void;
   addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
   removeCheckin: (id: string) => void;
@@ -395,6 +397,12 @@ async function _neonInsertProposal(r: Proposal) {
       detail: r.detail,
       status: r.status,
       dept: r.dept,
+      approver: r.approver ?? "",
+      approvedAt: r.approvedAt,
+      createdBy: r.createdBy ?? "",
+      updatedAt: r.updatedAt,
+      deletedAt: r.deletedAt,
+      attachments: r.attachments ?? [],
     },
   });
 }
@@ -452,9 +460,19 @@ async function _neonDeleteTask(id: string) {
   await deleteTask({ data: { id } });
 }
 
-async function _neonUpdateProposalStatus(id: string, status: string) {
+async function _neonUpdateProposalStatus(id: string, status: string, approver?: string) {
   const { updateProposalStatus } = await import("@/routes/api/data");
-  await updateProposalStatus({ data: { id, status } });
+  await updateProposalStatus({ data: { id, status, approver } });
+}
+
+async function _neonUpdateProposal(id: string, data: Partial<Pick<Proposal, "kind" | "title" | "detail" | "dept" | "attachments">> & { updatedAt: string }) {
+  const { updateProposal } = await import("@/routes/api/data");
+  await updateProposal({ data: { id, ...data } });
+}
+
+async function _neonDeleteProposal(id: string, deletedAt: string) {
+  const { deleteProposal } = await import("@/routes/api/data");
+  await deleteProposal({ data: { id, deletedAt } });
 }
 
 export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
@@ -563,11 +581,17 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           assigner: r.assigner ?? r.created_by ?? "",
           photo: r.photo ?? undefined, location: r.location ?? "",
         }));
-        const neonProposals: Proposal[] = (prp as any[]).map((r) => ({
-          id: r.id, kind: r.kind as Proposal["kind"], title: r.title,
-          requester: r.requester ?? "", date: r.date, detail: r.detail ?? "",
-          status: (r.status ?? "Chờ duyệt") as Proposal["status"], dept: r.dept ?? "",
-        }));
+        const neonProposals: Proposal[] = (prp as any[])
+          .filter((r) => !r.deleted_at) // tombstone — phiếu đã xóa không load
+          .map((r) => ({
+            id: r.id, kind: r.kind as Proposal["kind"], title: r.title,
+            requester: r.requester ?? "", date: r.date, detail: r.detail ?? "",
+            status: (r.status ?? "Chờ duyệt") as Proposal["status"], dept: r.dept ?? "",
+            approver: r.approver ?? "", approvedAt: r.approved_at ?? undefined,
+            createdBy: r.created_by ?? "", updatedAt: r.updated_at ?? undefined,
+            deletedAt: r.deleted_at ?? undefined,
+            attachments: Array.isArray(r.attachments) ? r.attachments : [],
+          }));
         const neonNotes: Note[] = (nts as any[]).map((r) => ({
           id: r.id, stt: r.stt ?? undefined, date: r.date, content: r.content,
           author: r.author ?? "", deploy: r.deploy ?? "", deadline: r.deadline ?? "",
@@ -646,7 +670,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         set({
           attendance: mergedAttendance,
           tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated),
-          proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds),
+          proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds, (r) => r.updatedAt ?? "")
+            .filter((p) => !p.deletedAt), // tombstone — loại phiếu đã xóa khỏi mọi thiết bị
           notes: mergeByTs(get().notes, neonNotes, notePendingIds),
           messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
           checkins: (() => {
@@ -816,7 +841,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   },
 
   addProposal: (p) => {
-    const proposal: Proposal = { ...p, id: uid("dn") };
+    const proposal: Proposal = { ...p, id: uid("dn"), updatedAt: new Date().toISOString() };
     set((s) => ({ proposals: [proposal, ...s.proposals] }));
     saveLs(get());
     addPendingSync({ collection: "proposals", data: proposal });
@@ -825,14 +850,45 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       .catch(console.warn);
   },
 
-  setProposalStatus: (id, status) => {
+  setProposalStatus: (id, status, approver) => {
     set((s) => ({
       proposals: s.proposals.map((x) =>
-        x.id === id ? { ...x, status } : x,
+        x.id === id
+          ? {
+              ...x,
+              status,
+              approver: status === "Chờ duyệt" ? "" : (approver ?? x.approver ?? ""),
+              approvedAt: status === "Chờ duyệt" ? undefined : new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+          : x,
       ),
     }));
     saveLs(get());
-    _neonUpdateProposalStatus(id, status).catch(console.warn);
+    _neonUpdateProposalStatus(id, status, approver).catch(console.warn);
+  },
+
+  updateProposal: (id, data) => {
+    const updatedAt = new Date().toISOString();
+    set((s) => ({
+      proposals: s.proposals.map((x) =>
+        x.id === id ? { ...x, ...data, updatedAt } : x,
+      ),
+    }));
+    saveLs(get());
+    _neonUpdateProposal(id, { ...data, updatedAt }).catch(console.warn);
+  },
+
+  removeProposal: (id) => {
+    const deletedAt = new Date().toISOString();
+    set((s) => ({
+      proposals: s.proposals.filter((x) => x.id !== id),
+    }));
+    saveLs(get());
+    addPendingSync({ collection: "proposals", data: { id, deletedAt, _tombstone: true } as any });
+    _neonDeleteProposal(id, deletedAt)
+      .then(() => clearPendingSync([id]))
+      .catch(console.warn);
   },
 
   sendMessage: (text, channel) => {

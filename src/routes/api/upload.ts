@@ -14,6 +14,7 @@ function isConfigured(): boolean {
 
 /**
  * Upload a base64 image to Cloudinary and return the URL.
+ * Hỗ trợ: ảnh (image/*), video (video/*), file văn phòng (raw — PDF/Word/Excel...).
  * Falls back to returning the base64 string if Cloudinary is not configured.
  */
 export const uploadImage = createServerFn({ method: "POST" })
@@ -21,6 +22,7 @@ export const uploadImage = createServerFn({ method: "POST" })
     (data: {
       base64: string;
       folder?: string;
+      fileName?: string; // Tên gốc — dùng làm public_id cho file raw
     }) => data,
   )
   .handler(async ({ data }) => {
@@ -38,9 +40,11 @@ export const uploadImage = createServerFn({ method: "POST" })
       api_secret: API_SECRET,
     });
 
-    // Determine resource type from base64 header
+    // Determine resource type from base64 header:
+    // video/* → video, application/* (pdf, word, excel...) → raw, còn lại → image
     const isVideo = data.base64.includes("video/");
-    const resourceType = isVideo ? "video" : "image";
+    const isRaw = data.base64.includes("application/");
+    const resourceType = isVideo ? "video" : isRaw ? "raw" : "image";
 
     // Upload using upload_stream with 30s timeout to avoid hanging on slow networks
     const result = await Promise.race([
@@ -49,10 +53,19 @@ export const uploadImage = createServerFn({ method: "POST" })
           {
             folder: data.folder || "giong-vn",
             resource_type: resourceType,
-            transformation: [
-              { width: 1200, height: 1200, crop: "limit" }, // Max 1200px
-              { quality: "auto" }, // Auto compress
-            ],
+            // File raw (PDF/Word/Excel) KHÔNG dùng transformation ảnh — sẽ lỗi upload
+            ...(resourceType === "image"
+              ? {
+                  transformation: [
+                    { width: 1200, height: 1200, crop: "limit" }, // Max 1200px
+                    { quality: "auto" }, // Auto compress
+                  ],
+                }
+              : {}),
+            // Giữ tên file gốc cho raw để người dùng tải về đúng tên
+            ...(resourceType === "raw" && data.fileName
+              ? { public_id: data.fileName.replace(/\.[^.]+$/, "") }
+              : {}),
           },
           (error, result) => {
             if (error) reject(error);
