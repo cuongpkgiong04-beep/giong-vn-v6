@@ -2043,3 +2043,37 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > Đã verify bằng tsc standalone (parse OK cả 6 file). Vercel build là gate cuối.
 > Nếu muốn chạy local chuẩn: chuyển project ra ngoài Drive hoặc xóa node_modules
 > + `npm install` lại với Drive sync tạm dừng.
+
+---
+
+### Giai đoạn 54: Bottom bar mobile — nút Chat → Đề nghị (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): thay nút "Chat" bằng "Đề nghị" trong mobile bottom bar (MOBILE_PRIMARY) |
+| (mới) | chore: tăng version 0.3.5 → 0.3.6 |
+
+> **Yêu cầu của Đại ca:** Nút "Chat" ở bottom bar mobile ít dùng → thay bằng "Đề nghị"
+> (module nghiệp vụ quan trọng hơn).
+>
+> **Fix (surgical — 1 dòng trong `src/components/app-shell.tsx` dòng 92):**
+> ```ts
+> // Trước:
+> const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/chat", "/nhiem-vu"];
+> // Sau:
+> const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/de-nghi", "/nhiem-vu"];
+> ```
+>
+> **Cơ chế:** Bottom bar mobile lọc `visibleNav` theo `MOBILE_PRIMARY` rồi sort theo
+> thứ tự trong mảng. `/de-nghi` đã có sẵn trong NAV (icon FileText, group "Nghiệp vụ")
+> → nút mới tự đúng icon + phân quyền: user không có quyền Đề nghị → nút tự ẩn
+> (khác Chat vốn ai cũng thấy).
+>
+> **LƯU Ý:** Module Chat không bị xóa — vẫn truy cập được qua sidebar (desktop) và
+> menu hamburger (mobile). Chỉ thay vị trí ưu tiên trong bottom bar.
+>
+> **Tiêu chí kiểm chứng:** Mobile bottom bar = Chấm công / Check-in / Tổng quan /
+> **Đề nghị** / Nhiệm vụ. Bấm Đề nghị → mở trang Đề nghị đúng quyền. Sidebar còn Chat.
+
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 54 — Bottom bar: Chat → Đề nghị)*
+*Người cập nhật: Trợ lý lập trình*
