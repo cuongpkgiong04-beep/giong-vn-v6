@@ -2075,5 +2075,51 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Mobile bottom bar = Chấm công / Check-in / Tổng quan /
 > **Đề nghị** / Nhiệm vụ. Bấm Đề nghị → mở trang Đề nghị đúng quyền. Sidebar còn Chat.
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 54 — Bottom bar: Chat → Đề nghị)*
+---
+
+### Giai đoạn 55: Fix bản đồ Đường phố Báo cáo Check-in — OSM chặn theo IP (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(bang-check-in): đổi tile Đường phố từ OSM sang Esri World Street Map — hết trắng bản đồ ở một số mạng |
+| (mới) | chore: tăng version 0.3.6 → 0.3.7 |
+
+> **BUG REPORT của Đại ca (2026-09-09):**
+> Báo cáo Check-in: bản đồ **Đường phố** ở MÁY NHÀ + ĐIỆN THOẠI chỉ hiện nền xám + marker,
+> còn MÁY CÔNG TY thì hiện bình thường. Bản đồ **Vệ tinh** hiện đúng ở CẢ 3 nơi.
+>
+> **Chẩn đoán:**
+> - Marker + zoom control hiện → Leaflet JS (từ unpkg CDN) load OK → code KHÔNG sai.
+> - Vệ tinh (Esri) hiện mọi nơi; Đường phố (OSM) chỉ hiện ở công ty → lỗi nằm ở TILE SERVER.
+> - Test `curl` từ máy nhà: Esri Street Map → HTTP 200; OSM tile.openstreetmap.org → lỗi SSL/KÊT NỐI.
+>
+> **ROOT CAUSE:** Tile Đường phố dùng `{s}.tile.openstreetmap.org` — server MIỄN PHÍ của OSM
+> có chính sách block/throttle THEO IP khi over-limit. IP nhà/4G của Đại ca đã bị chặn tạm thời
+> (do over-limit tích cực trước đó — có thể từ app/tool khác cùng mạng), còn IP công ty thì không.
+>
+> **Fix (surgical — 1 chỗ trong `src/routes/bao-cao/bang-check-in.tsx`):**
+> ```ts
+> // Trước:
+> "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+> // Sau:
+> "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+> ```
+> Chọn Esri vì bản đồ Vệ tinh (cùng server Esri) đang hoạt động ổn định ở cả 3 thiết bị —
+> chứng minh đường mạng tới Esri thông suốt. Lợi ích thêm: map đường phố chi tiết, có tiếng Việt,
+> server thương mại không chặn IP cá nhân.
+>
+> **LƯU Ý:**
+> - `gps-map-inner.tsx` vẫn còn dùng OSM nhưng KHÔNG được import ở đâu → không ảnh hưởng, không sửa.
+> - CARTO basemaps (phương án thay thế khác) từ 2026 yêu cầu API key → không chọn.
+>
+> **LESSON LEARNED — Tile server miễn phí (OSM) chặn theo IP (2026-09-09):**
+> Triệu chứng "bản đồ xám, marker vẫn hiện, chỉ số thiết bị/mạng nhất định bị" là dấu hiệu kinh điển
+> của tile server từ chối IP — KHÔNG phải lỗi code. Cách chẩn đoán nhanh: so sánh 2 layer dùng
+> 2 nguồn khác nhau trên cùng thiết bị; curl 1 tile từ mỗi nguồn. Khi chọn tile server cho app
+> doanh nghiệp, ưu tiên nguồn thương mại ổn định (Esri) hoặc có API key (CARTO) thay vì OSM free.
+>
+> **Tiêu chí kiểm chứng:** Ở nhà/điện thoại mở Báo cáo Check-in → tab Đường phố → tile hiện đầy đủ
+> (không còn nền xám), marker đúng vị trí, Vệ tinh vẫn hoạt động như cũ.
+
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 55 — Fix bản đồ Đường phố: OSM → Esri)*
 *Người cập nhật: Trợ lý lập trình*
