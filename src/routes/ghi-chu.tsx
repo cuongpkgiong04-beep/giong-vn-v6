@@ -114,7 +114,7 @@ function GhiChuPage() {
         return true;
       })
       .sort((a, b) =>
-        b.date > a.date ? 1 : b.date < a.date ? -1 : (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
+        b.date > a.date ? 1 : b.date < a.date ? -1 : String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")),
       );
   }, [notes, mine, statCard, fAuthor, fDept, fFrom, fTo, q, isMine, today]);
 

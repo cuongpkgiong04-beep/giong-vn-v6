@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 67 — Nâng cấp Module Ghi chú: bộ lọc ghim + bảng + LWW)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 68 — Fix trang Ghi chú crash: timestamptz → ISO string lúc hydrate)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2646,3 +2646,50 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** /ho-so hiển thị bảng + 4 card + khối lọc ghim; tạo/sửa/xóa đúng
 > quyền; đính kèm ảnh/file hoạt động; 4 hồ sơ cũ nằm trong DB; báo cáo /bao-cao/bang-ho-so
 > lọc + CSV + pie hoạt động; typecheck sạch (tách lỗi .mjs).
+
+---
+
+### Giai đoạn 68: Fix trang Ghi chú crash — timestamptz trả Date thay vì string (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(store): chuẩn hóa timestamptz → ISO string lúc hydrate (isoStr) — hết crash ".localeCompare is not a function" |
+| (mới) | fix(ghi-chu): bọc String() ở phép sort updatedAt — phòng thủ |
+| (mới) | chore: tăng version 0.7.1 → 0.7.2 |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Vào trang Ghi chú → "Something went wrong —
+> (t.updatedAt ?? \"\").localeCompare is not a function" — toàn trang crash.
+>
+> **Chuỗi nguyên nhân gốc (4 bước):**
+> 1. Cột `updated_at` (migration 0020) kiểu `timestamptz`.
+> 2. Driver `pg` trong `db.ts` chỉ setTypeParser cho int8/date/interval — KHÔNG có
+>    timestamptz → node-postgres parse cột này thành **Date object**.
+> 3. TanStack Start server-function serializer CHO PHÉP Date sống sót qua RPC →
+>    store hydrate nhận `updatedAt` là Date (TypeScript không phát hiện vì dòng data
+>    đi qua `as any[]`).
+> 4. Trang Ghi chú sort `(b.updatedAt ?? "").localeCompare(...)` → Date không có
+>    `.localeCompare` → ReferenceError crash cả trang.
+>
+> **Vì sao chỉ Ghi chú crash:** 3 module cùng pattern (Đề nghị/Hồ sơ/Check-in) dùng
+> `updatedAt` chỉ cho `mergeByTs`/`parseTs` (chấp nhận cả Date) — duy nhất Ghi chú
+> gọi `.localeCompare` trực tiếp. Nhưng Đề nghị + Báo cáo Đề nghị có `.slice()` trên
+> `approvedAt` → sẽ crash cùng cách khi bấm duyệt — đã fix TẬN GỚC cùng lúc.
+>
+> **Fix (2 file):**
+> 1. `src/lib/store.ts`: helper `isoStr()` (Date → toISOString, còn lại → String) đặt
+>    đầu khối hydrate; áp dụng cho TẤT CẢ `updated_at`/`approved_at`/`deleted_at` của
+>    attendance, proposals, notes, documents, checkins (9 chỗ). Merge `parseTs` không
+>    cần sửa — đã xử lý được cả Date.
+> 2. `src/routes/ghi-chu.tsx`: sort bọc `String(...)` phòng thủ dữ liệu lọt đường khác.
+>
+> **LESSON LEARNED — node-postgres trả Date cho timestamptz (2026-09-10):**
+> `pg` mặc định parse `timestamptz` → Date object. Muốn giữ string phải setTypeParser
+> (OID 1184) hoặc chuẩn hóa ở biên. Project đã normalize date (OID 1082) nhưng bỏ sót
+> timestamptz. **Quy tắc từ giờ:** mọi cột timestamp mới thêm qua migration PHẢI được
+> chuẩn hóa thành ISO string ngay lúc hydrate trong store — kiểm tra bằng grep
+> `updated_at` sau khi thêm cột mới. Kiểu `string | null` trong TS không cứu được vì
+> dữ liệu đi qua `as any[]` — TS chỉ nhìn annotation, không nhìn runtime.
+>
+> **Tiêu chí kiểm chứng:** Vào trang Ghi chú không còn crash; danh sách sort đúng
+> (mới nhất lên trên trong cùng ngày); Đề nghị bấm duyệt/từ chối không lỗi
+> `approvedAt.slice`; mở trang trên thiết bị khác vẫn đồng bộ (merge LWW hoạt động).

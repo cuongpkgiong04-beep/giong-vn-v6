@@ -604,13 +604,21 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         }
 
         // Map Neon rows → app types (all synced since they came from DB)
+        // Normalize timestamptz → ISO string: node-postgres returns Date objects
+        // for timestamptz columns (no parser override in db.ts), and Date breaks
+        // downstream string ops (.localeCompare/.slice) in routes.
+        const isoStr = (v: unknown): string | null => {
+          if (v == null) return null;
+          if (v instanceof Date) return v.toISOString();
+          return String(v);
+        };
         const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
           id: r.id, name: r.name, status: r.status, time: r.time,
           date: r.date, weekday: r.weekday, gps: r.gps ?? "",
           address: r.address ?? "", photo: r.photo ?? undefined,
           type: r.type ?? "Bình thường", approved: r.approved ?? "Chưa",
           workplace: r.workplace ?? "VP",
-          updatedAt: r.updated_at ?? `${r.date}T${r.time}`,
+          updatedAt: isoStr(r.updated_at) ?? `${r.date}T${r.time}`,
           synced: true,
         }));
 
@@ -628,16 +636,16 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             id: r.id, kind: r.kind as Proposal["kind"], title: r.title,
             requester: r.requester ?? "", date: r.date, detail: r.detail ?? "",
             status: (r.status ?? "Chờ duyệt") as Proposal["status"], dept: r.dept ?? "",
-            approver: r.approver ?? "", approvedAt: r.approved_at ?? undefined,
-            createdBy: r.created_by ?? "", updatedAt: r.updated_at ?? undefined,
-            deletedAt: r.deleted_at ?? undefined,
+            approver: r.approver ?? "", approvedAt: isoStr(r.approved_at) ?? undefined,
+            createdBy: r.created_by ?? "", updatedAt: isoStr(r.updated_at) ?? undefined,
+            deletedAt: isoStr(r.deleted_at) ?? undefined,
             attachments: Array.isArray(r.attachments) ? r.attachments : [],
           }));
         const neonNotes: Note[] = (nts as any[]).map((r) => ({
           id: r.id, stt: r.stt ?? undefined, date: r.date, content: r.content,
           author: r.author ?? "", deploy: r.deploy ?? "", deadline: r.deadline ?? "",
           support: r.support ?? "", dept: r.dept ?? "", status: r.status ?? "",
-          createdBy: r.created_by ?? "", updatedAt: r.updated_at ?? undefined,
+          createdBy: r.created_by ?? "", updatedAt: isoStr(r.updated_at) ?? undefined,
         }));
         const neonMessages: ChatMessage[] = (msgs as any[]).map((r) => ({
           id: r.id, from: r.from_name, text: r.text, at: r.at, channel: r.channel,
@@ -649,15 +657,15 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             dept: r.dept ?? "", center: r.center ?? "", summary: r.summary ?? "",
             creator: r.creator ?? "", createdBy: r.created_by ?? "",
             date: String(r.date).slice(0, 10),
-            updatedAt: r.updated_at ?? undefined,
-            deletedAt: r.deleted_at ?? undefined,
+            updatedAt: isoStr(r.updated_at) ?? undefined,
+            deletedAt: isoStr(r.deleted_at) ?? undefined,
             attachments: Array.isArray(r.attachments) ? r.attachments : [],
           }));
         const neonCheckins: CheckIn[] = (cks as any[]).map((r) => ({
           id: r.id, name: r.name, time: r.time, date: r.date, weekday: r.weekday,
           gps: r.gps ?? "", address: r.address ?? "", note: r.note ?? "",
           photo: r.photo ?? "", centerCode: r.center_code ?? "VP",
-          status: r.status ?? "checked_in", updatedAt: r.updated_at ?? null,
+          status: r.status ?? "checked_in", updatedAt: isoStr(r.updated_at) ?? null,
         }));
 
         const dbEmployeeList: Employee[] = (dbEmps as any[]).map((r) => ({
