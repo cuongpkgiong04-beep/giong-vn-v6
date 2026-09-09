@@ -1052,7 +1052,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     _neonInsertMessage(tombstoned)
       .then(() => clearPendingSync([id]))
       .catch(console.warn);
-    deleteMessage(id, deletedAt)
+    deleteMessage({ data: { id, deletedAt } })
       .then(() => clearPendingSync([id]))
       .catch(console.warn);
   },

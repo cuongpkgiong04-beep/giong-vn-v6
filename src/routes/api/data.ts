@@ -561,7 +561,6 @@ const MESSAGE_COLUMNS = `
   id, from_name, text, at, channel, direct_key, created_by,
   attachments, updated_at, deleted_at
 `;
-
 function mapMessageRow(r: MessageRow) {
   return {
     id: r.id,
@@ -578,12 +577,15 @@ function mapMessageRow(r: MessageRow) {
 }
 
 /** Load TOÀN BỘ messages tin nhắn (mọi kênh + 1-1) — dùng cho hydrate + poll.
- *  Giới hạn 1000 tin mới nhất (theo at DESC rồi đảo lại ASC). */
+ *  Giới hạn 1000 tin mới nhất (theo at DESC rồi đảo lại ASC).
+ *  LƯU Ý: danh sách cột viết TRỰC TIẾP trong template (interface Sql không có .raw —
+ *  dùng sql.raw gây TypeError runtime → cả hydrate reject → mọi module trắng dữ liệu). */
 export const loadAllMessages = createServerFn({ method: "GET" })
   .handler(async () => {
     const sql = await getSql();
     const rows = await sql<MessageRow>`
-      SELECT ${sql.raw(MESSAGE_COLUMNS)}
+      SELECT id, from_name, text, at, channel, direct_key, created_by,
+             attachments, updated_at, deleted_at
       FROM messages
       ORDER BY at DESC
       LIMIT 1000
@@ -597,7 +599,8 @@ export const loadMessagesSince = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     const rows = await sql<MessageRow>`
-      SELECT ${sql.raw(MESSAGE_COLUMNS)}
+      SELECT id, from_name, text, at, channel, direct_key, created_by,
+             attachments, updated_at, deleted_at
       FROM messages
       WHERE at > ${data.since}
       ORDER BY at ASC

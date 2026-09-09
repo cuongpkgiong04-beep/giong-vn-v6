@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 69 — Nâng cấp Module Chat kiểu Zalo)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 70 — Hotfix sự cố sql.raw làm trắng dữ liệu + xác nhận tsc CLI hỏng)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -2761,3 +2761,61 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Nhóm: 4 kênh; Riêng tư: mọi nhân sự (kể cả chưa từng nhắn — để bắt đầu tin mới).
 > - Gửi ảnh + PDF → hiện trong bubble; bấm ảnh phóng to lightbox nền trắng.
 > - Poll 5s: tin nhắn từ thiết bị khác tự hiện mà không refresh.
+
+---
+
+### Giai đoạn 70: Hotfix sự cố sql.raw — trắng dữ liệu mọi module + XÁC NHẬN tsc CLI hỏng (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (hotfix) | fix(data): bỏ sql.raw trong loadAllMessages/loadMessagesSince — interface Sql không có method này |
+| (hotfix) | fix(store): sửa cú pháp gọi deleteMessage({ data }) — server function nhận 1 object |
+| (mới) | feat(scripts): thêm scripts/typecheck.mjs — probe typecheck qua TypeScript API thay tsc CLI hỏng |
+| (mới) | chore: tăng version 0.8.0 → 0.8.1 |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Sau deploy Chat (GĐ 69), không vào được dữ liệu
+> từ Sidebar hoặc BẤT KỲ đâu — mọi module trắng trừ Chấm công.
+>
+> **ROOT CAUSE (2 lỗi của AI trong commit GĐ 69):**
+> 1. `loadAllMessages`/`loadMessagesSince` dùng `sql.raw(MESSAGE_COLUMNS)` — nhưng
+>    interface `Sql` trong `db.ts` CHỈ có tagged-template + `.query()`, KHÔNG có `.raw()`
+>    → runtime `sql.raw is not a function` → loadAllMessages throw.
+> 2. Chuỗi hậu quả: hàm này nằm trong `Promise.all` của hydrate cùng tasks/proposals/
+>    notes/checkins/employees/centers → MỘT hàm reject = CẢ LỐT reject → catch nuốt →
+>    không module nào load được từ Neon. Chỉ attendance sống sót vì được tách try/catch
+>    riêng (GĐ 17). Một hàm mới thêm vào Promise.all chung = điểm chết chôn toàn app.
+>
+> **XÁC NHẬN tsc CLI trên máy này HỎNG HOÀN TOÀN (nâng cấp từ nghi ngờ GĐ 61):**
+> Probe: chủ ý đặt lỗi type ngây thơ nhất (`const x: number = 'chuoi'`) vào project →
+> `npx tsc --noEmit` vẫn báo 0 lỗi. tsc CLI chạy ra kết quả SAI — mọi "typecheck sạch"
+> từ máy này vô giá trị. Nguyên nhân gần như chắc chắn: node_modules Google Drive
+> corrupt (GĐ 53). TypeScript LIBRARY vẫn ổn — gọi trực tiếp qua API (script probe)
+> bắt đúng 26 lỗi thật (trong đó 2 lỗi của GĐ 69). Nghĩa là: engine compile tốt,
+> chỉ đường thực thi CLI cho kết quả giả.
+>
+> **Giải pháp typecheck từ giờ:** `node scripts/typecheck.mjs` — gọi ts.createProgram
+> trực tiếp với tsconfig.json, in lỗi non-mjs (loại 436 lỗi nhiễu từ file .mjs lạ).
+> ĐÃ VERIFIED: phát hiện đúng cả 2 lỗi GĐ 69 mà tsc CLI bỏ qua.
+>
+> **LESSON LEARNED — Không được phép dùng method không tồn tại trên abstraction mỏng (2026-09-10):**
+> `sql.raw()` là API của postgres.js (postgres tag template), KHÔNG phải của interface
+> `Sql` tự viết trong db.ts (bọc node-postgres `pool.query`). Khi viết SQL động, dùng
+> `sql.query(text, params)` hoặc viết thẳng cột vào template. **Trước khi dùng method
+> nào trên `sql`, grep db.ts xem interface có khai báo không** — TS không cứu được khi
+> tsc máy local hỏng.
+>
+> **LESSON LEARNED — Hàm mới thêm vào Promise.all chung là điểm chết đơn-lỗi (2026-09-10):**
+> Hydrate gom 8 hàm load vào 1 Promise.all với catch nuốt lỗi. 1 hàm throw → cả lố fail
+> → mọi module trắng. Đã có lesson tách attendance (GĐ 17) nhưng các hàm KHÁC vẫn dính
+> nhau. Quy tắc từ giờ: hàm load MỚI thêm vào hydrate phải có try/catch RIÊNG hoặc
+> `.catch(() => [])` tại chỗ — một module lỗi không được phép kéo sập module khác.
+>
+> **⚠️ VIỆC CẦN LÀM (máy cá nhân Đại ca):**
+> 1. Chuyển project ra ngoài Google Drive (hoặc exclude node_modules khỏi Drive sync)
+> 2. Xóa node_modules + `npm install` lại với Drive sync tạm dừng
+> 3. Verify: đặt lại lỗi `const x: number = 'chuoi'` → tsc CLI phải bắt được
+> 4. Trước khi làm xong: DÙNG `node scripts/typecheck.mjs` thay `npx tsc --noEmit`
+>
+> **Tiêu chí kiểm chứng:** Vào app mọi module có dữ liệu trở lại (Nhiệm vụ 74, Nhân sự,
+> Đề nghị...); trang Chat load tin nhắn bình thường; `node scripts/typecheck.mjs` báo
+> số lỗi KHÔNG ĐỔI so với baseline (26 lỗi cũ có sẵn, không thêm lỗi mới).
