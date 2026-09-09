@@ -2209,5 +2209,53 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Trên điện thoại: nút của trang đang mở hiện icon + chữ xanh;
 > 4 nút còn lại chỉ có icon. Bấm nút khác → chữ nhảy sang nút mới. Desktop sidebar giữ nguyên.
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 57 — Bottom bar mobile: chỉ nút active hiện chữ)*
+---
+
+### Giai đoạn 58: Nhân sự — ghim khối lọc + tiêu đề bảng, bảng cuộn nội bộ (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(nhan-su): ghim khối bộ lọc (sticky top-16) + container bảng sticky với thead cố định — bảng cuộn nội bộ, ÁP DỤNG CẢ desktop + mobile |
+| (mới) | chore: tăng version 0.3.9 → 0.4.0 (tròn chục minor theo quy tắc) |
+
+> **Yêu cầu của Đại ca:** Trong Danh mục Nhân sự, khi kéo xuống xem dữ liệu: trang cuộn đến
+> thanh tiêu đề thì DỪNG và CỐ ĐỊNH ở trên cùng; lăn tiếp thì dòng dữ liệu chạy tiếp;
+> lăn lên thì dữ liệu chạy lên, lăn lên tiếp nữa thì phần đầu trang hiện lại như ban đầu.
+> Đại ca chốt: khối ghim = ô tìm kiếm + tiêu đề bảng; MOBILE cũng ghim như desktop.
+>
+> **Fix (2 file):**
+> 1. `src/routes/nhan-su.tsx` — bọc khối bộ lọc (search + dropdown bộ phận + nút Thêm +
+>    toggle grid/table) trong `<div ref={stickyFiltersRef} className="sticky top-16 z-10
+>    -mx-4 border-b border-line bg-bg px-4 pb-2 sm:-mx-6 sm:px-6">`:
+>    - `-mx-4 px-4` / `sm:-mx-6 px-6` — phủ full chiều ngang đúng bằng padding của `<main>`
+>      để nội dung cuộn không hở xuyên qua 2 bên.
+>    - Chiều cao đo ĐỘNG bằng ResizeObserver trong callback ref (pattern GĐ 63 — object ref
+>      + useEffect deps [] KHÔNG chạy lại sau lần render đầu) → set CSS var `--ns-sticky-h`
+>      trên cả khối ghim VÀ `parentElement` (thead nằm ngoài khối ghim — lesson GĐ 58/60:
+>      CSS var chỉ kế thừa xuống dưới trong cây DOM).
+> 2. `src/components/employee/employee-table.tsx` — Container bảng (thay Card):
+>    `<div className="sticky top-[calc(4rem+var(--ns-sticky-h,64px))] z-[5]
+>    max-h-[calc(100dvh-10.5rem-var(--ns-sticky-h,64px))] overflow-auto rounded-xl
+>    bg-surface shadow-[var(--shadow-card)] lg:max-h-[calc(100dvh-6rem-var(--ns-sticky-h,64px))]">`
+>    + `<thead className="sticky top-0 z-[5]">`.
+>
+> **LESSON LEARNED — Bảng nhiều cột + sticky: dùng CUỘN NỘI BỘ thay vì ghim thead theo viewport (2026-09-09):**
+> Pattern GĐ 56 (mở overflow Card + thead sticky theo viewport) KHÔNG phù hợp bảng Nhân sự:
+> bảng 10 cột cần `overflow-x-auto` trên mobile — mà ancestor overflow khác visible PHÁ
+> sticky-theo-viewport. Giải pháp: chiều dọc để TOÀN Container bảng thành khối sticky với
+> `max-h` = viewport còn lại + `overflow-auto` (cuộn cả 2 trục bên trong); thead sticky `top-0`
+> trong container → vừa cuộn ngang được, vừa ghim tiêu đề, không đụng overflow ancestor.
+> Khối lọc ghim phía trên (top-16), container bảng ghim ngay dưới nó (4rem + --ns-sticky-h).
+>
+> **LƯU Ý:** Grid view: khối lọc vẫn ghim, thẻ nhân sự cuộn bình thường (container sticky
+> chỉ áp dụng cho table view). `dvh` thay `vh` để mobile không bị thanh addressbar che.
+> Fallback 64px khi var chưa gán — khối lọc cao thật (~64-70px) nên gần như không nhảy layout.
+>
+> **Tiêu chí kiểm chứng:**
+> - Kéo xuống: khối lọc dừng ngay dưới header app; container bảng ghim sát dưới khối lọc;
+>   thead luôn nhìn thấy; lăn chuột chỉ dòng dữ liệu chạy trong khung bảng.
+> - Lăn lên hết cỡ: PageHeader + 4 card số liệu hiện lại như ban đầu.
+> - Mobile: khối lọc + bảng ghim tương tự; bảng cuộn ngang trong khung để xem đủ 10 cột.
+
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 58 — Nhân sự: ghim khối lọc + tiêu đề bảng)*
 *Người cập nhật: Trợ lý lập trình*

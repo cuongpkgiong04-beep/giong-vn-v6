@@ -1,9 +1,14 @@
 /**
  * Employee table component — clean rewrite.
  * Shows employee list with edit/delete for Admin.
+ *
+ * Sticky UX (GĐ 58, yêu cầu Đại ca 2026-09-09 — áp dụng CẢ desktop + mobile):
+ * Container bảng là khối GHIM (sticky top = header app + chiều cao khối lọc --ns-sticky-h)
+ * với max-height = phần viewport còn lại → bảng cuộn NỘI BỘ, thead sticky top-0
+ * trong container. Khối lọc ở nhan-su.tsx ghim trên nó (top-16).
+ * KHÔNG dùng Card overflow-hidden — ancestor overflow phá sticky (lesson GĐ 56).
  */
 import { Pencil, Trash2 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { centerName } from "@/lib/catalog";
 import type { Employee } from "@/lib/types";
@@ -26,11 +31,10 @@ export function EmployeeTable({ employees, isAdmin, onEdit, onDelete }: Props) {
   }
 
   return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-line bg-surface-2/50">
+    <div className="sticky top-[calc(4rem+var(--ns-sticky-h,64px))] z-[5] max-h-[calc(100dvh-10.5rem-var(--ns-sticky-h,64px))] overflow-auto rounded-xl bg-surface shadow-[var(--shadow-card)] lg:max-h-[calc(100dvh-6rem-var(--ns-sticky-h,64px))]">
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 z-[5]">
+          <tr className="border-b border-line bg-surface-2">
               <th className="px-4 py-3 text-left font-medium text-muted">#</th>
               <th className="px-4 py-3 text-left font-medium text-muted">Họ tên</th>
               <th className="px-4 py-3 text-left font-medium text-muted">Chức danh</th>
@@ -80,9 +84,8 @@ export function EmployeeTable({ employees, isAdmin, onEdit, onDelete }: Props) {
                 )}
               </tr>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+        </tbody>
+      </table>
+    </div>
   );
 }

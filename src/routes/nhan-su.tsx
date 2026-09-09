@@ -3,7 +3,7 @@
  * Uses EmployeeTable + EmployeeForm components.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useMemo, useState } from "react";
 import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -63,6 +63,22 @@ function NhanSuPage() {
     useAppStore.getState().hydrate();
   }, []);
 
+  // Callback ref — đo chiều cao khối ghim bộ lọc, set CSS var --ns-sticky-h
+  // trên chính khối ghim VÀ parentElement (cha chung) để thead (nằm ngoài khối ghim) đọc được.
+  // Dùng callback ref (không phải useEffect + object ref) — pattern GĐ 63: ClientOnly/render-lầu-2
+  // khiến object ref với useEffect deps [] không bao giờ chạy.
+  const stickyFiltersRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    const set = () => {
+      const h = `${el.offsetHeight}px`;
+      el.style.setProperty("--ns-sticky-h", h);
+      el.parentElement?.style.setProperty("--ns-sticky-h", h);
+    };
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+  }, []);
+
   // Handlers
   const openAdd = () => { setEditing(null); setFormOpen(true); };
   const openEdit = (e: Employee) => { setEditing(e); setFormOpen(true); };
@@ -100,8 +116,9 @@ function NhanSuPage() {
         ))}
       </div>
 
-      {/* Filters + Add button */}
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      {/* Filters + Add button — khối ghim: dừng ngay dưới header app khi cuộn (cả desktop + mobile) */}
+      <div ref={stickyFiltersRef} className="sticky top-16 z-10 -mx-4 border-b border-line bg-bg px-4 pb-2 sm:-mx-6 sm:px-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm tên, tài khoản, phòng ban..." className="h-11 w-full rounded-xl border border-line bg-surface/90 pr-3 pl-10 text-sm text-ink shadow-[var(--shadow-card)] placeholder:text-faint transition focus:border-accent/30 focus:ring-2 focus:ring-accent/20 focus:outline-none" />
@@ -119,6 +136,7 @@ function NhanSuPage() {
           <button type="button" onClick={() => setView("grid")} className={cn("flex size-9 items-center justify-center rounded-md transition-colors", view === "grid" ? "bg-accent text-accent-fg" : "text-muted hover:text-ink")}><LayoutGrid className="size-4" /></button>
           <button type="button" onClick={() => setView("table")} className={cn("flex size-9 items-center justify-center rounded-md transition-colors", view === "table" ? "bg-accent text-accent-fg" : "text-muted hover:text-ink")}><List className="size-4" /></button>
         </div>
+      </div>
       </div>
 
       <p className="mb-3 text-sm text-muted">
