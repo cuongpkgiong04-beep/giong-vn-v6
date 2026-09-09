@@ -2458,5 +2458,30 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Bộ lọc + 4 card + bảng + CSV + biểu đồ hoạt động; dữ liệu sát với module Đề nghị
 > - Bấm dòng bảng mở chi tiết chỉ xem; nút Xuất CSV tải file mở Excel đúng tiếng Việt
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 62 — Báo cáo Đề nghị — Đề xuất)*
+---
+
+### Giai đoạn 63: Sidebar — khối user nền xanh + căn giữa avatar khi thu hẹp (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): khối user cuối Sidebar desktop nền xanh accent đậm + avatar căn giữa khít cột 44px |
+| (mới) | chore: tăng version 0.6.1 → 0.6.2 |
+
+> **Yêu cầu của Đại ca (2 điểm):**
+> 1. Nền nút user cuối Sidebar thành màu xanh đậm đồng nhất với avatar (mũi tên đỏ trong ảnh)
+> 2. Căn giữa biểu tượng — avatar khớp ô nền, vào đúng giữa cột Sidebar khi thu hẹp
+>
+> **Fix (1 chỗ trong `src/components/app-shell.tsx` — khối user cuối `<aside>` desktop):**
+> - Ô user: bỏ viền + nền trắng mờ (`border-forest-fg/10 bg-forest-fg/5`) →
+>   **`bg-accent`** (xanh accent #1c6b58 — cùng màu avatar cũ)
+> - `w-fit` + `mx-auto` + `justify-center` → thu hẹp ô KHÍT avatar (padding 6px/bên +
+>   avatar 24px = khít cột 44px) → vào đúng giữa cột, không tràn
+> - Hover mở rộng: `group-hover:w-full group-hover:justify-start` → ô trải full + chữ hiện (mượt như cũ)
+> - Avatar: `bg-white/15` + chữ trắng trên nền xanh; tên/chức danh chữ trắng (`text-white`, `text-white/70`)
+> - `shrink-0` cho avatar — không bị co khi chữ dài
+>
+> **Tiêu chí kiểm chứng:** Sidebar thu hẹp: ô xanh nhỏ khít avatar, vào đúng giữa cột.
+> Hover: ô xanh trải full, tên + chức danh trắng hiện ra. Mobile menu không đổi.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 63 — Sidebar: khối user nền xanh + căn giữa)*
 *Người cập nhật: Trợ lý lập trình*

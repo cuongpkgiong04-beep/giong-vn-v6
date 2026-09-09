@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.6.1";
+const DEFAULT_VERSION = "0.6.2";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -332,9 +332,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex-1 overflow-y-auto overflow-x-hidden pt-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <SidebarNav pathname={pathname} dark collapsed />
         </div>
-        <div className="border-t border-forest-fg/10 p-2 transition-all duration-300 group-hover:p-3">
-          <div className="flex items-center gap-1.5 rounded-xl border border-forest-fg/10 bg-forest-fg/5 p-1.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-accent text-[9px] font-semibold text-accent-fg shadow-sm shadow-accent/30">
+        {/* Khối user — nền xanh accent đậm đồng nhất; w-fit + mx-auto để avatar
+            VÀO GIỮA cột sidebar khi thu hẹp (44px = 12 + 8 + 24 khít), mở rộng thì full + chữ hiện */}
+        <div className="border-t border-forest-fg/10 p-1.5 transition-all duration-300 group-hover:p-3">
+          <div className="mx-auto flex w-fit items-center justify-center gap-1.5 rounded-xl bg-accent p-1 transition-all duration-300 group-hover:w-full group-hover:justify-start group-hover:p-1.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/15 text-[9px] font-semibold text-white shadow-sm shadow-black/20">
               {currentUserEmployee?.name
                 .split(" ")
                 .slice(-2)
@@ -342,8 +344,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 .join("")}
             </span>
             <div className="min-w-0 w-0 overflow-hidden transition-all duration-200 group-hover:w-auto group-hover:overflow-visible">
-              <p className="truncate text-xs font-medium text-forest-fg">{currentUserEmployee?.name}</p>
-              <p className="truncate text-[10px] text-forest-muted">{currentUserEmployee?.title}</p>
+              <p className="truncate text-xs font-medium text-white">{currentUserEmployee?.name}</p>
+              <p className="truncate text-[10px] text-white/70">{currentUserEmployee?.title}</p>
             </div>
           </div>
         </div>
