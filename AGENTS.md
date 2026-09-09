@@ -2176,5 +2176,38 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >   danh sách; bấm dòng mở chi tiết; ảnh phóng to được (lightbox nền trắng)
 > - Mobile: 6 lối tắt 2 cột × 3 hàng; 4 bảng 1 cột; dialog + lightbox hoạt động giống desktop
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 56 — Dashboard 6 lối tắt + 4 bảng tóm tắt có dialog chi tiết)*
+---
+
+### Giai đoạn 57: Bottom bar mobile — chỉ nút đang mở mới hiện chữ (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): ẩn chữ các nút bottom bar mobile — chỉ nút active hiển thị label, nút kia chỉ còn icon |
+| (mới) | chore: tăng version 0.3.8 → 0.3.9 |
+
+> **Yêu cầu của Đại ca:** Trên mobile, bottom bar 5 nút hiện chữ làm thanh bị chật.
+> Khi click vào nút nào thì nút đó mới hiện chữ; các nút không click chỉ còn biểu tượng.
+>
+> **Fix (1 chỗ trong `src/components/app-shell.tsx` — phần render bottom bar mobile):**
+> ```tsx
+> // Trước:
+> <Icon className="size-6" />
+> {item.label}
+>
+> // Sau:
+> <Icon className="size-6" />
+> {active ? item.label : null}
+> ```
+> Thêm `aria-label={item.label}` cho Link để khi chữ ẩn, accessibility vẫn đọc được tên nút.
+>
+> **Phạm vi:** Bottom bar chỉ render trên mobile (`lg:hidden`) nên desktop không đổi —
+> đúng nguyên tắc Desktop + Mobile song song (thay đổi này KHÔNG có mặt desktop).
+>
+> **LƯU Ý:** Chữ nút active màu accent (xanh lá) + kèm label giúp người dùng biết
+> đang ở trang nào — không cần indicator riêng.
+>
+> **Tiêu chí kiểm chứng:** Trên điện thoại: nút của trang đang mở hiện icon + chữ xanh;
+> 4 nút còn lại chỉ có icon. Bấm nút khác → chữ nhảy sang nút mới. Desktop sidebar giữ nguyên.
+
+*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 57 — Bottom bar mobile: chỉ nút active hiện chữ)*
 *Người cập nhật: Trợ lý lập trình*

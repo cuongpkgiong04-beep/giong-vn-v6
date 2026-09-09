@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.3.8";
+const DEFAULT_VERSION = "0.3.9";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -444,13 +444,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Link
               key={item.to}
               to={item.to}
+              aria-label={item.label}
               className={cn(
                 "flex min-h-16 flex-col items-center justify-center gap-1 text-[12px] font-medium",
                 active ? "text-accent" : "text-muted",
               )}
             >
               <Icon className="size-6" />
-              {item.label}
+              {/* Chỉ nút đang mở mới hiện chữ — nút kia chỉ còn icon (yêu cầu Đại ca 2026-09-09) */}
+              {active ? item.label : null}
             </Link>
           );
         })}
