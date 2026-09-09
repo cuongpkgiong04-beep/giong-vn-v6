@@ -2483,5 +2483,48 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar thu hẹp: ô xanh nhỏ khít avatar, vào đúng giữa cột.
 > Hover: ô xanh trải full, tên + chức danh trắng hiện ra. Mobile menu không đổi.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 63 — Sidebar: khối user nền xanh + căn giữa)*
+---
+
+### Giai đoạn 64: Sidebar — nút menu nền xanh đồng nhất, sáng khi active, icon căn giữa (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): nút menu Sidebar nền xanh accent đồng nhất — active sáng đầy màu + icon trắng; icon căn giữa khi thu hẹp |
+| (mới) | chore: tăng version 0.6.2 → 0.6.3 |
+
+> **Yêu cầu của Đại ca (2 điểm, ảnh kèm mũi tên đỏ):**
+> 1. Đổi nền CÁC NÚT trên Sidebar thành màu xanh đậm đồng nhất (như khối user GĐ 63);
+>    khi đang ở module nào thì nền xanh đó SÁNG lên
+> 2. Căn giữa icon cho khớp ô nền và vào giữa cột Sidebar khi thu hẹp
+>
+> **Fix (chỉ `NavLink` trong `src/components/app-shell.tsx` — nhánh dark):**
+> ```tsx
+> // Trước: nút trong suốt, chỉ active có bg-forest-fg/10 (trắng mờ)
+> dark ? active ? "bg-forest-fg/10 text-forest-fg"
+>      : "text-forest-muted hover:bg-forest-fg/5 hover:text-forest-fg" : ...
+>
+> // Sau: mọi nút nền xanh — active sáng đầy màu + icon trắng
+> dark ? active ? "bg-accent text-white shadow-sm shadow-accent/40"
+>      : "bg-accent/40 text-forest-fg/85 hover:bg-accent/65 hover:text-white" : ...
+> ```
+> Icon: `<Icon className={cn("size-4 shrink-0", dark && active && "text-white")} />` —
+> icon trắng tương phản trên nền xanh active.
+>
+> **Căn giữa khi thu hẹp (điểm 2):** nút đổi từ `justify-start gap-2.5 px-2.5` sang
+> `w-full justify-center gap-0 px-0` khi collapsed → icon 16px vào CHÍNH GIỮA cột 44px
+> (vùng nút 32px khít padding 6px/bên). Hover mở rộng:
+> `group-hover:justify-start group-hover:gap-2.5 group-hover:px-2.5` → về căn trái như cũ.
+> Trước đây `justify-start` + `px-0` khiến icon lệch trái, không khít ô.
+>
+> **Phạm vi:** CHỈ nhánh `dark` (Sidebar desktop nền tối). Mobile menu (không dark) và
+> nhánh sáng giữ nguyên. Khối user (GĐ 63) không đụng lại — đã cùng tông xanh.
+>
+> **Tiêu chí kiểm chứng:**
+> - Sidebar thu hẹp: mọi nút có nền xanh mờ; nút module đang mở nền xanh ĐẬM + icon trắng;
+>   icon mọi nút vào đúng giữa cột, không lệch trái.
+> - Hover nút thường: nền đậm dần lên (`accent/40 → accent/65`).
+> - Hover Sidebar mở rộng: nút về căn trái, icon + chữ như cũ; nút active vẫn xanh đậm.
+> - Mobile menu không đổi.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 64 — Sidebar: nút nền xanh, active sáng, icon căn giữa)*
 *Người cập nhật: Trợ lý lập trình*

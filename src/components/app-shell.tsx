@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.6.2";
+const DEFAULT_VERSION = "0.6.3";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -123,19 +123,24 @@ function NavLink({
         }
       }}
       className={cn(
-        "flex h-9 items-center gap-2.5 rounded-lg px-2.5 font-medium transition-all duration-200 justify-start",
+        "flex h-9 items-center rounded-lg font-medium transition-all duration-200",
         mobile ? "text-[16px]" : "text-[13px]",
-        collapsed ? "px-0" : "",
+        // Thu hẹp: nút full vùng 32px + căn giữa → icon vào đúng giữa cột 44px;
+        // hover mở rộng: trở lại căn trái + gap như cũ (yêu cầu Đại ca 2026-09-10)
+        collapsed
+          ? "w-full justify-center gap-0 px-0 group-hover:justify-start group-hover:gap-2.5 group-hover:px-2.5"
+          : "justify-start gap-2.5 px-2.5",
+        // Nền xanh accent đồng nhất — module đang mở thì nền SÁNG lên (GĐ 64)
         dark
           ? active
-            ? "bg-forest-fg/10 text-forest-fg"
-            : "text-forest-muted hover:bg-forest-fg/5 hover:text-forest-fg"
+            ? "bg-accent text-white shadow-sm shadow-accent/40"
+            : "bg-accent/40 text-forest-fg/85 hover:bg-accent/65 hover:text-white"
           : active
             ? "bg-accent-soft text-accent"
             : "text-muted hover:bg-surface-2 hover:text-ink",
       )}
     >
-      <Icon className="size-4 shrink-0" />
+      <Icon className={cn("size-4 shrink-0", dark && active && "text-white")} />
       <span
         className={cn(
           "whitespace-nowrap transition-all duration-200",
