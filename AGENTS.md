@@ -2421,7 +2421,8 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 |---|---|
 | (mới) | feat(bao-cao): tạo trang /bao-cao/bang-de-nghi — bộ lọc + 4 card thống kê + bảng + CSV + pie chart + bảng theo người |
 | (mới) | feat(catalog): đổi card Báo cáo 'Đề nghị chờ duyệt' → 'Đề nghị — Đề xuất' + href mới |
-| (mới) | chore: tăng version 0.5.2 → 0.6.0 (feature mới — minor) |
+| (mới) | feat(bang-de-nghi): thêm biểu đồ cột 'Đề nghị theo tháng' — stacked theo trạng thái, theo bộ lọc |
+| (mới) | chore: tăng version 0.5.2 → 0.6.0 (feature mới — minor); 0.6.0 → 0.6.1 (bổ sung biểu đồ cột) |
 
 > **Yêu cầu của Đại ca:** Tạo Báo cáo tương ứng module "Đề nghị-Đề xuất". Tiêu đề card
 > trên trang Báo cáo KHÔNG phải "Đề nghị chờ duyệt" mà là "Đề nghị-Đề xuất"; dòng mô tả
@@ -2444,6 +2445,13 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **LƯU Ý:** Route tự động đăng ký qua TanStack Router file-based (bang-de-nghi.tsx).
 > Trang báo cáo không có nút duyệt/sửa/xóa — chỉ xem + xuất. Module nghiệp vụ /de-nghi
 > giữ nguyên toàn bộ thao tác.
+>
+> **Bổ sung (0.6.1) — Biểu đồ cột "Đề nghị theo tháng":**
+> - `byMonth` memo: gom phiếu theo `date.slice(0,7)` → label MM/YYYY, sort tăng dần
+> - Stacked BarChart 3 lớp theo trạng thái — màu đồng bộ pie: Chờ #b45309, Đã duyệt #1c6b58, Từ chối #b42318
+> - Tự cập nhật theo bộ lọc (memo deps = rows đã lọc); trục Y allowDecimals={false}
+> - Bọc ClientOnly (pattern Dashboard GĐ 43) — tránh SSR hydration mismatch với Recharts
+> - Vị trí: full chiều ngang, phía trên cụm pie + bảng theo người
 >
 > **Tiêu chí kiểm chứng:**
 > - Trang Báo cáo: card thứ 4 tên "Đề nghị — Đề xuất" + mô tả mới; bấm vào mở /bao-cao/bang-de-nghi

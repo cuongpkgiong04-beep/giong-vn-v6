@@ -1,8 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { PageHeader } from "@/components/page-header";
+import { ClientOnly } from "@/components/client-only";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -114,6 +127,23 @@ function BaoCaoDeNghi() {
       map.set(key, e);
     }
     return [...map.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.total - a.total);
+  }, [rows]);
+
+  // ===== Biểu đồ cột: đề nghị theo tháng (xếp lớp theo trạng thái) =====
+  const byMonth = useMemo(() => {
+    const map = new Map<string, { month: string; "Chờ duyệt": number; "Đã duyệt": number; "Từ chối": number }>();
+    for (const p of rows) {
+      // p.date dạng YYYY-MM-DD → lấy YYYY-MM, hiển thị MM/YYYY
+      const ym = p.date.slice(0, 7);
+      const label = `${ym.slice(5)}/${ym.slice(0, 4)}`;
+      const e = map.get(ym) ?? { month: label, "Chờ duyệt": 0, "Đã duyệt": 0, "Từ chối": 0 };
+      if (p.status === "Chờ duyệt") e["Chờ duyệt"] += 1;
+      else if (p.status === "Đã duyệt") e["Đã duyệt"] += 1;
+      else if (p.status === "Từ chối") e["Từ chối"] += 1;
+      map.set(ym, e);
+    }
+    // Sort theo YYYY-MM tăng dần (tháng cũ bên trái)
+    return [...map.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([, v]) => v);
   }, [rows]);
 
   // ===== Export CSV — pattern Bảng Check-in (BOM + escape quote) =====
@@ -313,6 +343,37 @@ function BaoCaoDeNghi() {
               )}
             </tbody>
           </table>
+        </div>
+      </Card>
+
+      {/* Biểu đồ cột theo tháng — full chiều ngang */}
+      <Card className="mt-5">
+        <div className="p-4">
+          <p className="font-semibold text-ink">Đề nghị theo tháng</p>
+          <p className="mt-0.5 text-sm text-muted">Số phiếu theo trạng thái, cập nhật theo bộ lọc</p>
+          <ClientOnly>
+            {byMonth.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted">Chưa có dữ liệu.</p>
+            ) : (
+              <div className="mt-3 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={byMonth} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                    <CartesianGrid stroke="#d3ddd8" strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fill: "#5a6b65", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#5a6b65", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 12, border: "none", boxShadow: "var(--shadow-card)" }}
+                      labelStyle={{ color: "#12211c" }}
+                    />
+                    <Legend />
+                    <Bar dataKey="Chờ duyệt" stackId="a" fill="#b45309" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="Đã duyệt" stackId="a" fill="#1c6b58" />
+                    <Bar dataKey="Từ chối" stackId="a" fill="#b42318" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </ClientOnly>
         </div>
       </Card>
 
