@@ -2413,5 +2413,42 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Phiếu Chờ duyệt: Admin thấy ✓/✗; user thường không thấy nút nào ngoài Sửa/Xóa phiếu của mình.
 > - Dialog chi tiết phiếu đã xử lý: nút "Mở lại" bên dưới.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 61 — Module Đề nghị: nút Mở lại + giải đáp lưu trữ Cloudinary)*
+---
+
+### Giai đoạn 62: Báo cáo Đề nghị — Đề xuất (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(bao-cao): tạo trang /bao-cao/bang-de-nghi — bộ lọc + 4 card thống kê + bảng + CSV + pie chart + bảng theo người |
+| (mới) | feat(catalog): đổi card Báo cáo 'Đề nghị chờ duyệt' → 'Đề nghị — Đề xuất' + href mới |
+| (mới) | chore: tăng version 0.5.2 → 0.6.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca:** Tạo Báo cáo tương ứng module "Đề nghị-Đề xuất". Tiêu đề card
+> trên trang Báo cáo KHÔNG phải "Đề nghị chờ duyệt" mà là "Đề nghị-Đề xuất"; dòng mô tả
+> "Hàng đợi phê duyệt của quản lý" cũng đổi tương ứng.
+>
+> **Triển khai (2 file):**
+> 1. **`src/routes/bao-cao/bang-de-nghi.tsx` (mới):**
+>    - Bộ lọc: search + người đề nghị + người duyệt + loại + trạng thái + date range
+>    - 4 card thống kê tính theo dữ liệu ĐÃ LỌC (Tổng/Chờ/Đã duyệt/Từ chối)
+>    - Bảng 9 cột, thead sticky top-16, bấm dòng mở dialog chi tiết CHỈ XEM (báo cáo
+>      không chỉnh sửa — phân tách với module Nghiệp vụ /de-nghi)
+>    - Export CSV: pattern Bảng Check-in — BOM \uFEFF + escape dấu " (""), tên file
+>      `bang-de-nghi-{from}-{to}.csv`
+>    - Pie chart cơ cấu theo trạng thái (màu: Chờ #b45309, Đã duyệt #1c6b58, Từ chối #b42318)
+>    - Bảng phụ thống kê theo người đề nghị (Tổng/Chờ/Đã duyệt/Từ chối), max-h scroll
+> 2. **`src/lib/catalog.ts`:** REPORTS đổi entry bc6: name "Đề nghị — Đề xuất",
+>    desc "Tổng hợp đề nghị theo người, loại, trạng thái, thời gian + xuất CSV",
+>    href `/bao-cao/bang-de-nghi` (trước là /de-nghi — trỏ thẳng vào module nghiệp vụ).
+>
+> **LƯU Ý:** Route tự động đăng ký qua TanStack Router file-based (bang-de-nghi.tsx).
+> Trang báo cáo không có nút duyệt/sửa/xóa — chỉ xem + xuất. Module nghiệp vụ /de-nghi
+> giữ nguyên toàn bộ thao tác.
+>
+> **Tiêu chí kiểm chứng:**
+> - Trang Báo cáo: card thứ 4 tên "Đề nghị — Đề xuất" + mô tả mới; bấm vào mở /bao-cao/bang-de-nghi
+> - Bộ lọc + 4 card + bảng + CSV + biểu đồ hoạt động; dữ liệu sát với module Đề nghị
+> - Bấm dòng bảng mở chi tiết chỉ xem; nút Xuất CSV tải file mở Excel đúng tiếng Việt
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 62 — Báo cáo Đề nghị — Đề xuất)*
 *Người cập nhật: Trợ lý lập trình*
