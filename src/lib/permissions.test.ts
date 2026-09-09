@@ -4,8 +4,11 @@ import { EMPLOYEES } from "./catalog.ts";
 import {
   getAllowedNavItems,
   getEffectiveModuleAccess,
+  getUserModuleAccess,
+  setAllModuleAccessFromServer,
   setUserModuleAccess,
   resetUserModuleAccess,
+  type ModuleKey,
 } from "./permissions.ts";
 
 // Initialize store with test employees before tests
@@ -70,5 +73,31 @@ describe("module permission matrix", () => {
 
     resetUserModuleAccess(employee.id);
     assert.equal(getEffectiveModuleAccess(employee, "proposals"), true);
+  });
+
+  it("applies server-synced overrides so grants work on other devices", () => {
+    const employeeId = "e0000000-0000-0000-0000-000000000014";
+    const employee = EMPLOYEES.find((item) => item.id === employeeId)!;
+
+    // Simulate hydrate: Admin grant from `module_access` table lands on a
+    // device that never made the change itself.
+    setAllModuleAccessFromServer({ [employeeId]: { reports: true } });
+
+    assert.equal(getUserModuleAccess(employeeId).reports, true);
+    assert.equal(getEffectiveModuleAccess(employee, "reports"), true);
+    assert.equal(getAllowedNavItems(employee).includes("/bao-cao"), true);
+
+    // Server data replaces (not merges with) the previous mirror.
+    setAllModuleAccessFromServer({ [employeeId]: { reports: false } });
+    assert.equal(getEffectiveModuleAccess(employee, "reports"), false);
+    assert.equal(getAllowedNavItems(employee).includes("/bao-cao"), false);
+  });
+
+  it("keeps admin bypass even when overrides deny a module", () => {
+    const admin = EMPLOYEES.find((item) => item.id === "e0000000-0000-0000-0000-000000000003")!;
+    setAllModuleAccessFromServer({
+      [admin.id]: { reports: false } as Partial<Record<ModuleKey, boolean>>,
+    });
+    assert.equal(getEffectiveModuleAccess(admin, "reports"), true);
   });
 });

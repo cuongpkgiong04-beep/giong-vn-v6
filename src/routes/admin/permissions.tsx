@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/lib/store";
 import { isAdminRole } from "@/lib/catalog";
 import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess } from "@/lib/permissions";
+import { saveModuleAccess, clearModuleAccess } from "@/routes/api/employee-crud";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 export const Route = createFileRoute("/admin/permissions")({
@@ -87,11 +88,21 @@ function AdminPermissionsPage() {
   const updateModule = (moduleKey: ModuleKey, enabled: boolean) => {
     if (!selectedEmployee) return;
 
+    // Optimistic update tại máy + LƯU XUỐNG DB để user ở thiết bị khác nhận được.
     setUserModuleAccess(selectedEmployee.id, moduleKey, enabled);
     setModuleRows((rows) =>
       rows.map((row) => (row.key === moduleKey ? { ...row, userEnabled: enabled } : row)),
     );
-    toast.success(`${selectedEmployee.name}: ${enabled ? "đã bật" : "đã tắt"} quyền ${MODULE_DEFINITIONS.find((item) => item.key === moduleKey)?.label ?? moduleKey}`);
+    const next = { ...getUserModuleAccess(selectedEmployee.id), [moduleKey]: enabled };
+    saveModuleAccess(
+      { data: { employeeId: selectedEmployee.id, modules: next as Record<string, boolean> } },
+    )
+      .then(() =>
+        toast.success(`${selectedEmployee.name}: ${enabled ? "đã bật" : "đã tắt"} quyền ${MODULE_DEFINITIONS.find((item) => item.key === moduleKey)?.label ?? moduleKey}`),
+      )
+      .catch(() =>
+        toast.error("Lưu phân quyền thất bại — kiểm tra mạng và thử lại"),
+      );
   };
 
   const resetModules = () => {
@@ -104,7 +115,13 @@ function AdminPermissionsPage() {
         userEnabled: Boolean(defaultMap[row.key]),
       })),
     );
-    toast.success(`Đã reset quyền mặc định cho ${selectedEmployee.name}`);
+    clearModuleAccess({ data: { employeeId: selectedEmployee.id } })
+      .then(() =>
+        toast.success(`Đã reset quyền mặc định cho ${selectedEmployee.name}`),
+      )
+      .catch(() =>
+        toast.error("Lưu phân quyền thất bại — kiểm tra mạng và thử lại"),
+      );
   };
 
   return (

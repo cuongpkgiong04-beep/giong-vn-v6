@@ -26,7 +26,7 @@ import { Logo } from "@/components/logo";
 import { ClientOnly } from "@/components/client-only";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { isAdminRole } from "@/lib/catalog";
-import { getAllowedNavItems } from "@/lib/permissions";
+import { getAllowedNavItems, setAllModuleAccessFromServer } from "@/lib/permissions";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.3.4";
+const DEFAULT_VERSION = "0.3.5";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -90,7 +90,6 @@ const NAV: NavItem[] = [
 ];
 
 const MOBILE_PRIMARY = ["/cham-cong", "/check-in", "/", "/chat", "/nhiem-vu"];
-const ADMIN_ONLY_PATHS = ["/bao-cao"];
 
 function NavLink({
   item,
@@ -204,6 +203,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user: authUser, isPending } = useCurrentUserState();
   const [appVersion, setAppVersion] = useState(DEFAULT_VERSION);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Tăng lên khi overrides phân quyền từ DB về — buộc allowedPaths recompute.
+  // `ready` chặn redirect sớm: chưa load xong phân quyền thì chưa kết luận.
+  const [moduleAccessVersion, setModuleAccessVersion] = useState(0);
+  const [moduleAccessReady, setModuleAccessReady] = useState(false);
   useEffect(() => {
     setAppVersion(getAppVersion());
   }, []);
@@ -219,6 +222,29 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  // Phân quyền chia sẻ (module_access) — load từ DB để grant của Admin áp dụng
+  // trên mọi thiết bị. Load riêng, fail không chặn app (giữ bản local mirror).
+  // Sau khi server data về, recompute allowedPaths ở dưới sẽ phản ánh quyền mới.
+  useEffect(() => {
+    import("@/routes/api/employee-crud")
+      .then(({ loadAllModuleAccess }) => loadAllModuleAccess())
+      .then((rows) => {
+        setAllModuleAccessFromServer(
+          Object.fromEntries(
+            (rows as Array<{ employee_id: string; modules: Record<string, boolean> }>).map(
+              (r) => [r.employee_id, r.modules ?? {}],
+            ),
+          ),
+        );
+        setModuleAccessVersion((v) => v + 1);
+        setModuleAccessReady(true);
+      })
+      .catch(() => {
+        // Migration 0017 chưa chạy / DB lỗi — giữ bản local mirror.
+        setModuleAccessReady(true);
+      });
+  }, []);
 
   // iOS standalone PWA doesn't support pull-to-refresh.
   // Re-hydrate data when app returns to foreground.
@@ -254,7 +280,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const allowedPaths = useMemo(
     () => getAllowedNavItems(currentUserEmployee),
-    [currentUserEmployee],
+    // moduleAccessVersion: overrides từ DB về là lúc nav cần tính lại.
+    [currentUserEmployee, moduleAccessVersion],
   );
 
   const visibleNav = useMemo(
@@ -269,13 +296,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [visibleNav, q]);
 
   const PUBLIC_ROUTES = ["/login", "/forgot-password"];
+  // Phân quyền module (Báo cáo, Ghi chú…) điều khiển NAV + route access qua
+  // getAllowedNavItems — không còn danh sách admin-only cứng nào ở đây.
+  // /preview tự chặn non-admin bên trong trang (hiện thông báo, không redirect).
   const isRouteAllowed =
     PUBLIC_ROUTES.includes(pathname) ||
     pathname === "/api/auth/$" ||
     !authEnabled ||
     !authUser ||
     isAdmin ||
-    !ADMIN_ONLY_PATHS.includes(pathname);
+    pathname === "/" ||
+    pathname === "/preview" ||
+    // Chưa load xong phân quyền chia sẻ thì chưa redirect (tránh nháy về "/").
+    !moduleAccessReady ||
+    allowedPaths.includes(pathname) ||
+    // Cho phép sub-route của module được cấp (vd /bao-cao/bang-cham-cong).
+    allowedPaths.some((p) => p !== "/" && pathname.startsWith(p + "/"));
 
   if (authEnabled && !isPending && !authUser && !PUBLIC_ROUTES.includes(pathname)) {
     return <Navigate to="/login" replace />;

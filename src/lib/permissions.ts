@@ -60,10 +60,6 @@ export type ModuleKey =
   | "admin"
   | "preview";
 
-const MODULE_ACCESS_STORAGE_KEY = "giong-vn-module-access";
-
-type ModuleAccessMap = Partial<Record<ModuleKey, boolean>>;
-
 export const MODULE_DEFINITIONS = [
   { key: "dashboard", label: "Tổng quan", paths: ["/"], group: "Điều hành" },
   { key: "attendance", label: "Chấm công", paths: ["/cham-cong"], group: "Vận hành" },
@@ -86,7 +82,23 @@ export const MODULE_LABELS: Record<ModuleKey, string> = Object.fromEntries(
   MODULE_DEFINITIONS.map((module) => [module.key, module.label]),
 ) as Record<ModuleKey, string>;
 
-function readModuleAccessStorage(): Record<string, ModuleAccessMap> {
+/**
+ * Phân quyền theo user — ĐỒNG BỘ GIỮA CÁC THIẾT BỊ.
+ *
+ * Nguồn sự thật là bảng `module_access` trên DB (migrations/0017), đọc qua
+ * `loadAllModuleAccess()` khi store hydrate. Trước đây grant của Admin chỉ nằm
+ * trong localStorage máy Admin → user ở máy khác không bao giờ nhận được.
+ * `dbModuleAccess` giữ bản mirror của server trong memory; localStorage chỉ là
+ * bản cuối cùng (offline fallback giữa các lần hydrate).
+ */
+const MODULE_ACCESS_STORAGE_KEY = "giong-vn-module-access";
+
+type ModuleAccessMap = Partial<Record<ModuleKey, boolean>>;
+
+let dbModuleAccess: Record<string, ModuleAccessMap> = {};
+let dbModuleAccessSeeded = false;
+
+function readMirror(): Record<string, ModuleAccessMap> {
   if (typeof globalThis === "undefined" || !("localStorage" in globalThis)) return {};
 
   try {
@@ -99,7 +111,7 @@ function readModuleAccessStorage(): Record<string, ModuleAccessMap> {
   }
 }
 
-function writeModuleAccessStorage(value: Record<string, ModuleAccessMap>) {
+function writeMirror(value: Record<string, ModuleAccessMap>) {
   if (typeof globalThis === "undefined" || !("localStorage" in globalThis)) return;
 
   try {
@@ -109,22 +121,46 @@ function writeModuleAccessStorage(value: Record<string, ModuleAccessMap>) {
   }
 }
 
+function ensureSeeded() {
+  if (dbModuleAccessSeeded) return;
+  dbModuleAccessSeeded = true;
+  // Đầu phiên: dùng bản server cuối cùng (offline fallback).
+  for (const [id, map] of Object.entries(readMirror())) {
+    dbModuleAccess[id] = map ?? {};
+  }
+}
+
+/** Thay toàn bộ overrides bằng dữ liệu từ server (`loadAllModuleAccess`). */
+export function setAllModuleAccessFromServer(map: Record<string, ModuleAccessMap>) {
+  dbModuleAccess = {};
+  for (const [id, modules] of Object.entries(map)) {
+    dbModuleAccess[id] = modules ?? {};
+  }
+  dbModuleAccessSeeded = true;
+  writeMirror(dbModuleAccess);
+}
+
 export function getUserModuleAccess(employeeId: string): ModuleAccessMap {
   if (!employeeId) return {};
-  return readModuleAccessStorage()[employeeId] ?? {};
+  ensureSeeded();
+  return dbModuleAccess[employeeId] ?? {};
 }
 
+/** Optimistic update tại máy — trang Phân quyền tự lưu DB qua `saveModuleAccess`. */
 export function setUserModuleAccess(employeeId: string, moduleKey: ModuleKey, enabled: boolean) {
-  const store = readModuleAccessStorage();
-  const current = store[employeeId] ?? {};
-  store[employeeId] = { ...current, [moduleKey]: enabled };
-  writeModuleAccessStorage(store);
+  if (!employeeId) return;
+  ensureSeeded();
+  const current = dbModuleAccess[employeeId] ?? {};
+  dbModuleAccess[employeeId] = { ...current, [moduleKey]: enabled };
+  writeMirror(dbModuleAccess);
 }
 
+/** Xóa overrides (về mặc định) tại máy — trang Phân quyền tự lưu DB qua `clearModuleAccess`. */
 export function resetUserModuleAccess(employeeId: string) {
-  const store = readModuleAccessStorage();
-  delete store[employeeId];
-  writeModuleAccessStorage(store);
+  if (!employeeId) return;
+  ensureSeeded();
+  delete dbModuleAccess[employeeId];
+  writeMirror(dbModuleAccess);
 }
 
 export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessMap {

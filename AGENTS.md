@@ -1987,3 +1987,59 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > đã truyền `center_id` đầy đủ.
 
 Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, version hiển thị trong sidebar cũng sẽ khớp `0.3.4`.
+
+---
+
+### Giai đoạn 53: Fix phân quyền Báo cáo — grant chỉ nằm ở máy Admin (2026-09-09)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(permissions): phân quyền lưu DB (module_access) — đồng bộ mọi thiết bị + bỏ chặn cứng /bao-cao |
+| (mới) | feat(migration): 0017_module_access.sql — bảng lưu override phân quyền per-user |
+| (mới) | chore: tăng version 0.3.4 → 0.3.5 |
+
+> **BUG REPORT của Đại ca (2026-09-09):**
+> Admin vào trang Phân quyền, bật quyền "Báo cáo" cho user. User đăng nhập → KHÔNG thấy
+> menu Báo cáo / vào `/bao-cao` bị đá về trang chủ.
+>
+> **Nguyên nhân — 2 lỗi chồng nhau:**
+> 1. **`ADMIN_ONLY_PATHS = ["/bao-cao"]` cứng trong `app-shell.tsx`:** guard route
+>    `isRouteAllowed` đá mọi non-admin khỏi `/bao-cao` BẤKỂ phân quyền trong DB.
+>    Commit `85ed382` đã từng xóa các path khác khỏi mảng này nhưng sót `/bao-cao`.
+> 2. **Grant lưu localStorage máy Admin:** `setUserModuleAccess()` ghi vào
+>    `localStorage["giong-vn-module-access"]` — chỉ tồn tại trên browser của Admin.
+>    User ở máy/điện thoại khác đọc localStorage của chính nó → không bao giờ nhận được grant.
+>
+> **Fix:**
+> - Migration `0017_module_access.sql`: bảng `module_access (employee_id PK, modules jsonb,
+>   updated_at)` — nguồn sự thật dùng chung. Tự chạy khi Vercel build.
+> - `employee-crud.ts`: +3 server functions `loadAllModuleAccess` / `saveModuleAccess` /
+>   `clearModuleAccess`.
+> - `permissions.ts`: overrides đọc từ mirror DB trong memory (`dbModuleAccess`);
+>   localStorage chỉ là offline fallback cuối phiên. Thêm `setAllModuleAccessFromServer()`.
+> - `app-shell.tsx`: **xóa `ADMIN_ONLY_PATHS`**; load overrides từ DB khi mở app
+>   (`moduleAccessVersion` + `moduleAccessReady` — tránh redirect sớm trước khi data về);
+>   guard route theo `allowedPaths` + cho phép sub-route `/bao-cao/bang-*`.
+> - `admin/permissions.tsx`: bật/tắt quyền lưu xuống Neon ngay (optimistic + toast lỗi).
+> - `permissions.test.ts`: +2 test (server override áp dụng thiết bị khác; admin bypass).
+>
+> **LESSON LEARNED — Quyền phải nằm ở DB dùng chung, không phải localStorage:**
+> Mọi cấu hình quản trị (phân quyền, duyệt đăng ký…) ảnh hưởng user KHÁC phải lưu DB.
+> localStorage chỉ hợp lệ cho preference cá nhân của chính thiết bị đó. Nếu không,
+> "admin cấp quyền" chỉ có tác dụng trên đúng browser đã bấm nút.
+>
+> **LESSON LEARNED — Không chặn route cứng khi đã có hệ thống phân quyền:**
+> `ADMIN_ONLY_PATHS` từng được thêm để chặn Báo cáo, nhưng nó GHI ĐÈ hệ thống phân quyền
+> module (`getAllowedNavItems`). Hai cơ chế kiểm soát cùng một quyền → cấu hình admin
+> trở nên vô nghĩa. Khi có RBAC rồi thì route guard phải ĐỌC RBAC, không tự đặt luật riêng.
+>
+> **⚠️ VIỆC CẦN LÀM SAU DEPLOY:** các grant cũ trong localStorage máy Admin KHÔNG tự
+> chuyển sang DB. Đại ca cần vào lại trang Phân quyền và bật quyền Báo cáo cho user
+> MỘT LẦN NỮA — từ lần này grant lưu Neon và có hiệu lực trên mọi thiết bị.
+>
+> **⚠️ Node_modules trên Google Drive bị corrupt (585 package.json hỏng):**
+> `npm install` trong thư mục Drive gặp `TAR_ENTRY_ERROR UNKNOWN: unknown error, write`
+> — Drive sync ghi file npm bị lỗi → typecheck/test chạy local KHÔNG đáng tin.
+> Đã verify bằng tsc standalone (parse OK cả 6 file). Vercel build là gate cuối.
+> Nếu muốn chạy local chuẩn: chuyển project ra ngoài Drive hoặc xóa node_modules
+> + `npm install` lại với Drive sync tạm dừng.

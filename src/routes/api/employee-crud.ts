@@ -224,3 +224,39 @@ export const syncApprovedToEmployees = createServerFn({ method: "POST" })
     }
     return { total: approved.length, created };
   });
+
+// ── Module Access (Phân quyền per-user overrides) ─────────────────────────────
+
+/** Load every user's module overrides — shared across ALL devices. */
+export const loadAllModuleAccess = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const sql = await getSql();
+    return sql<{ employee_id: string; modules: Record<string, boolean> }>`
+      SELECT employee_id, modules FROM module_access
+    `;
+  },
+);
+
+/** Upsert one user's module overrides (Admin Phân quyền page). */
+export const saveModuleAccess = createServerFn({ method: "POST" })
+  .validator((data: { employeeId: string; modules: Record<string, boolean> }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      INSERT INTO module_access (employee_id, modules, updated_at)
+      VALUES (${data.employeeId}, ${JSON.stringify(data.modules)}::jsonb, now())
+      ON CONFLICT (employee_id) DO UPDATE SET
+        modules = EXCLUDED.modules,
+        updated_at = now()
+    `;
+    return { success: true };
+  });
+
+/** Delete one user's overrides — back to role/department defaults. */
+export const clearModuleAccess = createServerFn({ method: "POST" })
+  .validator((data: { employeeId: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`DELETE FROM module_access WHERE employee_id = ${data.employeeId}`;
+    return { success: true };
+  });
