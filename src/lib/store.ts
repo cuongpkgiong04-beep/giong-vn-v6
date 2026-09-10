@@ -62,11 +62,13 @@ type Actions = {
   updateProposal: (id: string, data: Partial<Pick<Proposal, "kind" | "title" | "detail" | "dept" | "attachments">>) => void;
   removeProposal: (id: string) => void;
   setProposalStatus: (id: string, status: Proposal["status"], approver?: string) => void;
-  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[]; groupId?: string }) => void;
+  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[]; groupId?: string; mentions?: string[] }) => void;
   refreshMessages: () => Promise<void>;
   removeMessage: (id: string) => void;
   addChatGroup: (name: string, memberIds: string[]) => void;
   addChatGroupMembers: (groupId: string, employeeIds: string[]) => void;
+  /** GĐ 77: đổi tên nhóm — Owner/Admin */
+  renameChatGroup: (groupId: string, name: string) => void;
   removeChatGroupMember: (groupId: string, employeeId: string) => void;
   removeChatGroup: (groupId: string) => void;
   /** GĐ 74: đánh dấu đã đọc hội thoại (cập nhật lastReadAt) — giảm badge unread */
@@ -534,6 +536,7 @@ async function _neonInsertMessage(r: ChatMessage) {
       updatedAt: r.updatedAt,
       deletedAt: r.deletedAt,
       groupId: r.groupId ?? "",
+      mentions: r.mentions ?? [],
     },
   });
 }
@@ -771,6 +774,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             updatedAt: isoStr(r.updatedAt) ?? r.at,
             deletedAt: isoStr(r.deletedAt) ?? undefined,
             groupId: r.groupId ?? "",
+            mentions: Array.isArray(r.mentions) ? r.mentions : [],
           }))
           .filter((m) => !m.deletedAt); // tombstone — tin đã thu hồi không load
 
@@ -1113,6 +1117,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       directKey,
       attachments: opts?.attachments ?? [],
       groupId: opts?.groupId ?? "",
+      mentions: opts?.mentions ?? [],
       updatedAt: now.toISOString(),
     };
     set((s) => ({ messages: [...s.messages, msg] }));
@@ -1143,6 +1148,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : r.at,
           deletedAt: r.deletedAt ?? undefined,
           groupId: r.groupId ?? "",
+          mentions: Array.isArray(r.mentions) ? r.mentions : [],
         }))
         .filter((m) => !m.deletedAt);
       if (incoming.length === 0) return;
@@ -1250,6 +1256,21 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     (async () => {
       const { addChatGroupMembers } = await import("@/routes/api/data");
       await addChatGroupMembers({ data: { groupId, employeeIds } });
+    })().catch(console.warn);
+  },
+
+  /** Đổi tên nhóm (GĐ 77 — Owner/Admin). LWW: updated_at mới → poll thiết bị khác tự cập nhật tên. */
+  renameChatGroup: (groupId, name) => {
+    const now = new Date().toISOString();
+    set((s) => ({
+      chatGroups: s.chatGroups.map((g) =>
+        g.id === groupId ? { ...g, name, updatedAt: now } : g,
+      ),
+    }));
+    saveLs(get());
+    (async () => {
+      const { renameChatGroup } = await import("@/routes/api/data");
+      await renameChatGroup({ data: { groupId, name } });
     })().catch(console.warn);
   },
 

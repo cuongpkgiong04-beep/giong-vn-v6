@@ -556,6 +556,7 @@ type MessageRow = {
   updated_at: string | null;
   deleted_at: string | null;
   group_id: string | null;
+  mentions?: unknown;
 };
 
 const MESSAGE_COLUMNS = `
@@ -575,6 +576,7 @@ function mapMessageRow(r: MessageRow) {
     updatedAt: r.updated_at,
     deletedAt: r.deleted_at,
     groupId: r.group_id ?? "",
+    mentions: Array.isArray(r.mentions) ? (r.mentions as string[]) : [],
   };
 }
 
@@ -587,7 +589,7 @@ export const loadAllMessages = createServerFn({ method: "GET" })
     const sql = await getSql();
     const rows = await sql<MessageRow>`
       SELECT id, from_name, text, at, channel, direct_key, created_by,
-             attachments, updated_at, deleted_at, group_id
+             attachments, updated_at, deleted_at, group_id, mentions
       FROM messages
       ORDER BY at DESC
       LIMIT 1000
@@ -602,7 +604,7 @@ export const loadMessagesSince = createServerFn({ method: "GET" })
     const sql = await getSql();
     const rows = await sql<MessageRow>`
       SELECT id, from_name, text, at, channel, direct_key, created_by,
-             attachments, updated_at, deleted_at, group_id
+             attachments, updated_at, deleted_at, group_id, mentions
       FROM messages
       WHERE at > ${data.since}
       ORDER BY at ASC
@@ -625,19 +627,21 @@ export const insertMessage = createServerFn({ method: "POST" })
       updatedAt?: string;
       deletedAt?: string;
       groupId?: string;
+      mentions?: string[];
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
       INSERT INTO messages (id, from_name, text, at, channel, direct_key, created_by,
-                            attachments, updated_at, deleted_at, group_id)
+                            attachments, updated_at, deleted_at, group_id, mentions)
       VALUES (${data.id}, ${data.from}, ${data.text}, ${data.at}, ${data.channel},
               ${data.directKey ?? ""}, ${data.fromId ?? ""},
               ${JSON.stringify(data.attachments ?? [])}::jsonb,
               ${data.updatedAt ? new Date(data.updatedAt) : new Date()},
               ${data.deletedAt ? new Date(data.deletedAt) : null},
-              ${data.groupId ?? ""})
+              ${data.groupId ?? ""},
+              ${JSON.stringify(data.mentions ?? [])}::jsonb)
       ON CONFLICT (id) DO UPDATE SET
         deleted_at = EXCLUDED.deleted_at,
         updated_at = EXCLUDED.updated_at
@@ -732,6 +736,18 @@ export const createChatGroup = createServerFn({ method: "POST" })
         ON CONFLICT (group_id, employee_id) DO NOTHING
       `;
     }
+    return { success: true };
+  });
+
+/** Đổi tên nhóm — Owner hoặc Admin (GĐ 77). Cập nhật updated_at để LWW poll lan truyền tên mới. */
+export const renameChatGroup = createServerFn({ method: "POST" })
+  .validator((data: { groupId: string; name: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE chat_groups SET name = ${data.name}, updated_at = now()
+      WHERE id = ${data.groupId} AND deleted_at IS NULL
+    `;
     return { success: true };
   });
 

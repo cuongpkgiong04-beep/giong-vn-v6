@@ -6,6 +6,7 @@ import {
   ImagePlus,
   LogOut,
   Paperclip,
+  Pencil,
   Search,
   Send,
   UserPlus,
@@ -107,6 +108,7 @@ function ChatPage() {
   const addGroupMembers = useAppStore((s) => s.addChatGroupMembers);
   const removeGroupMember = useAppStore((s) => s.removeChatGroupMember);
   const removeChatGroup = useAppStore((s) => s.removeChatGroup);
+  const renameChatGroup = useAppStore((s) => s.renameChatGroup);
   const markConversationRead = useAppStore((s) => s.markConversationRead);
   const chatGroups = useAppStore((s) => s.chatGroups);
   const currentUserId = useAppStore((s) => s.currentUserId);
@@ -131,6 +133,12 @@ function ChatPage() {
   const [newGroupName, setNewGroupName] = useState("");
   const [newMemberIds, setNewMemberIds] = useState<string[]>([]);
   const [memberDialog, setMemberDialog] = useState<string | null>(null); // groupId đang xem
+  // GĐ 77: đổi tên nhóm — state form inline trong dialog thành viên
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  // GĐ 77: @mention trong nhóm — state dropdown chọn người khi gõ "@"
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null); // null = tắt; "" = vừa gõ @
+  const [mentionedIds, setMentionedIds] = useState<string[]>([]); // ID employee được tag trong tin đang soạn
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -217,6 +225,40 @@ function ChatPage() {
     return () => clearInterval(timer);
   }, [refreshMessages]);
 
+  /* GĐ 77: ứng viên @mention — member nhóm đang mở (trừ mình), lọc theo chữ sau "@" */
+  const mentionCandidates = useMemo(() => {
+    if (mentionQuery === null || tab !== "group" || !groupId) return [];
+    const q = mentionQuery.toLowerCase();
+    return (activeGroup?.members ?? [])
+      .filter((m) => m.employeeId !== currentUserId)
+      .map((m) => employees.find((e) => e.id === m.employeeId))
+      .filter((e): e is NonNullable<typeof e> => Boolean(e))
+      .filter((e) => !q || e.name.toLowerCase().includes(q));
+  }, [mentionQuery, tab, groupId, activeGroup, employees, currentUserId]);
+
+  /* GĐ 77: gõ "@" trong ô soạn tin (chỉ nhóm) → mở dropdown mention */
+  function handleTextChange(v: string) {
+    setText(v);
+    if (tab !== "group") {
+      setMentionQuery(null);
+      return;
+    }
+    const m = v.match(/@([^@\n]*)$/); // chữ ngay sau "@" cuối cùng
+    if (m) {
+      setMentionQuery(m[1]);
+    } else {
+      setMentionQuery(null);
+    }
+  }
+
+  /* GĐ 77: chọn người từ dropdown — thay "@chữ" bằng "@Tên " + lưu ID vào mentions */
+  function pickMention(empId: string, name: string) {
+    if (!mentionQuery) return;
+    setText((prev) => prev.replace(/@([^@\n]*)$/, `@${name} `));
+    setMentionedIds((prev) => (prev.includes(empId) ? prev : [...prev, empId]));
+    setMentionQuery(null);
+  }
+
   /* Cuộn xuống đáy khi tin thay đổi / đổi hội thoại */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -246,9 +288,12 @@ function ChatPage() {
       toId: tab === "direct" ? peerId! : undefined,
       groupId: tab === "group" && groupId ? groupId : undefined,
       attachments: attachments.length > 0 ? attachments : undefined,
+      // GĐ 77: gửi kèm danh sách ID được @mention (chỉ nhóm có nghĩa)
+      mentions: tab === "group" && mentionedIds.length > 0 ? mentionedIds : undefined,
     });
     setText("");
     setAttachments([]);
+    setMentionedIds([]); // GĐ 77: reset mention sau khi gửi
   }
 
   async function handleFiles(files: FileList | null) {
@@ -627,7 +672,10 @@ function ChatPage() {
                             </a>
                           )
                         ) : (
-                          <p className="mt-0.5 whitespace-pre-wrap">{m.text}</p>
+                          /* GĐ 77: tô đậm @Tên — người bị tag thấy tên mình nổi bật hơn */
+                          <p className="mt-0.5 whitespace-pre-wrap">
+                            {renderTextWithMentions(m.text, m.mentions, employees, currentUserId, mine)}
+                          </p>
                         )}
                         <p
                           className={`mt-1 text-right text-[10px] ${
@@ -647,6 +695,32 @@ function ChatPage() {
 
           {/* Ô soạn tin */}
           <form onSubmit={submit} className="border-t border-line p-3">
+            {/* GĐ 77: dropdown @mention — gõ "@" trong nhóm để chọn người */}
+            {mentionQuery !== null && mentionCandidates.length > 0 && (
+              <div className="mb-2 max-h-44 overflow-y-auto rounded-md border border-line bg-surface shadow-md">
+                {mentionCandidates.map((e) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => pickMention(e.id, e.name)}
+                    className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left hover:bg-surface-2"
+                  >
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/20 text-[9px] font-semibold text-accent">
+                      {e.name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .join("")}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                      {e.name}
+                      <span className="ml-1.5 text-xs text-muted">{e.dept}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
             {attachments.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-2">
                 {attachments.map((url) => (
@@ -695,13 +769,13 @@ function ChatPage() {
               </Button>
               <Input
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => handleTextChange(e.target.value)}
                 placeholder={
                   !canSend
                     ? "Chọn một hội thoại..."
                     : tab === "direct"
                       ? `Nhắn ${employees.find((e) => e.id === peerId)?.name ?? ""}...`
-                      : `Nhắn nhóm ${activeGroup?.name ?? ""}...`
+                      : `Nhắn nhóm ${activeGroup?.name ?? ""}... (gõ @ để nhắc ai đó)`
                 }
                 disabled={!canSend}
               />
@@ -796,12 +870,62 @@ function ChatPage() {
             const amOwner = g.createdBy === currentUserId;
             // Owner + Admin được thêm/xóa member (chốt của Đại ca)
             const canManage = amOwner || isAdmin;
+            // GĐ 77: Owner/Admin được đổi tên nhóm
+            const canRename = amOwner || isAdmin;
             const nonMembers = employees.filter(
               (e) => e.id !== currentUserId && !g.members.some((m) => m.employeeId === e.id),
             );
             return (
               <>
-                <DialogTitle>{g.name}</DialogTitle>
+                {/* GĐ 77: đổi tên nhóm — nút ✏️ cạnh tên (Owner/Admin), form inline */}
+                {renameOpen ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const newName = renameValue.trim();
+                      if (!newName) {
+                        toast.error("Nhập tên nhóm");
+                        return;
+                      }
+                      renameChatGroup(g.id, newName);
+                      toast.success(`Đã đổi tên nhóm thành "${newName}"`);
+                      setRenameOpen(false);
+                    }}
+                    className="mt-1 flex items-center gap-2"
+                  >
+                    <Input
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      placeholder="Tên nhóm mới"
+                      autoFocus
+                    />
+                    <Button type="submit" size="sm">Lưu</Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRenameOpen(false)}
+                    >Hủy</Button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <DialogTitle>{g.name}</DialogTitle>
+                    {canRename && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRenameValue(g.name);
+                          setRenameOpen(true);
+                        }}
+                        className="flex size-6 shrink-0 items-center justify-center rounded text-faint hover:bg-surface-2 hover:text-ink"
+                        title="Đổi tên nhóm"
+                        aria-label="Đổi tên nhóm"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
                 <DialogDesc>
                   Nhóm riêng • {g.members.length} thành viên
                   {amOwner ? " • Bạn là chủ nhóm" : ""}
@@ -930,4 +1054,58 @@ function ChatPage() {
 /** URL đính kèm dạng text (tin cũ) → href an toàn */
 function messageLinkHref(url: string): string {
   return url;
+}
+
+/**
+ * GĐ 77: render text với @Tên được tô đậm — người bị tag thấy tên mình
+ * nổi bật (vien + nền nhấn) trong bubble, cả tin của mình lẫn người khác.
+ * Map theo mentions ID (chính xác) — fallback regex @Tên nếu tin cũ không có ID.
+ */
+function renderTextWithMentions(
+  text: string,
+  mentions: string[] | undefined,
+  employees: Array<{ id: string; name: string }>,
+  currentUserId: string,
+  mine: boolean,
+): React.ReactNode {
+  if (!text.includes("@")) return text;
+  // Tập hợp tên cần tô đậm: tên employee theo mentions ID + tên chính mình (fallback)
+  const mentionedNames = new Set<string>();
+  for (const id of mentions ?? []) {
+    const emp = employees.find((e) => e.id === id);
+    if (emp) mentionedNames.add(emp.name);
+  }
+  // Tách text thành phần thường + phần @Tên
+  const parts: React.ReactNode[] = [];
+  const regex = /@([^@\n,.;!?]+)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    const rawName = match[1].trim();
+    const hit =
+      mentionedNames.has(rawName) ||
+      [...mentionedNames].some((n) => n.startsWith(rawName) && rawName.length >= 2) || // gõ @Cường khớp @CườngPK
+      rawName === currentUserId;
+    // Chỉ tô đậm nếu tên khớp người được mention (hoặc chính mình trong tin không có mentions ID)
+    const isMe = employees.find(
+      (e) => e.id === currentUserId && (e.name === rawName || rawName.length >= 2 && e.name.startsWith(rawName)),
+    ) && (mentions ?? []).length === 0;
+    if (!hit && !isMe) continue;
+    parts.push(text.slice(last, match.index));
+    parts.push(
+      <span
+        key={`m-${key++}`}
+        className={`rounded px-0.5 font-semibold ${
+          mine ? "bg-white/25 text-white" : "bg-accent/15 text-accent"
+        }`}
+      >
+        @{rawName}
+      </span>,
+    );
+    last = match.index + match[0].length;
+  }
+  if (parts.length === 0) return text;
+  parts.push(text.slice(last));
+  return parts;
 }

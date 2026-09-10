@@ -120,6 +120,8 @@ export type ChatMessage = {
   deletedAt?: string;
   /** ID nhóm chat riêng (GĐ 72) — rỗng nếu kênh công khai hoặc 1-1 */
   groupId?: string;
+  /** Danh sách ID employee được @mention trong tin nhóm (GĐ 77) — rỗng nếu không mention */
+  mentions?: string[];
 };
 
 /** Nhóm chat riêng (GĐ 72) — kiểu Zalo: Admin tạo, thành viên mới thấy */

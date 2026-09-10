@@ -95,6 +95,7 @@
 - **Minimal Change Policy** — tối thiểu thay đổi cần thiết
 - **PHẢI HỎI TRƯỚC KHI PUSH** — Sau khi sửa code xong, PHẢI hỏi Đại ca lựa chọn trước khi push (xem bên dưới).
 - **Desktop + Mobile song song** (hiệu lực từ 2026-09-09) — Mọi sửa code từ giờ áp dụng đồng thời cho cả Desktop và Mobile, trừ khi Đại ca yêu cầu cụ thể khác.
+- **Chỉ sửa phần được chỉ định** (hiệu lực từ 2026-09-10) — Khi Đại ca yêu cầu sửa một phần cụ thể (một module/trang/hàm), CHỈ được sửa đúng phần đó, KHÔNG sửa lan sang phần khác (file/module/khác) dù thấy chỗ nào "nên sửa kèm". Cần đụng phần khác → DỪNG và hỏi Đại ca trước.
 
 ### Quy tắc CLAUDE.md (bắt buộc tuân thủ):
 
@@ -2559,7 +2560,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 76 — Nguyên tắc truy cập trực tiếp Vercel/Neon/Cloudinary)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 77 — Chat: đổi tên nhóm + @mention)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3101,3 +3102,56 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Lần sau AI đọc AGENTS.md sẽ biết ngay mình được truy cập
 > trực tiếp 3 hệ thống nào, được làm gì mặc định, và việc gì phải hỏi Đại ca trước
 > khi làm — không cần hỏi lại quyền từng lần.
+
+---
+
+### Giai đoạn 77: Chat — đổi tên nhóm + @mention trong nhóm (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): thêm nguyên tắc "Chỉ sửa phần được chỉ định" vào Quy tắc code |
+| (mới) | feat(migration): 0024_message_mentions.sql — messages thêm cột mentions (JSONB) |
+| (mới) | feat(chat): owner/admin đổi tên nhóm (nút ✏️ trong dialog Thành viên, form inline) |
+| (mới) | feat(chat): @mention trong nhóm — gõ @ → dropdown chọn người, @Tên tô đậm trong bubble |
+| (mới) | chore: tăng version 0.9.4 → 0.9.5 |
+
+> **Yêu cầu của Đại ca (2026-09-10) — 2 tính năng trong module Chat + 1 nguyên tắc:**
+> 0. Nguyên tắc mới: CHỈ sửa phần được chỉ định, KHÔNG lan sang phần khác — cần đụng
+>    phần khác phải DỪNG và hỏi trước. Đã thêm vào danh sách Quy tắc code.
+> 1. Người tạo nhóm (owner) đổi được tên nhóm.
+> 2. Trong nhóm, gõ "@" để chọn người — tin vẫn hiện trong nhóm nhưng người bị tag
+>    chú ý hơn vì thấy tên mình tô đậm.
+>
+> **Chi tiết triển khai (5 file + 1 migration — đúng phạm vi Chat, không lan module khác):**
+> 1. **renameChatGroup:** server function (data.ts — UPDATE name + updated_at WHERE
+>    deleted_at IS NULL) → store action (optimistic + fire-and-forget Neon, LWW qua
+>    updated_at → poll thiết bị khác tự nhận tên mới) → UI: nút ✏️ cạnh tên nhóm trong
+>    dialog Thành viên (chỉ canRename = amOwner || isAdmin), form inline Lưu/Hủy.
+> 2. **@mention:**
+>    - Migration 0024: `messages.mentions jsonb default '[]'` + backfill tin cũ.
+>    - types.ts: `ChatMessage.mentions?: string[]` (employeeId).
+>    - data.ts: insertMessage thêm cột mentions; mapMessageRow + 2 SELECT (load all
+>      + poll since) đủ cột — end-to-end.
+>    - store.ts: sendMessage opts thêm mentions; _neonInsertMessage gửi mentions;
+>      hydrate map + poll map mentions.
+>    - chat.tsx: `handleTextChange` regex `/@([^@\n]*)$/` → mở dropdown member nhóm
+>      (trừ mình, lọc theo chữ sau @); `pickMention` thay @chữ bằng @Tên + lưu ID;
+>      submit gửi mentions (chỉ nhóm) + reset sau gửi; placeholder gợi ý
+>      "(gõ @ để nhắc ai đó)"; `renderTextWithMentions` tô đậm @Tên trong bubble
+>      (tin của mình: bg-white/25 trên xanh; người khác: bg-accent/15) — khớp theo
+>      mentions ID, fallback theo tên chính mình cho tin cũ không có ID.
+>
+> **LESSON LEARNED — str_replace với chuỗi dài chứa code: dễ phát sinh lỗi cú pháp (2026-09-10):**
+> Khi ghi file test bằng chuỗi dài, lẫn vào đoạn sai (`myGroupIds.groups`, lặp `over.id`)
+> khiến file hỏng cú pháp. Sau mỗi lần ghi/sửa lớn nên chạy ngay node/cú pháp check
+> ngắn (hoặc test) để bắt lỗi sớm — không đợi đến typecheck cuối cùng.
+>
+> **Tiêu chí kiểm chứng:**
+> - Owner/Admin mở dialog Thành viên → thấy ✏️ cạnh tên nhóm → đổi tên Lưu →
+>   tên mới hiện ngay + thiết bị khác ≤5s tự cập nhật. Member thường không thấy ✏️.
+> - Trong nhóm gõ "@" → dropdown hiện member; gõ tiếp "@Cư" lọc còn "Phạm Kiên Cường";
+>   chọn → ô nhập thành "@Phạm Kiên Cường "; gửi tin → mọi người trong nhóm thấy
+>   tin, tên "@Phạm Kiên Cường" tô đậm; người bị tag thấy tên mình nổi bật.
+> - Tin 1-1 không có dropdown @ (chỉ nhóm); gửi tin @ kèm ID lưu vào cột mentions
+>   (Neon); thiết bị khác mở lại vẫn thấy tô đậm (mentions load từ DB).
+> - Migration 0024 tự chạy khi Vercel build; tin cũ không bị ảnh hưởng.
