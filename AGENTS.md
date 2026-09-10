@@ -145,9 +145,12 @@
   1. `package.json` → field `"version": "x.y.z"`
   2. `src/components/app-shell.tsx` → `const DEFAULT_VERSION = "x.y.z"`
 - **Quy tắc tăng:** Patch (x.y.Z+1) cho fix nhỏ, Minor (x.Y.0+1) cho feature mới.
-- **Quy tắc tròn chục:** Khi số sau tăng đến tròn chục thì số trước tăng 1 bậc, số sau về 0:
-  - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.9.9` → `2.0.0`
-  - Áp dụng cho cả 3 số: patch đầy (x.y.9→x.y+1.0), minor đầy (x.9.9→x+1.0.0).
+- **Quy tắc tròn chục:** Khi số sau tăng đến tròn chục mà CHỤC CHƯA ĐẦY thì số trước tăng 1 bậc, số sau về 0:
+  - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.8.9` → `1.9.0` (patch đầy, chục chưa đầy)
+- **Quy tắc tròn trăm (bổ sung 2026-09-10 theo yêu cầu Đại ca):** Khi chục ĐÃ ĐẦY ĐỦ thì phải LÊN TRÒN TRĂM — KHÔNG TỒN TẠI dạng `x.10.y`:
+  - `0.9.9` → `1.0.0` (NHẢY QUA 0.10.0)
+  - `1.9.9` → `2.0.0`; `1.19.9` → `2.0.0` (minor đầy → lên tròn trăm)
+  - Tóm lại: minor chỉ chạy 0→9; hết 9 là đổi số lớn. Không bao giờ sinh `0.10.0`, `1.10.0`, `x.y.10`.
 
 ### Ngôn ngữ & Ghi nhớ (bắt buộc tuân thủ):
 
@@ -2560,7 +2563,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 82 — Nhiệm vụ: cuộn chuột dropdown Người hỗ trợ)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 83 — Version: quy tắc tròn trăm, hiệu chỉnh 1.0.0)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3374,3 +3377,41 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > người → lăn chuột xuống chọn tiếp được bình thường (không cần kéo scrollbar);
 > bấm ngoài dropdown vẫn tự đóng; hover highlight từng dòng vẫn hoạt động;
 > typecheck SẠCH 0 lỗi.
+
+---
+
+### Giai đoạn 83: Quy tắc tròn trăm khi tăng Version + hiệu chỉnh 0.10.0 → 1.0.0 (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | chore: hiệu chỉnh version 0.10.0 → 1.0.0 (package.json + DEFAULT_VERSION) — theo quy tắc tròn trăm |
+| (mới) | docs(agents): bổ sung quy tắc tròn trăm — chục đầy đủ thì lên tròn trăm, KHÔNG tồn tại x.10.y |
+
+> **Yêu cầu của Đại ca (2026-09-10):** Xem lại quy tắc tròn chục của Version — khi chục
+> đã đủ đầy thì phải LÊN TRÒN TRĂM chứ. Version `0.10.0` là KHÔNG đúng; số đúng phải là
+> **`1.0.0`** (ảnh kèm: sidebar hiện `VERSION 0.10.0` sau GĐ 82 bump 0.9.9 → 0.10.0).
+>
+> **Phân tích:** Quy tắc tròn chục GĐ 51 viết `1.9.9 → 2.0.0` nhưng ví dụ thiếu nhánh
+> `0.9.9` — lần bump đầu tiên gặp `x.9.9 → x.10.0` theo logic số học thường thì sinh ra
+> version không mong muốn. Ý của Đại ca: minor chỉ chạy 0→9, hết 9 là đổi số lớn —
+> không bao giờ tồn tại dạng `x.10.y`.
+>
+> **Sửa (3 chỗ — surgical):**
+> 1. `package.json`: `"version": "0.10.0"` → `"1.0.0"` (hiệu chỉnh, không tăng thêm bậc).
+> 2. `src/components/app-shell.tsx`: `DEFAULT_VERSION = "0.10.0"` → `"1.0.0"`.
+> 3. `AGENTS.md` mục Cách tăng Version: tách 2 quy tắc —
+>    - **Tròn chục** (chục CHƯA đầy): `1.0.9 → 1.1.0`; `1.8.9 → 1.9.0`.
+>    - **Tròn trăm** (chục ĐÃ đầy): `0.9.9 → 1.0.0` (nhảy qua 0.10.0); `1.9.9 → 2.0.0`;
+>      `1.19.9 → 2.0.0`.
+>
+> **LESSON LEARNED — Quy tắc version chốt (2026-09-10):**
+> Minor chỉ chạy 0→9. Khi patch đầy mà minor đang ở 9 (`x.9.9`) → minor về 0 và MAJOR +1
+> (`x.9.9 → x+1.0.0`). Không bao giờ sinh `x.10.y`. Ví dụ đầy đủ: `1.0.9 → 1.1.0`;
+> `1.8.9 → 1.9.0`; `1.9.9 → 2.0.0`; `0.9.9 → 1.0.0`.
+>
+> **LƯU Ý:** `with-app-env.mjs` chỉ validate regex `/^(\d+\.)(\d+\.)(\d+)$/` → `1.0.0`
+> khớp, không cần sửa. Sau deploy sidebar phải hiện `VERSION 1.0.0`.
+>
+> **Tiêu chí kiểm chứng:** 2 nơi version đều `1.0.0` (grep xác nhận không còn 0.10.0);
+> sidebar hiện `VERSION 1.0.0` sau khi Vercel deploy xong; quy tắc tròn trăm được ghi
+> lại trong AGENTS.md để lần bump `x.9.9` tiếp theo không lặp sai.
