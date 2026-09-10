@@ -187,7 +187,10 @@ const PENDING_KEY = "giong-vn-pending-sync";
 
 // Background retry state (module-level, singleton)
 let _bgRetryStarted = false;
-let _bgRetryInterval: ReturnType<typeof setInterval> | null = null;
+// GĐ 84: cờ chống chạy 2 lần retry đồng thời (scheduler + nút thủ công)
+let _syncRunning = false;
+// GĐ 84: timeout của lịch retry backoff — reschedule sau mỗi lần chạy
+let _retryTimeout: ReturnType<typeof setTimeout> | null = null;
 
 type PendingRecord = { collection: string; data: any; attempts?: number };
 
@@ -223,6 +226,9 @@ function addPendingSync(record: PendingRecord) {
   } catch {
     /* quota */
   }
+  // GĐ 84: bản ghi mới — rút ngắn vòng chờ (≤5s) để sync nhanh,
+  // không phải chờ cả chu kỳ backoff dài đang treo
+  scheduleNextRetry(5_000);
 }
 
 function clearPendingSync(ids: string[]) {
@@ -239,6 +245,9 @@ function clearPendingSync(ids: string[]) {
 async function retryPendingSync() {
   const pending = getPendingSync();
   if (pending.length === 0) return;
+  if (_syncRunning) return; // GĐ 84: tránh chạy đè (nút thủ công + interval)
+  _syncRunning = true;
+  try {
   const succeeded: string[] = [];
   const api = await import("@/routes/api/data");
   for (const record of pending) {
@@ -267,8 +276,9 @@ async function retryPendingSync() {
       }
       succeeded.push(record.data.id);
     } catch (err) {
-      // Increment attempts — track failures for admin visibility
+      // GĐ 84: đánh dấu thời điểm fail gần nhất — recentFailures() reset đếm sau 10 phút
       record.attempts = (record.attempts ?? 0) + 1;
+      record.data._lastFailTs = Date.now();
       console.warn(`[store] Retry sync failed (${record.attempts}x) for ${record.collection}/${record.data.id}:`, err);
     }
   }
@@ -280,11 +290,94 @@ async function retryPendingSync() {
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
   } catch { /* quota */ }
+  } finally {
+    _syncRunning = false;
+  }
+}
+
+/**
+ * GĐ 84: Lập lịch retry TỰ THÍCH ỨNG — hết 1 vòng chạy, đặt vòng kế theo số lần fail
+ * hiện tại: 5s (mới) → 10s → 30s → 60s → 5 phút (lỗi dai dẳng). Thay cho interval 30s
+ * cố định cũ (dội server liên tục khi lỗi dài).
+ * maxDelayMs: trần delay — dùng khi có bản ghi MỚI thêm vào queue (addPendingSync)
+ * để bản ghi mới không phải chờ cả chu kỳ backoff dài.
+ */
+function scheduleNextRetry(maxDelayMs?: number) {
+  if (typeof window === "undefined") return;
+  if (_retryTimeout) clearTimeout(_retryTimeout);
+  if (getPendingSync().length === 0) return; // queue rỗng — không cần lịch
+  const base = currentRetryDelayMs();
+  const delay = maxDelayMs ? Math.min(base, maxDelayMs) : base;
+  _retryTimeout = setTimeout(() => {
+    retryPendingSync()
+      .then(() => useAppStore.getState().hydrate())
+      .catch(() => {})
+      .finally(() => scheduleNextRetry());
+  }, delay);
 }
 
 /** Get pending sync records for admin visibility. */
 export function getPendingSyncRecords(): PendingRecord[] {
   return getPendingSync();
+}
+
+/* ── GĐ 84: Retry backoff + trigger thủ công ───────────────────────────── */
+
+/** Chu kỳ retry theo số lần đã fail: 5s (lần đầu) → 10s → 30s → 60s → 5 phút. */
+const RETRY_DELAYS_MS = [5_000, 10_000, 30_000, 60_000, 300_000];
+
+/** Đổi chu kỳ retry hiện tại theo số lần fail nhiều nhất trong queue. */
+function currentRetryDelayMs(): number {
+  const maxAttempts = getPendingSync().reduce(
+    (max, r) => Math.max(max, r.attempts ?? 0),
+    0,
+  );
+  return RETRY_DELAYS_MS[Math.min(maxAttempts, RETRY_DELAYS_MS.length - 1)];
+}
+
+/** Đếm số lần fail gần nhất của 1 record (chỉ tính attempts trong 10 phút gần đây). */
+function recentFailures(record: PendingRecord): number {
+  const lastFailTs = record.data?._lastFailTs ?? 0;
+  if (lastFailTs > 0 && Date.now() - lastFailTs > 10 * 60 * 1000) return 0; // reset sau 10 phút
+  return record.attempts ?? 0;
+}
+
+/**
+ * Trigger retry NGAY LẬP TỨC (GĐ 84) — dùng cho:
+ * - Nút "Thử lại ngay" trên trang Chấm công
+ * - Lịch retry tự thích ứng (backoff) thay cho interval 30s cố định cũ
+ * Trả về số bản ghi sync thành công (−1 nếu đang có lần chạy khác).
+ */
+export async function triggerPendingSyncNow(): Promise<number> {
+  if (_syncRunning) return -1;
+  try {
+    const before = getPendingSync().length;
+    if (before === 0) return 0;
+    await retryPendingSync();
+    const after = getPendingSync().length;
+    return Math.max(0, before - after);
+  } catch {
+    return 0;
+  }
+}
+
+/** Thống kê queue cho UI (dashboard sync ở trang Chấm công). */
+export function getPendingSyncStats(): {
+  total: number;
+  failed: number;
+  expiringSoon: number;
+  nextRetryMs: number;
+} {
+  const pending = getPendingSync();
+  const now = Date.now();
+  let failed = 0;
+  let expiringSoon = 0;
+  for (const r of pending) {
+    if (recentFailures(r) > 5) failed += 1;
+    const age = now - (r.data?._syncTs ?? now);
+    if (age > PENDING_EXPIRY_MS - 24 * 60 * 60 * 1000) expiringSoon += 1; // còn < 24h
+  }
+  return { total: pending.length, failed, expiringSoon, nextRetryMs: currentRetryDelayMs() };
 }
 
 /* ── GĐ 74: Unread chat tracking ─────────────────────────────────────────── */
@@ -901,7 +994,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         set({ _neonReady: false });
       }
 
-      // Background retry interval (once only)
+      // Background retry (once only) — GĐ 84: backoff tự thích ứng thay interval 30s
       if (!_bgRetryStarted) {
         _bgRetryStarted = true;
         // Online listener — sync immediately when network returns
@@ -911,11 +1004,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             retryPendingSync().then(() => get().hydrate()).catch(() => {});
           });
         }
-        _bgRetryInterval = setInterval(() => {
-          if (getPendingSync().length > 0) {
-            retryPendingSync().then(() => get().hydrate()).catch(() => {});
-          }
-        }, 30_000);
+        scheduleNextRetry();
       }
     })();
   },

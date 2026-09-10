@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { CENTERS, findEmployeeByLooseText, getVisibleCenterCodes, isAdminRole } from "@/lib/catalog";
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
-import { useAppStore, getPendingSyncRecords } from "@/lib/store";
+import { useAppStore, getPendingSyncRecords, triggerPendingSyncNow, getPendingSyncStats } from "@/lib/store";
 import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage } from "@/routes/api/upload";
 
@@ -79,6 +79,9 @@ function ChamCongPage() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [pendingRecords, setPendingRecords] = useState<Array<{ collection: string; data: any; attempts?: number }>>([]);
   const [showSyncDashboard, setShowSyncDashboard] = useState(false);
+  // GĐ 84: trạng thái nút "Thử lại ngay" + cảnh báo sắp hết hạn 7 ngày
+  const [isRetryingNow, setIsRetryingNow] = useState(false);
+  const [expiringSoon, setExpiringSoon] = useState(0);
   // Camera state
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -92,7 +95,10 @@ function ChamCongPage() {
 
   // Refresh pending records periodically
   useEffect(() => {
-    const refresh = () => setPendingRecords(getPendingSyncRecords());
+    const refresh = () => {
+      setPendingRecords(getPendingSyncRecords());
+      setExpiringSoon(getPendingSyncStats().expiringSoon);
+    };
     refresh();
     const interval = setInterval(refresh, 10_000);
     return () => clearInterval(interval);
@@ -767,10 +773,44 @@ function ChamCongPage() {
           </button>
           {showSyncDashboard && (
             <div className="mt-2 rounded-lg border border-line bg-surface p-4">
-              <div className="mb-3 flex items-center gap-4 text-sm">
+              <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
                 <span className="text-muted">Tổng: <strong className="text-ink">{syncStats.total}</strong></span>
                 <span className="text-muted">Đang retry: <strong className="text-amber-600">{syncStats.retrying}</strong></span>
                 <span className="text-muted">Lỗi &gt;5 lần: <strong className="text-red-500">{syncStats.failed}</strong></span>
+                {expiringSoon > 0 && (
+                  <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                    ⚠ {expiringSoon} bản ghi sắp hết hạn dự phòng (còn &lt;24h)
+                  </span>
+                )}
+                <button
+                  type="button"
+                  disabled={isRetryingNow}
+                  onClick={async () => {
+                    setIsRetryingNow(true);
+                    try {
+                      const ok = await triggerPendingSyncNow();
+                      if (ok > 0) {
+                        toast.success(`Đã sync ngay ${ok} bản ghi lên DB`);
+                      } else if (ok === 0) {
+                        toast.info("Chưa sync được bản ghi nào — sẽ tự thử lại sau");
+                      } // ok === -1: đang có lần sync khác chạy — bỏ qua, không báo lỗi
+                    } catch {
+                      toast.error("Thử lại thất bại — kiểm tra mạng rồi thử lại");
+                    } finally {
+                      setIsRetryingNow(false);
+                      setPendingRecords(getPendingSyncRecords());
+                      setExpiringSoon(getPendingSyncStats().expiringSoon);
+                    }
+                  }}
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent-soft px-3 py-1 text-xs font-medium text-accent transition hover:bg-accent hover:text-white disabled:opacity-50"
+                >
+                  {isRetryingNow ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="size-3.5" />
+                  )}
+                  Thử lại ngay
+                </button>
               </div>
               <div className="max-h-60 overflow-y-auto">
                 <table className="w-full text-left text-xs">
@@ -815,7 +855,8 @@ function ChamCongPage() {
                 </table>
               </div>
               <p className="mt-3 text-xs text-faint">
-                Bản ghi tự động retry mỗi 30 giây. Lỗi &gt;5 lần cần kiểm tra DB hoặc network.
+                Bản ghi tự động retry: 5s đầu → giãn dần 10s → 30s → 60s → 5 phút khi lỗi dai dẳng.
+                Bật mạng lại là tự sync ngay. Lỗi &gt;5 lần cần kiểm tra DB hoặc network.
               </p>
             </div>
           )}

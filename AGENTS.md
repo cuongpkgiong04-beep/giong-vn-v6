@@ -2563,7 +2563,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 83 — Version: quy tắc tròn trăm, hiệu chỉnh 1.0.0)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 84 — Chấm công: retry sync tự thích ứng + nút Thử lại ngay)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3415,3 +3415,62 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** 2 nơi version đều `1.0.0` (grep xác nhận không còn 0.10.0);
 > sidebar hiện `VERSION 1.0.0` sau khi Vercel deploy xong; quy tắc tròn trăm được ghi
 > lại trong AGENTS.md để lần bump `x.9.9` tiếp theo không lặp sai.
+
+---
+
+### Giai đoạn 84: Chấm công — retry sync tự thích ứng + nút Thử lại ngay (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(sync): retry backoff 5s→10s→30s→60s→5p thay interval 30s cố định + cờ chống chạy đè |
+| (mới) | feat(cham-cong): nút '↻ Thử lại ngay' + cảnh báo bản ghi sắp hết hạn dự phòng 7 ngày |
+| (mới) | chore: tăng version 1.0.0 → 1.1.0 (cải tiến chức năng — minor) |
+
+> **Câu hỏi của Đại ca (2026-09-10):** Điểm danh Vào ca/Tan ca khi lỗi sync thì có bị
+> mất data không? Cứ 5 giây up lại + có bản dự phòng được không?
+>
+> **Đánh giá hiện trạng (trước khi sửa):** Data KHÔNG mất — đã có 4 lớp bảo vệ từ GĐ 17:
+> (1) local-first lưu localStorage ngay; (2) pending queue `giong-vn-pending-sync`;
+> (3) retry tự động 30s + khi network online; (4) UPSERT LWW chống trùng khi retry.
+> Nhưng có 4 lỗ hổng: UPDATE/DELETE không vào queue (Gói C — CHƯA sửa); retry 30s
+> cố định không backoff; localStorage dễ mất (user clear browser data); expiry 7 ngày
+> xóa âm thầm không cảnh báo.
+>
+> **Đại ca chọn Gói A — Củng cố retry (surgical, 2 file):**
+> 1. `store.ts`:
+>    - `RETRY_DELAYS_MS = [5s, 10s, 30s, 60s, 300s]` — delay hiện tại = số lần fail
+>      nhiều nhất trong queue; reset đếm sau 10 phút ổn định (`_lastFailTs` +
+>      `recentFailures()`).
+>    - `scheduleNextRetry(maxDelayMs?)` — 1 scheduler timeout duy nhất thay interval;
+>      `addPendingSync()` gọi `scheduleNextRetry(5_000)` để bản ghi MỚI không chờ cả
+>      chu kỳ backoff dài.
+>    - Cờ `_syncRunning` chặn 2 lần retry chạy đè (scheduler + nút thủ công + online
+>      listener); xóa `_bgRetryInterval` không dùng nữa.
+>    - Export `triggerPendingSyncNow()` (nút thủ công, return số bản ghi sync được,
+>      -1 nếu đang có lần chạy khác) + `getPendingSyncStats()` (total/failed/
+>      expiringSoon/nextRetryMs — expiringSoon = còn <24h trước hạn 7 ngày).
+> 2. `cham-cong.tsx` (dashboard sync — chỉ Admin, hiện khi có bản ghi chờ):
+>    - Nút '↻ Thử lại ngay' (Loader2 spinner khi đang chạy; toast: success/info/error;
+>      refresh queue sau khi xong).
+>    - Badge cam '⚠ X bản ghi sắp hết hạn dự phòng (còn <24h)'.
+>    - Cập nhật text giải thích chu kỳ retry mới.
+>
+> **LESSON LEARNED — Hàm module-level KHÔNG thấy `get()` của store (2026-09-10):**
+> `scheduleNextRetry` định nghĩa TRƯỚC `useAppStore` → không tham chiếu `get()` trực tiếp
+> được → dùng `useAppStore.getState().hydrate()`. Hoãn hàm dùng `get` xuống dưới nơi
+> store đã khai báo, hoặc gọi qua `useAppStore.getState()`.
+>
+> **LESSON LEARNED — str_replace không khớp do CRLF (2026-09-10):**
+> File store.ts dùng CRLF; replacement ghi \n thường có thể không khớp chuỗi cũ có \r
+> — khi replacement "not found", đọc lại vùng đó bằng read_files để lấy text đúng
+> (kể cả ký tự đặc biệt như '→' từng bị ghi nhầm '—') rồi sửa lại 1 lần.
+>
+> **CHƯA LÀM (đã phân tích, chờ Đại ca duyệt):** Gói B — export file JSON dự phòng
+> (nút tải bản ghi chờ ra máy); Gói C — UPDATE/DELETE fail cũng vào pending queue
+> (hiện tượng bản ghi đã xóa 'hồi sinh' trên thiết bị khác khi mạng lỗi — lỗ hổng
+> đúng dữ liệu quan trọng nhất).
+>
+> **Tiêu chí kiểm chứng:** Điểm danh offline → bản ghi có ngay trong danh sách với
+> badge 'Đang chờ' → bật mạng → tự sync ≤5s (không còn chờ 30s); Admin mở dashboard
+> sync → bấm 'Thử lại ngay' → toast kết quả + queue cập nhật; lỗi dai dẳng → log
+> retry giãn dần (không dội server mỗi 30s); typecheck SẠCH 0 lỗi; 17/17 test pass.
