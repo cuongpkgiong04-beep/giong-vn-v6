@@ -534,7 +534,7 @@ function TasksPage() {
           <div className="mt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeletingId(null)}>Lưu lại</Button>
             <Button
-              variant="destructive"
+              variant="danger"
               onClick={() => {
                 if (deletingId) {
                   removeTask(deletingId);

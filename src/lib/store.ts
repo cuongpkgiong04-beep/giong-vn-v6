@@ -794,7 +794,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             dept: r.dept ?? "", center: r.center ?? "", summary: r.summary ?? "",
             creator: r.creator ?? "", createdBy: r.created_by ?? "",
             date: String(r.date).slice(0, 10),
-            updatedAt: isoStr(r.updated_at) ?? undefined,
+            // Fix TS2322 (2026-09-10): Document.updatedAt bắt buộc string — fallback rỗng thay undefined
+            updatedAt: isoStr(r.updated_at) ?? "",
             deletedAt: isoStr(r.deleted_at) ?? undefined,
             attachments: Array.isArray(r.attachments) ? r.attachments : [],
           }));
@@ -802,7 +803,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           id: r.id, name: r.name, time: r.time, date: r.date, weekday: r.weekday,
           gps: r.gps ?? "", address: r.address ?? "", note: r.note ?? "",
           photo: r.photo ?? "", centerCode: r.center_code ?? "VP",
-          status: r.status ?? "checked_in", updatedAt: isoStr(r.updated_at) ?? null,
+          // Fix TS2322 (2026-09-10): CheckIn.updatedAt là string | undefined — null không thuộc union
+          status: r.status ?? "checked_in", updatedAt: isoStr(r.updated_at) ?? undefined,
         }));
 
         const dbEmployeeList: Employee[] = (dbEmps as any[]).map((r) => ({

@@ -113,9 +113,9 @@ function CheckInPage() {
     day: "2-digit",
   }).format(new Date());
   const todayRecords = useMemo(() => {
-    const empId = currentEmployee?.id;
+    // Fix TS2339 (2026-09-10): CheckIn không có employeeId — lọc theo TÊN (bản ghi check-in lưu name)
     return checkins.filter((a) =>
-      (empId && a.employeeId === empId) || a.name === (currentEmployee?.name ?? currentName),
+      a.name === (currentEmployee?.name ?? currentName),
     ).filter((a) => a.date === todayStr);
   }, [checkins, currentEmployee, currentName, todayStr]);
 
@@ -149,13 +149,14 @@ function CheckInPage() {
   const rows = useMemo(() => {
     return visibleCheckins.filter((a) => {
       const related = findEmployeeByLooseText(a.name);
-      const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
+      // Fix TS2339 (2026-09-10): CheckIn không có workplace — lấy trung tâm qua employee khớp TÊN
+      const workplace = related?.center ?? currentEmployee?.center ?? "VP";
       if (center !== "all" && workplace !== center) return false;
       if (dateFrom && a.date < dateFrom) return false;
       if (dateTo && a.date > dateTo) return false;
       if (q.trim()) {
         const s = q.toLowerCase();
-        const searchText = [a.name, a.address, a.workplace, related?.username ?? "", related?.dept ?? "", related?.center ?? ""]
+        const searchText = [a.name, a.address, related?.username ?? "", related?.dept ?? "", related?.center ?? ""]
           .join(" ")
           .toLowerCase();
         return searchText.includes(s);
@@ -425,7 +426,8 @@ function CheckInPage() {
         setAddress(coordinateText); // tạm thời, resolve ngay bên dưới
         setLocationStatus("Vị trí đã xác định");
         // Resolve địa chỉ ngay khi có GPS để overlay hiển thị tên đường
-        reverseGeocode({ data: { lat, lng } })
+        // Fix TS2322 (2026-09-10): validator yêu cầu number — lat/lng từ toFixed là string
+        reverseGeocode({ data: { lat: Number(lat), lng: Number(lng) } })
           .then((addr) => { if (addr) setAddress(addr); })
           .catch(() => {}); // giữ coordinateText nếu fail
       },
@@ -471,7 +473,7 @@ function CheckInPage() {
       setPhotoPreview(null);
       setNote("");
       stopCamera();
-    } catch (err) {
+    } catch (err: any) {
       toast.error("Lỗi check-in: " + (err?.message || err));
     } finally {
       submittingRef.current = false;
@@ -498,7 +500,7 @@ function CheckInPage() {
       setIsDialogOpen(false);
       setPhotoPreview(null);
       stopCamera();
-    } catch (err) {
+    } catch (err: any) {
       toast.error("Lỗi: " + (err?.message || err));
     } finally {
       submittingRef.current = false;
@@ -567,7 +569,8 @@ function CheckInPage() {
           <tbody>
             {rows.map((a, idx) => {
               const related = findEmployeeByLooseText(a.name);
-              const workplace = related?.center ?? a.workplace ?? currentEmployee?.center ?? "VP";
+              // Fix TS2339 (2026-09-10): CheckIn không có workplace — dùng center của employee khớp tên
+              const workplace = related?.center ?? currentEmployee?.center ?? "VP";
               return (
                 <tr
                   key={a.id}

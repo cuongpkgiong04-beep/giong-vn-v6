@@ -29,6 +29,8 @@ import { Route as AdminApprovalsRouteImport } from './routes/admin/approvals'
 import { Route as AdminPermissionsRouteImport } from './routes/admin/permissions'
 import { Route as BaoCaoBangChamCongRouteImport } from './routes/bao-cao/bang-cham-cong'
 import { Route as BaoCaoBangCheckInRouteImport } from './routes/bao-cao/bang-check-in'
+import { Route as BaoCaoBangDeNghiRouteImport } from './routes/bao-cao/bang-de-nghi'
+import { Route as BaoCaoBangHoSoRouteImport } from './routes/bao-cao/bang-ho-so'
 import { Route as BaoCaoBangNhiemVuRouteImport } from './routes/bao-cao/bang-nhiem-vu'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -132,6 +134,16 @@ const BaoCaoBangCheckInRoute = BaoCaoBangCheckInRouteImport.update({
   path: '/bang-check-in',
   getParentRoute: () => BaoCaoRoute,
 } as any)
+const BaoCaoBangDeNghiRoute = BaoCaoBangDeNghiRouteImport.update({
+  id: '/bang-de-nghi',
+  path: '/bang-de-nghi',
+  getParentRoute: () => BaoCaoRoute,
+} as any)
+const BaoCaoBangHoSoRoute = BaoCaoBangHoSoRouteImport.update({
+  id: '/bang-ho-so',
+  path: '/bang-ho-so',
+  getParentRoute: () => BaoCaoRoute,
+} as any)
 const BaoCaoBangNhiemVuRoute = BaoCaoBangNhiemVuRouteImport.update({
   id: '/bang-nhiem-vu',
   path: '/bang-nhiem-vu',
@@ -164,6 +176,8 @@ export interface FileRoutesByFullPath {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
   '/bao-cao/bang-check-in': typeof BaoCaoBangCheckInRoute
+  '/bao-cao/bang-de-nghi': typeof BaoCaoBangDeNghiRoute
+  '/bao-cao/bang-ho-so': typeof BaoCaoBangHoSoRoute
   '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -188,6 +202,8 @@ export interface FileRoutesByTo {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
   '/bao-cao/bang-check-in': typeof BaoCaoBangCheckInRoute
+  '/bao-cao/bang-de-nghi': typeof BaoCaoBangDeNghiRoute
+  '/bao-cao/bang-ho-so': typeof BaoCaoBangHoSoRoute
   '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -213,6 +229,8 @@ export interface FileRoutesById {
   '/admin/permissions': typeof AdminPermissionsRoute
   '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
   '/bao-cao/bang-check-in': typeof BaoCaoBangCheckInRoute
+  '/bao-cao/bang-de-nghi': typeof BaoCaoBangDeNghiRoute
+  '/bao-cao/bang-ho-so': typeof BaoCaoBangHoSoRoute
   '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -239,6 +257,8 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/bao-cao/bang-cham-cong'
     | '/bao-cao/bang-check-in'
+    | '/bao-cao/bang-de-nghi'
+    | '/bao-cao/bang-ho-so'
     | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -263,6 +283,8 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/bao-cao/bang-cham-cong'
     | '/bao-cao/bang-check-in'
+    | '/bao-cao/bang-de-nghi'
+    | '/bao-cao/bang-ho-so'
     | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
   id:
@@ -287,6 +309,8 @@ export interface FileRouteTypes {
     | '/admin/permissions'
     | '/bao-cao/bang-cham-cong'
     | '/bao-cao/bang-check-in'
+    | '/bao-cao/bang-de-nghi'
+    | '/bao-cao/bang-ho-so'
     | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -455,6 +479,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BaoCaoBangCheckInRouteImport
       parentRoute: typeof BaoCaoRoute
     }
+    '/bao-cao/bang-de-nghi': {
+      id: '/bao-cao/bang-de-nghi'
+      path: '/bang-de-nghi'
+      fullPath: '/bao-cao/bang-de-nghi'
+      preLoaderRoute: typeof BaoCaoBangDeNghiRouteImport
+      parentRoute: typeof BaoCaoRoute
+    }
+    '/bao-cao/bang-ho-so': {
+      id: '/bao-cao/bang-ho-so'
+      path: '/bang-ho-so'
+      fullPath: '/bao-cao/bang-ho-so'
+      preLoaderRoute: typeof BaoCaoBangHoSoRouteImport
+      parentRoute: typeof BaoCaoRoute
+    }
     '/bao-cao/bang-nhiem-vu': {
       id: '/bao-cao/bang-nhiem-vu'
       path: '/bang-nhiem-vu'
@@ -475,12 +513,16 @@ declare module '@tanstack/react-router' {
 interface BaoCaoRouteChildren {
   BaoCaoBangChamCongRoute: typeof BaoCaoBangChamCongRoute
   BaoCaoBangCheckInRoute: typeof BaoCaoBangCheckInRoute
+  BaoCaoBangDeNghiRoute: typeof BaoCaoBangDeNghiRoute
+  BaoCaoBangHoSoRoute: typeof BaoCaoBangHoSoRoute
   BaoCaoBangNhiemVuRoute: typeof BaoCaoBangNhiemVuRoute
 }
 
 const BaoCaoRouteChildren: BaoCaoRouteChildren = {
   BaoCaoBangChamCongRoute: BaoCaoBangChamCongRoute,
   BaoCaoBangCheckInRoute: BaoCaoBangCheckInRoute,
+  BaoCaoBangDeNghiRoute: BaoCaoBangDeNghiRoute,
+  BaoCaoBangHoSoRoute: BaoCaoBangHoSoRoute,
   BaoCaoBangNhiemVuRoute: BaoCaoBangNhiemVuRoute,
 }
 
@@ -511,12 +553,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

@@ -277,7 +277,8 @@ export const loadProposals = createServerFn({ method: "GET" })
       created_by: string | null;
       updated_at: string | null;
       deleted_at: string | null;
-      attachments: unknown;
+      // Fix TS2345 (2026-09-10): unknown không qua serializer — pg trả jsonb thành mảng giá trị
+      attachments: string[] | null;
     }>`
       SELECT id, kind, title, requester, date, detail, status, dept,
              approver, approved_at, created_by, updated_at, deleted_at, attachments
@@ -402,7 +403,8 @@ export const loadDocuments = createServerFn({ method: "GET" })
       date: string;
       updated_at: string | null;
       deleted_at: string | null;
-      attachments: unknown;
+      // Fix TS2345 (2026-09-10): unknown không qua serializer — pg trả jsonb thành mảng giá trị
+      attachments: string[] | null;
     }>`
       SELECT id, title, category, dept, center, summary, creator,
              created_by, date, updated_at, deleted_at, attachments

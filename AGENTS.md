@@ -2560,7 +2560,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 77 — Chat: đổi tên nhóm + @mention)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 78 — Dọn sạch 26 lỗi typecheck, typecheck SẠCH 0 lỗi)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3155,3 +3155,69 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Tin 1-1 không có dropdown @ (chỉ nhóm); gửi tin @ kèm ID lưu vào cột mentions
 >   (Neon); thiết bị khác mở lại vẫn thấy tô đậm (mentions load từ DB).
 > - Migration 0024 tự chạy khi Vercel build; tin cũ không bị ảnh hưởng.
+
+---
+
+### Giai đoạn 78: Dọn sạch 26 lỗi typecheck — SẠCH 0 lỗi (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(typescript): sửa 24 lỗi type tích tụ từ GĐ 25-70 — giữ nguyên hành vi chạy |
+| (mới) | chore: sinh lại routeTree.gen.ts (2 lỗi route báo cáo tự hết) |
+| (mới) | chore: tăng version 0.9.5 → 0.9.6 |
+
+> **Yêu cầu của Đại ca (2026-09-10):** Kiểm tra code hiện tại có lỗi gì không, có ảnh
+> hưởng thực thi không — tìm + đề xuất sửa, bỏ lỗi không ảnh hưởng chương trình chạy.
+> Đại ca duyệt sửa CẢ NHÓM A (an toàn) + NHÓM B (rủi ro runtime).
+>
+> **Phân loại 26 lỗi baseline (scripts/typecheck.mjs):**
+> - **Nhóm B — rủi ro runtime thật (đã fix):**
+>   1. `cham-cong.tsx doStampWithGps` — `video` possibly null: hàm chạy ASYNC trong
+>      `.then(reverseGeocode)` — video/canvas có thể unmount (đóng dialog khi GPS chậm)
+>      trước lúc stamp → guard `if (!video || !canvas) return;` đầu hàm.
+>   2. `reverseGeocode({ data: { lat, lng } })` ×3 (cham-cong 264/495 + check-in 428):
+>      validator yêu cầu `{lat: number; lng: number}` nhưng truyền string từ `.toFixed(6)`
+>      → bọc `Number(lat), Number(lng)`.
+> - **Nhóm A — lỗi type thuần, chưa gây lỗi chạy (đã fix):**
+>   3. `nhiem-vu.tsx:537` variant "destructive" → "danger" (Button UI không có destructive;
+>      variant lạ rơi về default — nút xóa TỪNG MẤT màu đỏ, giờ có lại).
+>   4. `check-in.tsx` đọc `a.employeeId`/`a.workplace` không tồn tại trên type CheckIn
+>      (luôn undefined, fallback vẫn chạy) → xóa tham chiếu, dùng fallback trực tiếp ×4 chỗ.
+>   5. `check-in.tsx` `catch (err)` → `catch (err: any)` ×2 (err?.message trên {}).
+>   6. `store.ts` neonCheckins `updatedAt ?? null` → `?? undefined` (union type CheckIn);
+>      neonDocuments `updatedAt ?? undefined` → `?? ""` (Document.updatedAt bắt buộc string).
+>   7. `data.ts` loadProposals + loadDocuments generic `attachments: unknown` →
+>      `string[] | null` (unknown không qua serializer check của createServerFn).
+> - **Nhóm tự hết — routeTree.gen.ts CŨ (đã sinh lại local):** 2 lỗi
+>     `createFileRoute("/bao-cao/bang-de-nghi"|"/bao-cao/bang-ho-so")` không có trong
+>     FileRoutesByPath — routeTree.gen.ts committed bị cũ (thiếu 2 trang báo cáo mới).
+>     Vercel build tự sinh lại nên production KHÔNG bao giờ lỗi; sinh local bằng
+>     router-generator để typecheck sạch cả local.
+>
+> **LESSON LEARNED — Sinh routeTree.gen.ts từ CLI khi tsc/máy hỏng (2026-09-10):**
+> Không cần chạy dev server. Dùng trực tiếp package `@tanstack/router-generator`
+> (đã có trong node_modules):
+> ```js
+> const { Generator, getConfig } = require("@tanstack/router-generator");
+> const config = await getConfig({ routesDirectory: "./src/routes",
+>   generatedRouteTree: "./src/routeTree.gen.ts" }, process.cwd());
+> await new Generator({ config, root: process.cwd() }).run();
+> ```
+> API đúng: export `Generator` (class, method `.run()`), KHÔNG phải `generator.generate`.
+> **Quy tắc từ giờ:** thêm route file mới → nhớ routeTree.gen.ts là file SINH RA —
+> commit file cũ là bình thường, typecheck local sẽ sáng đỏ 2 lỗi cho đến khi sinh lại.
+>
+> **LESSON LEARNED — Lỗi type tích tụ nhiều giai đoạn là nợ âm thầm (2026-09-10):**
+> 26 lỗi tồn tại từ GĐ 25-70 không ai sửa vì "không ảnh hưởng chạy" — nhưng trong đó
+> lẫn rủi ro runtime thật (guard video async, RPC sai kiểu) và lỗi thật (nút xóa mất
+> màu đỏ). Vì tsc CLI máy này hỏng (GĐ 70) nên baseline "26 lỗi" bị coi là bình thường.
+> **Bài học:** định kỳ chạy `node scripts/typecheck.mjs` và sửa sạch — baseline 0 là
+> dễ phát hiện lỗi mới hơn baseline 26. Giờ rule đơn giản: typecheck phải luôn SẠCH,
+> lỗi mới xuất hiện = lỗi của lần sửa hiện tại, không được phép đẩy vào baseline.
+>
+> **Tiêu chí kiểm chứng:**
+> - `node scripts/typecheck.mjs` → "✅ Typecheck SẠCH (0 lỗi)" — baseline mới = 0.
+> - `node --experimental-strip-types --test src/lib/unread.test.ts src/lib/merge.test.ts`
+>   → 17/17 pass (không hỏng logic hiện có).
+> - Chức năng không đổi: chấm công/check-in GPS + camera hoạt động như cũ; nút xóa
+>   nhiệm vụ CÓ MÀU ĐỎ (khác biệt duy nhất nhìn thấy được mắt thường).

@@ -261,7 +261,8 @@ function ChamCongPage() {
         setAddress(coordinateText); // tạm thời, sẽ resolve ngay bên dưới
         setLocationStatus("Vị trí đã xác định");
         // Resolve địa chỉ ngay khi có GPS để overlay hiển thị tên đường
-        reverseGeocode({ data: { lat, lng } })
+        // Fix TS2322 (2026-09-10): validator yêu cầu number — lat/lng từ toFixed là string
+        reverseGeocode({ data: { lat: Number(lat), lng: Number(lng) } })
           .then((addr) => { if (addr) setAddress(addr); })
           .catch(() => {}); // giữ coordinateText nếu fail
       },
@@ -468,6 +469,9 @@ function ChamCongPage() {
 
     // Đợi video metadata load xong rồi mới stamp — đảm bảo canvas đúng kích thước thật
     function doStampWithGps(gpsVal: string, addrVal: string) {
+      // Fix TS18047 (2026-09-10): hàm chạy ASYNC trong .then(reverseGeocode) — video/canvas
+      // có thể bị unmount (đóng dialog) trước lúc stamp → guard tránh crash runtime
+      if (!video || !canvas) return;
       if (video.videoWidth > 100 && video.videoHeight > 100) {
         doStamp(video, canvas, freshTime, freshDate, freshWeekday, gpsVal, addrVal);
       } else {
@@ -492,7 +496,8 @@ function ChamCongPage() {
         setGps(freshGpsVal);
         setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
         // Resolve địa chỉ trước khi stamp
-        reverseGeocode({ data: { lat, lng } })
+        // Fix TS2322 (2026-09-10): validator yêu cầu number
+        reverseGeocode({ data: { lat: Number(lat), lng: Number(lng) } })
           .then((addr) => {
             const resolvedAddr = addr || freshAddr;
             if (addr) setAddress(addr);
