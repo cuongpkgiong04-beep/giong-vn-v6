@@ -2557,7 +2557,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 74 — Chat: xóa kênh công khai + badge tin chưa đọc kiểu Zalo)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 75 — Fix badge chat kẹt + cap badge 6/6+)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3007,3 +3007,61 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - B mở đúng hội thoại → badge giảm đúng số tin vừa đọc; đọc hết toàn bộ → badge ẩn.
 > - Tin của chính mình không tăng badge. Badge mỗi user độc lập (localStorage per-user).
 > - Mobile 1 khung, desktop 2 cột — mọi thay đổi áp dụng cả 2 (nguyên tắc song song).
+
+---
+
+### Giai đoạn 75: Fix badge chat kẹt "3" + cap badge 6/6+ (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(store): totalUnreadCount chỉ đếm hội thoại MỞ ĐƯỢC trong UI — hết badge kẹt do tin kênh đã xóa/nhóm giải tán/peer đã xóa |
+| (mới) | feat(app-shell): cap badge tin chưa đọc tối đa 6, vượt thì "6+" (thay 99+) — sidebar + bottom bar mobile |
+| (mới) | test: unit test src/lib/unread.test.ts (6 test) — bản sao logic thuần vì store.ts import "@/data" không chạy standalone trong node --test |
+| (mới) | chore: tăng version 0.9.2 → 0.9.3 (fix bug — patch) |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Badge chat chưa đọc trên sidebar + bottom bar
+> luôn hiển thị "3" MẶC DÙ đã đọc hết tin. Đồng thời yêu cầu mới: badge hiển thị tối đa
+> "6", vượt quá thì "6+" (thay cap 99+ hiện tại).
+>
+> **ROOT CAUSE — badge kẹt: đếm cả hội thoại "ma" không thể mở để đánh dấu đã đọc (2026-09-10):**
+> `totalUnreadCount()` gom convKeys từ TẤT CẢ tin nhắn trong store rồi đếm từng key:
+> 1. **Tin cũ của 4 kênh công khai đã xóa (GĐ 74):** tin vẫn nằm trong Neon + localStorage
+>    (channel "Chung"/"Kế toán"...), key `group:{channel}` vẫn được tạo — nhưng UI KHÔNG còn
+>    kênh nào để mở → markConversationRead không bao giờ chạy cho key này → badge kẹt.
+> 2. **Tin của nhóm đã giải tán:** nhóm bị tombstone khỏi chatGroups nhưng tin vẫn giữ
+>    groupId → key `mygroup:{id}` không mở được.
+> 3. **Tin 1-1 cũ (trước migration 0021) direct_key='':** rơi vào key `group:{channel}` —
+>    cùng số phận với kênh đã xóa.
+>
+> Vì lastRead mặc định = 0, mọi tin người khác gửi trong hội thoại ma đều tính là
+> chưa đọc VĨNH VIỄN → đọc thật bao nhiêu badge vẫn còn "3". Đây là dạng lỗi âm thầm
+> giống GĐ 69: ghi/đọc mỗi đầu tự đúng, ghép lại lệch — data còn đó nhưng UI mở không được.
+>
+> **Fix (surgical — 2 file):**
+> 1. `store.ts — totalUnreadCount(messages, userId, chatGroups, employeeIds):` thêm 2
+>    tham số; chỉ tạo convKey cho hội thoại MỞ ĐƯỢC trong UI, khớp đúng danh sách
+>    hội thoại trang Chat: nhóm = mình là member + nhóm chưa tombstone; 1-1 = peer
+>    còn trong danh sách nhân sự; tin kênh công khai cũ (không groupId/directKey) → bỏ.
+> 2. `app-shell.tsx:` 2 selector truyền `s.chatGroups` + Set employee IDs (NavLink
+>    dùng useMemo tránh tạo Set mới mỗi render; AppShell body tính inline vì selector
+>    trả số — không gây re-render thừa); 2 chỗ render badge đổi `>99 ? "99+"` →
+>    `>6 ? "6+"` theo yêu cầu.
+>
+> **LESSON LEARNED — Đếm unread phải lọc theo "hội thoại UI mở được", không phải theo data (2026-09-10):**
+> Số đếm badge là con số ĐỂ USER HÀNH ĐỘNG (bấm vào để đọc). Tin nằm trong hội thoại
+> không thể mở thì KHÔNG BAO GIỜ được đếm, dù tồn tại trong DB. Khi thêm một nguồn data
+> mới (kênh, nhóm, loại tin), luôn tự hỏi: tin cũ của nguồn này, sau khi nguồn bị xóa/
+> khóa, còn đường nào để user "tiêu" số đếm không? Nếu không → phải lọc ngay từ counter.
+>
+> **LESSON LEARNED — Store import "@/data" khiến test standalone không chạy được (2026-09-10):**
+> Muốn unit test hàm thuần trong store.ts bằng `node --test` phải resolve alias "@/"
+> mà node không hiểu → ERR_MODULE_NOT_FOUND. Giải pháp thực dụng: test bản SAO logic
+> thuần trong file test (kèm comment đồng bộ với store.ts). Về lâu dài: tách các hàm
+> thuần (unread/merge/...) sang module không phụ thuộc alias để import trực tiếp.
+>
+> **Tiêu chí kiểm chứng:**
+> - Badge không còn kẹt: mở Chat → đọc hết hội thoại → về Dashboard, badge biến mất.
+> - Badge đếm đúng: A nhắn B 5 tin → B thấy "5"; nhắn 7 tin → B thấy "6+".
+> - Tin cũ của kênh công khai (nếu còn sót trong DB) KHÔNG làm badge tăng nữa.
+> - Sidebar + bottom bar mobile + hamburger đều cap 6/6+.
+> - `node --experimental-strip-types --test src/lib/unread.test.ts` → 6/6 pass.

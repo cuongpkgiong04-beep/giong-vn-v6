@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "0.9.2";
+const DEFAULT_VERSION = "0.9.3";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -111,8 +111,12 @@ function NavLink({
   // GĐ 74: badge tin nhắn chưa đọc trên icon Chat (sidebar + hamburger).
   // Selector đọc messages + currentUserId; _chatReadTick bump cũng chạy lại selector
   // (state change) → count cập nhật ngay sau markConversationRead.
+  // Fix badge kẹt (2026-09-10): chỉ đếm hội thoại mở được trong UI — cần chatGroups
+  // (nhóm mình là member) + employees (peer 1-1 còn tồn tại).
+  const employees = useAppStore((s) => s.employees);
+  const employeeIds = useMemo(() => new Set(employees.map((e) => e.id)), [employees]);
   const unreadBadge = useAppStore(
-    (s) => (item.to === "/chat" ? totalUnreadCount(s.messages, s.currentUserId) : 0),
+    (s) => (item.to === "/chat" ? totalUnreadCount(s.messages, s.currentUserId, s.chatGroups, employeeIds) : 0),
   );
   return (
     <Link
@@ -151,7 +155,8 @@ function NavLink({
         <Icon className={cn("size-4", dark && active && "text-white")} />
         {unreadBadge > 0 && (
           <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
-            {unreadBadge > 99 ? "99+" : unreadBadge}
+            {/* Cap 6/6+ theo yêu cầu (2026-09-10) — trước đây 99+ */}
+            {unreadBadge > 6 ? "6+" : unreadBadge}
           </span>
         )}
       </span>
@@ -232,8 +237,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const employees = useAppStore((s) => s.employees);
   // GĐ 74: tổng tin nhắn chưa đọc — badge đỏ trên icon Chat bottom bar mobile.
   // _chatReadTick trong selector: markConversationRead bump counter → tính lại ngay.
+  // Fix badge kẹt (2026-09-10): truyền chatGroups + employeeIds — chỉ đếm hội thoại
+  // mở được trong UI (kênh đã xóa / nhóm giải tán / peer đã xóa không đếm).
   const mobileChatUnread = useAppStore((s) =>
-    totalUnreadCount(s.messages, s.currentUserId) + (s._chatReadTick ?? 0) - (s._chatReadTick ?? 0),
+    totalUnreadCount(s.messages, s.currentUserId, s.chatGroups, new Set(s.employees.map((e) => e.id))) +
+      (s._chatReadTick ?? 0) - (s._chatReadTick ?? 0),
   );
   // Resolve current employee: ALWAYS use store userId (stable across server/client)
   // to avoid hydration mismatch. Auth email/name may differ between SSR and client.
@@ -482,7 +490,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <Icon className="size-6" />
                 {unreadBadge > 0 && (
                   <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-surface bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
-                    {unreadBadge > 99 ? "99+" : unreadBadge}
+                    {/* Cap 6/6+ theo yêu cầu (2026-09-10) — trước đây 99+ */}
+                    {unreadBadge > 6 ? "6+" : unreadBadge}
                   </span>
                 )}
               </span>

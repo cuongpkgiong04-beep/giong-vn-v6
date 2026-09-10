@@ -328,13 +328,41 @@ export function unreadCountFor(
   }).length;
 }
 
-/** Tổng unread TOÀN BỘ hội thoại (kênh + nhóm + 1-1) — badge tổng trên icon Chat. */
-export function totalUnreadCount(messages: ChatMessage[], userId: string): number {
+/**
+ * Tổng unread CHỈ đếm các hội thoại MỞ ĐƯỢC trong UI (fix badge kẹt — 2026-09-10):
+ * trước đây đếm trên TẤT CẢ key suy ra từ tin nhắn, bao gồm tin cũ của 4 kênh công
+ * khai đã xóa (GĐ 74) + nhóm đã giải tán + tin 1-1 cũ direct_key='' — các hội thoại
+ * "ma" này KHÔNG thể mở để đánh dấu đã đọc → badge kẹt vĩnh viễn dù đọc hết.
+ * Giờ: nhóm = mình là member của nhóm còn sống; 1-1 = peer còn trong danh sách nhân sự.
+ * convKeys PHẢI khớp đúng danh sách hội thoại ở trang Chat (myGroups + direct list).
+ */
+export function totalUnreadCount(
+  messages: ChatMessage[],
+  userId: string,
+  chatGroups: ChatGroup[] = [],
+  employeeIds: Set<string> = new Set(),
+): number {
   const lastReadMap = readLastReadMap(userId);
+  // Hội thoại nhóm mở được: nhóm chưa xóa + mình là member
+  const myGroupIds = new Set(
+    chatGroups
+      .filter((g) => !g.deletedAt && g.members.some((m) => m.employeeId === userId))
+      .map((g) => g.id),
+  );
   const convKeys = new Set<string>();
   for (const m of messages) {
     if (m.deletedAt) continue;
-    convKeys.add(conversationKeyOf(m, userId));
+    if (m.groupId) {
+      if (myGroupIds.has(m.groupId)) convKeys.add(`mygroup:${m.groupId}`);
+      continue; // nhóm không còn (đã giải tán / không phải member) → bỏ, không đếm
+    }
+    if (m.directKey) {
+      const peer = m.directKey.split("|").find((id) => id !== userId);
+      if (peer && employeeIds.has(peer)) convKeys.add(`direct:${peer}`);
+      // peer không còn trong nhân sự → bỏ
+      continue;
+    }
+    // Tin cũ kênh công khai (group:{channel}) — kênh đã xóa GĐ 74, không có UI mở → bỏ
   }
   let total = 0;
   for (const key of convKeys) {
