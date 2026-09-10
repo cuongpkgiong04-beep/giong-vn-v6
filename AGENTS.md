@@ -3580,3 +3580,58 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Admin: nút sửa → sửa Tên rút gọn/Cụm/Thành phố/Địa chỉ → Lưu → toast xanh,
 >   mở thiết bị khác thấy thay đổi. User thường: chỉ xem.
 > - Typecheck SẠCH 0 lỗi (scripts/typecheck.mjs); 17/17 test pass.
+
+---
+
+### Giai đoạn 87: Trung tâm — ghim bảng cuộn nội bộ + 4 cột mới (Vị trí địa lý / SĐT / Phụ trách / Ghi chú) (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0025_centers_contact.sql — bảng centers thêm phone/manager/note (default '') |
+| (mới) | feat(trung-tam): bảng Danh sách ghim cuộn nội bộ (pattern Nhân sự GĐ 58) + 4 cột mới; dialog chi tiết thêm SĐT/Phụ trách/Ghi chú — Admin sửa được |
+| (mới) | feat(employee-crud): loadCenters SELECT + updateCenter đủ 3 cột liên hệ mới |
+| (mới) | chore: tăng version 1.2.0 → 1.3.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca (2026-09-10) — sửa Module Trung tâm, 3 điểm:**
+> 1. Dòng tiêu đề dưới bản đồ CHƯA cố định khi cuộn → phải ghim.
+> 2. Tiêu đề bảng thêm các cột: Vị trí địa lý (theo tọa độ), Số điện thoại (để trống
+>    Admin điền sau), Phụ trách trung tâm (Admin điền tên nhân sự sau), Ghi chú.
+>
+> **Đã chốt trước khi làm:** Phụ trách = dropdown chọn từ danh sách nhân sự (em đề
+> xuất, anh chọn) thay vì ô nhập tự do. Vị trí địa lý CHỈ ĐỌC — tự tra từ tọa độ.
+>
+> **Chi tiết triển khai (5 file + 1 migration):**
+> 1. **Migration 0025:** `centers` thêm `phone text default ''`, `manager text default ''`,
+>    `note text default ''` + update coalesce. Tự chạy khi Vercel build.
+> 2. **employee-crud.ts:** DbCenter type + loadCenters SELECT COALESCE 3 cột mới;
+>    updateCenter nhận + UPDATE thêm phone/manager/note.
+> 3. **types.ts:** `Center` thêm `phone?/manager?/note?`. **store.ts:** map dbCenterList
+>    đủ 3 field (hydrate qua merge fallback — centers không LWW, DB thắng).
+> 4. **trung-tam.tsx:**
+>    - Bảng Danh sách: container bảng thành khối sticky
+>      `top-[calc(4rem+var(--tt-sticky-h,56px))]` + `max-h-[calc(100dvh-…)] overflow-auto`
+>      + thead sticky top-0 — cuộn nội bộ, tiêu đề + tiêu đề cột luôn nhìn thấy
+>      (desktop max-h-6rem, mobile max-h-10.5rem trừ bottom bar).
+>    - 4 cột mới trong bảng + dialog: Vị trí địa lý (reverseGeocode từ CENTER_COORDS,
+>      cache localStorage `giong-vn-center-geo` — mỗi mã chỉ gọi 1 lần vì tọa độ cố định;
+>      title tooltip hiện tọa độ), SĐT (Input), Phụ trách (dropdown nhân sự sort vi),
+>      Ghi chú (Textarea, whitespace-pre-wrap).
+>
+> **LESSON LEARNED — Gọi server function trong useEffect: bọc từng lệnh với cancelled flag (2026-09-10):**
+> Reverse geocode 20 trung tâm chạy tuần tự trong useEffect — component có thể unmount
+> (đổi trang) giữa chừng → dùng `cancelled` flag trong closure + kiểm tra trước mỗi
+> setState; cache localStorage ghi ngay sau mỗi kết quả (quota error bỏ qua) — lần
+> sau vào trang không gọi lại Nominatim.
+>
+> **Tiêu chí kiểm chứng:**
+> - Toggle "Danh sách" → cuộn xuống: khối tiêu đề + thead đứng yên, dòng chạy trong khung
+>   (desktop + mobile); không hở khe giữa 2 khối ghim (var --tt-sticky-h đo động).
+> - Cột Vị trí địa lý hiện "…" rồi tên vị trí sau vài giây (cache vĩnh viễn); SĐT/
+>   Phụ trách/Ghi chú hiện "—" khi trống.
+> - Admin: sửa 3 trường trong dialog → Lưu → toast xanh; mở thiết bị khác vẫn thấy
+>   (lưu Neon qua updateCenter). User thường: chỉ xem.
+> - Migration 0025 tự chạy khi build; cards view giữ nguyên.
+> - Typecheck SẠCH 0 lỗi (scripts/typecheck.mjs); 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 87 — Trung tâm: ghim bảng cuộn nội bộ + 4 cột mới)*
+*Người cập nhật: Trợ lý lập trình*

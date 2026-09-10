@@ -74,6 +74,12 @@ export type Center = {
   short: string;
   city: string;
   kind: "Trung tâm" | "Văn phòng";
+  /** Số điện thoại trung tâm — Admin điền (GĐ 87) */
+  phone?: string;
+  /** Tên nhân sự phụ trách trung tâm — Admin chọn từ dropdown (GĐ 87) */
+  manager?: string;
+  /** Ghi chú — Admin điền (GĐ 87) */
+  note?: string;
 };
 
 export type Proposal = {

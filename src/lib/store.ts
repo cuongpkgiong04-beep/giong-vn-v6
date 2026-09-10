@@ -909,6 +909,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const dbCenterList: Center[] = (dbCtrs as any[]).map((r) => ({
           code: r.code, name: r.name, short: r.short_name, city: r.city,
           kind: (r.code === 'VP' ? 'Văn phòng' : 'Trung tâm') as 'Trung tâm' | 'Văn phòng',
+          phone: r.phone ?? '', manager: r.manager ?? '', note: r.note ?? '',
         }));
 
         const employeeMap = new Map<string, Employee>();

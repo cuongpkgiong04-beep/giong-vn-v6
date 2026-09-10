@@ -33,6 +33,9 @@ export type DbCenter = {
   city: string;
   district: string;
   address: string;
+  phone: string;
+  manager: string;
+  note: string;
   status: string;
 };
 
@@ -91,6 +94,9 @@ export const loadCenters = createServerFn({ method: "GET" }).handler(
         city,
         COALESCE(district, '') as district,
         COALESCE(address, '') as address,
+        COALESCE(phone, '') as phone,
+        COALESCE(manager, '') as manager,
+        COALESCE(note, '') as note,
         status
       FROM centers
       WHERE status = 'active'
@@ -139,15 +145,16 @@ export const updateEmployee = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-/** Update a center's display info (name, short_name, city, district, address). */
+/** Update a center's display + contact info (phone/manager/note — cột mới GĐ 87). */
 export const updateCenter = createServerFn({ method: "POST" })
-  .validator((data: { code: string; name: string; short_name: string; city: string; district: string; address: string }) => data)
+  .validator((data: { code: string; name: string; short_name: string; city: string; district: string; address: string; phone: string; manager: string; note: string }) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
       UPDATE centers
       SET name = ${data.name}, short_name = ${data.short_name}, city = ${data.city},
-          district = ${data.district}, address = ${data.address}, updated_at = now()
+          district = ${data.district}, address = ${data.address},
+          phone = ${data.phone}, manager = ${data.manager}, note = ${data.note}, updated_at = now()
       WHERE code = ${data.code}
     `;
     return { success: true };

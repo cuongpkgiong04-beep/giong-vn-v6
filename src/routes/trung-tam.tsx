@@ -7,12 +7,17 @@ import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAppStore } from "@/lib/store";
 import { isAdminRole } from "@/lib/catalog";
 import { CENTER_COORDS } from "@/lib/center-coords";
 import { updateCenter } from "@/routes/api/employee-crud";
+import { reverseGeocode } from "@/routes/api/data";
 
 export const Route = createFileRoute("/trung-tam")({ component: TrungTamPage });
+
+/** Cache tên vị trí địa lý (reverse geocode từ tọa độ) theo mã trung tâm — tránh gọi lại Nominatim. */
+const GEO_CACHE_KEY = "giong-vn-center-geo";
 
 /**
  * Load Leaflet from CDN at runtime — same approach as Báo cáo Check-in.
@@ -197,6 +202,9 @@ type CenterEdit = {
   city: string;
   district: string;
   address: string;
+  phone: string;
+  manager: string;
+  note: string;
 };
 
 function TrungTamPage() {
@@ -239,6 +247,43 @@ function TrungTamPage() {
       .filter((p): p is NonNullable<typeof p> => p !== null);
   }, [centers, staffByCenter]);
 
+  // Cột "Vị trí địa lý" — reverse geocode từ tọa độ (cache localStorage — mỗi center chỉ gọi 1 lần)
+  const [geoNames, setGeoNames] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cache: Record<string, string> = {};
+    try {
+      cache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) ?? "{}");
+    } catch {
+      cache = {};
+    }
+    setGeoNames((prev) => ({ ...prev, ...cache }));
+    const missing = mapPoints.filter((p) => !(p.code in cache));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      // Tuần tự — nhẹ nhàng với Nominatim, kết quả lưu cache vĩnh viễn (tọa độ cố định)
+      for (const p of missing) {
+        try {
+          const name = await reverseGeocode({ data: { lat: p.lat, lng: p.lng } });
+          if (cancelled) return;
+          cache[p.code] = name || "";
+        } catch {
+          if (cancelled) return;
+          cache[p.code] = "";
+        }
+        setGeoNames((prev) => ({ ...prev, [p.code]: cache[p.code] }));
+        try {
+          localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(cache));
+        } catch {
+          /* ignore quota */
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mapPoints]);
+
   const toEdit = useCallback(
     (code: string): CenterEdit => {
       const c = centers.find((x) => x.code === code)!;
@@ -249,6 +294,9 @@ function TrungTamPage() {
         city: c.city,
         district: c.kind === "Văn phòng" ? "Long Biên" : CENTER_COORDS[c.code]?.cluster ?? "",
         address: "",
+        phone: c.phone ?? "",
+        manager: c.manager ?? "",
+        note: c.note ?? "",
       };
     },
     [centers],
@@ -288,6 +336,9 @@ function TrungTamPage() {
           city: detail.city,
           district: detail.district,
           address: detail.address,
+          phone: detail.phone,
+          manager: detail.manager,
+          note: detail.note,
         },
       });
       toast.success(`Đã cập nhật ${detail.short}`);
@@ -373,11 +424,13 @@ function TrungTamPage() {
         </div>
       )}
 
-      {/* List view — bảng nhiều cột, bấm dòng mở chi tiết */}
+      {/* List view — bảng nhiều cột; container GHIM ngay dưới khối tiêu đề + CUỘN NỘI BỘ
+          (pattern Nhân sự GĐ 58): thead sticky top-0, dòng dữ liệu chạy trong khung —
+          tiêu đề + tiêu đề cột luôn nhìn thấy khi cuộn (desktop + mobile). */}
       {view === "list" && (
-        <div className="overflow-x-auto rounded-xl border border-line">
+        <div className="sticky top-[calc(4rem+var(--tt-sticky-h,56px))] z-[5] max-h-[calc(100dvh-10.5rem-var(--tt-sticky-h,56px))] overflow-auto rounded-xl border border-line bg-surface lg:max-h-[calc(100dvh-6rem-var(--tt-sticky-h,56px))]">
           <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-left text-xs uppercase tracking-wider text-muted">
+            <thead className="sticky top-0 z-[5] bg-surface-2 text-left text-xs uppercase tracking-wider text-muted">
               <tr>
                 <th className="px-3 py-2.5">STT</th>
                 <th className="px-3 py-2.5">Mã</th>
@@ -386,6 +439,10 @@ function TrungTamPage() {
                 <th className="px-3 py-2.5">Cụm</th>
                 <th className="px-3 py-2.5">Loại</th>
                 <th className="px-3 py-2.5 text-right">Số NS</th>
+                <th className="px-3 py-2.5">Vị trí địa lý</th>
+                <th className="px-3 py-2.5">Số điện thoại</th>
+                <th className="px-3 py-2.5">Phụ trách trung tâm</th>
+                <th className="px-3 py-2.5">Ghi chú</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -402,6 +459,19 @@ function TrungTamPage() {
                   <td className="px-3 py-2.5 text-muted">{CENTER_COORDS[c.code]?.cluster ?? "—"}</td>
                   <td className="px-3 py-2.5 text-muted">{c.kind}</td>
                   <td className="px-3 py-2.5 text-right tabular">{staffByCenter[c.code] ?? 0}</td>
+                  <td
+                    className="max-w-[220px] px-3 py-2.5 text-muted"
+                    title={CENTER_COORDS[c.code] ? `Tọa độ: ${CENTER_COORDS[c.code].lat.toFixed(6)}, ${CENTER_COORDS[c.code].lng.toFixed(6)}` : undefined}
+                  >
+                    {!CENTER_COORDS[c.code]
+                      ? "—"
+                      : geoNames[c.code] === undefined
+                        ? "…"
+                        : geoNames[c.code] || "—"}
+                  </td>
+                  <td className="px-3 py-2.5 text-muted tabular">{c.phone || "—"}</td>
+                  <td className="px-3 py-2.5 text-muted">{c.manager || "—"}</td>
+                  <td className="max-w-[200px] px-3 py-2.5 whitespace-pre-wrap text-muted">{c.note || "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -464,6 +534,53 @@ function TrungTamPage() {
                       <Input value={detail.address} onChange={(e) => setDetail({ ...detail, address: e.target.value })} className="mt-1" />
                     ) : (
                       <p className="mt-1 text-sm leading-5 text-ink">{detail.address || "—"}</p>
+                    )}
+                  </div>
+                  <div className="rounded-xl border border-line bg-surface-2 p-3">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Số điện thoại</p>
+                    {editing ? (
+                      <Input
+                        value={detail.phone}
+                        onChange={(e) => setDetail({ ...detail, phone: e.target.value })}
+                        placeholder="VD: 0243 8xx xxxx"
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm font-medium text-ink tabular">{detail.phone || "—"}</p>
+                    )}
+                  </div>
+                  <div className="rounded-xl border border-line bg-surface-2 p-3">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Phụ trách trung tâm</p>
+                    {editing ? (
+                      <select
+                        value={detail.manager}
+                        onChange={(e) => setDetail({ ...detail, manager: e.target.value })}
+                        className="mt-1 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"
+                      >
+                        <option value="">— Chọn nhân sự —</option>
+                        {[...employees]
+                          .sort((a, b) => a.name.localeCompare(b.name, "vi"))
+                          .map((e) => (
+                            <option key={e.id} value={e.name}>
+                              {e.name}
+                            </option>
+                          ))}
+                      </select>
+                    ) : (
+                      <p className="mt-1 text-sm font-medium text-ink">{detail.manager || "—"}</p>
+                    )}
+                  </div>
+                  <div className="rounded-xl border border-line bg-surface-2 p-3 sm:col-span-2">
+                    <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Ghi chú</p>
+                    {editing ? (
+                      <Textarea
+                        value={detail.note}
+                        onChange={(e) => setDetail({ ...detail, note: e.target.value })}
+                        rows={3}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm leading-5 whitespace-pre-wrap text-ink">{detail.note || "—"}</p>
                     )}
                   </div>
                 </div>
