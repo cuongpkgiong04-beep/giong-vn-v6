@@ -80,6 +80,9 @@ function CheckInPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
+  // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
+  const facingModeRef = useRef<"user" | "environment">("user");
+  if (facingModeRef.current !== facingMode) facingModeRef.current = facingMode;
   const [isIOS] = useState(detectIOS);
 
   // Desktop (lg+): đo chiều cao khối ghim (tiêu đề + bộ lọc) để thead bảng sticky ngay bên dưới
@@ -383,15 +386,20 @@ function CheckInPage() {
     setFacingMode(next);
     stopCamera();
     await new Promise((r) => setTimeout(r, 150));
-    startCamera();
+    // GĐ 81 fix: truyền mode TRỰC TIẾP — trước đây gọi startCamera() không đối số,
+    // hàm dùng closure cũ (facingMode chưa update) → lần bấm 1 vẫn mở camera cũ,
+    // phải bấm lần 2 (sau khi re-render) mới mở camera sau.
+    startCamera(next);
   }
 
-  async function startCamera() {
+  async function startCamera(modeOverride?: "user" | "environment") {
     const video = videoRef.current;
     if (!video) return;
+    // Dùng đối số truyền trực tiếp nếu có — tránh stale closure khi đổi camera
+    const facing = modeOverride ?? facingModeRef.current;
     stopCamera();
     const streamPromise = navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+      video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
     });
     streamPromise.then((stream) => {

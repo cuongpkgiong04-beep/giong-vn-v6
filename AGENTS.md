@@ -2560,7 +2560,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 80 — Lightbox Check-in: fix nền đen + nút X không bấm được)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 81 — Check-in: fix đổi camera phải bấm 2 lần)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3290,3 +3290,48 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Module Check-in: bấm ảnh trong dialog → phóng to → X + bấm nền ĐÓNG ĐƯỢC →
 >   dialog chi tiết trở lại.
 > - Typecheck SẠCH 0 lỗi; desktop + mobile cùng hành vi.
+
+---
+
+### Giai đoạn 81: Check-in — fix đổi camera sau phải bấm 2 lần (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(check-in): switchCamera truyền mode mới trực tiếp vào startCamera — bấm 1 lần đổi camera ăn ngay |
+| (mới) | chore: tăng version 0.9.8 → 0.9.9 |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Mobile — trong "Thêm Check-in", bấm nút
+> chuyển camera sau phải BẤM 2 LẦN mới nhận. Chỉ muốn bấm 1 lần là được ngay.
+>
+> **ROOT CAUSE — stale closure trong switchCamera (2026-09-10):**
+> ```ts
+> setFacingMode(next);        // setState — chỉ có hiệu lực lần render KẾ TIẾP
+> stopCamera();
+> await new Promise((r) => setTimeout(r, 150));
+> startCamera();              // gọi từ closure CŨ — bên trong vẫn đọc facingMode CŨ
+> ```
+> `startCamera` đọc `facingMode` từ closure của lần render lúc bấm nút — lời gọi sau
+> `await 150ms` vẫn dùng giá trị cũ → `getUserMedia` mở CAMERA CŨ → nhìn như
+> "không nhận". Bấm lần 2: component đã re-render xong, nút mang closure mới với
+> mode mới → camera sau mới bật. Lỗi không hiện trên desktop (không test được
+> switch camera trên webcam).
+>
+> **Fix (check-in.tsx — 2 thay đổi):**
+> 1. `switchCamera`: gọi `startCamera(next)` — truyền mode mới TRỰC TIẾP làm đối số,
+>    không dựa vào state vừa set.
+> 2. `startCamera(modeOverride?: "user" | "environment")`: nhận override + thêm
+>    `facingModeRef` đồng bộ theo state (`if (ref.current !== state) ref.current = state`)
+>    → mọi đường gọi khác (handleOpenDialog, retakePhoto — gọi KHÔNG đối số) đọc ref
+>    luôn đúng mode hiện tại, kể cả closure cũ.
+>
+> **LESSON LEARNED — setState rồi gọi hàm async ngay sau đó = stale closure (2026-09-10):**
+> React state không đổi ngay tại chỗ — hàm gọi SAU `await` vẫn là hàm của lần render
+> cũ, đọc state cũ. Quy tắc: cần giá trị MỚI trong cùng 1 luồng xử lý → truyền thẳng
+> làm ĐỐI SỐ, hoặc giữ mirror `useRef` đồng bộ theo state. Pattern này đã xuất hiện
+> GĐ 39 (capturePhoto/retakePhoto chuyển plain function) — cùng gốc React closure.
+> Lưu ý: lỗi này chỉ lộ trên THIẾT BỊ THẬT có 2 camera — desktop không test được.
+>
+> **Tiêu chí kiểm chứng:** Mobile — mở Thêm Check-in → bấm nút 📷 MỘT LẦN → camera
+> sau bật ngay (không phải bấm lần 2); bấm tiếp → về camera trước ngay; mở lại
+> dialog → camera mặc định đúng mode lần cuối chọn; chụp lại (retake) vẫn mở đúng
+> mode; typecheck SẠCH 0 lỗi.
