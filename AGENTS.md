@@ -2560,7 +2560,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 79 — Dashboard: nhãn ngày biểu đồ dd/mm)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 80 — Lightbox Check-in: fix nền đen + nút X không bấm được)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3243,3 +3243,50 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **Tiêu chí kiểm chứng:** Biểu đồ Dashboard hiển thị `04/09`, `05/09`... `10/09`
 > (ngày/trước-tháng/sau); phần còn lại của Dashboard không đổi; typecheck vẫn SẠCH 0 lỗi.
+
+---
+
+### Giai đoạn 80: Lightbox Check-in — fix nền đen + không phóng to được + nút X chết (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(bang-check-in): ảnh dialog nền đen → trắng + thêm lightbox phóng to (trước đây chưa có) |
+| (mới) | fix(check-in,bang-check-in): đóng Radix dialog khi mở lightbox — nút X/bấm nền lightbox bấm được |
+| (mới) | chore: tăng version 0.9.7 → 0.9.8 |
+
+> **BUG REPORT của Đại ca (2026-09-10) — 3 điểm:**
+> 1. Báo cáo Check-in: ảnh trong dialog chi tiết VẪN nền đen (module Check-in đã trắng từ GĐ 65 nhưng Báo cáo bị sót).
+> 2. Báo cáo Check-in: bấm vào ảnh KHÔNG phóng to được (lightbox chưa từng được thêm).
+> 3. Đóng ảnh bằng nút "X" chưa hoạt động tốt ở CẢ module Check-in và Báo cáo Check-in.
+>
+> **ROOT CAUSE điểm 3 — Radix Dialog modal khóa pointer-events ngoài portal (2026-09-10):**
+> Radix Dialog (không truyền `modal={false}`) mặc định modal=true: gắn
+> `pointer-events: none` lên toàn bộ `body` rồi CHỈ khôi phục pointer cho
+> DialogContent. Lightbox của mình render NGOÀI Radix Portal (fixed inset-0 z-[60])
+> → lightbox HIỆN (z cao hơn) nhưng MỌI CLICK BỊ NUỐT — nút X, bấm nền đều chết.
+> Z-index không cứu được pointer-events — đây là lý do "nút X không hoạt động tốt".
+>
+> **Fix (2 file, cùng 1 cơ chế):** bấm phóng to → `setIsDetailOpen(false)` (nhả khóa
+> modal Radix) + mở lightbox → đóng lightbox (X / bấm nền) → mở lại dialog chi tiết
+> như cũ (`closeLightbox()`: setLightboxPhoto(null) + if (detailRow/detailRecord)
+> setIsDetailOpen(true)). detailRecord/detailRow KHÔNG bị reset khi đóng dialog →
+> mở lại giữ nguyên dữ liệu.
+>
+> **Fix điểm 1-2 (bang-check-in.tsx):** khung ảnh `bg-black p-2` → `bg-white p-2`;
+> thêm state lightboxPhoto + cursor-zoom-in + onClick phóng to + lightbox nền trắng
+> (pattern GĐ 65) — Báo cáo Check-in giờ đồng bộ 100% với module Check-in.
+>
+> **LESSON LEARNED — Overlay tự render ngoài Radix Portal bị chặn click (2026-09-10):**
+> Mọi overlay tự viết (lightbox, panel nổi...) mở TỪ TRONG dialog Radix modal phải:
+> (a) render qua Radix Portal, HOẶC (b) đóng dialog trước khi mở overlay. Z-index cao
+> chỉ giải quyết HIỂN THỊ, không giải quyết CLICK — Radix khóa pointer-events ở body.
+> Dấu hiệu nhận biết: overlay hiện đúng vị trí, hover effects không chạy, nút bấm
+> không phản hồi — kiểm tra bằng cách thêm onClick vào document log ra console.
+>
+> **Tiêu chí kiểm chứng:**
+> - Báo cáo Check-in: bấm dòng → dialog chi tiết ảnh nền TRẮNG; bấm ảnh → phóng to
+>   full màn; nút X góc phải ĐÓNG ĐƯỢC; bấm nền trắng cũng đóng; dialog chi tiết
+>   mở lại như cũ sau khi đóng lightbox.
+> - Module Check-in: bấm ảnh trong dialog → phóng to → X + bấm nền ĐÓNG ĐƯỢC →
+>   dialog chi tiết trở lại.
+> - Typecheck SẠCH 0 lỗi; desktop + mobile cùng hành vi.

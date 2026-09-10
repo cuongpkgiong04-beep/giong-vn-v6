@@ -58,6 +58,14 @@ function CheckInPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   // Lightbox xem ảnh check-in toàn màn hình (click ảnh trong dialog chi tiết để mở)
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+
+  /* GĐ 80: Radix Dialog modal khóa pointer-events NGOÀI portal → lightbox render ngoài
+     portal bị nuốt click (X/nền không bấm được). Fix: đóng dialog khi mở lightbox,
+     mở lại khi đóng lightbox — đồng bộ với Báo cáo Check-in. */
+  function closeLightbox() {
+    setLightboxPhoto(null);
+    if (detailRecord) setIsDetailOpen(true); // mở lại dialog chi tiết như cũ
+  }
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const submittingRef = useRef(false);
@@ -776,7 +784,10 @@ function CheckInPage() {
                       alt="Ảnh checkin"
                       className="h-40 w-auto mx-auto cursor-zoom-in rounded object-contain transition hover:opacity-90"
                       title="Bấm để phóng to"
-                      onClick={() => setLightboxPhoto(detailRecord.photo!)}
+                      onClick={() => {
+                        setIsDetailOpen(false); // tắt Radix modal — lightbox mới nhận click
+                        setLightboxPhoto(detailRecord.photo!);
+                      }}
                     />
                   </div>
                 )}
@@ -808,7 +819,7 @@ function CheckInPage() {
       {lightboxPhoto && (
         <div
           className="fixed inset-0 z-[60] flex cursor-zoom-out items-center justify-center bg-white/95 p-4"
-          onClick={() => setLightboxPhoto(null)}
+          onClick={closeLightbox}
         >
           <img
             src={lightboxPhoto}
@@ -820,7 +831,7 @@ function CheckInPage() {
             type="button"
             aria-label="Đóng"
             className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-black/10 text-ink transition hover:bg-black/20"
-            onClick={() => setLightboxPhoto(null)}
+            onClick={closeLightbox}
           >
             <X className="size-6" />
           </button>

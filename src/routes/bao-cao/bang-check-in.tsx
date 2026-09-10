@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Download, Layers, MapPin, Satellite, Map as MapIcon } from "lucide-react";
+import { Download, Layers, MapPin, Satellite, Map as MapIcon, X } from "lucide-react";
 import { ClientOnly } from "@/components/client-only";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -255,6 +255,14 @@ function BangCheckInReport() {
   const [dateTo, setDateTo] = useState("");
   const [detailRow, setDetailRow] = useState<ReportRow | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  // GĐ 80: lightbox phóng to ảnh — Radix Dialog modal khóa pointer-events ngoài portal
+  // → bấm X/nền lightbox bị nuốt. Fix: đóng dialog khi mở lightbox, mở lại khi đóng.
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+
+  function closeLightbox() {
+    setLightboxPhoto(null);
+    if (detailRow) setIsDetailOpen(true); // mở lại dialog chi tiết như cũ
+  }
 
   const reportRows = useMemo(() => {
     const filtered = checkins.filter((c) => {
@@ -587,8 +595,17 @@ function BangCheckInReport() {
                   <p className="mt-1 text-sm leading-5 text-ink">{cleanAddress(detailRow.address)}</p>
                 </div>
                 {detailRow.photo && (
-                  <div className="rounded-xl border border-line bg-black p-2">
-                    <img src={detailRow.photo} alt="Ảnh check-in" className="h-40 w-auto mx-auto rounded object-contain" />
+                  <div className="rounded-xl border border-line bg-white p-2">
+                    <img
+                      src={detailRow.photo}
+                      alt="Ảnh check-in"
+                      className="h-40 w-auto mx-auto cursor-zoom-in rounded object-contain transition hover:opacity-90"
+                      title="Bấm để phóng to"
+                      onClick={() => {
+                        setIsDetailOpen(false); // tắt Radix modal — lightbox ngoài portal mới bấm được
+                        setLightboxPhoto(detailRow.photo!);
+                      }}
+                    />
                   </div>
                 )}
                 {detailRow.note && detailRow.note !== "—" && (
@@ -602,6 +619,30 @@ function BangCheckInReport() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* GĐ 80: Lightbox nền trắng (pattern GĐ 65) — render NGOÀI Radix portal nên phải
+          đóng dialog khi mở (Radix modal khóa pointer-events ngoài portal, bấm X bị nuốt) */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-[60] flex cursor-zoom-out items-center justify-center bg-white/95 p-4"
+          onClick={closeLightbox}
+        >
+          <img
+            src={lightboxPhoto}
+            alt="Ảnh check-in (phóng to)"
+            className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            aria-label="Đóng"
+            className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-black/10 text-ink transition hover:bg-black/20"
+            onClick={closeLightbox}
+          >
+            <X className="size-6" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
