@@ -145,12 +145,13 @@
   1. `package.json` → field `"version": "x.y.z"`
   2. `src/components/app-shell.tsx` → `const DEFAULT_VERSION = "x.y.z"`
 - **Quy tắc tăng:** Patch (x.y.Z+1) cho fix nhỏ, Minor (x.Y.0+1) cho feature mới.
-- **Quy tắc tròn chục:** Khi số sau tăng đến tròn chục mà CHỤC CHƯA ĐẦY thì số trước tăng 1 bậc, số sau về 0:
-  - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.8.9` → `1.9.0` (patch đầy, chục chưa đầy)
-- **Quy tắc tròn trăm (bổ sung 2026-09-10 theo yêu cầu Đại ca):** Khi chục ĐÃ ĐẦY ĐỦ thì phải LÊN TRÒN TRĂM — KHÔNG TỒN TẠI dạng `x.10.y`:
+- **Hệ đánh số (chốt 2026-09-10 — Đại ca chọn giữ hệ 1 chữ số):** Vị trí MINOR và PATCH mỗi nơi chỉ dùng MỘT chữ số 0→9; khi đầy 9 thì về 0 và "nhớ" sang số trước (giống phép cộng số). MAJOR tăng tự do khi được nhớ sang (kể cả `9.9.9 → 10.0.0`).
+- **Tròn chục (minor đang 0→8, patch đầy 9):** minor +1 bậc, patch về 0:
+  - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.8.9` → `1.9.0`
+- **Tròn trăm (minor ĐANG 9, patch đầy 9):** minor về 0, MAJOR +1:
   - `0.9.9` → `1.0.0` (NHẢY QUA 0.10.0)
-  - `1.9.9` → `2.0.0`; `1.19.9` → `2.0.0` (minor đầy → lên tròn trăm)
-  - Tóm lại: minor chỉ chạy 0→9; hết 9 là đổi số lớn. Không bao giờ sinh `0.10.0`, `1.10.0`, `x.y.10`.
+  - `1.9.9` → `2.0.0`
+- **KHÔNG bao giờ tồn tại** dạng `x.10.y` hay `x.y.10` — số như `1.19.9` KHÔNG HỢP LỆ trong hệ này (minor có 2 chữ số), không được dùng làm ví dụ tăng.
 
 ### Ngôn ngữ & Ghi nhớ (bắt buộc tuân thủ):
 
@@ -3474,3 +3475,54 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > badge 'Đang chờ' → bật mạng → tự sync ≤5s (không còn chờ 30s); Admin mở dashboard
 > sync → bấm 'Thử lại ngay' → toast kết quả + queue cập nhật; lỗi dai dẳng → log
 > retry giãn dần (không dội server mỗi 30s); typecheck SẠCH 0 lỗi; 17/17 test pass.
+
+---
+
+### Giai đoạn 85: Rà soát & nhất quán hóa quy tắc đánh số Version (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): viết lại mục Cách tăng Version — chốt hệ 1 chữ số 0-9, bỏ ví dụ chết 1.19.9, định nghĩa lại tròn chục/tròn trăm theo điều kiện rõ |
+| (mới) | chore: tăng version 1.1.0 → 1.1.1 |
+
+> **Câu hỏi của Đại ca (2026-09-10):** Xem lại nguyên tắc tròn chục + tròn trăm —
+> có vẻ vẫn chưa đúng cách đánh thứ tự của Version.
+>
+> **Điểm chưa chặt tìm được (trước khi sửa):**
+> 1. **Ví dụ chết:** dòng tóm lại cấm `x.10.y` nhưng ví dụ lại có `1.19.9 → 2.0.0` —
+>    `1.19.9` có minor 2 chữ số, thuộc dạng bị cấm → ví dụ mô tả trạng thái không
+>    bao giờ tồn tại, quy tắc tự mâu thuẫn.
+> 2. **Thuật ngữ lệch bản chất:** "tròn chục/tròn trăm" thực chất là phép CỘNG SỐ
+>    CÓ NHỚ — mỗi vị trí (minor, patch) chỉ có 1 chữ số 0→9, đầy 9 thì về 0 và nhớ
+>    sang số trước. Tên gọi "tròn trăm" dễ hiểu nhầm thành hệ trăm hàng.
+> 3. **Khác SemVer:** chuẩn ngành cho minor/patch tăng tự do (`1.9.9 → 1.10.0`
+>    hợp lệ, npm vẫn sort đúng `1.9 < 1.10`); major chỉ tăng khi breaking change.
+>    Hệ mình tăng major chỉ vì hết chữ số → major tăng ảo sau ~100 release.
+>    Cả 2 hệ đều XẾP ĐÚNG THỨ TỰ tăng dần — lỗi nằm ở cách đánh số so chuẩn ngành
+>    + mâu thuẫn văn bản, KHÔNG phải lỗi thứ tự sort.
+>
+> **Đại ca chốt: GIỮ hệ mỗi chữ số 0-9** (không chuyển SemVer) — version luôn gọn,
+> không bao giờ có `x.10.y`. Em đã trình cả 2 phương án kèm ưu/nhược trước khi chốt.
+>
+> **Fix (chỉ văn bản AGENTS.md — không đụng code):**
+> 1. Thêm dòng **"Hệ đánh số"**: minor + patch mỗi vị trí 1 chữ số 0→9; đầy 9 thì
+>    về 0 + nhớ; major tăng tự do khi được nhớ (`9.9.9 → 10.0.0` hợp lệ).
+> 2. Định nghĩa 2 nhánh theo ĐIỀU KIỆN:
+>    - Tròn chục = minor đang 0→8, patch đầy 9 → minor +1, patch về 0
+>      (`1.0.9 → 1.1.0`; `1.8.9 → 1.9.0`).
+>    - Tròn trăm = minor đang ĐÚNG 9, patch đầy 9 → minor về 0, major +1
+>      (`0.9.9 → 1.0.0`; `1.9.9 → 2.0.0`).
+> 3. Xóa ví dụ chết `1.19.9 → 2.0.0` + ghi rõ số 2 chữ số KHÔNG HỢP LỆ trong hệ.
+>
+> **Kiểm tra version hiện tại:** `package.json` = `DEFAULT_VERSION` = `1.1.0` —
+> 2 nơi khớp, đúng quy tắc. Regex validate trong `with-app-env.mjs`
+> (`/^(\d+\.)?(\d+\.)?(\d+)$/)`) chấp nhận mọi dạng 3 số → không cần sửa code.
+>
+> **LƯU Ý (khác SemVer cần nhớ khi so với công cụ ngoài):** npm CLI vẫn parse
+> version dạng này đúng (chỉ là chuỗi 3 số); thứ tự hiển thị 'phiên bản mới nhất'
+> của các công cụ so SemVer có thể đánh giá khác hệ mình — nhưng project không
+> publish lên npm nên không ảnh hưởng thực tế.
+>
+> **Tiêu chí kiểm chứng:** Mục Cách tăng Version không còn mâu thuẫn (grep không
+> còn `1.19.9`); 2 nơi version đều `1.1.1` sau bump; sidebar hiện VERSION 1.1.1
+> sau deploy; lần bump tới gặp `x.9.9` áp dụng đúng nhánh tròn trăm.
