@@ -244,6 +244,8 @@ src/
 - **Formatting:** Prettier + ESLint (đã cấu hình sẵn)
 - **Được phép truy cập Vercel** — Em có quyền dùng Playwright/headless browser để login vào website Vercel (`https://giong-vn-v6.vercel.app`) và xem toàn bộ dự án. Login credentials: `cuongpk.giong04@gmail.com` / `Admin123!`. Dùng khi cần kiểm tra UI, debug lỗi trên deployment thực tế.
 - **Được phép truy cập Neon** — Em có quyền truy cập Neon PostgreSQL console để kiểm tra dữ liệu, chạy SQL query, và thực hiện lệnh cần thiết. Kết nối qua `DATABASE_URL` env var trên Vercel. Dùng khi cần verify data, debug query, hoặc thực hiện migration thủ công.
+- **Được phép truy cập Cloudinary** — Em có quyền truy cập Cloudinary console (`https://console.cloudinary.com`) để kiểm tra Media Library (ảnh/file đã upload), dung lượng, debug upload lỗi. Dùng khi cần verify file đã lên CDN, tìm file thừa, hoặc kiểm tra lỗi transformation.
+- **Quy tắc truy cập trực tiếp 3 hệ thống (bổ sung 2026-09-10, theo yêu cầu Đại ca):** Em được phép truy cập TRỰC TIẾP, KHÔNG cần hỏi lại từng lần: (1) **Vercel** — website + CLI (`vercel logs`, `vercel env ls`, `vercel project ls`, deploy...); (2) **Neon** — console SQL + mọi query đọc/kiểm tra; (3) **Cloudinary** — console + API. Mặc định được phép: đọc, kiểm tra, debug, xem logs. VẪN PHẢI HỎI Đại ca trước khi làm thao tác PHÁ HỦY: xóa sạch dữ liệu (drop table, delete all), xóa media hàng loạt, reset môi trường, đổi cấu hình quan trọng (domain, env, connection string). Lưu ý GĐ 71: env đánh dấu Sensitive trên Vercel không pull được qua CLI (`[SENSITIVE]`) — cần giá trị thật thì nhờ Đại ca cung cấp hoặc bỏ dấu Sensitive.
 
 ---
 
@@ -2557,7 +2559,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 75 — Fix badge chat kẹt + cap badge 6/6+)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 76 — Nguyên tắc truy cập trực tiếp Vercel/Neon/Cloudinary)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3065,3 +3067,37 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Tin cũ của kênh công khai (nếu còn sót trong DB) KHÔNG làm badge tăng nữa.
 > - Sidebar + bottom bar mobile + hamburger đều cap 6/6+.
 > - `node --experimental-strip-types --test src/lib/unread.test.ts` → 6/6 pass.
+
+---
+
+### Giai đoạn 76: Nguyên tắc truy cập trực tiếp Vercel / Neon / Cloudinary (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): bổ sung quyền truy cập Cloudinary + quy tắc truy cập trực tiếp 3 hệ thống vào Mục 9 |
+| (mới) | chore: tăng version 0.9.3 → 0.9.4 |
+
+> **Câu hỏi của Đại ca (2026-09-10):** AGENTS.md có nguyên tắc cho phép truy cập CLI
+> Vercel, console Neon, console Cloudinary không? Nếu chưa → bổ sung.
+>
+> **Kết quả kiểm tra trước khi bổ sung:**
+> - **Vercel:** ✅ đã có — Mục 9 (login website qua Playwright) + Mục 12 (Vercel CLI:
+>   `vercel logs`, `vercel env ls`, `vercel project ls`...).
+> - **Neon:** ✅ đã có — Mục 9 (console SQL, verify data, migration thủ công).
+> - **Cloudinary:** ❌ CHƯA có — chỉ nhắc trong code (upload ảnh/file), không có
+>   nguyên tắc cho phép truy cập console.
+>
+> **Đã bổ sung vào Mục 9 (Lưu ý khi làm việc):**
+> 1. **Được phép truy cập Cloudinary** — console `console.cloudinary.com`: kiểm tra
+>    Media Library, dung lượng, debug upload lỗi, verify file lên CDN.
+> 2. **Quy tắc truy cập trực tiếp 3 hệ thống** — Vercel (website + CLI), Neon
+>    (console SQL + query), Cloudinary (console + API): mặc định ĐƯỢC PHÉP đọc,
+>    kiểm tra, debug, xem logs — KHÔNG cần hỏi lại từng lần. VẪN PHẢI HỎI Đại ca
+>    trước thao tác PHÁ HỦY: drop table / delete all, xóa media hàng loạt, reset
+>    môi trường, đổi cấu hình quan trọng (domain, env, connection string).
+> 3. Giữ nguyên lưu ý GĐ 71: env Sensitive trên Vercel không pull được giá trị
+>    thật qua CLI (`[SENSITIVE]`) — cần thì nhờ Đại ca cung cấp hoặc bỏ dấu Sensitive.
+>
+> **Tiêu chí kiểm chứng:** Lần sau AI đọc AGENTS.md sẽ biết ngay mình được truy cập
+> trực tiếp 3 hệ thống nào, được làm gì mặc định, và việc gì phải hỏi Đại ca trước
+> khi làm — không cần hỏi lại quyền từng lần.
