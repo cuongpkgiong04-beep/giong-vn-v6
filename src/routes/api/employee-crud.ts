@@ -139,6 +139,20 @@ export const updateEmployee = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+/** Update a center's display info (name, short_name, city, district, address). */
+export const updateCenter = createServerFn({ method: "POST" })
+  .validator((data: { code: string; name: string; short_name: string; city: string; district: string; address: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE centers
+      SET name = ${data.name}, short_name = ${data.short_name}, city = ${data.city},
+          district = ${data.district}, address = ${data.address}, updated_at = now()
+      WHERE code = ${data.code}
+    `;
+    return { success: true };
+  });
+
 /** Soft-delete an employee. */
 export const deleteEmployee = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)

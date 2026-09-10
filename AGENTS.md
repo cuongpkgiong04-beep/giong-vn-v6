@@ -3526,3 +3526,57 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Mục Cách tăng Version không còn mâu thuẫn (grep không
 > còn `1.19.9`); 2 nơi version đều `1.1.1` sau bump; sidebar hiện VERSION 1.1.1
 > sau deploy; lần bump tới gặp `x.9.9` áp dụng đúng nhánh tròn trăm.
+
+---
+
+### Giai đoạn 86: Nâng cấp Module Trung tâm — bản đồ 20 điểm + danh sách + chỉnh sửa (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(trung-tam): nâng cấp 6 điểm — chuẩn hóa ToadoGiong.txt + nhúng tọa độ + bản đồ Leaflet + thẻ/bảng + dialog xem/sửa Admin |
+| (mới) | feat(employee-crud): thêm server function updateCenter (name/short_name/city/district/address — không đụng tọa độ) |
+| (mới) | chore: tăng version 1.1.1 → 1.2.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca (6 điểm):** (1) dùng tọa độ file ToadoGiong.txt cho 19 trung tâm
+> + Văn phòng; (2) xóa dòng chú thích dưới tiêu đề; (3) thêm dạng danh sách cạnh dạng thẻ;
+> (4) bấm thẻ/dòng mở chi tiết + Admin chỉnh sửa; (5) bản đồ giống 100% Báo cáo Check-in
+> đặt dưới tiêu đề; (6) tiêu đề danh sách cố định khi cuộn.
+>
+> **Đã chốt trước khi làm:** tọa độ NHÚNG vào code TS (không fetch txt lúc runtime);
+> Admin sửa thông tin hiển thị, KHÔNG sửa tọa độ (tránh migration centers.lat/lng);
+> danh sách = bảng nhiều cột.
+>
+> **Triển khai (4 file):**
+> 1. **ToadoGiong.txt:** sửa dòng 4 Từ Sơn lệch cột (tên lặp 2 lần), dòng 19 Đông Yên
+>    đổi dấu chấm thập phân → phẩy cho đồng nhất. Giữ nguyên 20 dòng STT 0→19.
+> 2. **src/lib/center-coords.ts (mới):** 20 tọa độ map theo MÃ trung tâm (VP, LB, SĐ,
+>    TS, HM, TD, ML, TP, PY, CĐ, TĐ, TA, LM, ĐX, ĐY, BH, TO, TT, QO) + field `cluster`
+>    (cột Cụm trong file gốc). File txt giờ chỉ là tài liệu tham chiếu — nguồn sự thật
+>    là center-coords.ts.
+> 3. **employee-crud.ts:** +`updateCenter` — UPDATE name/short_name/city/district/address
+>    + updated_at, WHERE code. Không đụng code/lat/lng.
+> 4. **trung-tam.tsx — viết lại:** bỏ desc PageHeader; `CenterMap` copy 100% pattern
+>    CheckInMap (Leaflet CDN loadLeaflet + 2 lớp Esri Đường phố/Vệ tinh + popup +
+>    fitBounds + bấm marker mở chi tiết); khối sticky top-16 chứa tiêu đề "Danh sách
+>    các trung tâm" + toggle Thẻ/Danh sách (callback ref + ResizeObserver →
+>    `--tt-sticky-h` — pattern GĐ 63/58); bảng 7 cột bấm dòng mở dialog; dialog chi tiết
+>    + nút "Chỉnh sửa thông tin" (chỉ Admin) + Lưu → updateCenter → hydrate + toast.
+>
+> **LESSON LEARNED — write_file content bị cắt/truncated khi quá dài (2026-09-10):**
+> Lần đầu ghi ToadoGiong.txt bằng write_file, content bị chèn chỗ trống + cắt giữa
+> dòng ("21,04743328\tlat2-placeholder\t105,8779599", "21,0627...") — KHÔNG khớp
+> nội dung đã soạn. Sau khi ghi file bất kỳ, NÊN read_files lại xác nhận 1 lần nếu
+> nội dung quan trọng (tọa độ, seed data) — phát hiện ngay, ghi lại không mất data.
+>
+> **LESSON LEARNED — Ripgrep binary biến mất giữa session (2026-09-10):**
+> code_search đột ngột lỗi `ENOENT ... rg.exe` (tool vendored ripgrep không tìm thấy).
+> Fallback ổn định: `grep -n ... | head` qua run_terminal_command. Đừng kẹt vào 1 tool.
+>
+> **Tiêu chí kiểm chứng:**
+> - Trang /trung-tam: tiêu đề không còn dòng chú thích; bản đồ ngay dưới tiêu đề với
+>   20 marker (fitBounds đủ 4 cụm); chuyển Đường phố/Vệ tinh được; bấm marker mở dialog.
+> - Tiêu đề danh sách + toggle đứng yên khi cuộn (desktop + mobile); bảng 7 cột;
+>   bấm thẻ hoặc dòng đều mở chi tiết.
+> - Admin: nút sửa → sửa Tên rút gọn/Cụm/Thành phố/Địa chỉ → Lưu → toast xanh,
+>   mở thiết bị khác thấy thay đổi. User thường: chỉ xem.
+> - Typecheck SẠCH 0 lỗi (scripts/typecheck.mjs); 17/17 test pass.
