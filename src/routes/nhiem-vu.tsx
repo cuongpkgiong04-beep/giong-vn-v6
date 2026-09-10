@@ -424,7 +424,11 @@ function TasksPage() {
             </div>
             <div>
               <Label>Người hỗ trợ</Label>
-              <Popover.Root>
+              {/* GĐ 82: modal={true} — Popover lồng trong Dialog modal bị chặn wheel
+                  (react-remove-scroll của Dialog chặn mọi target ngoài DialogContent,
+                  portal Popover nằm ngoài) → lăn chuột không chạy, phải kéo scrollbar.
+                  modal=true tạo lớp scroll-lock riêng — wheel TRÊN danh sách được phép. */}
+              <Popover.Root modal={true}>
                 <Popover.Trigger asChild>
                   <button
                     type="button"

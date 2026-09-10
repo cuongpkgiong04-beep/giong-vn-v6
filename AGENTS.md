@@ -2560,7 +2560,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 81 — Check-in: fix đổi camera phải bấm 2 lần)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 82 — Nhiệm vụ: cuộn chuột dropdown Người hỗ trợ)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3335,3 +3335,42 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > sau bật ngay (không phải bấm lần 2); bấm tiếp → về camera trước ngay; mở lại
 > dialog → camera mặc định đúng mode lần cuối chọn; chụp lại (retake) vẫn mở đúng
 > mode; typecheck SẠCH 0 lỗi.
+
+---
+
+### Giai đoạn 82: Nhiệm vụ — cuộn chuột dropdown Người hỗ trợ (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(nhiem-vu): Popover.Root modal={true} — lăn chuột được trong dropdown Người hỗ trợ |
+| (mới) | chore: tăng version 0.9.9 → 0.10.0 (tròn chục minor theo quy tắc) |
+
+> **BUG REPORT của Đại ca (2026-09-10):** Trong dialog "Nhiệm vụ mới", sau khi mở
+> dropdown "Người hỗ trợ" và tick chọn 1 người, KHÔNG lăn được chuột xuống chọn
+> người tiếp theo — phải kéo scrollbar bằng chuột.
+>
+> **ROOT CAUSE — Popover portal nằm ngoài vùng được phép wheel của Dialog modal:**
+> Dialog "Nhiệm vụ mới" là Radix Dialog modal (react-remove-scroll khóa wheel toàn
+> trang, chỉ khôi phục cho nội dung trong DialogContent). Dropdown Người hỗ trợ
+> (GĐ 26) render qua Popover.Portal — NẰM NGOÀI DialogContent → lăn chuột trên
+> danh sách bị NUỐT sự kiện wheel; mousedown kéo scrollbar thì KHÔNG bị chặn →
+> đúng hiện tượng "phải bấm vào thanh cuộn".
+>
+> **Fix (1 thuộc tính trong nhiem-vu.tsx):** `<Popover.Root modal={true}>` — Popover
+> tạo lớp scroll-lock RIÊNG phía trên lớp của Dialog; cơ chế nested lock của
+> react-remove-scroll CHO PHÉP wheel trên target thuộc lớp trong cùng (danh sách
+> checkbox) → cuộn chuột chạy bình thường; click-outside vẫn đóng dropdown như cũ.
+>
+> **LESSON LEARNED — Popover lồng trong Dialog modal phải modal={true} (2026-09-10):**
+> Radix Popover mặc định modal=false → portal của nó bị scroll-lock + pointer-events
+> của Dialog chặn. Khi Popover (hoặc dropdown tự viết qua portal) mở TỪ trong Dialog:
+> (a) wheel/scroll không chạy → thêm `modal={true}` vào Popover.Root;
+> (b) nếu là overlay tự render (lightbox GĐ 80) → phải đóng dialog trước.
+> Dấu hiệu nhận biết chung: overlay/popover HIỆN đúng nhưng tương tác (scroll, click)
+> bị nuốt — cùng gốc với lesson Radix modal GĐ 80 (pointer-events) nhưng biểu hiện
+> khác (wheel vs click).
+>
+> **Tiêu chí kiểm chứng:** Dialog Nhiệm vụ mới → mở dropdown Người hỗ trợ → tick 1
+> người → lăn chuột xuống chọn tiếp được bình thường (không cần kéo scrollbar);
+> bấm ngoài dropdown vẫn tự đóng; hover highlight từng dòng vẫn hoạt động;
+> typecheck SẠCH 0 lỗi.
