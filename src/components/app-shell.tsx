@@ -14,7 +14,6 @@ import {
   MessageSquare,
   RefreshCw,
   Smartphone,
-  Search,
   ShieldCheck,
   StickyNote,
   Timer,
@@ -37,7 +36,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "1.3.0";
+const DEFAULT_VERSION = "1.3.1";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -219,7 +218,6 @@ function SidebarNav({ pathname, onNavigate, dark, collapsed = false, mobile = fa
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
   const hydrate = useAppStore((s) => s.hydrate);
   const setCurrentUserId = useAppStore((s) => s.setCurrentUserId);
   const userId = useAppStore((s) => s.currentUserId);
@@ -321,12 +319,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     [allowedPaths],
   );
 
-  const hits = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (s.length < 2) return [];
-    return visibleNav.filter((n) => n.label.toLowerCase().includes(s)).slice(0, 6);
-  }, [visibleNav, q]);
-
   const PUBLIC_ROUTES = ["/login", "/forgot-password"];
   // Phân quyền module (Báo cáo, Ghi chú…) điều khiển NAV + route access qua
   // getAllowedNavItems — không còn danh sách admin-only cứng nào ở đây.
@@ -408,30 +400,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <RefreshCw className={`size-5 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Tìm module, chức năng…"
-              className="h-11 w-full rounded-xl border border-line bg-surface/90 pr-3 pl-10 text-sm text-ink shadow-[var(--shadow-card)] placeholder:text-faint transition focus:border-accent/30 focus:ring-2 focus:ring-accent/20 focus:outline-none"
-            />
-            {hits.length > 0 ? (
-              <div className="absolute top-12 right-0 left-0 z-30 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-card-hover)]">
-                {hits.map((h) => (
-                  <Link
-                    key={h.to}
-                    to={h.to}
-                    onClick={() => setQ("")}
-                    className="flex h-11 items-center gap-2 px-3 text-sm text-ink transition hover:bg-surface-2"
-                  >
-                    <h.icon className="size-4 text-muted" />
-                    {h.label}
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-          </div>
+          {/* Đệm đẩy nhóm nút bên phải xuống cuối header — thay chỗ ô tìm kiếm đã bỏ (2026-09-10) */}
+          <div className="min-w-0 flex-1" />
 
           {authEnabled ? (
             <div className="flex items-center gap-2">

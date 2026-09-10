@@ -3633,5 +3633,30 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > - Migration 0025 tự chạy khi build; cards view giữ nguyên.
 > - Typecheck SẠCH 0 lỗi (scripts/typecheck.mjs); 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 87 — Trung tâm: ghim bảng cuộn nội bộ + 4 cột mới)*
+---
+
+### Giai đoạn 88: Bỏ ô tìm kiếm trong header app (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(app-shell): xóa ô "Tìm module, chức năng…" + dropdown gợi ý khỏi header — dọn state q, memo hits, import icon Search |
+| (mới) | chore: tăng version 1.3.0 → 1.3.1 (fix nhỏ — patch) |
+
+> **Yêu cầu của Đại ca (kèm ảnh):** Bỏ ô tìm kiếm "Tìm module, chức năng…" trên
+> Dashboard. Ô này nằm ở header TỔNG của app (app-shell.tsx) — hiện trên MỌI trang,
+> không riêng Dashboard → em hỏi phạm vi, Đại ca chốt: **bỏ hẳn ở mọi trang**.
+>
+> **Chi tiết (chỉ `src/components/app-shell.tsx`):**
+> 1. Xóa khối JSX ô tìm kiếm + dropdown kết quả (hits) — thay bằng div đệm
+>    `min-w-0 flex-1` để nhóm nút Quản trị/Đổi mật khẩu/Đăng xuất/Thông báo
+>    vẫn canh phải như cũ.
+> 2. Dọn code thừa: state `q` + `setQ`, memo `hits`, import icon `Search` khỏi
+>    lucide-react. Grep xác nhận không còn tham chiếu nào sót lại.
+> 3. Header giữ nguyên chiều cao (h-16) + các nút còn lại — mobile lẫn desktop.
+>
+> **Tiêu chí kiểm chứng:** Header không còn ô tìm kiếm trên mọi trang; nút
+> Quản trị/avatar/Đổi mật khẩu/Đăng xuất/Chuông thông báo vẫn nằm bên phải như cũ;
+> typecheck SẠCH 0 lỗi; sidebar hiện VERSION 1.3.1 sau deploy.
+
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 88 — Bỏ ô tìm kiếm header app)*
 *Người cập nhật: Trợ lý lập trình*
