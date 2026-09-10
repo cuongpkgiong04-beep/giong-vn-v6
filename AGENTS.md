@@ -2560,7 +2560,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 78 — Dọn sạch 26 lỗi typecheck, typecheck SẠCH 0 lỗi)*
+*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 79 — Dashboard: nhãn ngày biểu đồ dd/mm)*
 *Người cập nhật: Trợ lý lập trình*
 
 ---
@@ -3221,3 +3221,25 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >   → 17/17 pass (không hỏng logic hiện có).
 > - Chức năng không đổi: chấm công/check-in GPS + camera hoạt động như cũ; nút xóa
 >   nhiệm vụ CÓ MÀU ĐỎ (khác biệt duy nhất nhìn thấy được mắt thường).
+
+---
+
+### Giai đoạn 79: Dashboard — nhãn ngày biểu đồ theo dd/mm (2026-09-10)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(dashboard): nhãn ngày biểu đồ "Chấm công 14 phiên đông" đổi mm/dd → dd/mm |
+| (mới) | chore: tăng version 0.9.6 → 0.9.7 |
+
+> **Yêu cầu của Đại ca (2026-09-10):** Biểu đồ Dashboard đang thể hiện ngày dạng
+> `09/04` (mm/dd — kiểu Mỹ) → đổi sang `dd/mm` (04/09 — kiểu Việt Nam).
+>
+> **Fix (1 dòng trong `src/routes/index.tsx` — memo `attChart`):**
+> ```ts
+> // Trước: day: d.date.slice(5).replace("-", "/")  → "09/04" (tháng trước)
+> // Sau:   day: d.date.slice(8, 10) + "/" + d.date.slice(5, 7)  → "04/09" (ngày trước)
+> ```
+> Date ISO `"2026-09-04"`: slice(8,10) = ngày, slice(5,7) = tháng → đổi thứ tự là xong.
+>
+> **Tiêu chí kiểm chứng:** Biểu đồ Dashboard hiển thị `04/09`, `05/09`... `10/09`
+> (ngày/trước-tháng/sau); phần còn lại của Dashboard không đổi; typecheck vẫn SẠCH 0 lỗi.

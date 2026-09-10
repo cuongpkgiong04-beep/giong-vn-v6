@@ -129,7 +129,8 @@ function Dashboard() {
       .slice(0, 14) // lấy đúng 14 phiên đông
       .sort((x, y) => (x.date < y.date ? -1 : 1)) // hiển thị theo thứ tự thời gian
       .map((d) => ({
-        day: d.date.slice(5).replace("-", "/"),
+        // dd/mm theo yêu cầu Đại ca (2026-09-10) — trước đây mm/dd (slice(5) → tháng trước)
+        day: d.date.slice(8, 10) + "/" + d.date.slice(5, 7),
         vào: d.in,
         ra: d.out,
       }));
