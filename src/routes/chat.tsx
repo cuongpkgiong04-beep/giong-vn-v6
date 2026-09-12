@@ -164,7 +164,16 @@ function ChatPage() {
   const [showStarred, setShowStarred] = useState(false); // mở popup "Tin đã lưu"
   const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "😡"]; // 6 quick reaction như Zalo
   const fileRef = useRef<HTMLInputElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  /* GĐ 97: cuộn xuống đáy vùng tin nhắn. force=true khi MỞ hội thoại (luôn về đáy);
+     force=false khi tin mới/ảnh load — chỉ cuộn nếu đang ở gần đáy (đang đọc sửổi không giật). */
+  function scrollToBottom(force = false) {
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+    if (force || nearBottom) el.scrollTop = el.scrollHeight;
+  }
 
   const directKey = peerId ? [currentUserId, peerId].sort().join("|") : "";
   const activeGroup = groupId ? chatGroups.find((g) => g.id === groupId) ?? null : null;
@@ -419,10 +428,14 @@ function ChatPage() {
     setMentionQuery(null);
   }
 
-  /* Cuộn xuống đáy khi tin thay đổi / đổi hội thoại */
+  /* GĐ 97: cuộn xuống đáy — MỞ/ĐỔI hội thoại thì luôn về đáy (kể cả đang đọc sửổi);
+     tin mới về (poll 5s) thì chỉ cuộn nếu đang ở gần đáy — không giật người đang đọc. */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeMessages.length, groupId, peerId, tab]);
+    scrollToBottom(true);
+  }, [activeConvKey]);
+  useEffect(() => {
+    scrollToBottom(false);
+  }, [activeMessages.length]);
 
   /* GĐ 74: đang mở hội thoại → đánh dấu đã đọc (badge đỏ giảm đúng).
      Chạy lại khi có tin mới về (poll 5s) → đang mở chat thì tin mới coi như đã đọc. */
@@ -765,7 +778,8 @@ function ChatPage() {
           )}
 
           {/* Vùng tin nhắn */}
-          <div className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
+          {/* GĐ 97: vùng tin nhắn — ref để cuộn scrollTop (không dùng scrollIntoView) */}
+          <div ref={scrollAreaRef} className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
             {(tab === "direct" ? Boolean(peerId) : Boolean(groupId)) &&
               activeMessages.length === 0 && (
                 <p className="py-12 text-center text-sm text-faint">
@@ -898,6 +912,7 @@ function ChatPage() {
                                   src={url}
                                   alt="Đính kèm"
                                   className="max-h-52 cursor-zoom-in rounded-md object-cover"
+                                  onLoad={() => scrollToBottom(false)}
                                   onClick={() => setLightbox(url)}
                                 />
                               ) : (
@@ -1099,7 +1114,6 @@ function ChatPage() {
                 </div>
               );
             })}
-            <div ref={bottomRef} />
           </div>
 
           {/* Ô soạn tin */}

@@ -4006,5 +4006,48 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > đúng nội dung + tên + giờ; trả lời trong nhóm tự chèn @Tên + người đó nhận tin;
 > typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 96 — Fix crash tin nhắn riêng + Reply tự @)*
+### Giai đoạn 97: Giải đáp badge Admin/User + fix cuộn đáy Chat (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(chat): cuộn đáy bằng scrollTop + cuộn lại khi ảnh load — hết cảnh thanh cuộn "kẹt ở giữa" |
+| (mới) | chore: tăng version 1.6.0 → 1.6.1 (fix nhỏ — patch) |
+
+> **Câu hỏi của Đại ca (2026-09-12):** (1) Hiển thị Chat của Admin và User có giống nhau
+> không — sao Admin báo đọc hết tin, User vẫn còn tin chưa đọc? (2) Admin mở tin thì
+> cuộn xuống đáy, User thì thanh cuộn ở giữa — có khác code không?
+>
+> **Kết luận — KHÔNG khác code:**
+> 1. Trang Chat + badge + cơ chế đã-đọc KHÔNG có một dòng nào check role Admin/User.
+> 2. Badge là trạng thái PER-USER (localStorage `giong-vn-chat-read-{userId}` — mốc
+>    lastReadAt từng tài khoản, GĐ 74): Admin đã mở hội thoại → badge Admin = 0;
+>    User chưa mở (hoặc tin mới đến sau lần mở cuối) → badge User vẫn đếm. Hai số
+>    khác nhau là ĐÚNG THIẾT KẾ (như Zalo).
+> 3. Đo thực tế bằng Playwright trên production: KỂ CẢ ADMIN scroll KHÔNG ở đáy
+>    (scrollTop 119 / max ~535) → hiện tượng "ở giữa" ảnh hưởng MỌI vai trò — bug
+>    thật, không phải khác biệt phân quyền.
+>
+> **ROOT CAUSE cuộn kẹt:** dùng `scrollIntoView` chạy ngay khi render — nhưng ẢNH
+> trong tin load xong SAU đó (async) → scrollHeight tăng đột xuất → vị trí cuộn bị
+> bỏ lại giữa chừng. Trước đó code còn tham chiếu bottomRef chỉ để scrollIntoView.
+>
+> **Fix (chỉ chat.tsx):**
+> 1. Ref `scrollAreaRef` trên vùng tin nhắn + `scrollToBottom(force)` đặt trực tiếp
+>    `el.scrollTop = el.scrollHeight` — mở/đổi hội thoại luôn về đáy (force=true);
+>    tin mới (poll) chỉ cuộn nếu đang gần đáy (<160px) — không giật người đang đọc tin cũ.
+> 2. Ảnh trong tin thêm `onLoad={() => scrollToBottom(false)}` — ảnh load xong đẩy
+>    layout thì cuộn lại ngay (nếu đang ở đáy).
+> 3. Xóa bottomRef (chỉ còn mục đích scrollIntoView cũ).
+>
+> **LESSON LEARNED — scrollIntoView không đáng tin cho khung chat có ảnh (2026-09-12):**
+> Ảnh/iframe/đính kèm load async làm scrollHeight thay đổi SAU khi scroll chạy →
+> chat hiện "không ở đáy" như yêầu. Fix chuẩn: cuộn bằng scrollTop trên khung có
+> overflow riêng + gọi lại sau khi ảnh load (onLoad). Với tin mới đến: chỉ cuộn khi
+> user đang gần đáy — cuộn cưỡng bức mọi lúc làm người đọc tin cũ bị giật xuống.
+>
+> **Tiêu chí kiểm chứng:** Cả Admin lẫn User mở hội thoại → thanh cuộn ở ĐÁY (thấy tin
+> mới nhất); ảnh load xong không đẩy vị trí cuộn; badge per-user hoạt động đúng
+> (mỗi tài khoản tự đánh dấu riêng); typecheck SẠCH 0 lỗi.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 97 — Giải đáp badge + fix cuộn đáy Chat)*
 *Người cập nhật: Trợ lý lập trình*
