@@ -3726,5 +3726,48 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > trang mở bình thường → nhập mật khẩu hiện tại + mới → đổi thành công; Admin vẫn
 > đổi được như cũ; sidebar hiện VERSION 1.3.3 sau deploy.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 90 — Fix user thường không đổi được mật khẩu)*
+### Giai đoạn 91: Phân quyền Ghi chú — Admin toàn quyền + User tự quản (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0026_notes_permissions_transfer.sql — notes thêm deleted_at + chuyển ghi chú cũ về Admin Phạm Kiên Cường |
+| (mới) | feat(data): updateNote + deleteNote (tombstone) + loadDeletedNoteIds; insertNote → UPSERT LWW preserve deleted_at |
+| (mới) | feat(store): updateNote/removeNote + hydrate tombstone filter — xóa ghi chú lan truyền mọi thiết bị |
+| (mới) | feat(ghi-chu): User chỉ thấy+sửa ghi chú của mình (không xóa); Admin xem/sửa/xóa TẤT CẢ + dialog xác nhận xóa |
+| (mới) | chore: tăng version 1.3.3 → 1.4.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca (2026-09-12):** (1) Chuyển hết dữ liệu Ghi chú hiện tại sang Admin;
+> (2) Admin được phép xem, sửa, xóa TẤT CẢ dữ liệu Ghi chú; (3) User được xem, sửa —
+> KHÔNG được xóa — dữ liệu của chính user lập đó.
+>
+> **Đã hỏi lại 3 điểm trước khi làm (nguyên tắc Không tự đoán ý định):**
+> 1. "Chuyển sang Admin" = migration đổi sở hữu (created_by + author) các ghi chú HIỆN CÓ
+>    về Phạm Kiên Cường — Quản trị HT (chọn trong 4 tài khoản Admin) ✅
+> 2. User thường CHỈ THẤY ghi chú của mình (ẩn ghi chú người khác) ✅
+> 3. Trước đây ghi chú là module duy nhất KHÔNG sửa/xóa được (nguyên tắc AppSheet cũ
+>    "đã gửi là chốt") — nay bỏ, Admin toàn quyền; user tự sửa ghi chú của mình.
+>
+> **Migration 0026 — chống chạy lại làm hỏng data mới:** chỉ UPDATE dòng
+> `coalesce(created_by,'') = ''` (chưa có chủ) → ghi chú user tạo SAU deploy không bị
+> cuốn về Admin khi build lại (migration chỉ chạy 1 lần qua bảng _migrations nhưng
+> vẫn phòng thủ). Backfill cuối: created_by rỗng mà không tìm được Admin → giữ author.
+>
+> **Tombstone ghi chú — dùng updated_at làm chuẩn LWW, KHÔNG dùng deletedAt:**
+> mergeByTs so `updatedAt`; deleteNote set cả 2 cột cùng giá trị → tombstone thắng
+> merge trên thiết bị giữ bản cũ → bị lọc. insertNote UPSERT preserve
+> `deleted_at = COALESCE(EXCLUDED.deleted_at, notes.deleted_at)` — retry offline của
+> tombstone (pending queue ghi `{id, deletedAt, _tombstone}` đi qua insert vì switch
+> case chỉ có _neonInsertNote) KHÔNG hồi sinh bản ghi đã xóa (pattern proposals GĐ 59).
+>
+> **UI phân quyền:** `canEdit = isAdmin || isMine`; `canDelete = isAdmin`.
+> User không thấy nút xóa ở CẢ bảng lẫn dialog chi tiết. Dialog tạo/sửa dùng chung
+> (editingId — pattern Nhiệm vụ GĐ 24); cột Thao tác mới trong bảng (✏️/🗑 + stopPropagation
+> để không mở dialog chi tiết); desc trang đổi theo role.
+>
+> **Tiêu chí kiểm chứng:** Đăng nhập user thường → chỉ thấy ghi chú của mình, có nút ✏️
+> không có 🗑; sửa lưu được + đồng bộ thiết bị khác; Admin thấy tất cả 39 ghi chú cũ
+> (Người tạo = Phạm Kiên Cường), sửa/xóa được mọi dòng; xóa → dialog xác nhận → biến mất
+> ở thiết bị khác; typecheck SẠCH 0 lỗi; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 91 — Phân quyền Ghi chú)*
 *Người cập nhật: Trợ lý lập trình*

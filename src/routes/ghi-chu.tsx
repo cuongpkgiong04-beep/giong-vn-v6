@@ -4,11 +4,13 @@ import {
   AlertTriangle,
   Calendar,
   FileText,
+  Pencil,
   Plus,
   Search,
+  Trash2,
   User,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -18,6 +20,7 @@ import { Dialog, DialogContent, DialogDesc, DialogTitle } from "@/components/ui/
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { isAdminRole } from "@/lib/catalog";
 import { formatDate, todayIso } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 import type { Note } from "@/lib/types";
@@ -27,6 +30,8 @@ export const Route = createFileRoute("/ghi-chu")({ component: GhiChuPage });
 function GhiChuPage() {
   const notes = useAppStore((s) => s.notes);
   const addNote = useAppStore((s) => s.addNote);
+  const updateNote = useAppStore((s) => s.updateNote);
+  const removeNote = useAppStore((s) => s.removeNote);
   const employees = useAppStore((s) => s.employees);
 
   // Reactive current user — pattern GĐ 16 (non-reactive getEmployeeById bug)
@@ -35,16 +40,21 @@ function GhiChuPage() {
   );
   const meName = currentEmployee?.name ?? useAppStore.getState().currentName();
   const meId = currentEmployee?.id ?? "";
+  // GĐ 91: Admin (SuperAdmin/Admin) toàn quyền — xem/sửa/xóa TẤT CẢ ghi chú
+  const isAdmin = isAdminRole(currentEmployee?.role);
 
   // ===== Dialog states =====
   const [open, setOpen] = useState(false);
   const [detailRow, setDetailRow] = useState<Note | null>(null);
+  const [deleteRow, setDeleteRow] = useState<Note | null>(null);
 
   // ===== Form states =====
   const [content, setContent] = useState("");
   const [deadline, setDeadline] = useState("");
   const [support, setSupport] = useState("");
   const [dept, setDept] = useState("");
+  /** GĐ 91: dialog tạo/sửa dùng chung — editingId != null khi đang sửa (pattern Nhiệm vụ GĐ 24) */
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // ===== Filter states =====
   const [q, setQ] = useState("");
@@ -73,31 +83,54 @@ function GhiChuPage() {
     [meId, meName],
   );
 
+  // GĐ 91: User CHỈ thấy ghi chú của mình; Admin thấy tất cả
+  const visibleNotes = useMemo(
+    () => (isAdmin ? notes : notes.filter(isMine)),
+    [notes, isAdmin, isMine],
+  );
+
+  // Quyền sửa/xóa theo phân quyền mới: Admin sửa/xóa tất cả; User sửa ghi chú của mình, KHÔNG xóa
+  const canEdit = useCallback(
+    (n: Note) => isAdmin || isMine(n),
+    [isAdmin, isMine],
+  );
+  const canDelete = isAdmin;
+
   const today = todayIso();
 
-  // ===== Danh sách người tạo / phòng ban (từ data thật) =====
+  // Reset form khi dialog đóng (pattern Nhiệm vụ GĐ 24)
+  useEffect(() => {
+    if (!open) {
+      setEditingId(null);
+      setContent("");
+      setDeadline("");
+      setSupport("");
+    }
+  }, [open]);
+
+  // ===== Danh sách người tạo / phòng ban (từ data mà user ĐƯỢC thấy) =====
   const authors = useMemo(
-    () => [...new Set(notes.map((n) => n.author).filter(Boolean))].sort(),
-    [notes],
+    () => [...new Set(visibleNotes.map((n) => n.author).filter(Boolean))].sort(),
+    [visibleNotes],
   );
   const deptOptions = useMemo(
     () =>
-      [...new Set([...notes.map((n) => n.dept), ...employees.map((e) => e.dept)].filter(Boolean))].sort(),
-    [notes, employees],
+      [...new Set([...visibleNotes.map((n) => n.dept), ...employees.map((e) => e.dept)].filter(Boolean))].sort(),
+    [visibleNotes, employees],
   );
 
-  // ===== Thống kê (theo toàn bộ notes, không theo filter) =====
+  // ===== Thống kê (theo notes ĐƯỢC thấy, không theo filter) =====
   const stats = useMemo(() => {
-    const total = notes.length;
-    const mineCount = notes.filter(isMine).length;
-    const withDeadline = notes.filter((n) => n.deadline && n.deadline >= today).length;
-    const overdue = notes.filter((n) => n.deadline && n.deadline < today).length;
+    const total = visibleNotes.length;
+    const mineCount = visibleNotes.filter(isMine).length;
+    const withDeadline = visibleNotes.filter((n) => n.deadline && n.deadline >= today).length;
+    const overdue = visibleNotes.filter((n) => n.deadline && n.deadline < today).length;
     return { total, mineCount, withDeadline, overdue };
-  }, [notes, isMine, today]);
+  }, [visibleNotes, isMine, today]);
 
   // ===== Rows sau filter — mới nhất lên đầu =====
   const rows = useMemo(() => {
-    return notes
+    return visibleNotes
       .filter((n) => {
         if (mine && !isMine(n)) return false;
         if (statCard === "mine" && !isMine(n)) return false;
@@ -116,9 +149,10 @@ function GhiChuPage() {
       .sort((a, b) =>
         b.date > a.date ? 1 : b.date < a.date ? -1 : String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")),
       );
-  }, [notes, mine, statCard, fAuthor, fDept, fFrom, fTo, q, isMine, today]);
+  }, [visibleNotes, mine, statCard, fAuthor, fDept, fFrom, fTo, q, isMine, today]);
 
   function openCreate() {
+    setEditingId(null);
     setContent("");
     setDeadline("");
     setSupport("");
@@ -126,25 +160,49 @@ function GhiChuPage() {
     setOpen(true);
   }
 
+  function openEdit(n: Note) {
+    setEditingId(n.id);
+    setContent(n.content);
+    setDeadline(n.deadline ?? "");
+    setSupport(n.support ?? "");
+    setDept(n.dept ?? "");
+    setDetailRow(null);
+    setOpen(true);
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim()) return;
-    addNote({
-      date: todayIso(),
-      content: content.trim(),
-      author: meName,
-      deploy: "",
-      deadline,
-      support: support.trim(),
-      dept: dept || currentEmployee?.dept || "Hệ thống",
-      status: "Mới",
-      createdBy: meId || undefined,
-    });
-    setContent("");
-    setDeadline("");
-    setSupport("");
+    if (editingId) {
+      updateNote(editingId, {
+        content: content.trim(),
+        deadline,
+        support: support.trim(),
+        dept: dept || currentEmployee?.dept || "Hệ thống",
+      });
+      toast.success("Đã cập nhật ghi chú — dữ liệu đã lưu database");
+    } else {
+      addNote({
+        date: todayIso(),
+        content: content.trim(),
+        author: meName,
+        deploy: "",
+        deadline,
+        support: support.trim(),
+        dept: dept || currentEmployee?.dept || "Hệ thống",
+        status: "Mới",
+        createdBy: meId || undefined,
+      });
+      toast.success("Đã thêm ghi chú — dữ liệu đã lưu database");
+    }
     setOpen(false);
-    toast.success("Đã thêm ghi chú — dữ liệu đã lưu database");
+  }
+
+  function confirmDelete() {
+    if (!deleteRow) return;
+    removeNote(deleteRow.id);
+    setDeleteRow(null);
+    toast.success("Đã xóa ghi chú — đồng bộ mọi thiết bị");
   }
 
   return (
@@ -152,7 +210,11 @@ function GhiChuPage() {
       <PageHeader
         eyebrow="Hệ thống"
         title="Ghi chú"
-        desc="Mọi người đăng nhập đều tạo được ghi chú — lưu database, đồng bộ mọi thiết bị. Ghi chú đã gửi không sửa, không xóa."
+        desc={
+          isAdmin
+            ? "Admin xem, sửa, xóa tất cả ghi chú. User xem và sửa ghi chú của mình, không xóa được. Lưu database, đồng bộ mọi thiết bị."
+            : "Bạn xem và sửa ghi chú do chính mình tạo — không xóa được. Lưu database, đồng bộ mọi thiết bị."
+        }
         actions={
           <Button onClick={openCreate}>
             <Plus />
@@ -258,7 +320,7 @@ function GhiChuPage() {
       </div>
 
       <p className="mb-3 mt-3 text-sm text-muted">
-        Hiển thị <span className="font-medium text-ink">{rows.length}</span> / {notes.length} ghi chú
+        Hiển thị <span className="font-medium text-ink">{rows.length}</span> / {visibleNotes.length} ghi chú
         {statCard !== "all"
           ? ` · lọc: ${statCard === "mine" ? "Của tôi" : statCard === "deadline" ? "Còn hạn" : "Quá hạn"}`
           : ""}
@@ -278,12 +340,13 @@ function GhiChuPage() {
                 <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">Hỗ trợ</th>
                 <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">Ngày tạo</th>
                 <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">Trạng thái</th>
+                <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-10 text-center text-muted">
+                  <td colSpan={9} className="px-3 py-10 text-center text-muted">
                     Không có ghi chú nào khớp bộ lọc.
                   </td>
                 </tr>
@@ -310,6 +373,37 @@ function GhiChuPage() {
                       </td>
                       <td className="px-3 py-3 whitespace-nowrap tabular text-muted">{formatDate(n.date)}</td>
                       <td className="px-3 py-3"><StatusBadge value={n.status} /></td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <span className="flex items-center gap-1">
+                          {canEdit(n) ? (
+                            <button
+                              type="button"
+                              title="Sửa ghi chú"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEdit(n);
+                              }}
+                              className="rounded-md p-1.5 text-muted transition-colors hover:bg-accent-soft hover:text-accent"
+                            >
+                              <Pencil className="size-4" />
+                            </button>
+                          ) : null}
+                          {canDelete ? (
+                            <button
+                              type="button"
+                              title="Xóa ghi chú"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteRow(n);
+                              }}
+                              className="rounded-md p-1.5 text-muted transition-colors hover:bg-red-50 hover:text-danger"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          ) : null}
+                          {!canEdit(n) && !canDelete ? <span className="text-faint">—</span> : null}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })
@@ -319,13 +413,14 @@ function GhiChuPage() {
         </div>
       </Card>
 
-      {/* ===== Dialog tạo ghi chú mới — mọi người đăng nhập đều tạo được ===== */}
+      {/* ===== Dialog tạo / sửa ghi chú — dùng chung (editingId phân biệt) ===== */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogTitle>Ghi chú mới</DialogTitle>
+          <DialogTitle>{editingId ? "Sửa ghi chú" : "Ghi chú mới"}</DialogTitle>
           <DialogDesc>
             Người tạo: <span className="font-medium text-ink">{meName}</span>
-            {currentEmployee?.dept ? ` · ${currentEmployee.dept}` : ""} — ghi chú đã gửi không sửa, không xóa.
+            {currentEmployee?.dept ? ` · ${currentEmployee.dept}` : ""}
+            {editingId ? " — chỉnh sửa nội dung rồi lưu lại." : " — lưu database, đồng bộ mọi thiết bị."}
           </DialogDesc>
           <form onSubmit={submit} className="mt-4 flex flex-col gap-3">
             <div>
@@ -376,13 +471,13 @@ function GhiChuPage() {
               </select>
             </div>
             <Button type="submit" disabled={!content.trim()}>
-              Lưu ghi chú
+              {editingId ? "Lưu thay đổi" : "Lưu ghi chú"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* ===== Dialog chi tiết ghi chú ===== */}
+      {/* ===== Dialog chi tiết ghi chú — Sửa/Xóa theo quyền ===== */}
       <Dialog open={!!detailRow} onOpenChange={(v) => !v && setDetailRow(null)}>
         <DialogContent>
           <DialogTitle>Chi tiết ghi chú</DialogTitle>
@@ -412,8 +507,48 @@ function GhiChuPage() {
                 </p>
                 <p className="sm:col-span-2"><span className="text-muted">Người hỗ trợ:</span> <span className="text-ink">{detailRow.support || "—"}</span></p>
               </div>
+              {detailRow && (canEdit(detailRow) || canDelete) ? (
+                <div className="mt-1 flex items-center justify-end gap-2 border-t border-line pt-3">
+                  {canEdit(detailRow) ? (
+                    <Button variant="outline" onClick={() => openEdit(detailRow)}>
+                      <Pencil />
+                      Sửa
+                    </Button>
+                  ) : null}
+                  {canDelete ? (
+                    <Button variant="danger" onClick={() => { setDeleteRow(detailRow); setDetailRow(null); }}>
+                      <Trash2 />
+                      Xóa
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== Dialog xác nhận xóa — chỉ Admin (pattern Nhiệm vụ GĐ 24) ===== */}
+      <Dialog open={!!deleteRow} onOpenChange={(v) => !v && setDeleteRow(null)}>
+        <DialogContent>
+          <DialogTitle>Xóa ghi chú?</DialogTitle>
+          <DialogDesc>
+            Ghi chú sẽ bị xóa trên MỌI thiết bị. Thao tác không thể hoàn tác.
+          </DialogDesc>
+          {deleteRow ? (
+            <p className="mt-3 max-h-32 overflow-hidden rounded-lg border border-line bg-surface-2/50 p-3 text-sm whitespace-pre-wrap text-ink">
+              {deleteRow.content.length > 200 ? `${deleteRow.content.slice(0, 200)}…` : deleteRow.content}
+            </p>
+          ) : null}
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteRow(null)}>
+              Lưu lại
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              <Trash2 />
+              Chắc xóa
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

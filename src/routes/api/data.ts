@@ -530,18 +530,73 @@ export const insertNote = createServerFn({ method: "POST" })
       status?: string;
       createdBy?: string;
       updatedAt?: string;
+      deletedAt?: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    // UPSERT LWW (pattern proposals GĐ 59) — retry offline không bị trùng, bản mới thắng.
+    // deleted_at được preserve để tombstone (removeNote offline) retry không "hồi sinh".
+    await sql`
+      INSERT INTO notes (id, stt, date, content, author, deploy, deadline, support, dept, status, created_by, updated_at, deleted_at)
+      VALUES (${data.id}, ${data.stt ?? null}, ${data.date}, ${data.content},
+              ${data.author ?? ""}, ${data.deploy ?? ""}, ${data.deadline ?? ""},
+              ${data.support ?? ""}, ${data.dept ?? ""}, ${data.status ?? ""},
+              ${data.createdBy ?? ""}, ${data.updatedAt ? new Date(data.updatedAt) : null},
+              ${data.deletedAt ? new Date(data.deletedAt) : null})
+      ON CONFLICT (id) DO UPDATE SET
+        content = EXCLUDED.content,
+        author = EXCLUDED.author,
+        deadline = EXCLUDED.deadline,
+        support = EXCLUDED.support,
+        dept = EXCLUDED.dept,
+        status = EXCLUDED.status,
+        updated_at = EXCLUDED.updated_at,
+        deleted_at = COALESCE(EXCLUDED.deleted_at, notes.deleted_at)
+      WHERE notes.updated_at < EXCLUDED.updated_at
+    `;
+  });
+
+/** Sửa ghi chú (Admin: tất cả; User: ghi chú của mình) — LWW guard phía DB. */
+export const updateNote = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      content?: string;
+      deadline?: string;
+      support?: string;
+      dept?: string;
+      status?: string;
+      updatedAt: string;
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
-      INSERT INTO notes (id, stt, date, content, author, deploy, deadline, support, dept, status, created_by, updated_at)
-      VALUES (${data.id}, ${data.stt ?? null}, ${data.date}, ${data.content},
-              ${data.author ?? ""}, ${data.deploy ?? ""}, ${data.deadline ?? ""},
-              ${data.support ?? ""}, ${data.dept ?? ""}, ${data.status ?? ""},
-              ${data.createdBy ?? ""}, ${data.updatedAt ?? null})
-      ON CONFLICT (id) DO NOTHING
+      UPDATE notes SET
+        content = COALESCE(${data.content ?? null}, content),
+        deadline = COALESCE(${data.deadline ?? null}, deadline),
+        support = COALESCE(${data.support ?? null}, support),
+        dept = COALESCE(${data.dept ?? null}, dept),
+        status = COALESCE(${data.status ?? null}, status),
+        updated_at = ${new Date(data.updatedAt)}
+      WHERE id = ${data.id} AND updated_at < ${new Date(data.updatedAt)}
     `;
+  });
+
+/** Xóa ghi chú — TOMBSTONE soft delete để xóa lan truyền mọi thiết bị (chỉ Admin). */
+export const deleteNote = createServerFn({ method: "POST" })
+  .validator((data: { id: string; deletedAt: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`UPDATE notes SET deleted_at = ${new Date(data.deletedAt)}, updated_at = ${new Date(data.deletedAt)} WHERE id = ${data.id}`;
+  });
+
+/** Danh sách ghi chú đã xóa — hydrate lọc tombstone khỏi mọi thiết bị (pattern attendance GĐ 17). */
+export const loadDeletedNoteIds = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{ id: string }>`SELECT id FROM notes WHERE deleted_at IS NOT NULL`;
   });
 
 /* ─────────────────── Messages ─────────────────── */

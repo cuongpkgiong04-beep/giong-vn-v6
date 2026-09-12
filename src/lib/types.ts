@@ -52,6 +52,8 @@ export type Note = {
   status: string;
   createdBy?: string;
   updatedAt?: string;
+  /** Tombstone — ghi chú đã xóa (chỉ Admin xóa được, GĐ 91) */
+  deletedAt?: string;
 };
 
 export type Employee = {
