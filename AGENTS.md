@@ -3818,5 +3818,42 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > lửng, không biến mất); cuộn ngang trong khung xem đủ 9 cột; Desktop không đổi;
 > typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 92 — Ghi chú mobile thead, fix 2 lần)*
+### Giai đoạn 93: Chấm công — nút X lightbox phải bấm 2 lần mới đóng (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(cham-cong): đóng Radix dialog trước khi mở lightbox + closeLightbox() mở lại dialog — nút X / bấm nền ăn ngay 1 lần |
+| (mới) | chore: tăng version 1.4.2 → 1.4.3 (fix nhỏ — patch) |
+
+> **BUG REPORT của Đại ca (2026-09-12):** Chấm công — phóng to ảnh chấm công xong muốn
+> đóng lại thì phải ấn nút "X" 2 LẦN mới đóng được. Muốn ấn 1 lần.
+>
+> **ROOT CAUSE — cùng gốc GĐ 80 nhưng TRƯỚC GIỜ chưa được áp cho Chấm công:**
+> GĐ 80 fix nút X chết cho Check-in + Báo cáo Check-in (phạm vi yêu cầu lúc đó chỉ
+> 2 trang đó). Chấm công vẫn giữ lightbox render NGOÀI Radix portal trong khi dialog
+> chi tiết đang mở modal → dialog gắn `pointer-events: none` lên body, CHỈ khôi phục
+> cho DialogContent → cú bấm đầu vào nút X bị NUỐT, bấm lần 2 mới tới.
+>
+> **Fix (surgical — cham-cong.tsx, cùng pattern GĐ 80):**
+> 1. Bấm ảnh phóng to → `setIsDetailOpen(false)` (nhả khóa modal) rồi mới
+>    `setLightboxPhoto(...)`.
+> 2. `closeLightbox()` mới: `setLightboxPhoto(null)` + if (detailRecord)
+>    `setIsDetailOpen(true)` — đóng lightbox → dialog chi tiết mở lại như cũ;
+>    detailRecord không reset nên giữ nguyên dữ liệu.
+> 3. Nút X + onClick nền đổi sang `closeLightbox`.
+>
+> **⚠️ Lesson GĐ 80 CHƯA kết thúc — còn trang dùng lightbox ngoài portal:**
+> Đây là lần THỨ 3 cùng một lỗi Radix modal khóa tương tác (GĐ 80 click, GĐ 82 wheel,
+> nay Chấm công bị SÓT). **Bất kỳ trang nào có lightbox/overlay tự render mở TỪ dialog
+> Radix modal đều phải áp pattern: đóng dialog (hoặc render qua Radix Portal) TRƯỚC khi
+> mở overlay.** Checklist rà: cham-cong ✅ (GĐ 93), check-in ✅ (GĐ 80), bang-check-in ✅
+> (GĐ 80), index/dashboard ✅ (GĐ 56 dùng lightbox từ bảng tóm tắt — cần verify),
+> de-nghi / ho-so / trung-tam (lightbox nền trắng — cần verify theo đúng checklist).
+>
+> **Tiêu chí kiểm chứng:** Chấm công → bấm dòng → dialog chi tiết → bấm ảnh → phóng to
+> → ấn X MỘT LẦN → lightbox đóng + dialog chi tiết mở lại như cũ; bấm nền đen cũng
+> đóng; bấm ảnh lần nữa vẫn phóng to được; Desktop + mobile cùng hành vi;
+> typecheck SẠCH 0 lỗi.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 93 — Chấm công nút X lightbox bấm 1 lần)*
 *Người cập nhật: Trợ lý lập trình*

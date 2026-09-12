@@ -71,6 +71,13 @@ function ChamCongPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   // Lightbox xem ảnh chấm công toàn màn hình (click ảnh trong dialog chi tiết để mở)
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+
+  // GĐ 93: đóng lightbox rồi MỞ LẠI dialog chi tiết (pattern Check-in GĐ 80) —
+  // detailRecord không bị reset khi đóng dialog nên mở lại giữ nguyên dữ liệu.
+  function closeLightbox() {
+    setLightboxPhoto(null);
+    if (detailRecord) setIsDetailOpen(true);
+  }
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   // Chỉ cho phép xác nhận 1 lần — ref chặn mọi double-tap trước khi re-render
@@ -1230,7 +1237,13 @@ function ChamCongPage() {
                     className="w-full cursor-zoom-in object-contain transition hover:opacity-90"
                     style={{ maxHeight: 300 }}
                     title="Bấm để phóng to"
-                    onClick={() => setLightboxPhoto(detailRecord.photo!)}
+                    onClick={() => {
+                      // GĐ 93: NHẢ khóa modal Radix trước khi mở lightbox — dialog modal
+                      // gắn pointer-events:none lên body, lightbox render ngoài portal
+                      // nên cú bấm đầu bị nuốt (phải bấm 2 lần mới đóng — bug Đại ca báo).
+                      setIsDetailOpen(false);
+                      setLightboxPhoto(detailRecord.photo!);
+                    }}
                   />
                 </div>
               )}
@@ -1286,11 +1299,12 @@ function ChamCongPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Lightbox: xem ảnh chấm công toàn màn hình — bấm ảnh hoặc nền để đóng */}
+      {/* Lightbox: xem ảnh chấm công toàn màn hình — bấm ảnh hoặc nền để đóng.
+          Dialog chi tiết ĐÃ ĐÓNG trước đó (nhả khóa modal) → nút X + bấm nền ăn ngay 1 lần. */}
       {lightboxPhoto && (
         <div
           className="fixed inset-0 z-[60] flex cursor-zoom-out items-center justify-center bg-black/90 p-4"
-          onClick={() => setLightboxPhoto(null)}
+          onClick={closeLightbox}
         >
           <img
             src={lightboxPhoto}
@@ -1302,7 +1316,7 @@ function ChamCongPage() {
             type="button"
             aria-label="Đóng"
             className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-            onClick={() => setLightboxPhoto(null)}
+            onClick={closeLightbox}
           >
             <X className="size-6" />
           </button>
