@@ -623,12 +623,14 @@ type MessageRow = {
   deleted_by?: unknown;
 };
 
-// GĐ 94: full cột cho SELECT (viết trực tiếp — KHÔNG sql.raw, lesson GĐ 70)
-const MESSAGE_COLUMNS = `
-  id, from_name, text, at, channel, direct_key, created_by,
-  attachments, updated_at, deleted_at, group_id, mentions,
-  reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by
-`;
+// GĐ 96: KHÔNG được chèn chuỗi tên cột qua ${biến} vào template sql`` —
+// interface Sql coi chuỗi chèn là THAM SỐ $1, không phải SQL → SELECT $1 trả rows
+// không có cột nào → mọi field undefined → crash at.slice (lesson GĐ 70 tái phạm).
+// Tên cột PHẢI viết THẲNG trong từng query (hằng COLUMNS chỉ để đối chiếu).
+const MESSAGE_COLUMNS =
+  "id, from_name, text, at, channel, direct_key, created_by, " +
+  "attachments, updated_at, deleted_at, group_id, mentions, " +
+  "reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by";
 function mapMessageRow(r: MessageRow) {
   return {
     id: r.id,
@@ -664,7 +666,9 @@ export const loadAllMessages = createServerFn({ method: "GET" })
   .handler(async () => {
     const sql = await getSql();
     const rows = await sql<MessageRow>`
-      SELECT ${MESSAGE_COLUMNS}
+      SELECT id, from_name, text, at, channel, direct_key, created_by,
+             attachments, updated_at, deleted_at, group_id, mentions,
+             reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by
       FROM messages
       ORDER BY at DESC
       LIMIT 1000
@@ -680,7 +684,9 @@ export const loadMessagesSince = createServerFn({ method: "GET" })
     // GĐ 94: poll cả tin MỚI (at > since) LẪN tin cũ vừa đổi meta (reaction/ghim/
     // thu hồi phía tôi...) — meta đổi trên tin cũ có at cũ nên phải bắt bằng updated_at.
     const rows = await sql<MessageRow>`
-      SELECT ${MESSAGE_COLUMNS}
+      SELECT id, from_name, text, at, channel, direct_key, created_by,
+             attachments, updated_at, deleted_at, group_id, mentions,
+             reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by
       FROM messages
       WHERE at > ${data.since} OR updated_at > ${new Date(Date.now() - 60_000).toISOString()}
       ORDER BY at ASC

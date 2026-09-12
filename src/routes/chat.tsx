@@ -183,9 +183,12 @@ function ChatPage() {
         ? `mygroup:${groupId}`
         : "";
 
-  /* Tin nhắn của hội thoại đang mở — GĐ 94: ẩn tin bị TÔI xóa phía tôi */
+  /* Tin nhắn của hội thoại đang mở — GĐ 94: ẩn tin bị TÔI xóa phía tôi.
+     GĐ 96: lọc tin HỎNG (at không phải string) — dữ liệu lỗi do bản poll trước
+     ghi nhầm vào localStorage; không lọc thì crash at.slice ngay khi render. */
   const activeMessages = useMemo(() => {
     const list = messages.filter((m) => {
+      if (!m.at || typeof m.at !== "string") return false;
       if (m.deletedBy?.includes(currentUserId)) return false; // xóa chỉ ở phía tôi
       if (tab === "direct") return m.directKey === directKey;
       if (groupId) return m.groupId === groupId;
@@ -217,8 +220,24 @@ function ChatPage() {
     setReactBar(null);
   }
 
-  /* GĐ 94: bắt đầu trả lời 1 tin */
+  /* GĐ 94: bắt đầu trả lời 1 tin.
+     GĐ 96: trả lời trong NHÓM — tự chèn "@Tên " người được trả lời vào ô soạn +
+     lưu ID vào mentions để người đó NHẬN ĐƯỢC tin (không có @ thì họ không biết). */
   function startReply(msgId: string) {
+    const src = messages.find((x) => x.id === msgId);
+    if (src && tab === "group") {
+      const senderId = src.fromId || "";
+      // Không tự @ chính mình khi trả lời tin của mình
+      if (senderId && senderId !== currentUserId) {
+        const senderName = employees.find((e) => e.id === senderId)?.name ?? src.from;
+        const prefix = `@${senderName} `;
+        setText((prev) => {
+          const stripped = prev.replace(/^@[^@\n]+\s*/, ""); // thay @ của lần reply trước
+          return prefix + stripped;
+        });
+        setMentionedIds((prev) => (prev.includes(senderId) ? prev : [...prev, senderId]));
+      }
+    }
     setReplyTo(msgId);
     setMsgMenu(null);
   }

@@ -3942,5 +3942,69 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > đúng tên gốc; dialog Xem chi tiết đủ mọi thông tin kể cả reply 2 chiều (tin này
 > trả lời ai + ai đã trả lời tin này) + cảm xúc từng người; typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 95 — Chat Xem chi tiết + Lưu về máy)*
+### Giai đoạn 96: Fix crash tin nhắn riêng + Trả lời tự @ người được trả lời (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(data): loadAllMessages/loadMessagesSince — SELECT chèn tên cột qua ${biến} bị coi là tham số $1 → rows không cột nào → crash at.slice; viết THẲNG tên cột vào template |
+| (mới) | feat(chat): bấm ↩️ Trả lời trong nhóm tự chèn "@Tên " người được trả lời + lưu mentions ID — người đó nhận được tin |
+| (mới) | fix(chat): lọc tin hỏng (at không phải string) khi render — phòng thủ dữ liệu lỗi bản poll cũ ghi vào localStorage |
+| (mới) | chore: tăng version 1.5.1 → 1.6.0 (fix lớn + feature — minor) |
+
+> **BUG REPORT của Đại ca (2026-09-12):** (1) Phần tin nhắn riêng trong Chat bị lỗi hiển thị
+> "Something went wrong — Cannot read properties of undefined (reading 'slice')".
+> (2) Trả lời tin nhắn thành viên trong nhóm (nút ↩️) phải tự có "@..người được trả lời"
+> trong cửa sổ soạn — không có @ thì người đó không nhận được tin.
+>
+> **Quy trình debug (Playwright + dump response):**
+> 1. Script Playwright login production → mở tab Tin nhắn riêng → bắt được stack trace:
+>    TypeError trong `Array.map` tại `chat-*.js` (bundle chính của trang Chat).
+> 2. Tải bundle, đọc code quanh cột lỗi → crash tại `t.at.slice(0,10)` trong
+>    `activeMessages.map` — tức có tin nào đó `at === undefined`.
+> 3. localStorage máy sạch (0 tin) → tin hỏng đến từ data Neon. Dump raw response
+>    `_serverFn`: format TanStack serializer cho thấy **TẤT CẢ** tin có
+>    id/from/text/at = undefined (chỉ còn fallback channel "Chung").
+>
+> **ROOT CAUSE — SELECT chèn tên cột qua ${biến} thành tham số $1 (GĐ 70 tái phạm):**
+> GĐ 94 viết `const MESSAGE_COLUMNS = \`id, from_name, ...\`` rồi dùng
+> `SELECT ${MESSAGE_COLUMNS} FROM messages` — chuỗi chèn qua `${}` trong template
+> của interface `Sql` (db.ts) bị gửi đi làm **tham số $1**, không phải SQL
+> → query thật = `SELECT $1 FROM messages` → mỗi row chỉ có 1 cột vô danh
+> → mapMessageRow đọc `r.id/r.at/...` đều undefined → render crash at.slice.
+> GĐ 70 từng dính `sql.raw is not a function`, fix bằng "viết thẳng cột vào template"
+> nhưng lần này viết qua `${biến}` — cùng gốc: **interface Sql mỏng chỉ chấp nhận
+> tagged-template thuần, KHÔNG có cơ chế ghép SQL động.**
+>
+> **Fix:** viết THẲNG toàn bộ danh sách cột trong từng query (loadAllMessages +
+> loadMessagesSince); MESSAGE_COLUMNS còn lại chỉ là chuỗi THAM CHIẾU để đối chiếu
+> khi thêm cột mới (comment cảnh báo ngay đầu hằng).
+>
+> **Feature — Trả lời tự @ (theo yêu cầu):** startReply trong NHÓM chèn
+> `@Tên người gửi ` vào đầu ô soạn (thay @ của lần reply trước, không chồng @),
+> lưu ID vào mentionedIds → tin reply luôn tag đúng người → họ nhận được tin.
+> Trả lời tin của chính mình thì không tự @.
+>
+> **Phòng thủ:** activeMessages lọc tin `at` không phải string — thiết bị từng nhận
+> dữ liệu lỗi từ bản poll cũ (đã ghi localStorage) không còn crash khi render.
+>
+> **LESSON LEARNED — Template SQL: KHÔNG ghép SQL qua ${biến} dưới mọi hình thức (2026-09-12):**
+> `${}` trong tagged template của interface Sql LUÔN là tham số — kể cả khi nội dung
+> "trông như SQL". Ghép tên cột/table/điều kiện động phải viết thẳng trong template
+> (dễ đọc, typecheck được) — nếu thật sự cần động thì build chuỗi điều kiện ở JS
+> rồi chọn giữa vài template viết sẵn, không nhúng chuỗi SQL vào tham số.
+> **Checklist khi thêm server function query:** (1) grep không có `sql.raw`;
+> (2) grep không có `SELECT ${` / `FROM ${` / `WHERE ${` với biến chứa SQL;
+> (3) test trên production bằng dump response — rows phải có đủ field.
+>
+> **LESSON LEARNED — Lỗi SQL ÂM THẦM: query SAI vẫn trả 200 (2026-09-12):**
+> `SELECT $1 FROM messages` là SQL HỢP LỆ → không throw, chỉ trả data sai dạng
+> → serializer vẫn 200 OK → hydrate không biết lỗi → crash lệch xuống UI render.
+> Khác với GĐ 70 (throw rõ ràng). Dạng lỗi "query chạy được nhưng sai ý" nguy hiểm
+> hơn lỗi throw — phải verify DATA ĐÚNG FORM (field đầy đủ) chứ không chỉ "có response".
+>
+> **Tiêu chí kiểm chứng:** Vào Tin nhắn riêng không còn crash; tin nhắn nhóm/1-1 hiện
+> đúng nội dung + tên + giờ; trả lời trong nhóm tự chèn @Tên + người đó nhận tin;
+> typecheck SẠCH 0 lỗi.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 96 — Fix crash tin nhắn riêng + Reply tự @)*
 *Người cập nhật: Trợ lý lập trình*
