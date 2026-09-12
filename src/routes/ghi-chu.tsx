@@ -326,11 +326,16 @@ function GhiChuPage() {
           : ""}
       </p>
 
-      {/* ===== Bảng ghi chú — thead ghim dưới khối lọc khi cuộn ===== */}
-      <Card className="overflow-hidden p-0 lg:overflow-visible">
+      {/* ===== Bảng ghi chú — thead ghim khi cuộn =====
+        Mobile: Card thành khối GHIM cuộn nội bộ (pattern Nhân sự GĐ 58) — ancestor
+        overflow-x-auto phá thead sticky theo viewport nên cả container phải sticky
+        max-h + overflow-auto, thead ghim top-0 bên trong. Vừa cuộn ngang được, vừa
+        giữ tiêu đề cố định như Desktop.
+        Desktop: giữ nguyên pattern GĐ 67 (Card mở overflow, thead ghim theo viewport). */}
+      <Card className="sticky top-[calc(4rem+var(--gc-sticky-h,64px))] z-[5] max-h-[calc(100dvh-10.5rem-var(--gc-sticky-h,64px))] overflow-auto p-0 lg:static lg:max-h-none lg:overflow-visible">
         <div className="overflow-x-auto lg:overflow-x-visible">
           <table className="w-full text-sm">
-            <thead className="sticky top-[calc(4rem+var(--gc-sticky-h,64px))] z-[5]">
+            <thead className="sticky top-0 z-[5] lg:top-[calc(4rem+var(--gc-sticky-h,64px))]">
               <tr className="border-b border-line bg-surface">
                 <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">STT</th>
                 <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">Nội dung</th>
