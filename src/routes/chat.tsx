@@ -7,6 +7,7 @@ import {
   CornerUpLeft,
   CirclePlus,
   Crown,
+  Download,
   Forward,
   ImagePlus,
   Info,
@@ -266,6 +267,47 @@ function ChatPage() {
     updateMessageMeta(msgId, { deletedBy: next });
     setSelectedIds((prev) => prev.filter((id) => id !== msgId));
     setMsgMenu(null);
+  }
+
+  /* GĐ 95: LƯU VỀ MÁY — tải đính kèm (ảnh/tệp) của tin với tên file gốc từ URL */
+  async function saveAttachmentsToDisk(msgId: string) {
+    const m = messages.find((x) => x.id === msgId);
+    if (!m) return;
+    const urls = m.attachments?.length
+      ? m.attachments
+      : m.text.startsWith("http") && !m.text.includes(" ")
+        ? [m.text]
+        : [];
+    if (urls.length === 0) {
+      toast.error("Tin này không có tệp đính kèm để lưu");
+      return;
+    }
+    setMsgMenu(null);
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        // Tên file gốc từ URL Cloudinary (public_id + ext)
+        let name = "file";
+        try {
+          const raw = decodeURIComponent(url.split("/").pop() ?? "");
+          name = raw.includes(".") ? raw : `${raw || "file"}.jpg`;
+        } catch {
+          name = "file.jpg";
+        }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(a.href);
+      } catch (err) {
+        console.error("Save attachment failed:", err);
+        toast.error("Không tải được tệp — mở đường link thất bại");
+      }
+    }
+    if (urls.length > 0) toast.success(`Đã lưu ${urls.length} tệp về máy`);
   }
 
   /* Danh sách hội thoại trái — nhóm riêng (GĐ 72) + 1-1. Kênh công khai đã xóa (GĐ 74). */
@@ -1013,6 +1055,13 @@ function ChatPage() {
                         </button>
                         <button
                           type="button"
+                          onClick={() => { saveAttachmentsToDisk(m.id); }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                        >
+                          <Download className="size-4 text-muted" /> Lưu về máy
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => { setDetailMsg(m.id); setMsgMenu(null); }}
                           className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
                         >
@@ -1429,41 +1478,136 @@ function ChatPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── GĐ 94: dialog XEM CHI TIẾT tin nhắn ── */}
+      {/* ── GĐ 94: dialog XEM CHI TIẾT tin nhắn — bổ sung đủ theo yêu cầu Đại ca:
+          reaction + trả lời (tin gốc + tin phản hồi) + chuyển tiếp + đính kèm + loại hội thoại ── */}
       <Dialog open={detailMsg !== null} onOpenChange={(v) => !v && setDetailMsg(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           {(() => {
             const m = messages.find((x) => x.id === detailMsg);
             if (!m) return null;
             const sender = employees.find((e) => e.id === m.fromId);
             const reactionList = m.reactions ?? [];
+            // Tin gốc đang được trả lời (nếu tin này là reply)
+            const repliedSrc = m.replyToId ? messages.find((x) => x.id === m.replyToId) : null;
+            // Các tin ĐÃ TRẢ LỜI tin này
+            const replyList = messages.filter((x) => x.replyToId === m.id && !x.deletedAt);
+            const convLabel = m.groupId
+              ? `Nhóm ${chatGroups.find((g) => g.id === m.groupId)?.name ?? ""}`
+              : (() => {
+                  const peerId2 = (m.directKey ?? "").split("|").find((id) => id !== (m.fromId ?? ""));
+                  const peer = employees.find((e) => e.id === (m.fromId === currentUserId ? peerId2 : m.fromId));
+                  return peer ? `Tin nhắn riêng với ${peer.name}` : "Tin nhắn riêng";
+                })();
             return (
               <>
                 <DialogTitle>Chi tiết tin nhắn</DialogTitle>
-                <div className="mt-3 space-y-2 text-sm">
+                <DialogDesc>{convLabel}</DialogDesc>
+                <div className="mt-3 space-y-2.5 text-sm">
                   <p className="rounded-lg border border-line bg-surface-2/50 p-3 whitespace-pre-wrap text-ink">
                     {m.text || "📎 Đính kèm"}
                   </p>
-                  <p><span className="text-muted">Người gửi:</span> <span className="font-medium text-ink">{sender?.name ?? m.from}</span></p>
-                  <p><span className="text-muted">Thời gian:</span> <span className="tabular text-ink">{m.at}</span></p>
+                  {(m.attachments?.length ?? 0) > 0 && (
+                    <p>
+                      <span className="text-muted">Đính kèm:</span>{" "}
+                      <span className="text-ink">{m.attachments!.length} tệp</span>
+                      <span className="ml-1.5 flex flex-wrap gap-1">
+                        {m.attachments!.map((url) =>
+                          isImageUrl(url) ? (
+                            <img
+                              key={url}
+                              src={url}
+                              alt="Đính kèm"
+                              className="size-10 cursor-zoom-in rounded border border-line object-cover"
+                              onClick={() => { setDetailMsg(null); setLightbox(url); }}
+                            />
+                          ) : (
+                            <a
+                              key={url}
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded border border-line px-1.5 py-0.5 text-[11px] text-accent hover:underline"
+                            >
+                              {fileIconLabel(url)}
+                            </a>
+                          ),
+                        )}
+                      </span>
+                    </p>
+                  )}
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <p><span className="text-muted">Người gửi:</span> <span className="font-medium text-ink">{sender?.name ?? m.from}</span></p>
+                    <p><span className="text-muted">Thời gian:</span> <span className="tabular text-ink">{m.at}</span></p>
+                  </div>
+                  {/* GĐ 95: Lưu về máy — tải đính kèm với tên file gốc */}
+                  {((m.attachments?.length ?? 0) > 0 || (m.text.startsWith("http") && !m.text.includes(" "))) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => saveAttachmentsToDisk(m.id)}
+                    >
+                      <Download className="size-4" /> Lưu về máy
+                    </Button>
+                  )}
+                  {/* GĐ 95: tin này là TRẢ LỜI — quote tin gốc */}
+                  {repliedSrc && (
+                    <div className="border-l-2 border-accent/50 pl-2">
+                      <p className="text-xs text-muted">Đang trả lời:</p>
+                      <p className="text-xs font-medium text-accent">
+                        {employees.find((e) => e.id === repliedSrc.fromId)?.name ?? repliedSrc.from}
+                      </p>
+                      <p className="line-clamp-2 text-xs text-muted">{repliedSrc.text || "📎 Đính kèm"}</p>
+                      <button
+                        type="button"
+                        onClick={() => { setDetailMsg(null); document.getElementById(`msg-${repliedSrc.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                        className="mt-0.5 text-[11px] text-accent hover:underline"
+                      >
+                        Xem tin gốc →
+                      </button>
+                    </div>
+                  )}
+                  {/* GĐ 95: các tin ĐÃ TRẢ LỜI tin này */}
+                  {replyList.length > 0 && (
+                    <div className="border-l-2 border-line pl-2">
+                      <p className="text-xs text-muted">Được trả lời bởi ({replyList.length}):</p>
+                      {replyList.slice(0, 3).map((r) => (
+                        <p key={r.id} className="truncate text-xs text-ink">
+                          <span className="font-medium">{employees.find((e) => e.id === r.fromId)?.name ?? r.from}:</span>{" "}
+                          {r.text || "📎 Đính kèm"}
+                        </p>
+                      ))}
+                      {replyList.length > 3 && (
+                        <p className="text-[11px] text-faint">…và {replyList.length - 3} tin khác</p>
+                      )}
+                    </div>
+                  )}
                   {m.forwardedFrom ? (
                     <p><span className="text-muted">Chuyển tiếp từ:</span> <span className="text-ink">{m.forwardedFrom}</span></p>
                   ) : null}
                   {m.pinned ? (
                     <p><span className="text-muted">Ghim:</span> <span className="text-ink">bởi {m.pinnedBy || "không rõ"}</span></p>
                   ) : null}
-                  <p>
-                    <span className="text-muted">Cảm xúc:</span>{" "}
+                  <div>
+                    <p className="text-muted">
+                      Cảm xúc {reactionList.length > 0 ? <span className="font-medium text-ink">({reactionList.length})</span> : ""}:
+                    </p>
                     {reactionList.length === 0 ? (
-                      <span className="text-faint">Chưa có</span>
+                      <p className="text-faint">Chưa có</p>
                     ) : (
-                      <span className="text-ink">
-                        {reactionList.map((r) => `${r.emoji} ${employees.find((e) => e.id === r.employeeId)?.name ?? "?"}`).join(", ")}
-                      </span>
+                      <div className="mt-1 space-y-0.5">
+                        {reactionList.map((r, idx) => (
+                          <p key={`${r.employeeId}-${idx}`} className="text-ink">
+                            <span className="text-base">{r.emoji}</span>{" "}
+                            {employees.find((e) => e.id === r.employeeId)?.name ?? "?"}
+                          </p>
+                        ))}
+                      </div>
                     )}
-                  </p>
+                  </div>
                   <p>
-                    <span className="text-muted">Đánh dấu:</span>{" "}
+                    <span className="text-muted">Đánh dấu ⭐:</span>{" "}
                     {(m.starredBy ?? []).length === 0 ? (
                       <span className="text-faint">Chưa ai</span>
                     ) : (

@@ -3913,5 +3913,34 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > ghim → banner đầu hội thoại; ⭐ → popup Tin đã lưu; Chọn nhiều → xóa phía tôi
 > hàng loạt; thiết bị khác tự đồng bộ ≤5s; typecheck SẠCH 0 lỗi; 17/17 test.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 94 — Chat tác vụ tin nhắn kiểu Zalo)*
+### Giai đoạn 95: Chat — hoàn thiện dialog Xem chi tiết + Lưu về máy (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(chat): dialog Xem chi tiết đầy đủ — hội thoại thuộc về, đính kèm thumbnail, đang trả lời/được trả lời bởi, cảm xúc từng người, lưu về máy |
+| (mới) | feat(chat): Lưu về máy — menu "..." + dialog chi tiết; fetch blob + a.download tên file gốc từ URL Cloudinary |
+| (mới) | chore: tăng version 1.5.0 → 1.5.1 (bổ sung nhỏ — patch) |
+
+> **Yêu cầu của Đại ca (2026-09-12):** (1) Bổ sung các thông tin reaction/trả lời/
+> chuyển tiếp vào dialog "Xem chi tiết" tin nhắn; (2) Thiếu chức năng "Lưu về máy" —
+> bổ sung thêm.
+>
+> **Dialog Xem chi tiết giờ gồm:** hội thoại thuộc về (Nhóm X / Tin nhắn riêng với Y),
+> nội dung, đính kèm (thumbnail ảnh bấm lightbox / link tệp), người gửi + thời gian,
+> đang trả lời (quote tin gốc + nút Xem tin gốc → cuộn tới), được trả lời bởi
+> (tối đa 3 + đếm), chuyển tiếp từ, ghim bởi, cảm xúc (từng emoji + TÊN từng người —
+> trước chỉ 1 dòng), đánh dấu ⭐ (tên những người lưu), nút Lưu về máy (chỉ hiện khi
+> có đính kèm).
+>
+> **Lưu về máy — 2 chỗ:** menu "..." (mọi tin) + dialog chi tiết (chỉ tin có đính kèm
+> hoặc URL riêng). Cơ chế: fetch URL → blob → `<a download>` với tên file gốc từ
+> Cloudinary public_id (decodeURIComponent, thiếu ext thì mặc định .jpg); nhiều tệp
+> tải lần lượt; revokeObjectURL sau click; toast kết quả. Chỉ tải đính kèm — tin
+> text thuần báo "không có tệp đính kèm".
+>
+> **Tiêu chí kiểm chứng:** Menu ... có mục Lưu về máy; tin có ảnh → lưu được file
+> đúng tên gốc; dialog Xem chi tiết đủ mọi thông tin kể cả reply 2 chiều (tin này
+> trả lời ai + ai đã trả lời tin này) + cảm xúc từng người; typecheck SẠCH 0 lỗi.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 95 — Chat Xem chi tiết + Lưu về máy)*
 *Người cập nhật: Trợ lý lập trình*
