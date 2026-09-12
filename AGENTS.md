@@ -3855,5 +3855,63 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > đóng; bấm ảnh lần nữa vẫn phóng to được; Desktop + mobile cùng hành vi;
 > typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 93 — Chấm công nút X lightbox bấm 1 lần)*
+### Giai đoạn 94: Chat — tác vụ tin nhắn kiểu Zalo (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0027_chat_zalo_actions.sql — messages thêm 7 cột: reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by |
+| (mới) | feat(data): updateMessageMeta (COALESCE + LWW) + poll WHERE at > since OR updated_at > 1 phút (bắt meta đổi trên tin cũ) + insertMessage/full cột |
+| (mới) | feat(store): updateMessageMeta action + sendMessage mở rộng replyToId/forwardedFrom + hydrate/poll map đủ meta |
+| (mới) | feat(chat): reaction 6 emoji + trả lời (quote + preview bar) + chuyển tiếp (dialog) + menu ... 6 mục (Copy/Ghim/Đánh dấu/Chọn nhiều/Xem chi tiết/Xóa phía tôi) + banner ghim + popup Tin đã lưu ⭐ |
+| (mới) | chore: tăng version 1.4.3 → 1.5.0 (feature lớn — minor) |
+
+> **Yêu cầu của Đại ca (kèm 3 ảnh Zalo, 2026-09-12):** Bấm vào hội thoại/tin nhắn hiện:
+> (1) thanh biểu tượng cảm xúc cho tin nhắn người gửi; (2) 3 nút nhanh: Trả lời ·
+> Chuyển tiếp · ...; (3) trong ... có đủ các lựa chọn như Zalo. Đã hỏi lại và chốt:
+> áp dụng CẢ nhóm + 1-1; menu ĐỦ 6 mục hoạt động thật (mục "Tùy chọn khác >" của
+> Zalo là submenu rỗng — bỏ).
+>
+> **Kiến trúc meta tin nhắn (7 cột mới trong messages):**
+> - `reactions jsonb` — [{ employeeId, emoji }]; 1 user 1 emoji/tin; bấm lại = bỏ.
+> - `reply_to_id` — ID tin gốc; quote render trong bubble, bấm cuộn tới tin gốc
+>   (anchor id={`msg-${id}`} + scrollIntoView).
+> - `forwarded_from` — nhãn "Chuyển tiếp từ X" trên bubble; forward = gửi tin MỚI
+>   (1-1: toId) giữ nguyên text + nhãn nguồn.
+> - `pinned` + `pinned_by` — banner đầu hội thoại; ghim mới TỰ BỎ ghim cũ (loop
+>   updateMessageMeta các tin pinned rồi mới ghim tin mới).
+> - `starred_by jsonb` — danh sách employeeId đã ⭐; nút ⭐ đầu header hiện khi >0,
+>   popup liệt kê tin + bấm Bỏ đánh dấu.
+> - `deleted_by jsonb` — "xóa chỉ ở phía tôi": activeMessages lọc
+>   `m.deletedBy?.includes(currentUserId)` — người khác vẫn thấy bình thường.
+>
+> **Poll bắt meta đổi trên tin cũ (điểm hay cần nhớ):** meta (reaction/ghim/xóa
+> phía tôi) đổi trên tin CŨ có `at` cũ — poll cũ `WHERE at > since` KHÔNG BAO GIỜ
+> thấy. Fix: `WHERE at > since OR updated_at > now() - 60s` — tin vừa đổi meta 1
+> phút gần đây cũng về; mergeByTs LWW theo updatedAt giữ bản mới nhất.
+>
+> **UI pattern:** action bar 4 nút (Trả lời/Chuyển tiếp/.../Smile) nằm TRONG khối
+> `group flex` → hover desktop hiện; mobile BẤM bubble mở thanh 6 emoji (onClick
+> trên div cha, stopPropagation ở quote/reaction để không đụng action khác); menu
+> "..." + reactBar render DƯỚI khối tin (relative z-10) — không bị bubble đè.
+> Mode chọn nhiều: bubble onClick tick/untick + ring-2; thanh trên cùng đếm + xóa
+> hàng loạt phía tôi.
+>
+> **LESSON LEARNED — reaction summary absolute cần bubble relative (2026-09-12):**
+> Badge reaction định vị `absolute -bottom-2.5` — quên `relative` trên bubble thì
+> absolute bám ancestor khác (khối `group flex` có items-end) → badge nhảy lên mép
+> hàng thay vì góc dưới bubble. Kiểm tra mọi phần tử absolute mới: ancestor cần
+> position context đúng chưa?
+>
+> **LƯU Ý cho Đại ca khi test:** tin cũ trước nâng cấp không có meta — vẫn bình
+> thường; reaction/ghim/đánh dấu/xóa-phía-tôi LƯU NEON — thiết bị khác tự thấy ≤5s;
+> "Xóa chỉ ở phía tôi" KHÁC "Thu hồi" (thu hồi = mọi người mất tin, giữ nguyên nút X
+> cũ cho tin của mình trong 24h).
+>
+> **Tiêu chí kiểm chứng:** Bấm/hover tin → thanh 6 emoji + 3 nút nhanh hiện; chọn
+> ❤️ → badge góc bubble; Trả lời → quote trong tin mới, bấm quote nhảy tới tin gốc;
+> Chuyển tiếp → chọn người → tin mới có nhãn nguồn; menu đủ 6 mục hoạt động thật;
+> ghim → banner đầu hội thoại; ⭐ → popup Tin đã lưu; Chọn nhiều → xóa phía tôi
+> hàng loạt; thiết bị khác tự đồng bộ ≤5s; typecheck SẠCH 0 lỗi; 17/17 test.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 94 — Chat tác vụ tin nhắn kiểu Zalo)*
 *Người cập nhật: Trợ lý lập trình*

@@ -614,11 +614,20 @@ type MessageRow = {
   deleted_at: string | null;
   group_id: string | null;
   mentions?: unknown;
+  reactions?: unknown;
+  reply_to_id?: string | null;
+  forwarded_from?: string | null;
+  pinned?: boolean | null;
+  pinned_by?: string | null;
+  starred_by?: unknown;
+  deleted_by?: unknown;
 };
 
+// GĐ 94: full cột cho SELECT (viết trực tiếp — KHÔNG sql.raw, lesson GĐ 70)
 const MESSAGE_COLUMNS = `
   id, from_name, text, at, channel, direct_key, created_by,
-  attachments, updated_at, deleted_at
+  attachments, updated_at, deleted_at, group_id, mentions,
+  reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by
 `;
 function mapMessageRow(r: MessageRow) {
   return {
@@ -634,6 +643,16 @@ function mapMessageRow(r: MessageRow) {
     deletedAt: r.deleted_at,
     groupId: r.group_id ?? "",
     mentions: Array.isArray(r.mentions) ? (r.mentions as string[]) : [],
+    // GĐ 94: meta Zalo — reaction/reply/forward/pin/star/delete-for-me
+    reactions: Array.isArray(r.reactions)
+      ? (r.reactions as { employeeId: string; emoji: string }[])
+      : [],
+    replyToId: r.reply_to_id ?? "",
+    forwardedFrom: r.forwarded_from ?? "",
+    pinned: r.pinned ?? false,
+    pinnedBy: r.pinned_by ?? "",
+    starredBy: Array.isArray(r.starred_by) ? (r.starred_by as string[]) : [],
+    deletedBy: Array.isArray(r.deleted_by) ? (r.deleted_by as string[]) : [],
   };
 }
 
@@ -645,8 +664,7 @@ export const loadAllMessages = createServerFn({ method: "GET" })
   .handler(async () => {
     const sql = await getSql();
     const rows = await sql<MessageRow>`
-      SELECT id, from_name, text, at, channel, direct_key, created_by,
-             attachments, updated_at, deleted_at, group_id, mentions
+      SELECT ${MESSAGE_COLUMNS}
       FROM messages
       ORDER BY at DESC
       LIMIT 1000
@@ -659,11 +677,12 @@ export const loadMessagesSince = createServerFn({ method: "GET" })
   .validator((data: { since: string }) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
+    // GĐ 94: poll cả tin MỚI (at > since) LẪN tin cũ vừa đổi meta (reaction/ghim/
+    // thu hồi phía tôi...) — meta đổi trên tin cũ có at cũ nên phải bắt bằng updated_at.
     const rows = await sql<MessageRow>`
-      SELECT id, from_name, text, at, channel, direct_key, created_by,
-             attachments, updated_at, deleted_at, group_id, mentions
+      SELECT ${MESSAGE_COLUMNS}
       FROM messages
-      WHERE at > ${data.since}
+      WHERE at > ${data.since} OR updated_at > ${new Date(Date.now() - 60_000).toISOString()}
       ORDER BY at ASC
       LIMIT 200
     `;
@@ -685,24 +704,74 @@ export const insertMessage = createServerFn({ method: "POST" })
       deletedAt?: string;
       groupId?: string;
       mentions?: string[];
+      reactions?: { employeeId: string; emoji: string }[];
+      replyToId?: string;
+      forwardedFrom?: string;
+      pinned?: boolean;
+      pinnedBy?: string;
+      starredBy?: string[];
+      deletedBy?: string[];
     }) => data,
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
     await sql`
       INSERT INTO messages (id, from_name, text, at, channel, direct_key, created_by,
-                            attachments, updated_at, deleted_at, group_id, mentions)
+                            attachments, updated_at, deleted_at, group_id, mentions,
+                            reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by)
       VALUES (${data.id}, ${data.from}, ${data.text}, ${data.at}, ${data.channel},
               ${data.directKey ?? ""}, ${data.fromId ?? ""},
               ${JSON.stringify(data.attachments ?? [])}::jsonb,
               ${data.updatedAt ? new Date(data.updatedAt) : new Date()},
               ${data.deletedAt ? new Date(data.deletedAt) : null},
               ${data.groupId ?? ""},
-              ${JSON.stringify(data.mentions ?? [])}::jsonb)
+              ${JSON.stringify(data.mentions ?? [])}::jsonb,
+              ${JSON.stringify(data.reactions ?? [])}::jsonb,
+              ${data.replyToId ?? ""},
+              ${data.forwardedFrom ?? ""},
+              ${data.pinned ?? false},
+              ${data.pinnedBy ?? ""},
+              ${JSON.stringify(data.starredBy ?? [])}::jsonb,
+              ${JSON.stringify(data.deletedBy ?? [])}::jsonb)
       ON CONFLICT (id) DO UPDATE SET
         deleted_at = EXCLUDED.deleted_at,
-        updated_at = EXCLUDED.updated_at
+        updated_at = EXCLUDED.updated_at,
+        reactions = EXCLUDED.reactions,
+        pinned = EXCLUDED.pinned,
+        pinned_by = EXCLUDED.pinned_by,
+        starred_by = EXCLUDED.starred_by,
+        deleted_by = EXCLUDED.deleted_by
       WHERE messages.updated_at < EXCLUDED.updated_at
+    `;
+  });
+
+/**
+ * GĐ 94: cập nhật meta tin nhắn (reaction/ghim/đánh dấu/xóa phía tôi) —
+ * COALESCE từng field + LWW guard theo updated_at. Chỉ meta đổi, text/at giữ nguyên.
+ */
+export const updateMessageMeta = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      id: string;
+      updatedAt: string;
+      reactions?: { employeeId: string; emoji: string }[];
+      pinned?: boolean;
+      pinnedBy?: string;
+      starredBy?: string[];
+      deletedBy?: string[];
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    await sql`
+      UPDATE messages SET
+        reactions = COALESCE(${data.reactions ? JSON.stringify(data.reactions) : null}::jsonb, reactions),
+        pinned = COALESCE(${data.pinned ?? null}, pinned),
+        pinned_by = COALESCE(${data.pinnedBy ?? null}, pinned_by),
+        starred_by = COALESCE(${data.starredBy ? JSON.stringify(data.starredBy) : null}::jsonb, starred_by),
+        deleted_by = COALESCE(${data.deletedBy ? JSON.stringify(data.deletedBy) : null}::jsonb, deleted_by),
+        updated_at = ${new Date(data.updatedAt)}
+      WHERE id = ${data.id} AND updated_at < ${new Date(data.updatedAt)}
     `;
   });
 

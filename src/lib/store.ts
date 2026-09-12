@@ -64,7 +64,9 @@ type Actions = {
   updateProposal: (id: string, data: Partial<Pick<Proposal, "kind" | "title" | "detail" | "dept" | "attachments">>) => void;
   removeProposal: (id: string) => void;
   setProposalStatus: (id: string, status: Proposal["status"], approver?: string) => void;
-  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[]; groupId?: string; mentions?: string[] }) => void;
+  sendMessage: (text: string, channel: string, opts?: { toId?: string; attachments?: string[]; groupId?: string; mentions?: string[]; replyToId?: string; forwardedFrom?: string }) => void;
+  /** GĐ 94: đổi meta tin nhắn (reaction/ghim/đánh dấu/xóa phía tôi) — LWW qua Neon */
+  updateMessageMeta: (id: string, meta: { reactions?: { employeeId: string; emoji: string }[]; pinned?: boolean; pinnedBy?: string; starredBy?: string[]; deletedBy?: string[] }) => void;
   refreshMessages: () => Promise<void>;
   removeMessage: (id: string) => void;
   addChatGroup: (name: string, memberIds: string[]) => void;
@@ -645,6 +647,14 @@ async function _neonInsertMessage(r: ChatMessage) {
       deletedAt: r.deletedAt,
       groupId: r.groupId ?? "",
       mentions: r.mentions ?? [],
+      // GĐ 94: meta Zalo đi đầy đủ để tombstone/upsert LWW không mất meta
+      reactions: r.reactions ?? [],
+      replyToId: r.replyToId ?? "",
+      forwardedFrom: r.forwardedFrom ?? "",
+      pinned: r.pinned ?? false,
+      pinnedBy: r.pinnedBy ?? "",
+      starredBy: r.starredBy ?? [],
+      deletedBy: r.deletedBy ?? [],
     },
   });
 }
@@ -892,6 +902,14 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             deletedAt: isoStr(r.deletedAt) ?? undefined,
             groupId: r.groupId ?? "",
             mentions: Array.isArray(r.mentions) ? r.mentions : [],
+            // GĐ 94: meta Zalo
+            reactions: Array.isArray(r.reactions) ? r.reactions : [],
+            replyToId: r.replyToId ?? "",
+            forwardedFrom: r.forwardedFrom ?? "",
+            pinned: r.pinned ?? false,
+            pinnedBy: r.pinnedBy ?? "",
+            starredBy: Array.isArray(r.starredBy) ? r.starredBy : [],
+            deletedBy: Array.isArray(r.deletedBy) ? r.deletedBy : [],
           }))
           .filter((m) => !m.deletedAt); // tombstone — tin đã thu hồi không load
 
@@ -1268,6 +1286,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       attachments: opts?.attachments ?? [],
       groupId: opts?.groupId ?? "",
       mentions: opts?.mentions ?? [],
+      // GĐ 94: trả lời + chuyển tiếp
+      replyToId: opts?.replyToId ?? "",
+      forwardedFrom: opts?.forwardedFrom ?? "",
       updatedAt: now.toISOString(),
     };
     set((s) => ({ messages: [...s.messages, msg] }));
@@ -1275,6 +1296,20 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     addPendingSync({ collection: "messages", data: msg });
     _neonInsertMessage(msg)
       .then(() => clearPendingSync([msg.id]))
+      .catch(console.warn);
+  },
+
+  /** GĐ 94: đổi meta tin nhắn (reaction/ghim/đánh dấu/xóa phía tôi) — optimistic + LWW Neon. */
+  updateMessageMeta: (id, meta) => {
+    const updatedAt = new Date().toISOString();
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === id ? { ...m, ...meta, updatedAt } : m,
+      ),
+    }));
+    saveLs(get());
+    import("@/routes/api/data")
+      .then(({ updateMessageMeta }) => updateMessageMeta({ data: { id, ...meta, updatedAt } }))
       .catch(console.warn);
   },
 
@@ -1299,6 +1334,14 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           deletedAt: r.deletedAt ?? undefined,
           groupId: r.groupId ?? "",
           mentions: Array.isArray(r.mentions) ? r.mentions : [],
+          // GĐ 94: meta Zalo — reaction/pin/star/delete-for-me từ thiết bị khác
+          reactions: Array.isArray(r.reactions) ? r.reactions : [],
+          replyToId: r.replyToId ?? "",
+          forwardedFrom: r.forwardedFrom ?? "",
+          pinned: r.pinned ?? false,
+          pinnedBy: r.pinnedBy ?? "",
+          starredBy: Array.isArray(r.starredBy) ? r.starredBy : [],
+          deletedBy: Array.isArray(r.deletedBy) ? r.deletedBy : [],
         }))
         .filter((m) => !m.deletedAt);
       if (incoming.length === 0) return;

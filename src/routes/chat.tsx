@@ -1,14 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  Bookmark,
+  CheckSquare,
+  Copy,
+  CornerUpLeft,
   CirclePlus,
   Crown,
+  Forward,
   ImagePlus,
+  Info,
   LogOut,
+  MoreHorizontal,
   Paperclip,
   Pencil,
+  Pin,
   Search,
   Send,
+  Smile,
+  Star,
+  Trash2,
   UserPlus,
   Users,
   X,
@@ -102,6 +113,7 @@ async function compressImage(file: File): Promise<string> {
 function ChatPage() {
   const messages = useAppStore((s) => s.messages);
   const sendMessage = useAppStore((s) => s.sendMessage);
+  const updateMessageMeta = useAppStore((s) => s.updateMessageMeta);
   const refreshMessages = useAppStore((s) => s.refreshMessages);
   const removeMessage = useAppStore((s) => s.removeMessage);
   const addChatGroup = useAppStore((s) => s.addChatGroup);
@@ -139,6 +151,17 @@ function ChatPage() {
   // GĐ 77: @mention trong nhóm — state dropdown chọn người khi gõ "@"
   const [mentionQuery, setMentionQuery] = useState<string | null>(null); // null = tắt; "" = vừa gõ @
   const [mentionedIds, setMentionedIds] = useState<string[]>([]); // ID employee được tag trong tin đang soạn
+  // ── GĐ 94: tác vụ tin nhắn kiểu Zalo ──
+  const [msgMenu, setMsgMenu] = useState<string | null>(null); // id tin đang mở menu "..."
+  const [reactBar, setReactBar] = useState<string | null>(null); // id tin đang mở thanh 6 emoji
+  const [replyTo, setReplyTo] = useState<string | null>(null); // id tin đang được trả lời
+  const [forwardMsg, setForwardMsg] = useState<string | null>(null); // text+from tin đang chuyển tiếp
+  const [forwardTarget, setForwardTarget] = useState<string>(""); // employeeId đích chuyển tiếp
+  const [detailMsg, setDetailMsg] = useState<string | null>(null); // id tin xem chi tiết
+  const [multiSelect, setMultiSelect] = useState(false); // đang bật chế độ chọn nhiều tin
+  const [selectedIds, setSelectedIds] = useState<string[]>([]); // tin đã tick trong mode chọn nhiều
+  const [showStarred, setShowStarred] = useState(false); // mở popup "Tin đã lưu"
+  const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "😡"]; // 6 quick reaction như Zalo
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -159,15 +182,91 @@ function ChatPage() {
         ? `mygroup:${groupId}`
         : "";
 
-  /* Tin nhắn của hội thoại đang mở */
+  /* Tin nhắn của hội thoại đang mở — GĐ 94: ẩn tin bị TÔI xóa phía tôi */
   const activeMessages = useMemo(() => {
     const list = messages.filter((m) => {
+      if (m.deletedBy?.includes(currentUserId)) return false; // xóa chỉ ở phía tôi
       if (tab === "direct") return m.directKey === directKey;
       if (groupId) return m.groupId === groupId;
       return false; // GĐ 74: không còn kênh công khai
     });
     return list.sort((a, b) => (a.at > b.at ? 1 : a.at < b.at ? -1 : 0));
-  }, [messages, tab, directKey, groupId]);
+  }, [messages, tab, directKey, groupId, currentUserId]);
+
+  /* GĐ 94: tin đang ghim của hội thoại (mới ghim thay cũ — nguồn sự thật là tin pinned cuối) */
+  const pinnedMsg = useMemo(
+    () => activeMessages.filter((m) => m.pinned).slice(-1)[0] ?? null,
+    [activeMessages],
+  );
+
+  /* GĐ 94: tin tôi đã đánh dấu ⭐ (toàn app) */
+  const starredMsgs = useMemo(
+    () => messages.filter((m) => m.starredBy?.includes(currentUserId)),
+    [messages, currentUserId],
+  );
+
+  /* GĐ 94: toggle reaction của tôi trên 1 tin — bấm lại emoji đang có = bỏ reaction */
+  function toggleReaction(msgId: string, emoji: string) {
+    const m = messages.find((x) => x.id === msgId);
+    if (!m) return;
+    const rest = (m.reactions ?? []).filter((r) => r.employeeId !== currentUserId);
+    const mineR = (m.reactions ?? []).find((r) => r.employeeId === currentUserId);
+    const next = mineR?.emoji === emoji ? rest : [...rest, { employeeId: currentUserId, emoji }];
+    updateMessageMeta(msgId, { reactions: next });
+    setReactBar(null);
+  }
+
+  /* GĐ 94: bắt đầu trả lời 1 tin */
+  function startReply(msgId: string) {
+    setReplyTo(msgId);
+    setMsgMenu(null);
+  }
+
+  /* GĐ 94: chuyển tiếp tin sang hội thoại 1-1 khác (nhóm khác giữ nguyên ngữ cảnh member — 1-1 là an toàn/nhanh nhất) */
+  function doForward() {
+    if (!forwardTarget || forwardMsg === null) return;
+    sendMessage(forwardMsg, "", { toId: forwardTarget, forwardedFrom: meName || "Người khác" });
+    toast.success("Đã chuyển tiếp tin nhắn");
+    setForwardMsg(null);
+    setForwardTarget("");
+    setMsgMenu(null);
+  }
+
+  /* GĐ 94: ghim/bỏ ghim — ghim mới tự thay ghim cũ (updateMessageMeta gọi 2 lần) */
+  function togglePin(msgId: string) {
+    const wasPinned = messages.find((x) => x.id === msgId)?.pinned ?? false;
+    if (!wasPinned) {
+      for (const p of activeMessages.filter((x) => x.pinned)) {
+        updateMessageMeta(p.id, { pinned: false, pinnedBy: "" });
+      }
+    }
+    updateMessageMeta(msgId, { pinned: !wasPinned, pinnedBy: !wasPinned ? me?.name ?? "" : "" });
+    setMsgMenu(null);
+    toast.success(wasPinned ? "Đã bỏ ghim tin nhắn" : "Đã ghim tin nhắn");
+  }
+
+  /* GĐ 94: đánh dấu/bỏ đánh dấu ⭐ tin nhắn */
+  function toggleStar(msgId: string) {
+    const m = messages.find((x) => x.id === msgId);
+    if (!m) return;
+    const has = m.starredBy?.includes(currentUserId) ?? false;
+    const next = has
+      ? (m.starredBy ?? []).filter((id) => id !== currentUserId)
+      : [...(m.starredBy ?? []), currentUserId];
+    updateMessageMeta(msgId, { starredBy: next });
+    setMsgMenu(null);
+    toast.success(has ? "Đã bỏ đánh dấu" : "Đã đánh dấu tin nhắn ⭐");
+  }
+
+  /* GĐ 94: xóa tin CHỈ Ở PHÍA TÔI — người khác vẫn thấy bình thường */
+  function deleteForMe(msgId: string) {
+    const m = messages.find((x) => x.id === msgId);
+    if (!m) return;
+    const next = [...(m.deletedBy ?? []), currentUserId];
+    updateMessageMeta(msgId, { deletedBy: next });
+    setSelectedIds((prev) => prev.filter((id) => id !== msgId));
+    setMsgMenu(null);
+  }
 
   /* Danh sách hội thoại trái — nhóm riêng (GĐ 72) + 1-1. Kênh công khai đã xóa (GĐ 74). */
   const conversationList = useMemo(() => {
@@ -290,10 +389,13 @@ function ChatPage() {
       attachments: attachments.length > 0 ? attachments : undefined,
       // GĐ 77: gửi kèm danh sách ID được @mention (chỉ nhóm có nghĩa)
       mentions: tab === "group" && mentionedIds.length > 0 ? mentionedIds : undefined,
+      // GĐ 94: kèm ID tin đang trả lời (nếu có)
+      replyToId: replyTo ?? undefined,
     });
     setText("");
     setAttachments([]);
     setMentionedIds([]); // GĐ 77: reset mention sau khi gửi
+    setReplyTo(null); // GĐ 94: reset reply sau khi gửi
   }
 
   async function handleFiles(files: FileList | null) {
@@ -483,6 +585,17 @@ function ChatPage() {
             >
               <ArrowLeft className="size-4" />
             </button>
+            {/* GĐ 94: nút ⭐ Tin đã lưu — đếm số tin đánh dấu */}
+            {starredMsgs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowStarred(true)}
+                className="flex shrink-0 items-center gap-1 rounded-full border border-line px-2 py-1 text-[11px] font-medium text-amber-600 hover:bg-surface-2"
+                title="Tin đã lưu (đánh dấu)"
+              >
+                <Star className="size-3.5 fill-amber-400 text-amber-500" /> {starredMsgs.length}
+              </button>
+            )}
             {tab === "group" ? (
               groupId && activeGroup ? (
                 <>
@@ -539,6 +652,57 @@ function ChatPage() {
             )}
           </div>
 
+          {/* GĐ 94: banner tin GHIM — đầu hội thoại, bấm cuộn tới tin */}
+          {pinnedMsg && !multiSelect && (
+            <div className="flex items-center gap-2 border-b border-line bg-surface-2/60 px-4 py-1.5">
+              <Pin className="size-3.5 shrink-0 text-accent" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-ink">{pinnedMsg.text || "📎 Đính kèm"}</p>
+                <p className="text-[10px] text-faint">Được ghim bởi {pinnedMsg.pinnedBy || "không rõ"}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => document.getElementById(`msg-${pinnedMsg.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                className="shrink-0 text-[11px] font-medium text-accent hover:underline"
+              >
+                Xem
+              </button>
+              <button
+                type="button"
+                onClick={() => togglePin(pinnedMsg.id)}
+                className="shrink-0 text-faint hover:text-ink"
+                title="Bỏ ghim"
+                aria-label="Bỏ ghim tin nhắn"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* GĐ 94: mode CHỌN NHIỀU — thanh tác vụ trên cùng */}
+          {multiSelect && (
+            <div className="flex items-center gap-2 border-b border-line bg-accent-soft px-4 py-2">
+              <button
+                type="button"
+                onClick={() => { setMultiSelect(false); setSelectedIds([]); }}
+                className="flex size-7 items-center justify-center rounded hover:bg-surface"
+                aria-label="Thoát chọn nhiều"
+              >
+                <X className="size-4" />
+              </button>
+              <p className="flex-1 text-sm font-medium text-ink">Đã chọn {selectedIds.length} tin</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={selectedIds.length === 0}
+                onClick={() => { for (const id of selectedIds) deleteForMe(id); toast.success(`Đã xóa ${selectedIds.length} tin ở phía tôi`); }}
+              >
+                <Trash2 className="size-3.5" /> Xóa phía tôi
+              </Button>
+            </div>
+          )}
+
           {/* Vùng tin nhắn */}
           <div className="flex-1 space-y-1 overflow-y-auto px-4 py-3">
             {(tab === "direct" ? Boolean(peerId) : Boolean(groupId)) &&
@@ -579,9 +743,16 @@ function ChatPage() {
                     </div>
                   )}
                   <div
+                    id={`msg-${m.id}`}
                     className={`group flex items-end gap-1.5 ${
                       mine ? "justify-end" : "justify-start"
                     }`}
+                    onClick={(e) => {
+                      // GĐ 94: mobile không có hover — bấm trực tiếp vào bubble (không phải link/ảnh) mở action bar
+                      if (e.target instanceof HTMLAnchorElement) return;
+                      setReactBar(reactBar === m.id ? null : m.id);
+                      setMsgMenu(null);
+                    }}
                   >
                     {/* Nút thu hồi — tin của mình, trong 24h, chưa có đính kèm cũ */}
                     {mine && !m.deletedAt && (
@@ -596,24 +767,67 @@ function ChatPage() {
                       >
                         <X className="size-3.5" />
                       </button>
-                    )}
-                    {m.deletedAt ? (
+                    )}                    {m.deletedAt ? (
                       <div className="max-w-[80%] rounded-lg bg-surface-2 px-3 py-2 text-sm italic text-faint">
                         Tin nhắn đã được thu hồi
                       </div>
                     ) : (
                       <div
-                        className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                        className={`relative max-w-[80%] cursor-pointer rounded-lg px-3 py-2 text-sm ${
+                          multiSelect && selectedIds.includes(m.id)
+                            ? "ring-2 ring-accent"
+                            : ""
+                        } ${
                           mine
                             ? "bg-accent text-accent-fg"
                             : "bg-surface-2 text-ink"
                         }`}
+                        onClick={(e) => {
+                          // GĐ 94: mode chọn nhiều — bấm bubble = tick/untick
+                          if (multiSelect) {
+                            e.stopPropagation();
+                            setSelectedIds((prev) =>
+                              prev.includes(m.id) ? prev.filter((x) => x !== m.id) : [...prev, m.id],
+                            );
+                            return;
+                          }
+                        }}
                       >
+                        {/* GĐ 94: nhãn CHUYỂN TIẾP — tin forward hiển thị nguồn gốc */}
+                        {m.forwardedFrom && (
+                          <p className={`mb-1 flex items-center gap-1 text-[11px] italic ${mine ? "text-accent-fg/80" : "text-muted"}`}>
+                            <Forward className="size-3" /> Chuyển tiếp từ {m.forwardedFrom}
+                          </p>
+                        )}
                         {!mine && (
                           <p className="text-[11px] font-medium text-muted">
                             {senderLabel(m)}
                           </p>
                         )}
+                        {/* GĐ 94: quote tin được TRẢ LỜI — tên + nội dung rút gọn, viền trái */}
+                        {(() => {
+                          const src = m.replyToId ? messages.find((x) => x.id === m.replyToId) : null;
+                          if (!src) return null;
+                          return (
+                            <div
+                              className={`mb-1.5 cursor-pointer border-l-2 pl-2 ${
+                                mine ? "border-accent-fg/50" : "border-accent/50"
+                              }`}
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                document.getElementById(`msg-${src.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                              }}
+                              title="Bấm để xem tin gốc"
+                            >
+                              <p className={`text-[11px] font-semibold ${mine ? "text-accent-fg/90" : "text-accent"}`}>
+                                {employees.find((e2) => e2.id === src.fromId)?.name ?? src.from}
+                              </p>
+                              <p className={`truncate text-xs ${mine ? "text-accent-fg/70" : "text-muted"}`}>
+                                {src.text || "📎 Đính kèm"}
+                              </p>
+                            </div>
+                          );
+                        })()}
                         {m.attachments && m.attachments.length > 0 ? (
                           <div className="mt-0.5 space-y-1">
                             {m.attachments.map((url) =>
@@ -684,9 +898,136 @@ function ChatPage() {
                         >
                           {fmtTime(m.at)}
                         </p>
+                        {/* GĐ 94: tổng hợp reaction — góc dưới bubble (như Zalo) */}
+                        {(m.reactions?.length ?? 0) > 0 && (
+                          <div className={`absolute -bottom-2.5 ${mine ? "right-2" : "left-2"} flex items-center gap-0.5 rounded-full border border-line bg-surface px-1.5 py-0.5 text-[11px] shadow-sm`}>
+                            {Object.entries(
+                              (m.reactions ?? []).reduce<Record<string, number>>((acc, r) => {
+                                acc[r.emoji] = (acc[r.emoji] ?? 0) + 1;
+                                return acc;
+                              }, {}),
+                            ).map(([emoji, count]) => (
+                              <span key={emoji}>
+                                {emoji}
+                                {count > 1 ? ` ${count}` : ""}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
+                    {/* GĐ 94: 3 nút nhanh — Trả lời · Chuyển tiếp · ... (hover desktop; mobile bấm bubble) */}
+                    {!m.deletedAt && !multiSelect && (
+                      <span className="mb-1 hidden shrink-0 items-center gap-0.5 group-hover:flex">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); startReply(m.id); }}
+                          className="flex size-6 items-center justify-center rounded-full bg-surface text-muted shadow-sm hover:bg-surface-2 hover:text-ink"
+                          title="Trả lời"
+                          aria-label="Trả lời tin nhắn"
+                        >
+                          <CornerUpLeft className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setForwardMsg(m.text || "📎 Đính kèm"); setForwardTarget(""); setMsgMenu(null); }}
+                          className="flex size-6 items-center justify-center rounded-full bg-surface text-muted shadow-sm hover:bg-surface-2 hover:text-ink"
+                          title="Chuyển tiếp"
+                          aria-label="Chuyển tiếp tin nhắn"
+                        >
+                          <Forward className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setMsgMenu(msgMenu === m.id ? null : m.id); setReactBar(null); }}
+                          className={`flex size-6 items-center justify-center rounded-full shadow-sm ${msgMenu === m.id ? "bg-accent text-white" : "bg-surface text-muted hover:bg-surface-2 hover:text-ink"}`}
+                          title="Lựa chọn khác"
+                          aria-label="Lựa chọn khác"
+                        >
+                          <MoreHorizontal className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setReactBar(reactBar === m.id ? null : m.id); setMsgMenu(null); }}
+                          className={`flex size-6 items-center justify-center rounded-full shadow-sm ${reactBar === m.id ? "bg-accent text-white" : "bg-surface text-muted hover:bg-surface-2 hover:text-ink"}`}
+                          title="Cảm xúc"
+                          aria-label="Thả cảm xúc"
+                        >
+                          <Smile className="size-3.5" />
+                        </button>
+                      </span>
+                    )}
                   </div>
+                  {/* GĐ 94: thanh 6 quick emoji — hiện dưới bubble khi bấm nút cảm xúc */}
+                  {reactBar === m.id && (
+                    <div className={`relative z-10 -mt-1 mb-2 flex ${mine ? "justify-end" : "justify-start"}`}>
+                      <div className="flex items-center gap-0.5 rounded-full border border-line bg-surface px-2 py-1 shadow-md">
+                        {QUICK_EMOJIS.map((em) => {
+                          const activeR = m.reactions?.find((r) => r.employeeId === currentUserId)?.emoji === em;
+                          return (
+                            <button
+                              key={em}
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); toggleReaction(m.id, em); }}
+                              className={`flex size-8 items-center justify-center rounded-full text-lg transition hover:scale-125 hover:bg-surface-2 ${activeR ? "bg-accent-soft" : ""}`}
+                              title={em}
+                            >
+                              {em}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {/* GĐ 94: menu "..." — dropdown 6 mục như Zalo */}
+                  {msgMenu === m.id && (
+                    <div className={`relative z-10 -mt-1 mb-2 flex ${mine ? "justify-end" : "justify-start"}`}>
+                      <div className="w-56 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => { navigator.clipboard.writeText(m.text); toast.success("Đã copy tin nhắn"); setMsgMenu(null); }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                        >
+                          <Copy className="size-4 text-muted" /> Copy tin nhắn
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => togglePin(m.id)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                        >
+                          <Pin className={`size-4 ${m.pinned ? "text-accent" : "text-muted"}`} /> {m.pinned ? "Bỏ ghim" : "Ghim tin nhắn"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleStar(m.id)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                        >
+                          <Star className={`size-4 ${(m.starredBy ?? []).includes(currentUserId) ? "fill-amber-400 text-amber-500" : "text-muted"}`} /> {(m.starredBy ?? []).includes(currentUserId) ? "Bỏ đánh dấu" : "Đánh dấu tin nhắn"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setMultiSelect(true); setSelectedIds([m.id]); setMsgMenu(null); }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                        >
+                          <CheckSquare className="size-4 text-muted" /> Chọn nhiều tin nhắn
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setDetailMsg(m.id); setMsgMenu(null); }}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-ink hover:bg-surface-2"
+                        >
+                          <Info className="size-4 text-muted" /> Xem chi tiết
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteForMe(m.id)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="size-4" /> Xóa chỉ ở phía tôi
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -695,6 +1036,30 @@ function ChatPage() {
 
           {/* Ô soạn tin */}
           <form onSubmit={submit} className="border-t border-line p-3">
+            {/* GĐ 94: preview tin đang TRẢ LỜI — above input, nút X hủy */}
+            {(() => {
+              const src = replyTo ? messages.find((x) => x.id === replyTo) : null;
+              if (!src) return null;
+              return (
+                <div className="mb-2 flex items-center gap-2 rounded-md border border-line bg-surface-2 px-2.5 py-1.5">
+                  <CornerUpLeft className="size-3.5 shrink-0 text-accent" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-accent">
+                      Đang trả lời {employees.find((e2) => e2.id === src.fromId)?.name ?? src.from}
+                    </p>
+                    <p className="truncate text-xs text-muted">{src.text || "📎 Đính kèm"}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    className="flex size-6 shrink-0 items-center justify-center rounded text-faint hover:bg-surface hover:text-ink"
+                    aria-label="Hủy trả lời"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              );
+            })()}
             {/* GĐ 77: dropdown @mention — gõ "@" trong nhóm để chọn người */}
             {mentionQuery !== null && mentionCandidates.length > 0 && (
               <div className="mb-2 max-h-44 overflow-y-auto rounded-md border border-line bg-surface shadow-md">
@@ -1022,6 +1387,130 @@ function ChatPage() {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── GĐ 94: dialog CHUYỂN TIẾP tin ── */}
+      <Dialog open={forwardMsg !== null} onOpenChange={(v) => !v && setForwardMsg(null)}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Chuyển tiếp tin nhắn</DialogTitle>
+          <DialogDesc>
+            Chọn người nhận — tin sẽ gửi kèm nhãn "Chuyển tiếp từ {me?.name ?? "..."}".
+          </DialogDesc>
+          <p className="mt-2 max-h-20 overflow-hidden rounded-md border border-line bg-surface-2 p-2 text-xs text-muted">
+            {forwardMsg}
+          </p>
+          <div className="mt-3 max-h-64 space-y-0.5 overflow-y-auto">
+            {employees
+              .filter((e) => e.id !== currentUserId)
+              .map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => setForwardTarget(e.id)}
+                  className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-surface-2 ${
+                    forwardTarget === e.id ? "ring-1 ring-accent" : ""
+                  }`}
+                >
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent/20 text-[10px] font-semibold text-accent">
+                    {e.name.split(" ").map((w) => w[0]).filter(Boolean).slice(0, 2).join("")}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink">{e.name}</span>
+                  {forwardTarget === e.id && <span className="text-xs font-medium text-accent">✓</span>}
+                </button>
+              ))}
+          </div>
+          <div className="mt-3 flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setForwardMsg(null)}>Hủy</Button>
+            <Button type="button" disabled={!forwardTarget} onClick={doForward}>
+              <Forward className="size-4" /> Chuyển tiếp
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── GĐ 94: dialog XEM CHI TIẾT tin nhắn ── */}
+      <Dialog open={detailMsg !== null} onOpenChange={(v) => !v && setDetailMsg(null)}>
+        <DialogContent className="max-w-sm">
+          {(() => {
+            const m = messages.find((x) => x.id === detailMsg);
+            if (!m) return null;
+            const sender = employees.find((e) => e.id === m.fromId);
+            const reactionList = m.reactions ?? [];
+            return (
+              <>
+                <DialogTitle>Chi tiết tin nhắn</DialogTitle>
+                <div className="mt-3 space-y-2 text-sm">
+                  <p className="rounded-lg border border-line bg-surface-2/50 p-3 whitespace-pre-wrap text-ink">
+                    {m.text || "📎 Đính kèm"}
+                  </p>
+                  <p><span className="text-muted">Người gửi:</span> <span className="font-medium text-ink">{sender?.name ?? m.from}</span></p>
+                  <p><span className="text-muted">Thời gian:</span> <span className="tabular text-ink">{m.at}</span></p>
+                  {m.forwardedFrom ? (
+                    <p><span className="text-muted">Chuyển tiếp từ:</span> <span className="text-ink">{m.forwardedFrom}</span></p>
+                  ) : null}
+                  {m.pinned ? (
+                    <p><span className="text-muted">Ghim:</span> <span className="text-ink">bởi {m.pinnedBy || "không rõ"}</span></p>
+                  ) : null}
+                  <p>
+                    <span className="text-muted">Cảm xúc:</span>{" "}
+                    {reactionList.length === 0 ? (
+                      <span className="text-faint">Chưa có</span>
+                    ) : (
+                      <span className="text-ink">
+                        {reactionList.map((r) => `${r.emoji} ${employees.find((e) => e.id === r.employeeId)?.name ?? "?"}`).join(", ")}
+                      </span>
+                    )}
+                  </p>
+                  <p>
+                    <span className="text-muted">Đánh dấu:</span>{" "}
+                    {(m.starredBy ?? []).length === 0 ? (
+                      <span className="text-faint">Chưa ai</span>
+                    ) : (
+                      <span className="text-ink">{(m.starredBy ?? []).map((id) => employees.find((e) => e.id === id)?.name ?? id).join(", ")}</span>
+                    )}
+                  </p>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── GĐ 94: popup TIN ĐÃ LƯU (đánh dấu ⭐) ── */}
+      <Dialog open={showStarred} onOpenChange={setShowStarred}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Tin đã lưu ⭐</DialogTitle>
+          <DialogDesc>Các tin nhắn bạn đã đánh dấu — lưu theo tài khoản, mọi thiết bị.</DialogDesc>
+          <div className="mt-3 max-h-80 space-y-1.5 overflow-y-auto">
+            {starredMsgs.length === 0 ? (
+              <p className="py-6 text-center text-sm text-faint">Chưa có tin nào được đánh dấu.</p>
+            ) : (
+              starredMsgs.map((m) => {
+                const sender = employees.find((e) => e.id === m.fromId);
+                return (
+                  <div key={m.id} className="rounded-md border border-line p-2">
+                    <p className="text-[11px] font-semibold text-accent">
+                      {sender?.name ?? m.from}
+                      <span className="ml-1.5 font-normal text-faint">
+                        {m.groupId ? chatGroups.find((g) => g.id === m.groupId)?.name ?? "Nhóm" : "Tin nhắn riêng"} · {m.at}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-sm text-ink">{m.text || "📎 Đính kèm"}</p>
+                    <div className="mt-1 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleStar(m.id)}
+                        className="text-[11px] text-muted hover:text-red-600 hover:underline"
+                      >
+                        Bỏ đánh dấu
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

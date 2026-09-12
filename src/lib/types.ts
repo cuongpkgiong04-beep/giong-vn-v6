@@ -130,6 +130,20 @@ export type ChatMessage = {
   groupId?: string;
   /** Danh sách ID employee được @mention trong tin nhóm (GĐ 77) — rỗng nếu không mention */
   mentions?: string[];
+  /** GĐ 94: reaction kiểu Zalo — [{ employeeId, emoji }] — 1 user 1 emoji trên 1 tin */
+  reactions?: { employeeId: string; emoji: string }[];
+  /** GĐ 94: trả lời tin khác — ID tin được trả lời (rỗng nếu không phải reply) */
+  replyToId?: string;
+  /** GĐ 94: tin chuyển tiếp — tên người/nguồn gửi gốc (rỗng nếu không phải forward) */
+  forwardedFrom?: string;
+  /** GĐ 94: tin được ghim đầu hội thoại (chỉ 1 tin/hội thoại, ghim mới thay ghim cũ) */
+  pinned?: boolean;
+  /** GĐ 94: ai ghim (tên hiển thị) */
+  pinnedBy?: string;
+  /** GĐ 94: tin đã lưu — danh sách employeeId đã đánh dấu ⭐ */
+  starredBy?: string[];
+  /** GĐ 94: xóa CHỈ Ở PHÍA TÔI — danh sách employeeId không còn thấy tin này */
+  deletedBy?: string[];
 };
 
 /** Nhóm chat riêng (GĐ 72) — kiểu Zalo: Admin tạo, thành viên mới thấy */
