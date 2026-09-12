@@ -327,14 +327,14 @@ function GhiChuPage() {
       </p>
 
       {/* ===== Bảng ghi chú — thead ghim khi cuộn =====
-        Mobile: Card thành khối GHIM cuộn nội bộ (pattern Nhân sự GĐ 58) — ancestor
-        overflow-x-auto phá thead sticky theo viewport nên cả container phải sticky
-        max-h + overflow-auto, thead ghim top-0 bên trong. Vừa cuộn ngang được, vừa
-        giữ tiêu đề cố định như Desktop.
+        Mobile: Card thành khối GHIM cuộn nội bộ (pattern Nhân sự GĐ 58) — table là con
+        TRỰC TIẾP của Card, thead sticky top-0 bám đúng container cuộn. KHÔNG được bọc
+        div overflow-x-auto trung gian: div đó tạo scroll container riêng (không bao giờ
+        cuộn dọc) → thead bám div → trôi theo nội dung (bug GĐ 92 lần 1 chưa trị hết).
+        Card overflow-auto tự cuộn CẢ ngang lẫn dọc; table min-w giữ chế độ cuộn ngang.
         Desktop: giữ nguyên pattern GĐ 67 (Card mở overflow, thead ghim theo viewport). */}
       <Card className="sticky top-[calc(4rem+var(--gc-sticky-h,64px))] z-[5] max-h-[calc(100dvh-10.5rem-var(--gc-sticky-h,64px))] overflow-auto p-0 lg:static lg:max-h-none lg:overflow-visible">
-        <div className="overflow-x-auto lg:overflow-x-visible">
-          <table className="w-full text-sm">
+        <table className="w-full min-w-[760px] text-sm lg:min-w-0">
             <thead className="sticky top-0 z-[5] lg:top-[calc(4rem+var(--gc-sticky-h,64px))]">
               <tr className="border-b border-line bg-surface">
                 <th className="px-3 py-3 text-left font-medium whitespace-nowrap text-muted">STT</th>
@@ -414,8 +414,7 @@ function GhiChuPage() {
                 })
               )}
             </tbody>
-          </table>
-        </div>
+        </table>
       </Card>
 
       {/* ===== Dialog tạo / sửa ghi chú — dùng chung (editingId phân biệt) ===== */}

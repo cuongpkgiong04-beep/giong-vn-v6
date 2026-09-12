@@ -3769,44 +3769,54 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > (Người tạo = Phạm Kiên Cường), sửa/xóa được mọi dòng; xóa → dialog xác nhận → biến mất
 > ở thiết bị khác; typecheck SẠCH 0 lỗi; 17/17 test pass.
 
-### Giai đoạn 92: Ghi chú mobile — thead lơ lửng giữa màn hình khi cuộn (2026-09-12)
+### Giai đoạn 92: Ghi chú mobile — thead lơ lửng rồi biến mất khi cuộn (2026-09-12, fix 2 lần)
 
 | Commit | Thay đổi |
 |---|---|
 | (mới) | fix(ghi-chu): mobile dùng pattern Nhân sự GĐ 58 — Card bảng thành khối ghim cuộn nội bộ, thead ghim top-0 bên trong; Desktop giữ nguyên |
-| (mới) | chore: tăng version 1.4.0 → 1.4.1 (fix nhỏ — patch) |
+| (mới) | fix(ghi-chu): lần 2 — BỎ div overflow-x-auto TRUNG GIAN giữa Card và table (tạo scroll container riêng → thead bám div → trôi theo nội dung); table min-w thay cuộn ngang |
+| (mới) | chore: tăng version 1.4.0 → 1.4.1 → 1.4.2 (fix nhỏ — patch) |
 
-> **BUG REPORT của Đại ca (kèm ảnh mobile):** Kéo dữ liệu xuống xem thì tiêu đề bảng
-> (STT / Nội dung...) nằm CHƠ LƠ giữa màn hình — phải cố định ở trên giống Desktop.
+> **BUG REPORT của Đại ca (kèm 2 ảnh mobile):** Lần 1 — kéo xuống thì tiêu đề bảng
+> (STT / Nội dung...) CHƠ LƠ giữa màn hình. Lần 2 (sau fix 1.4.1) — thead đứng đúng
+> đầu khung lúc đầu nhưng CUỘN TIẾP thì BIẾN MẤT theo nội dung.
 >
-> **ROOT CAUSE — lesson GĐ 56 lặp lại trên mobile:** Card bảng giữ `overflow-hidden`
-> + div `overflow-x-auto` (cuộn ngang cho 9 cột) → ancestor có overflow khác visible
-> VÔ HIỆU HÓA thead sticky theo viewport → thead trôi theo nội dung, dừng ở vị trí
-> `top-[calc(4rem+--gc-sticky-h)]` bất kỳ khi cuộn → nhìn như lơ lửng. Desktop chạy
-> đúng vì đã mở overflow qua `lg:overflow-visible`; mobile không có giải pháp riêng.
->
-> **Fix (1 chỗ trong ghi-chu.tsx — mobile-only, desktop giữ nguyên 100%):**
-> Áp dụng pattern Nhân sự GĐ 58 cho riêng mobile — Container bảng thành khối GHIM:
+> **ROOT CAUSE lần 1 — ancestor overflow phá thead sticky theo viewport:** Card bảng
+> giữ `overflow-hidden` + div `overflow-x-auto` (cuộn ngang cho 9 cột) → ancestor có
+> overflow khác visible VÔ HIỆU HÓA sticky theo viewport → thead trôi, lơ lửng.
+> Fix: Card thành khối GHIM cuộn nội bộ (pattern Nhân sự GĐ 58):
 > ```
 > sticky top-[calc(4rem+var(--gc-sticky-h,64px))] z-[5]
 > max-h-[calc(100dvh-10.5rem-var(--gc-sticky-h,64px))] overflow-auto
-> lg:static lg:max-h-none lg:overflow-visible   ← desktop về lại pattern GĐ 67
+> lg:static lg:max-h-none lg:overflow-visible   ← desktop giữ pattern GĐ 67
 > ```
-> thead: `sticky top-0 z-[5] lg:top-[calc(4rem+var(--gc-sticky-h,64px))]` —
-> mobile ghim trong khung bảng (cuộn dọc + ngang bên trong), desktop ghim theo viewport.
 >
-> **LESSON LEARNED — 2 giải pháp thead sticky theo breakpoint (2026-09-12):**
-> Bảng nhiều cột cần cuộn ngang mobile → KHÔNG thể dùng 1 pattern cho cả 2:
-> (a) **Mobile:** container sticky + max-h + overflow-auto, thead sticky top-0
->     (cuộn nội bộ — Nhân sự GĐ 58, nay là Ghi chú);
-> (b) **Desktop:** mở overflow ancestor, thead sticky theo viewport
->     (Chấm công GĐ 56, Check-in GĐ 58, Đề nghị GĐ 59...).
-> Khi gặp "thead lơ lửng/trôi", kiểm tra NGAY overflow của ancestor trên đúng
-> breakpoint đó — mỗi pattern chỉ đúng trong điều kiện overflow của nó.
+> **ROOT CAUSE lần 2 — div trung gian giữa Card và table (fix 1.4.1 chưa trị hết):**
+> Vẫn còn div `overflow-x-auto` BÊN TRONG Card, bọc table. Div đó tự tạo scroll
+> container RIÊNG — cao bằng toàn bộ bảng, KHÔNG BAO GIỜ cuộn dọc → thead
+> `sticky top-0` bám vào DIV (không phải Card) → cuộn trang thead trôi theo nội dung,
+> biến mất khỏi khung. Nhân sự không bao giờ bị vì table là con TRỰC TIẾP của
+> container ghim — không có div trung gian.
 >
-> **Tiêu chí kiểm chứng:** Mobile kéo xuống: khối lọc ghim dưới header, khung bảng
-> ghim sát dưới khối lọc, tiêu đề bảng luôn ở TRÊN CÙNG khung; cuộn ngang xem đủ
-> 9 cột trong khung; Desktop không đổi; typecheck SẠCH 0 lỗi.
+> **Fix lần 2 (ghi-chu.tsx):** BỎ div `overflow-x-auto` trung gian — table là con
+> trực tiếp của Card; Card `overflow-auto` tự cuộn CẢ ngang lẫn dọc trong khung;
+> table thêm `min-w-[760px]` (mobile) + `lg:min-w-0` (desktop) để giữ cuộn ngang
+> xem đủ 9 cột. thead: `sticky top-0 lg:top-[calc(4rem+var(--gc-sticky-h,64px))]`.
+>
+> **LESSON LEARNED — thead sticky chỉ bám SCROLL CONTAINER CHA TRỰC TIẾP (2026-09-12):**
+> `position: sticky` bám vào ancestor CUỘN GẦN NHẤT, không phải viewport, không phải
+> khối sticky phía trên. Bất kỳ div bọc nào ở giữa table và container ghim (dù chỉ
+> `overflow-x-auto`) đều trở thành scroll container của thead → thead không bao giờ
+> "hết chỗ" để ghim → trôi theo nội dung. **Checklist khi table trong container ghim:
+> (a) table = con trực tiếp, KHÔNG div bọc overflow; (b) container `overflow-auto`
+> lo cả 2 trục; (c) table `min-w-*` thay div cuộn ngang; (d) test BẰNG CÁCH CUỘN
+> ĐẾN CUỐI danh sách — thead đứng đúng đầu khung lúc đầu CHƯA ĐỦ, phải xem nó có
+> biến mất khi cuộn tiếp không.**
+>
+> **Tiêu chí kiểm chứng:** Mobile kéo xuống HẾT danh sách: khối lọc ghim dưới header,
+> khung bảng ghim sát dưới khối lọc, tiêu đề bảng LUÔN ở trên cùng khung (không lơ
+> lửng, không biến mất); cuộn ngang trong khung xem đủ 9 cột; Desktop không đổi;
+> typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 92 — Ghi chú mobile thead lơ lửng)*
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 92 — Ghi chú mobile thead, fix 2 lần)*
 *Người cập nhật: Trợ lý lập trình*
