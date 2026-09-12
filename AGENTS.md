@@ -3688,5 +3688,43 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Quy tắc code có đủ 2 nguyên tắc kề nhau; không đụng code;
 > sidebar hiện VERSION 1.3.2 sau deploy.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 89 — Nguyên tắc "Không tự đoán ý định")*
+### Giai đoạn 90: Fix user thường không đổi được mật khẩu — route guard thiếu /change-password (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(app-shell): thêm lại pathname === "/change-password" vào isRouteAllowed — user thường bị đá về trang chủ khi mở trang đổi mật khẩu |
+| (mới) | chore: tăng version 1.3.2 → 1.3.3 (fix bug — patch) |
+
+> **BUG REPORT của Đại ca (2026-09-12):** User thường KHÔNG bấm/đổi được mật khẩu;
+> chỉ Admin đổi được. Lỗi này từng được fix rồi nhưng tái phát.
+>
+> **ROOT CAUSE (2 lớp):**
+> 1. **Nút + trang + server function đều KHÔNG sai:** Link "Đổi mật khẩu" trong
+>    UserButton trỏ đúng `/change-password`; trang đổi mật khẩu không phân biệt quyền;
+>    server function `changePassword` xác thực session Better Auth — ai đăng nhập cũng chạy được.
+> 2. **Route guard trong `app-shell.tsx` thiếu `/change-password`:** user thường vào
+>    `/change-password` → `isRouteAllowed = false` → `<Navigate to="/"> đá về trang chủ
+>    ngay lập tức → nhìn như "bấm không được". Admin không sao vì guard có nhánh
+>    `isAdmin` đi qua mọi route.
+>
+> **Vì sao tái phát — xác minh bằng git:** `git diff HEAD` cho thấy dòng
+> `pathname === "/change-password"` CHỈ tồn tại ở bản local chưa commit;
+> `git log -S 'change-password' -- app-shell.tsx` trả về RỖNG ở lịch sử commit —
+> nghĩa là lần "fix lần trước" CHƯA BAO GIỜ được commit, và commit GĐ 88 (bỏ ô tìm
+> kiếm header) đã thay vùng code chứa guard → dòng cho phép mất hẳn ở bản production.
+> **Bài học: fix "đã xong" mà chưa commit = chưa tồn tại. Vùng code đã sửa nhiều lần
+> thì mỗi lần đụng vào phải grep lại các route đặc biệt (/change-password, /login...).
+>
+> **Fix (surgical — 1 file, 2 dòng):** thêm lại vào `isRouteAllowed`:
+> ```tsx
+> // Mọi user đã đăng nhập đều được đổi mật khẩu riêng — route này không thuộc nav module
+> pathname === "/change-password" ||
+> ```
+> Typecheck SẠCH 0 lỗi (scripts/typecheck.mjs).
+>
+> **Tiêu chí kiểm chứng:** User thường đăng nhập → bấm "Đổi mật khẩu" trên header →
+> trang mở bình thường → nhập mật khẩu hiện tại + mới → đổi thành công; Admin vẫn
+> đổi được như cũ; sidebar hiện VERSION 1.3.3 sau deploy.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 90 — Fix user thường không đổi được mật khẩu)*
 *Người cập nhật: Trợ lý lập trình*

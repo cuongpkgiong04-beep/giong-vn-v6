@@ -36,7 +36,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "1.3.2";
+const DEFAULT_VERSION = "1.3.3";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -331,6 +331,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     isAdmin ||
     pathname === "/" ||
     pathname === "/preview" ||
+    // Mọi user đã đăng nhập đều được đổi mật khẩu riêng — route này không thuộc nav module
+    pathname === "/change-password" ||
     // Chưa load xong phân quyền chia sẻ thì chưa redirect (tránh nháy về "/").
     !moduleAccessReady ||
     allowedPaths.includes(pathname) ||
