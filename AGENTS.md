@@ -96,6 +96,7 @@
 - **PHẢI HỎI TRƯỚC KHI PUSH** — Sau khi sửa code xong, PHẢI hỏi Đại ca lựa chọn trước khi push (xem bên dưới).
 - **Desktop + Mobile song song** (hiệu lực từ 2026-09-09) — Mọi sửa code từ giờ áp dụng đồng thời cho cả Desktop và Mobile, trừ khi Đại ca yêu cầu cụ thể khác.
 - **Chỉ sửa phần được chỉ định** (hiệu lực từ 2026-09-10) — Khi Đại ca yêu cầu sửa một phần cụ thể (một module/trang/hàm), CHỈ được sửa đúng phần đó, KHÔNG sửa lan sang phần khác (file/module/khác) dù thấy chỗ nào "nên sửa kèm". Cần đụng phần khác → DỪNG và hỏi Đại ca trước.
+- **Không tự đoán ý định** (hiệu lực từ 2026-09-12) — Chưa chắc chắn về yêu cầu (phạm vi, cách làm, kết quả mong muốn) thì PHẢI HỎI LẠI Đại ca, KHÔNG tự suy đoán ý định rồi hành động. Hỏi trúng đích hơn là làm sai phải sửa lại.
 
 ### Quy tắc CLAUDE.md (bắt buộc tuân thủ):
 
@@ -3658,5 +3659,34 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > Quản trị/avatar/Đổi mật khẩu/Đăng xuất/Chuông thông báo vẫn nằm bên phải như cũ;
 > typecheck SẠCH 0 lỗi; sidebar hiện VERSION 1.3.1 sau deploy.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 88 — Bỏ ô tìm kiếm header app)*
+### Giai đoạn 89: Thêm nguyên tắc "Không tự đoán ý định" vào Quy tắc code (2026-09-12)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): thêm nguyên tắc "Không tự đoán ý định" vào Quy tắc code — cặp với "Chỉ sửa phần được chỉ định" |
+| (mới) | chore: tăng version 1.3.1 → 1.3.2 (docs nhỏ — patch) |
+
+> **Yêu cầu của Đại ca (2026-09-12):** Chỉ sửa những chỗ được yêu cầu, không sửa lan
+> sang chỗ khác, không tự đoán ý định mà phải hỏi lại nếu chưa chắc chắn — nếu nguyên
+> tắc này chưa có trong AGENTS.md thì cho vào.
+>
+> **Kiểm tra trước khi sửa:** Nguyên tắc "Chỉ sửa phần được chỉ định" ĐÃ có sẵn
+> (dòng 98, thêm 2026-09-10, GĐ 77) — đủ ý "không sửa lan". Nhưng vế **"không tự đoán
+> ý định — chưa chắc thì hỏi lại"** chỉ có trong CLAUDE.md (Không phỏng đoán ý định /
+> PHẢI HỎI LẠI / Chưa rõ thì hỏi đừng đoán), CHƯA có trong AGENTS.md.
+>
+> **Fix (chỉ văn bản AGENTS.md):** Thêm 1 dòng vào Quy tắc code ngay dưới nguyên tắc
+> "Chỉ sửa phần được chỉ định":
+>
+> **"Không tự đoán ý định"** (hiệu lực từ 2026-09-12) — Chưa chắc chắn về yêu cầu
+> (phạm vi, cách làm, kết quả mong muốn) thì PHẢI HỎI LẠI Đại ca, KHÔNG tự suy đoán
+> ý định rồi hành động. Hỏi trúng đích hơn là làm sai phải sửa lại.
+>
+> Giờ 2 nguyên tắc đi cặp: (1) không sửa LAN — cần đụng chỗ khác → DỪNG hỏi;
+> (2) không đoán Ý — chưa chắc về yêu cầu → hỏi trước khi làm.
+>
+> **Tiêu chí kiểm chứng:** Quy tắc code có đủ 2 nguyên tắc kề nhau; không đụng code;
+> sidebar hiện VERSION 1.3.2 sau deploy.
+
+*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 89 — Nguyên tắc "Không tự đoán ý định")*
 *Người cập nhật: Trợ lý lập trình*
