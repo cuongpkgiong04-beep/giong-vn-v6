@@ -237,6 +237,8 @@ type ReportRow = {
   gps: string;
   note: string;
   photo: string;
+  /** GĐ 102: URL video check-in (nếu có) */
+  video?: string;
 };
 
 function BangCheckInReport() {
@@ -310,6 +312,7 @@ function BangCheckInReport() {
           gps: c.gps || "",
           note: c.note || "—",
           photo: c.photo || "",
+          video: c.video || "",
         };
       });
 
@@ -605,6 +608,18 @@ function BangCheckInReport() {
                         setIsDetailOpen(false); // tắt Radix modal — lightbox ngoài portal mới bấm được
                         setLightboxPhoto(detailRow.photo!);
                       }}
+                    />
+                  </div>
+                )}
+                {/* GĐ 102: video check-in (nếu có) — phát ngay trong dialog */}
+                {detailRow.video && (
+                  <div className="rounded-xl border border-line bg-black p-2">
+                    <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Video check-in</p>
+                    <video
+                      src={detailRow.video}
+                      controls
+                      playsInline
+                      className="max-h-72 w-full rounded-lg object-contain"
                     />
                   </div>
                 )}

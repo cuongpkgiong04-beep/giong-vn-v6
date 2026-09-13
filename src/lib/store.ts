@@ -77,7 +77,7 @@ type Actions = {
   removeChatGroup: (groupId: string) => void;
   /** GĐ 74: đánh dấu đã đọc hội thoại (cập nhật lastReadAt) — giảm badge unread */
   markConversationRead: (convKey: string) => void;
-  addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string) => CheckIn;
+  addCheckin: (gps?: string, address?: string, note?: string, photo?: string, centerCode?: string, video?: string) => CheckIn;
   removeCheckin: (id: string) => void;
   addDocument: (d: Omit<Document, "id" | "updatedAt">) => void;
   updateDocument: (id: string, data: Partial<Pick<Document, "title" | "category" | "dept" | "center" | "summary" | "attachments">>) => void;
@@ -672,6 +672,7 @@ async function _neonInsertCheckin(r: CheckIn) {
       address: r.address,
       note: r.note,
       photo: r.photo ?? "",
+      video: r.video ?? "",
       centerCode: r.centerCode ?? "VP",
       status: r.status ?? "checked_in",
       updatedAt: r.updatedAt,
@@ -937,7 +938,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         const neonCheckins: CheckIn[] = (cks as any[]).map((r) => ({
           id: r.id, name: r.name, time: r.time, date: r.date, weekday: r.weekday,
           gps: r.gps ?? "", address: r.address ?? "", note: r.note ?? "",
-          photo: r.photo ?? "", centerCode: r.center_code ?? "VP",
+          photo: r.photo ?? "", video: r.video ?? "", centerCode: r.center_code ?? "VP",
           // Fix TS2322 (2026-09-10): CheckIn.updatedAt là string | undefined — null không thuộc union
           status: r.status ?? "checked_in", updatedAt: isoStr(r.updated_at) ?? undefined,
         }));
@@ -1571,7 +1572,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     set((s) => ({ _chatReadTick: (s as any)._chatReadTick ? (s as any)._chatReadTick + 1 : 1 } as any));
   },
 
-  addCheckin: (gps = "", address = "", note = "", photo = "", centerCode = "VP") => {
+  addCheckin: (gps = "", address = "", note = "", photo = "", centerCode = "VP", video = "") => {
     const date = todayIso();
     const ts = new Date().toISOString();
     const rec: CheckIn = {
@@ -1584,6 +1585,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       address,
       note,
       photo,
+      video, // GĐ 102: video quay có đóng dấu — song song với photo
       centerCode,
       status: "checked_in",
       updatedAt: ts,

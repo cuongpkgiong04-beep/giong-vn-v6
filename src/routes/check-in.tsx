@@ -78,6 +78,17 @@ function CheckInPage() {
   const captureCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  // GĐ 102: quay video có đóng dấu — MediaRecorder ghi từ canvas composite
+  // (video frame + overlay stamp vẽ 15fps) thay vì ghi thẳng stream camera.
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
+  const recordCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const recordRafRef = useRef<number | null>(null);
+  const recordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [videoPreview, setVideoPreview] = useState<{ url: string; base64: string } | null>(null);
+  const MAX_RECORD_SECONDS = 30;
   const [photoStamped, setPhotoStamped] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
   // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
@@ -211,6 +222,22 @@ function CheckInPage() {
     return lines.length > 0 ? lines : [text];
   }
 
+  /**
+   * GĐ 102: detect hướng cầm máy cho stamp ngang.
+   * Ưu tiên screen.orientation (angle 90/270 = ngang); fallback so innerWidth/innerHeight
+   * (file://, trình duyệt thiếu API). Trả về hướng NGANG của KHUNG Ảnh/video (canvas),
+   * KHÔNG phải hướng thiết bị — canvas ngang (w > h) mới cần stamp xoay.
+   */
+  function detectLandscape(): boolean {
+    try {
+      const so = screen as Screen & { orientation?: { type?: string; angle?: number } };
+      const t = so?.orientation?.type ?? "";
+      if (t.includes("landscape")) return true;
+      if (t.includes("portrait")) return false;
+    } catch { /* ignore */ }
+    return typeof window !== "undefined" && window.innerWidth > window.innerHeight;
+  }
+
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
@@ -242,7 +269,11 @@ function CheckInPage() {
         { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
       ],
     ];
-    return { w, h, scale, groups, groupGap, maxStampWidth };
+    // GĐ 102: khung NGANG (w > h — camera ngang/máy quay ngang) → stamp xoay dọc
+    // theo cạnh NGẮN (bên phải khung) — đọc được khi người xem NGHIÊNG đầu sang phải,
+    // đúng như yêu cầu "quay ngang thì dấu cũng sang ngang" (dấu theo trục máy).
+    const landscape = detectLandscape() || w > h;
+    return { w, h, scale, groups, groupGap, maxStampWidth, landscape };
   }
 
   const drawOverlay = useCallback(() => {
@@ -259,49 +290,82 @@ function CheckInPage() {
     if (!ctx) return;
 
     const layout = buildStampLayout(w, h, currentName, address, gps);
-    const { groups, groupGap, scale } = layout;
+    drawStampBlock(ctx, layout);
 
+    requestAnimationFrame(drawOverlay);
+  }, [currentName, gps, address]);
+
+  /** GĐ 102: vẽ khối stamp từ layout — landscape thì xoay 90° theo cạnh phải (đọc khi nghiêng đầu sang phải, cùng trục máy ngang); portrait giữ nguyên góc trái-dưới như cũ. */
+  function drawStampBlock(ctx: CanvasRenderingContext2D, layout: ReturnType<typeof buildStampLayout>) {
+    const { w, h, scale, groups, groupGap, landscape } = layout;
     ctx.textAlign = "left";
     const lineGap = Math.round(10 * scale);
 
     let totalH = 0;
+    let maxW = 0;
     for (let gi = 0; gi < groups.length; gi++) {
       for (const l of groups[gi]) {
         ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
         totalH += l.size + lineGap;
+        maxW = Math.max(maxW, ctx.measureText(l.text).width);
       }
       if (gi < groups.length - 1) totalH += groupGap;
     }
 
     const margin = Math.round(14 * scale);
-    const boxBottom = h - margin;
-    const boxLeft = margin;
-    let y = boxBottom;
-
-    const lineX = boxLeft;
-    const textX = lineX + Math.round(7 * scale);
-    const lineWidth = Math.round(3 * scale);
-    const lineTop = y - totalH - Math.round(4 * scale);
-    const lineHeight = totalH + Math.round(6 * scale);
-
-    ctx.fillStyle = "#22c55e";
-    ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
-
-    for (let gi = 0; gi < groups.length; gi++) {
-      for (const l of groups[gi]) {
-        y -= l.size;
-        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillText(l.text, textX + 1, y + 1);
-        ctx.fillStyle = l.color;
-        ctx.fillText(l.text, textX, y);
-        y -= lineGap;
+    ctx.save();
+    if (landscape) {
+      // Xoay 90° clockwise, neo cạnh PHẢI khung, chạy từ trên xuống — chữ dọc theo
+      // trục ngang của máy: người xem nghiêng đầu phải là đọc bình thường.
+      ctx.translate(w - margin, margin);
+      ctx.rotate(Math.PI / 2);
+      // Sau rotate: trục x = hướng xuống cạnh phải, trục y = sang trái khung.
+      const lineX = 0;
+      const textX = lineX + Math.round(7 * scale);
+      const lineWidth = Math.round(3 * scale);
+      ctx.fillStyle = "#22c55e";
+      ctx.fillRect(lineX, -lineWidth, totalH + Math.round(6 * scale), lineWidth);
+      let y = 0;
+      for (let gi = 0; gi < groups.length; gi++) {
+        for (const l of groups[gi]) {
+          y += l.size;
+          ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+          ctx.fillStyle = "rgba(0,0,0,0.7)";
+          ctx.fillText(l.text, textX + 1, y + 1);
+          ctx.fillStyle = l.color;
+          ctx.fillText(l.text, textX, y);
+          y += lineGap;
+        }
+        if (gi < groups.length - 1) y += groupGap;
       }
-      if (gi < groups.length - 1) y -= groupGap;
+    } else {
+      // Portrait — nguyên bản: khối trái-dưới, dòng chạy từ dưới lên
+      const boxBottom = h - margin;
+      const boxLeft = margin;
+      let y = boxBottom;
+      const lineX = boxLeft;
+      const textX = lineX + Math.round(7 * scale);
+      const lineWidth = Math.round(3 * scale);
+      const lineTop = y - totalH - Math.round(4 * scale);
+      const lineHeight = totalH + Math.round(6 * scale);
+      ctx.fillStyle = "#22c55e";
+      ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
+      for (let gi = 0; gi < groups.length; gi++) {
+        for (const l of groups[gi]) {
+          y -= l.size;
+          ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+          ctx.fillStyle = "rgba(0,0,0,0.7)";
+          ctx.fillText(l.text, textX + 1, y + 1);
+          ctx.fillStyle = l.color;
+          ctx.fillText(l.text, textX, y);
+          y -= lineGap;
+        }
+        if (gi < groups.length - 1) y -= groupGap;
+      }
     }
-
-    requestAnimationFrame(drawOverlay);
-  }, [currentName, gps, address]);
+    ctx.restore();
+    void maxW;
+  }
 
   useEffect(() => {
     if (cameraActive && videoRef.current && !photoPreview) {
@@ -343,31 +407,8 @@ function CheckInPage() {
     const freshAddr = address;
 
     const layout = buildStampLayout(w, h, currentName, freshAddr, freshGps);
-    const { groups, groupGap, maxStampWidth, scale } = layout;
-    ctx.textAlign = "left";
-    const margin = Math.round(14 * scale);
-    const boxLeft = margin;
-    const lineX = boxLeft;
-    const textX = lineX + Math.round(7 * scale);
-    const lineWidth = Math.round(3 * scale);
-    const lineTop = h - margin - (groups.length * 2) - groupGap;
-    const lineHeight = (groups.length * 2) + groupGap;
-    ctx.fillStyle = "#22c55e";
-    ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
-
-    let y = h - margin;
-    for (const grp of groups) {
-      for (const l of grp) {
-        y -= l.size;
-        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillText(l.text, textX + 1, y + 1);
-        ctx.fillStyle = l.color;
-        ctx.fillText(l.text, textX, y);
-        y -= Math.round(10 * scale);
-      }
-      y -= groupGap;
-    }
+    // GĐ 102: dùng chung drawStampBlock — landscape xoay 90° như overlay live
+    drawStampBlock(ctx, layout);
 
     const stamped = canvas.toDataURL("image/jpeg", 0.92);
     setPhotoPreview(stamped);
@@ -378,6 +419,100 @@ function CheckInPage() {
   function retakePhoto() {
     setPhotoPreview(null);
     setPhotoStamped(false);
+    setTimeout(() => startCamera(), 50);
+  }
+
+  // ── GĐ 102: quay video có đóng dấu ────────────────────────────────────────
+  /** Vẽ 1 frame video + stamp lên canvas quay (15fps đủ cho chữ dấu, file nhẹ). */
+  function drawRecordFrame(rec: HTMLCanvasElement, vid: HTMLVideoElement) {
+    const w = vid.videoWidth > 100 ? vid.videoWidth : 640;
+    const h = vid.videoHeight > 100 ? vid.videoHeight : 480;
+    if (rec.width !== w || rec.height !== h) {
+      rec.width = w;
+      rec.height = h;
+    }
+    const ctx = rec.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(vid, 0, 0, w, h);
+    // Overlay canvas đang có stamp mới nhất (drawOverlay loop vẽ liên tục) —
+    // composite thẳng overlay lên frame là chữ dấu khớp 100% với preview.
+    const overlay = overlayCanvasRef.current;
+    if (overlay && overlay.width === w && overlay.height === h) {
+      ctx.drawImage(overlay, 0, 0);
+    } else {
+      drawStampBlock(ctx, buildStampLayout(w, h, currentName, address, gps));
+    }
+  }
+
+  function startRecording() {
+    const video = videoRef.current;
+    if (!video || !cameraActive || isRecording) return;
+    if (typeof MediaRecorder === "undefined") {
+      toast.error("Thiết bị không hỗ trợ quay video");
+      return;
+    }
+    const rec = recordCanvasRef.current ?? document.createElement("canvas");
+    recordCanvasRef.current = rec;
+    drawRecordFrame(rec, video);
+
+    const stream = rec.captureStream(15);
+    const mimeCandidates = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
+    const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 1_500_000 } : undefined);
+    recordChunksRef.current = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recordChunksRef.current.push(e.data);
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(recordChunksRef.current, { type: mimeType || "video/webm" });
+      const url = URL.createObjectURL(blob);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVideoPreview({ url, base64: String(reader.result) });
+        toast.success(`Đã quay ${recordSeconds}s — bấm Xác nhận để gửi`);
+      };
+      reader.readAsDataURL(blob);
+    };
+    mediaRecorderRef.current = recorder;
+    recorder.start(500);
+    setIsRecording(true);
+    setRecordSeconds(0);
+    // Loop vẽ frame có dấu lên canvas quay
+    const loop = () => {
+      const vid = videoRef.current;
+      if (vid && mediaRecorderRef.current === recorder) drawRecordFrame(rec, vid);
+      recordRafRef.current = requestAnimationFrame(loop);
+    };
+    recordRafRef.current = requestAnimationFrame(loop);
+    // Đếm giây hiển thị + tự dừng ở MAX
+    const tick = setInterval(() => {
+      setRecordSeconds((s) => {
+        const next = s + 1;
+        if (next >= MAX_RECORD_SECONDS) stopRecording();
+        return next;
+      });
+    }, 1000);
+    recordTimerRef.current = tick as unknown as ReturnType<typeof setTimeout>;
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    if (recordRafRef.current) {
+      cancelAnimationFrame(recordRafRef.current);
+      recordRafRef.current = null;
+    }
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+  }
+
+  function retakeVideo() {
+    stopRecording();
+    setVideoPreview(null);
     setTimeout(() => startCamera(), 50);
   }
 
@@ -462,6 +597,8 @@ function CheckInPage() {
     setLocationStatus("Đang xác định vị trí...");
     setPhotoPreview(null);
     setPhotoStamped(false);
+    if (videoPreview) URL.revokeObjectURL(videoPreview.url);
+    setVideoPreview(null);
     setGpsCoords(null);
     // Request location trong nền — không chờ (tránh chặn mở dialog)
     requestLocation();
@@ -483,10 +620,23 @@ function CheckInPage() {
       } catch (err: any) {
         console.warn("[check-in] Upload ảnh thất bại, dùng base64:", err?.message);
       }
-      addCheckin(gpsStr, address, note || "", photoUrl, currentEmployee?.center ?? "VP");
+      // GĐ 102: upload video (nếu có) — resource_type video tự detect từ base64 header
+      let videoUrl = "";
+      if (videoPreview?.base64) {
+        try {
+          const result = await uploadImage({ data: { base64: videoPreview.base64, folder: "giong-vn/check-in" } });
+          videoUrl = result.url;
+        } catch (err: any) {
+          console.warn("[check-in] Upload video thất bại:", err?.message);
+          toast.warning("Video chưa gửi được — ảnh vẫn được lưu");
+        }
+      }
+      addCheckin(gpsStr, address, note || "", photoUrl, currentEmployee?.center ?? "VP", videoUrl);
       toast.success("Check-in thành công");
       setIsDialogOpen(false);
       setPhotoPreview(null);
+      if (videoPreview) URL.revokeObjectURL(videoPreview.url);
+      setVideoPreview(null);
       setNote("");
       stopCamera();
     } catch (err: any) {
@@ -511,10 +661,22 @@ function CheckInPage() {
       } catch (err: any) {
         console.warn("[check-in] Upload ảnh thất bại, dùng base64:", err?.message);
       }
-      addCheckin(gpsStr, address, "", photoUrl, currentEmployee?.center ?? "VP");
+      // GĐ 102: upload video (nếu có)
+      let videoUrl = "";
+      if (videoPreview?.base64) {
+        try {
+          const result = await uploadImage({ data: { base64: videoPreview.base64, folder: "giong-vn/check-in" } });
+          videoUrl = result.url;
+        } catch (err: any) {
+          console.warn("[check-in] Upload video thất bại:", err?.message);
+        }
+      }
+      addCheckin(gpsStr, address, "", photoUrl, currentEmployee?.center ?? "VP", videoUrl);
       toast.success("Điểm danh tan ca thành công");
       setIsDialogOpen(false);
       setPhotoPreview(null);
+      if (videoPreview) URL.revokeObjectURL(videoPreview.url);
+      setVideoPreview(null);
       stopCamera();
     } catch (err: any) {
       toast.error("Lỗi: " + (err?.message || err));
@@ -640,7 +802,7 @@ function CheckInPage() {
           <div className="mt-5 space-y-4">
             {/* Camera / Preview area (cả 2 platform dùng maxWidth:400 + contain cho Android, contain cho iOS) */}
             <div className="relative overflow-hidden rounded-2xl border border-line bg-black">
-              {!photoPreview ? (
+              {!photoPreview && !videoPreview ? (
                 <>
                   <video
                     ref={videoRef}
@@ -664,15 +826,15 @@ function CheckInPage() {
                       type="button"
                       onClick={switchCamera}
                       className="size-10 rounded-full border-2 border-white/70 bg-black/40 backdrop-blur-sm flex items-center justify-center transition hover:bg-black/60"
-                      title="Ảnh trước / Ảnh sau"
+                      title="Camera trước / Camera sau"
                     >
                       <Camera className="size-5" />
                     </button>
                     <button
                       type="button"
                       onClick={capturePhoto}
-                      disabled={isCapturing}
-                      className={`size-16 rounded-full border-4 border-white backdrop-blur-sm flex items-center justify-center transition ${isCapturing ? 'bg-white/10 cursor-not-allowed' : 'bg-white/30 active:scale-90 hover:bg-white/50'}`}
+                      disabled={isCapturing || isRecording}
+                      className={`size-16 rounded-full border-4 border-white backdrop-blur-sm flex items-center justify-center transition ${isCapturing || isRecording ? 'bg-white/10 cursor-not-allowed' : 'bg-white/30 active:scale-90 hover:bg-white/50'}`}
                       title={isCapturing ? 'Đang xử lý...' : 'Chụp ảnh'}
                     >
                       {isCapturing ? (
@@ -681,7 +843,31 @@ function CheckInPage() {
                         <div className="size-12 rounded-full bg-white" />
                       )}
                     </button>
+                    {/* GĐ 102: nút quay video — đỏ khi đang quay, đếm giây, tự dừng 30s */}
+                    <button
+                      type="button"
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isCapturing}
+                      className={`size-10 rounded-full border-2 backdrop-blur-sm flex items-center justify-center transition ${
+                        isRecording
+                          ? "border-red-400 bg-red-500/80 hover:bg-red-500"
+                          : "border-white/70 bg-black/40 hover:bg-black/60"
+                      }`}
+                      title={isRecording ? `Dừng quay (${recordSeconds}s/${MAX_RECORD_SECONDS}s)` : `Quay video (tối đa ${MAX_RECORD_SECONDS}s)`}
+                    >
+                      {isRecording ? (
+                        <span className="block size-4 rounded-[3px] bg-white" />
+                      ) : (
+                        <span className="block size-4 rounded-full bg-red-500" />
+                      )}
+                    </button>
                   </div>
+                  {isRecording && (
+                    <div className="absolute top-2 left-3 flex items-center gap-1.5 rounded-full bg-red-600/90 px-2.5 py-1 text-xs font-semibold text-white" style={{ zIndex: 20 }}>
+                      <span className="size-2 animate-pulse rounded-full bg-white" />
+                      REC {recordSeconds}s / {MAX_RECORD_SECONDS}s
+                    </div>
+                  )}
                   {!cameraActive && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white">
                       <Loader2 className="mb-3 size-8 animate-spin" />
@@ -689,7 +875,26 @@ function CheckInPage() {
                     </div>
                   )}
                 </>
-              ) : (
+              ) : videoPreview ? (
+                <div className="relative">
+                  {/* GĐ 102: preview video đã quay — có dấu trong từng frame */}
+                  <video
+                    src={videoPreview.url}
+                    controls
+                    playsInline
+                    className="w-full rounded-2xl mx-auto"
+                    style={{ maxHeight: 400, objectFit: "contain", maxWidth: isIOS ? "100%" : 400 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={retakeVideo}
+                    className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-sm hover:bg-black/80"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Quay lại
+                  </button>
+                </div>
+              ) : photoPreview ? (
                 <div className="relative">                    <img
                       src={photoPreview}
                       alt="Ảnh check-in đã đóng dấu"
@@ -705,7 +910,7 @@ function CheckInPage() {
                     Chụp lại
                   </button>
                 </div>
-              )}
+              ) : null}
               <canvas ref={captureCanvasRef} className="hidden" />
             </div>
 
@@ -746,10 +951,10 @@ function CheckInPage() {
           </div>
 
           <div className="mt-5 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => { setIsDialogOpen(false); stopCamera(); }} disabled={isSubmitting}>
+            <Button variant="outline" onClick={() => { stopRecording(); setIsDialogOpen(false); stopCamera(); }} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button onClick={confirmCheckin} disabled={isSubmitting || !photoPreview}>
+            <Button onClick={confirmCheckin} disabled={isSubmitting || isRecording || !photoPreview || !!videoPreview}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -803,6 +1008,17 @@ function CheckInPage() {
                   <div className="rounded-xl border border-line bg-surface-2 p-3">
                     <p className="text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Ghi chú</p>
                     <p className="mt-1 text-sm text-ink">{detailRecord.note}</p>
+                  </div>
+                )}
+                {detailRecord.video && (
+                  <div className="rounded-xl border border-line bg-black p-2">
+                    <p className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-muted uppercase">Video check-in</p>
+                    <video
+                      src={detailRecord.video}
+                      controls
+                      playsInline
+                      className="max-h-72 w-full rounded-lg object-contain"
+                    />
                   </div>
                 )}
               </div>

@@ -208,6 +208,8 @@ export type CheckIn = {
   address: string;
   note: string;
   photo?: string;
+  /** URL video quay có đóng dấu (GĐ 102) — Cloudinary, song song với photo */
+  video?: string;
   centerCode?: string;
   status?: string;
   updatedAt?: string;

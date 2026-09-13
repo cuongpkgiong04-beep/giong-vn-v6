@@ -4229,5 +4229,65 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > "VERSION 1.8.1" canh giữa, có đường kẻ trên — giống hệt chân sidebar desktop;
 > desktop không đổi; typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 101 — VERSION cuối menu mobile)*
+### Giai đoạn 102: Check-in — stamp ngang + quay video có đóng dấu (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0029_checkins_video.sql — checkins thêm cột video |
+| (mới) | feat(check-in): stamp xoay 90° khi cầm máy/canvas NGANG — drawStampBlock dùng chung overlay + ảnh chụp |
+| (mới) | feat(check-in): quay video MediaRecorder composite overlay — nút REC + đếm giây + max 30s + camera trước/sau |
+| (mới) | feat(types/data/store): CheckIn.video end-to-end (addCheckin tham số 6, hydrate map, _neonInsertCheckin) |
+| (mới) | feat(check-in,bang-check-in): dialog chi tiết + Báo cáo phát video; nút Xác nhận chặn khi đang quay |
+| (mới) | chore: tăng version 1.8.1 → 1.9.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca (2026-09-13):** (1) Check-in khi quay ngang điện thoại thì dấu
+> (ngày giờ, tên, định vị) cũng sang ngang; (2) thêm quay video cho camera trước +
+> sau vì hiện chỉ có chụp ảnh.
+>
+> **Đã hỏi chốt trước khi làm:** Video CÓ đóng dấu như ảnh; ảnh + video SONG SONG
+> (bắt buộc có ảnh, video tùy chọn).
+>
+> **1. Stamp ngang:** detectLandscape() (screen.orientation.type chứa landscape,
+> fallback innerWidth>innerHeight + so w>h của canvas). Gom logic vẽ thành
+> drawStampBlock(ctx, layout) — landscape: translate góc phải-trên + rotate(PI/2),
+> đường xanh + chữ chạy theo cạnh PHẢI khung (người xem nghiêng đầu sang phải đọc
+> bình thường — cùng trục máy ngang); portrait giữ nguyên khối trái-dưới dòng chạy
+> từ dưới lên. Dùng chung cho overlay live (drawOverlay) + ảnh chụp (capturePhoto)
+> → dấu trên ảnh KHỚP 100% với preview.
+>
+> **2. Quay video có dấu:** MediaRecorder KHÔNG ghi thẳng stream camera mà ghi từ
+> canvas composite (recordCanvas 15fps: drawImage video + drawImage overlayCanvas
+> có sẵn stamp; overlay lệch kích thước thì vẽ lại drawStampBlock) → từng frame
+> video đều có ngày giờ/tên/GPS realtime. MIME chọn theo isTypeSupported
+> (webm vp9→vp8→webm→mp4). Nút REC cạnh nút chụp: đỏ nhấp nháy + đếm giây,
+> tự dừng MAX_RECORD_SECONDS=30; preview video controls + Quay lại.
+>
+> **3. Data end-to-end:** Migration 0029 (video text default ''); types CheckIn.video?;
+> insertCheckin validator + INSERT/UPSERT cột video; addCheckin tham số thứ 6;
+> neonCheckins map + _neonInsertCheckin gửi video; dialog chi tiết Check-in + Báo cáo
+> Check-in (ReportRow.video) phát video. Upload dùng uploadImage sẵn — base64 header
+> video/* tự detect resource_type video (GĐ 59), KHÔNG transformation ảnh.
+>
+> **LESSON LEARNED — MediaRecorder không ghi overlay từ getUserMedia trực tiếp
+> (2026-09-13):** Stream camera chỉ có pixel thô — muốn dấu trong video PHẢI vẽ
+> frame + stamp lên canvas rồi captureStream(canvas). Ưu điểm: composite overlay
+> canvas có sẵn → dấu khớp tuyệt đối với preview, không phải vẽ lại logic font.
+>
+> **LESSON LEARNED — detectLandscape theo CANVAS không theo thiết bị (2026-09-13):
+> Camera mobile trả stream theo hướng vật lý; canvas ngang (w>h) mới là điều kiện
+> stamp cần xoay. Kết hợp cả 3 tín hiệu (orientation API + viewport + khung canvas)
+> để bao đủ trường hợp trình duyệt thiếu API.
+>
+> **LƯU Ý cho Đại ca khi test:** (1) Cầm máy NGANG → mở Thêm Check-in → dấu hiện
+> xoay theo cạnh phải, preview + ảnh chụp giống nhau; (2) bấm nút ⏺ quay → REC đỏ
+> đếm giây, quay tối đa 30s, dừng → preview video có dấu từng frame, có tiếng? KHÔNG —
+> video chỉ hình (audio:false như ảnh); (3) chuyển camera trước/sau trước khi quay
+> đều được; (4) Xác nhận Check-in → video + ảnh cùng lên Cloudinary, mở chi tiết
+> (Check-in + Báo cáo) phát được video; (5) migration 0029 tự chạy khi build.
+>
+> **Tiêu chí kiểm chứng:** Dấu xoay đúng khi ngang, giữ nguyên khi dọc; quay video
+> 2 camera đều có dấu; video hiện trong chi tiết + báo cáo; typecheck SẠCH 0 lỗi;
+> 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 102 — Check-in stamp ngang + quay video có dấu)*
 *Người cập nhật: Trợ lý lập trình*

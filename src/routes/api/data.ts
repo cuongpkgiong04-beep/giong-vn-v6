@@ -970,6 +970,7 @@ export const insertCheckin = createServerFn({ method: "POST" })
       address?: string;
       note?: string;
       photo?: string;
+      video?: string;
       centerCode?: string;
       status?: string;
       updatedAt?: string;
@@ -979,16 +980,17 @@ export const insertCheckin = createServerFn({ method: "POST" })
     const sql = await getSql();
     const ts = data.updatedAt ? new Date(data.updatedAt) : new Date();
     try {
-      // Try with new columns (migration 0014)
+      // Try with new columns (migration 0014 + 0029 video)
       await sql`
-        INSERT INTO checkins (id, name, time, date, weekday, gps, address, note, photo, center_code, status, updated_at)
+        INSERT INTO checkins (id, name, time, date, weekday, gps, address, note, photo, video, center_code, status, updated_at)
         VALUES (${data.id}, ${data.name}, ${data.time}, ${data.date}, ${data.weekday},
                 ${data.gps ?? ""}, ${data.address ?? ""}, ${data.note ?? ""},
-                ${data.photo ?? ""}, ${data.centerCode ?? "VP"}, ${data.status ?? "checked_in"}, ${ts})
+                ${data.photo ?? ""}, ${data.video ?? ""}, ${data.centerCode ?? "VP"}, ${data.status ?? "checked_in"}, ${ts})
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name, time = EXCLUDED.time, date = EXCLUDED.date,
           weekday = EXCLUDED.weekday, gps = EXCLUDED.gps, address = EXCLUDED.address,
-          note = EXCLUDED.note, photo = EXCLUDED.photo, center_code = EXCLUDED.center_code,
+          note = EXCLUDED.note, photo = EXCLUDED.photo, video = EXCLUDED.video,
+          center_code = EXCLUDED.center_code,
           status = EXCLUDED.status, updated_at = EXCLUDED.updated_at
         WHERE checkins.updated_at < EXCLUDED.updated_at
       `;
