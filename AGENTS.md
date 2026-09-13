@@ -4400,6 +4400,13 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > Cron giờ UTC — 07:00 sáng VN = 00:00 UTC; đặt giờ lẻ (02:17) tránh giờ cao điểm
 > cron chung của Vercel.
 >
+> **LESSON LEARNED — Vercel cron KHÔNG nhận ký tự `?` (2026-09-13, deploy fail thật):**
+> Lần đầu viết schedule `"17 2 ? * 1"` (cú pháp Quartz) → Vercel từ chối vercel.json →
+> deployment **FAILED** im lặng (vercel ls không hiện deployment lỗi, chỉ thấy qua
+> GitHub commit status API). Fix: cron chuẩn 5 trường `"17 2 * * 1"` (commit b51b0b6)
+> → Ready 26s. **Khi thêm/sửa vercel.json: kiểm tra commit status sau deploy bằng
+> `curl api.github.com/.../commits/<sha>/status` — đừng chỉ tin vercel ls.**
+>
 > **LƯU Ý cho Đại ca khi test:** (1) Bấm "Backup ngay" → Drive có CẢ .json + .xlsx
 > cùng mốc giờ; mở .xlsx bằng Excel/Google Sheets — sheet Tổng quan + từng bảng;
 > (2) cron tự chạy sáng thứ Hai — kiểm tra Drive có file mới ~09:17 (xem log
@@ -4409,5 +4416,5 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > (Settings → Crons); hướng dẫn đọc/khôi phục hiện cho Admin; typecheck SẠCH 0 lỗi;
 > 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 104 — Backup tuần tự động + Excel + hướng dẫn khôi phục)*
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 104 — Backup tuần tự động + Excel + hướng dẫn khôi phục — đã test E2E production: cron 401/OK + 2 file JSON 518KB + XLSX 302KB)*
 *Người cập nhật: Trợ lý lập trình*
