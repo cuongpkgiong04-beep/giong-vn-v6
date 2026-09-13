@@ -159,3 +159,71 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
+// ── GĐ 100: Web Push — App Icon Badge "cả khi app đóng" ─────────────────────
+// Server gửi payload JSON { unreadTotal, kind, title, body, url } qua VAPID.
+// Badge icon: số 1→6, quá 6 vẫn hiển thị 6 (cap — Giống badge trong app GĐ 75).
+// iOS PWA: badge chỉ hiện sau khi user cấp quyền thông báo; Android: hiện chấm
+// thông báo (Badging API số KHÔNG được Chrome/Android hỗ trợ — MDN 8/2026).
+self.addEventListener("push", (event) => {
+  let data = null;
+  try {
+    data = event.data ? event.data.json() : null;
+  } catch {
+    data = null;
+  }
+  if (!data) return;
+
+  const unread = Number(data.unreadTotal) || 0;
+  event.waitUntil(
+    (async () => {
+      // Badge số trên icon PWA (iOS 16.4+/desktop PWA) — quá 6 giữ nguyên 6
+      const badgeCount = Math.min(unread > 0 ? Math.min(unread, 6) : 0, 6);
+      try {
+        if (badgeCount > 0 && self.navigator.setAppBadge) {
+          await self.navigator.setAppBadge(badgeCount);
+        } else if (badgeCount === 0 && self.navigator.clearAppBadge) {
+          await self.navigator.clearAppBadge();
+        }
+      } catch {
+        // Badge API không có trên Android — chấm thông báo tự hiện kèm notification
+      }
+      // Bắt buộc hiện notification khi nhận push (yêu cầu của Chrome + điều kiện
+      // để badge iOS hoạt động). Bấm mở app đúng trang.
+      if (unread > 0) {
+        await self.registration.showNotification(data.title || "GIONG VIỆT NAM", {
+          body: data.body || "",
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-96.png",
+          tag: data.kind || "giong-vn",
+          data: { url: data.url || "/" },
+        });
+      }
+    })(),
+  );
+});
+
+// Bấm notification → mở/focus app đúng url trong payload
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = event.notification.data?.url || "/";
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of clientList) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) {
+            try {
+              await client.navigate(target);
+            } catch {
+              // trang không navigate được — giữ nguyên client hiện tại
+            }
+          }
+          return;
+        }
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
+});

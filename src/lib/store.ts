@@ -1226,6 +1226,30 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     _neonInsertProposal(proposal)
       .then(() => clearPendingSync([proposal.id]))
       .catch(console.warn);
+    // GĐ 100: push badge "đề nghị chờ duyệt" tới các Admin (badge icon cả khi app đóng).
+    // Fire-and-forget — lỗi push KHÔNG được ảnh hưởng luồng gửi đề nghị.
+    void (async () => {
+      try {
+        const adminIds = get()
+          .employees.filter((e) => e.role === "Admin" || e.role === "SuperAdmin")
+          .map((e) => e.id)
+          .filter((id) => id !== proposal.createdBy);
+        if (adminIds.length === 0) return;
+        const { sendPushBadge } = await import("@/routes/api/push");
+        await sendPushBadge({
+          data: {
+            employeeIds: adminIds,
+            unreadTotal: 1, // server chỉ cần > 0 để hiện notification — badge chính xác tự cập nhật khi mở app
+            kind: "proposal",
+            title: "Đề nghị mới chờ duyệt",
+            body: `${proposal.requester}: ${proposal.title}`.slice(0, 120),
+            url: "/de-nghi",
+          },
+        });
+      } catch {
+        // push fail im lặng — badge trong app vẫn hoạt động
+      }
+    })();
   },
 
   setProposalStatus: (id, status, approver) => {
@@ -1297,6 +1321,35 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
     _neonInsertMessage(msg)
       .then(() => clearPendingSync([msg.id]))
       .catch(console.warn);
+    // GĐ 100: push badge "tin chat mới" tới người nhận (1-1 hoặc nhóm).
+    // Fire-and-forget — lỗi push KHÔNG được ảnh hưởng luồng gửi tin.
+    void (async () => {
+      try {
+        let recipientIds: string[] = [];
+        if (msg.groupId) {
+          const grp = get().chatGroups.find((g) => g.id === msg.groupId);
+          recipientIds = (grp?.members ?? [])
+            .map((m) => m.employeeId)
+            .filter((id) => id && id !== msg.fromId);
+        } else if (opts?.toId) {
+          recipientIds = [opts.toId];
+        }
+        if (recipientIds.length === 0) return;
+        const { sendPushBadge } = await import("@/routes/api/push");
+        await sendPushBadge({
+          data: {
+            employeeIds: recipientIds,
+            unreadTotal: 1, // > 0 để hiện notification — badge chính xác tự cập nhật khi mở app
+            kind: "chat",
+            title: `${me?.name ?? "Tin nhắn mới"} — Chat`,
+            body: text.slice(0, 120),
+            url: "/chat",
+          },
+        });
+      } catch {
+        // push fail im lặng — badge trong app vẫn hoạt động
+      }
+    })();
   },
 
   /** GĐ 94: đổi meta tin nhắn (reaction/ghim/đánh dấu/xóa phía tôi) — optimistic + LWW Neon. */

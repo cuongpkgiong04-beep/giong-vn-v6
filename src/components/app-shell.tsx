@@ -26,6 +26,7 @@ import { ClientOnly } from "@/components/client-only";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { isAdminRole } from "@/lib/catalog";
 import { getAllowedNavItems, setAllModuleAccessFromServer } from "@/lib/permissions";
+import { applyOsBadge, subscribePush } from "@/lib/push-client";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
@@ -36,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "1.7.1";
+const DEFAULT_VERSION = "1.8.0";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -252,6 +253,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  // GĐ 100: badge icon màn hình chính — tổng (tin chat chưa đọc + đề nghị chờ duyệt),
+  // cap 6 (badge OS không hiện được "6+"). Chạy khi app ĐANG mở; khi app đóng
+  // service worker set badge từ Web Push (public/sw.js push handler).
+  const osBadgeTotal = mobileChatUnread + pending;
+  useEffect(() => {
+    applyOsBadge(osBadgeTotal);
+  }, [osBadgeTotal]);
+
+  // GĐ 100: xin quyền thông báo + đăng ký push subscription 1 lần sau login
+  // (badge + notification cả khi app đóng). Idempotent; no-op khi env chưa cấu hình.
+  useEffect(() => {
+    if (!authEnabled || !authUser || isPending) return;
+    void subscribePush();
+  }, [authEnabled, authUser, isPending]);
 
   // Phân quyền chia sẻ (module_access) — load từ DB để grant của Admin áp dụng
   // trên mọi thiết bị. Load riêng, fail không chặn app (giữ bản local mirror).

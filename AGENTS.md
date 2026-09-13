@@ -4146,5 +4146,62 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > ghi chú của users khác hiện đúng phạm vi (user chỉ thấy của mình, Admin tất cả).
 > Typecheck SẠCH 0 lỗi; 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 99 — Fix sort ghi chú + ẩn Quản trị khỏi Sidebar user thường)*
+### Giai đoạn 100: App Icon Badge — thông báo trên icon màn hình chính mobile (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(migration): 0028_push_subscriptions.sql — bảng lưu Web Push subscription per thiết bị |
+| (mới) | feat(push): server api/push.ts — lưu/xóa subscription + sendPushBadge (VAPID, dọn endpoint 404/410) |
+| (mới) | feat(push): client push-client.ts — xin quyền + đăng ký subscription + applyOsBadge (app mở) |
+| (mới) | feat(sw.js): push handler — set badge + notification khi app đóng; notificationclick mở đúng trang |
+| (mới) | feat(store): sendMessage/addProposal trigger push tới người nhận / Admin |
+| (mới) | feat(app-shell): badge icon = chat chưa đọc + đề nghị chờ (cap 6) realtime; tự xin quyền sau login |
+| (mới) | chore: tăng version 1.7.1 → 1.8.0 (feature lớn — minor) + deps web-push, @types/web-push |
+
+> **Yêu cầu của Đại ca (kèm ảnh badge Play Store, 2026-09-13):** Nghiên cứu để thông báo
+> của app (Chat + Đề nghị đề xuất) thể hiện lên ICON app trên màn hình chính mobile —
+> ô nhỏ nền đỏ, số trắng, 1→6, quá 6 → 6+.
+>
+> **Nghiên cứu (MDN 8/2026 + Chrome docs):** PWA dùng Badging API `setAppBadge(n)` —
+> (1) iOS/iPadOS 16.4+ PWA: OK, PHẢI xin quyền Notification trước; (2) Android Chrome:
+> KHÔNG hỗ trợ badge số (Google chặn từ OS) → Android nhận notification thường + chấm;
+> (3) desktop PWA: OK. Badge OS chỉ nhận số, không hiện được "6+" → quá 6 hiển thị 6
+> (trong app vẫn 6+ như cũ GĐ 75). Màu đỏ/trắng do OS đặt — web không chỉnh được.
+>
+> **Đã hỏi Đại ca trước khi làm:** Đại ca chọn Gói B (CẢ KHI APP ĐÓNG — Web Push)
+> + badge = TỔNG (chat chưa đọc + đề nghị chờ duyệt).
+>
+> **Kiến trúc end-to-end:** sendMessage → xác định người nhận (1-1 = toId; nhóm =
+> members trừ mình; đề nghị = Admin/SuperAdmin trừ người tạo) → sendPushBadge (server,
+> web-push + VAPID) → push service (FCM/APNs) → sw.js push handler → setAppBadge +
+> showNotification → bấm notification mở đúng trang (/chat, /de-nghi). App ĐANG mở:
+> app-shell useEffect theo `mobileChatUnread + pending` gọi applyOsBadge realtime.
+> unreadTotal trong push = 1 (chỉ cần >0 để hiện notification) — badge số CHÍNH XÁC
+> tự cập nhật khi user mở app (local lastRead map per-user).
+>
+> **Env VAPID (đã set qua CLI sau khi `vercel link`, chọn Secret):**
+> `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (web-push generateVAPIDKeys) / `VAPID_SUBJECT`
+> (mailto:cuongpk.giong04@gmail.com). Thiếu env → mọi function no-op an toàn (app vẫn
+> chạy, chỉ mất badge khi app đóng). KHÔNG đánh dấu config pull được — private key
+> giữ Secret đúng chuẩn.
+>
+> **LESSON LEARNED — Badge số không phải 1 API cho mọi nền tảng (2026-09-13):**
+> "Hiện số trên icon app" nghe như 1 tính năng nhưng thực ra 3 mảnh: Badging API
+> (app mở), Web Push + SW push handler (app đóng), và quyền Notification (điều kiện
+> iOS). Android là điểm mù của web (không có badge số) — không thể fix từ phía code,
+> chỉ có notification thay thế. Khi nghiên cứu tính năng OS-level luôn tách theo
+> nền tảng trước khi hứa kết quả với user.
+>
+> **LƯU Ý cho Đại ca khi test:** (1) Mở app trên iPhone → chấp nhận cho phép thông
+> báo → badge icon hiện khi có tin chat/đề nghị mới; (2) tắt app (swipe khỏi đa nhiệm)
+> → nhờ người khác nhắn tin → icon trên màn hình chính vẫn hiện badge + notification;
+> (3) mở app đọc hết → badge tự mất; (4) Android: nhận notification thường, không
+> badge số (giới hạn Google); (5) cần "Thêm vào Màn hình chính" trước thì mới có icon
+> PWA để badge.
+>
+> **Tiêu chí kiểm chứng:** iPhone PWA: badge số trên icon khi app mở lẫn app đóng;
+> bấm notification mở đúng trang; đọc hết tin badge về 0; đề nghị mới → Admin nhận
+> badge; quá 6 hiển thị 6; typecheck SẠCH 0 lỗi; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 100 — App Icon Badge: chat + đề nghị lên icon mobile)*
 *Người cập nhật: Trợ lý lập trình*
