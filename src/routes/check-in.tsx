@@ -612,13 +612,19 @@ function CheckInPage() {
     setIsSubmitting(true);
     try {
       const gpsStr = gpsCoords[0] + "," + gpsCoords[1];
-      // Upload photo to Cloudinary
-      let photoUrl = photoPreview;
+      // GĐ 103 fix tràn Neon: upload Cloudinary là BẮT BUỘC — fail thì DỪNG với toast
+      // rõ ràng, giữ ảnh/video trong dialog cho user bấm lại (không còn lưu base64
+// 50-100KB vào Neon như trước — đã thấy 1 ảnh lọt vào DB).
+      let photoUrl = "";
       try {
         const result = await uploadImage({ data: { base64: photoPreview, folder: "giong-vn/check-in" } });
         photoUrl = result.url;
       } catch (err: any) {
-        console.warn("[check-in] Upload ảnh thất bại, dùng base64:", err?.message);
+        console.warn("[check-in] Upload ảnh thất bại:", err?.message);
+        toast.error("Upload ảnh thất bại — kiểm tra mạng rồi bấm Xác nhận lại. Dữ liệu chưa gửi đi.");
+        setIsSubmitting(false);
+        submittingRef.current = false;
+        return;
       }
       // GĐ 102: upload video (nếu có) — resource_type video tự detect từ base64 header
       let videoUrl = "";
@@ -627,8 +633,8 @@ function CheckInPage() {
           const result = await uploadImage({ data: { base64: videoPreview.base64, folder: "giong-vn/check-in" } });
           videoUrl = result.url;
         } catch (err: any) {
-          console.warn("[check-in] Upload video thất bại:", err?.message);
-          toast.warning("Video chưa gửi được — ảnh vẫn được lưu");
+          console.warn("[check-in] Upload video thất bại — gửi không video:", err?.message);
+          toast.warning("Video chưa gửi được — check-in vẫn lưu với ảnh");
         }
       }
       addCheckin(gpsStr, address, note || "", photoUrl, currentEmployee?.center ?? "VP", videoUrl);
@@ -653,13 +659,17 @@ function CheckInPage() {
     setIsSubmitting(true);
     try {
       const gpsStr = gpsCoords[0] + "," + gpsCoords[1];
-      // Upload photo to Cloudinary
-      let photoUrl = photoPreview;
+      // GĐ 103 fix tràn Neon: upload bắt buộc — fail thì dừng, KHÔNG lưu base64 vào DB
+      let photoUrl = "";
       try {
         const result = await uploadImage({ data: { base64: photoPreview, folder: "giong-vn/check-in" } });
         photoUrl = result.url;
       } catch (err: any) {
-        console.warn("[check-in] Upload ảnh thất bại, dùng base64:", err?.message);
+        console.warn("[check-in] Upload ảnh thất bại:", err?.message);
+        toast.error("Upload ảnh thất bại — kiểm tra mạng rồi bấm Xác nhận lại. Dữ liệu chưa gửi đi.");
+        setIsSubmitting(false);
+        submittingRef.current = false;
+        return;
       }
       // GĐ 102: upload video (nếu có)
       let videoUrl = "";

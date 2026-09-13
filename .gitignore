@@ -17,3 +17,6 @@ Thumbs.db
 # Debug artifacts
 page.html
 .env*
+
+# Google Service Account key (GĐ 103 — backup Drive)
+.secrets/

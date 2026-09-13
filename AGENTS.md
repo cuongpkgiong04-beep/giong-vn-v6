@@ -4289,5 +4289,74 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > 2 camera đều có dấu; video hiện trong chi tiết + báo cáo; typecheck SẠCH 0 lỗi;
 > 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 102 — Check-in stamp ngang + quay video có dấu)*
+### Giai đoạn 103: Nghiên cứu Google Drive + Backup Drive + chặn base64 vào Neon (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(check-in): chặn base64 fallback — upload Cloudinary fail thì dừng + toast, KHÔNG lưu base64 50-100KB vào Neon |
+| (mới) | feat(backup): api/backup-drive.ts — gom 12 bảng Neon thành JSON upload Google Drive (OAuth refresh token) |
+| (mới) | feat(huong-dan): card "Sao lưu dữ liệu lên Google Drive" (chỉ Admin) — nút Backup ngay + kết quả số record |
+| (mới) | chore: gỡ package googleapis (thuần fetch — nhẹ bundle serverless) |
+| (mới) | chore: tăng version 1.9.0 → 1.9.1 (fix nhỏ + công cụ nội bộ — patch) |
+
+> **Câu hỏi của Đại ca (2026-09-13):** Dữ liệu thêm mới (đề nghị, check-in, chấm công,
+> ghi chú, chat, nhiệm vụ...) chuyển sang Google Drive được không để tránh Neon tràn
+> bộ nhớ? Nghiên cứu giải pháp tối ưu mà dữ liệu vẫn chạy ổn định.
+>
+> **Kết quả nghiên cứu (đo thật + tra cứu giới hạn Google):**
+> - Neon đang dùng **0.04/0.5GB (8%)**; toàn bộ data 2.34MB; ảnh/video ĐÃ nằm
+>   Cloudinary từ GĐ 8 (Neon chỉ giữ URL ~100 bytes) → tốc độ đầy ~4 NĂM mới tới hạn.
+> - Drive làm DB live: KHÔNG khả thi — ~3 ghi/giây bền vững, không query/index,
+>   ghi đồng thời tải-sửa-tải → mất dữ liệu. Đại ca chốt **A + B**: (A) chặn lỗ
+>   hổng base64 — nguồn phình to duy nhất còn tồn tại; (B) backup định kỳ ra Drive.
+>
+> **A — chặn base64:** confirmCheckin (Xác nhận + Tan ca): uploadImage fail → return
+> + toast "không lưu được ảnh, thử lại" — giữ ảnh trong dialog bấm lại; KHÔNG còn
+> lưu base64 vào `photo`. Chấm công đã chuẩn sẵn từ GĐ 25. Đã thấy 1 ảnh base64
+> lọt DB trong 56 check-in — đây là rủi ro thật.
+>
+> **B — Backup Drive — hành trình kiến trúc (3 lần thử):**
+> 1. **Service Account upload thẳng** → ❌ Google từ chối: "Service Accounts do not
+>    have storage quota" — SA Gmail thường không có dung lượng riêng, upload của SA
+>    vào folder được chia sẻ VẪN bị chặn (chỉ Shared Drive của Workspace trả phí mới
+>    đi được đường này).
+> 2. **SA tạo folder → chia sẻ cho Đại ca** → folder này vẫn nằm trong Drive SA
+>    (quota 0) → vô dụng. Folder ĐÚNG phải nằm trong Drive của Đại ca.
+> 3. **OAuth refresh token của chính Đại ca** (gcloud `auth login --enable-gdrive-access`
+>    sinh file ADC `legacy_credentials/<email>/adc.json` chứa refresh_token + client_id
+>    + client_secret có scope drive) → upload bằng danh nghĩa Đại ca → dùng quota 15GB
+>    Gmail → ✅ test upload + xóa file OK.
+>
+> **Kiến trúc cuối:** 4 env Vercel (`GOOGLE_REFRESH_TOKEN`, `GOOGLE_CLIENT_ID`,
+> `GOOGLE_CLIENT_SECRET`, `GOOGLE_DRIVE_FOLDER_ID` — đều Secret). Server function
+> thuần fetch: refresh token → access token → POST multipart upload 1 request →
+> file `giong-vn-backup-yyyy-mm-dd-hhmm.json` vào folder **GIONG-VN-Backup** trong
+> Drive của Đại ca. Folder ID: `1Kd0z8aJRQzl-Zwex0h5PHYR5m-Nuu2L6`. Key SA cũ
+> (`.secrets/giong-vn-backup-key.json`) KHÔNG còn dùng cho backup — chỉ còn giá trị
+> tham khảo, đã gitignore. GCP project `giong-vn-app` + Drive API đã bật (có thể
+> tái dùng sau này).
+>
+> **LESSON LEARNED — Service Account + Gmail cá nhân = không có quota Drive (2026-09-13):**
+> Mọi tutorial "upload Drive bằng Service Account" mặc định Workspace hoặc Shared Drive.
+> Với Gmail thường: file upload bởi SA bị từ chối KHỔNG QUOTA dù folder đã chia sẻ
+> writer. Giải pháp duy nhất không cần duyệt OAuth consent screen: refresh token từ
+> gcloud ADC (`--enable-gdrive-access`) — upload bằng danh nghĩa chủ tài khoản.
+>
+> **LESSON LEARNED — gcloud token qua Git Bash trên Windows (2026-09-13):**
+> `gcloud` wrapper .bash gọi python bằng path dạng `C;C:\...` hỏng trong Git Bash.
+> Cách ổn định: gọi qua `powershell.exe -Command "& '...gcloud.cmd' ..."` rồi
+> `tr -d '\r'`. Token của `auth login` thường KHÔNG có scope Drive — phải login lại
+> với `--enable-gdrive-access`; scopes đọc được trong response của oauth2/token.
+>
+> **LƯU Ý cho Đại ca khi test:** (1) Vào trang Hướng dẫn (Admin) → card "Sao lưu dữ
+> liệu lên Google Drive" → bấm **Backup ngay** → toast xanh + link file trong Drive
+> folder GIONG-VN-Backup; (2) file backup mở được, đủ 12 bảng; (3) Check-in khi
+> mạng chặn Cloudinary → hiện toast lỗi, KHÔNG tạo check-in — không còn base64
+> chui vào Neon; (4) 4 env GOOGLE_* đã set production qua CLI (Secret).
+>
+> **Tiêu chí kiểm chứng:** Backup tạo file JSON trong Drive đúng folder; số record
+> khớp production; check-in fail-upload không ghi base64 vào DB; typecheck SẠCH 0
+> lỗi; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 103 — Backup Google Drive + chặn base64 vào Neon)*
 *Người cập nhật: Trợ lý lập trình*
