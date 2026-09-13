@@ -33,6 +33,7 @@ import { Route as BaoCaoBangDeNghiRouteImport } from './routes/bao-cao/bang-de-n
 import { Route as BaoCaoBangHoSoRouteImport } from './routes/bao-cao/bang-ho-so'
 import { Route as BaoCaoBangNhiemVuRouteImport } from './routes/bao-cao/bang-nhiem-vu'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiCronBackupRouteImport } from './routes/api/cron/backup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -154,6 +155,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronBackupRoute = ApiCronBackupRouteImport.update({
+  id: '/api/cron/backup',
+  path: '/api/cron/backup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/bao-cao/bang-ho-so': typeof BaoCaoBangHoSoRoute
   '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/backup': typeof ApiCronBackupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/bao-cao/bang-ho-so': typeof BaoCaoBangHoSoRoute
   '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/backup': typeof ApiCronBackupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/bao-cao/bang-ho-so': typeof BaoCaoBangHoSoRoute
   '/bao-cao/bang-nhiem-vu': typeof BaoCaoBangNhiemVuRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/cron/backup': typeof ApiCronBackupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/bao-cao/bang-ho-so'
     | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
+    | '/api/cron/backup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/bao-cao/bang-ho-so'
     | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
+    | '/api/cron/backup'
   id:
     | '__root__'
     | '/'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/bao-cao/bang-ho-so'
     | '/bao-cao/bang-nhiem-vu'
     | '/api/auth/$'
+    | '/api/cron/backup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -335,6 +347,7 @@ export interface RootRouteChildren {
   AdminApprovalsRoute: typeof AdminApprovalsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCronBackupRoute: typeof ApiCronBackupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -507,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/backup': {
+      id: '/api/cron/backup'
+      path: '/api/cron/backup'
+      fullPath: '/api/cron/backup'
+      preLoaderRoute: typeof ApiCronBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -549,6 +569,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminApprovalsRoute: AdminApprovalsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCronBackupRoute: ApiCronBackupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -4358,5 +4358,56 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > khớp production; check-in fail-upload không ghi base64 vào DB; typecheck SẠCH 0
 > lỗi; 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 103 — Backup Google Drive + chặn base64 vào Neon)*
+### Giai đoạn 104: Backup tự động tuần + backup Excel + hướng dẫn đọc/khôi phục (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(backup): performBackup() sinh 2 file — JSON (khôi phục) + XLSX (đọc Excel, mỗi bảng 1 sheet) |
+| (mới) | feat(cron): route /api/cron/backup (Bearer CRON_SECRET) + vercel.json crons 1 tuần/lần (02:17 UTC thứ Hai) |
+| (mới) | feat(huong-dan): card "Hướng dẫn đọc file backup & khôi phục" (Admin) — cấu trúc file, quy trình 4 bước |
+| (mới) | chore: +exceljs, CRON_SECRET env; version 1.9.1 → 2.0.1 (minor 9 đầy → nhớ major) |
+
+> **Yêu cầu của Đại ca (2026-09-13):** (1) Hướng dẫn đọc file backup + cách khôi phục
+> vào phần Hướng dẫn chỉ Admin thấy; (2) Backup tự động 1 tuần 1 lần; (3) Backup
+> dạng Excel.
+>
+> **1. Backup 2 định dạng:** refactor backup-drive.ts — `collectBackupData()` load
+> 12 bảng dùng chung; `buildExcel()` (exceljs, dynamic import — không tăng bundle
+> chính) sinh workbook: sheet "Tổng quan" (thời gian xuất + số dòng từng bảng +
+> cảnh báo "KHÔI PHỤC phải dùng file .json") + mỗi bảng 1 sheet (dòng đầu tên cột,
+> object → JSON.stringify, Date → ISO). `performBackup()` upload CẢ 2 file qua
+> `driveUpload()` dùng chung (multipart buffer). Nút "Backup ngay" giờ báo cả 2 file.
+>
+> **2. Cron tuần:** route TanStack `/api/cron/backup` (pattern /api/auth/$) — GET,
+> kiểm `authorization: Bearer ${CRON_SECRET}` (Vercel Cron tự gửi env này; request
+> lạ → 401). vercel.json: `schedule "17 2 ? * 1"` = 02:17 UTC thứ Hai ≈ 09:17 sáng
+> VN. not-configured trả 200 (không retry nhiễu); lỗi khác 500. CRON_SECRET đã set
+> production (random 48 ký tự qua CLI).
+>
+> **3. Hướng dẫn (Admin):** card mới dưới card backup — cấu trúc file JSON ({meta,
+> data}), danh sách 12 bảng, công dụng từng định dạng (json = khôi phục, xlsx =
+> tra cứu/in ấn KHÔNG khôi phục), quy trình khôi phục 4 bước (tải json mới nhất →
+> gửi trợ lý nạp về Neon theo id, dữ liệu mới hơn backup không bị mất → đối chiếu
+> sheet Tổng quan → mở app kiểm tra).
+>
+> **Version 2.0.0-lệch:** bump `1.9.1 → 2.0.1` — feature mới = minor +1, minor đang
+> 9 (đầy) → về 0 + nhớ major (1→2), patch giữ 1. Lần ĐẦU TIÊN hệ đạt major 2.
+>
+> **LESSON LEARNED — Vercel Cron + TanStack Start route (2026-09-13):** Vercel Cron
+> chỉ gọi được URL public — route server của TanStack Start (createFileRoute +
+> server.handlers.GET) hoạt động như endpoint HTTP bình thường; thêm route file mới
+> phải sinh lại routeTree.gen.ts (script router-generator — GĐ 78) rồi commit.
+> Cron giờ UTC — 07:00 sáng VN = 00:00 UTC; đặt giờ lẻ (02:17) tránh giờ cao điểm
+> cron chung của Vercel.
+>
+> **LƯU Ý cho Đại ca khi test:** (1) Bấm "Backup ngay" → Drive có CẢ .json + .xlsx
+> cùng mốc giờ; mở .xlsx bằng Excel/Google Sheets — sheet Tổng quan + từng bảng;
+> (2) cron tự chạy sáng thứ Hai — kiểm tra Drive có file mới ~09:17 (xem log
+> `vercel logs` có dòng [cron-backup] OK); (3) card hướng dẫn khôi phục chỉ Admin thấy.
+>
+> **Tiêu chí kiểm chứng:** Backup tay tạo 2 file; cron đăng ký hiện trong Vercel
+> (Settings → Crons); hướng dẫn đọc/khôi phục hiện cho Admin; typecheck SẠCH 0 lỗi;
+> 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 104 — Backup tuần tự động + Excel + hướng dẫn khôi phục)*
 *Người cập nhật: Trợ lý lập trình*
