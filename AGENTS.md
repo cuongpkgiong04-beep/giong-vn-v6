@@ -4451,5 +4451,53 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Quay video có tiếng rõ; dấu thời gian vẫn khớp từng
 > frame; thiếu mic không vỡ flow; typecheck SẠCH 0 lỗi; 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 105 — Check-in video quay có âm thanh)*
+### Giai đoạn 106: Khởi đầu hệ sinh thái — Monorepo giong-apps + scaffold app Bán hàng (2026-09-14)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo giong-apps) | feat: khung monorepo + scaffold app Bán hàng (Giai đoạn A) |
+| (app tổng) | chore(gitignore): thêm giong-apps/ + chore: tăng version 2.1.0 → 2.1.1 |
+
+> **Bối cảnh (đã chốt với Đại ca qua 3 vòng hỏi-đáp 2026-09-14):** Tách hệ sinh
+> thái thành dự án tổng (giong-vn-v6 — GIỮ NGUYÊN) + 5 dự án con (Bán hàng,
+> Logistics, Mua hàng, NXK, UPMisa). Đại ca chốt: **mô hình B — app riêng
+> (monorepo)**, **SSO 1 tài khoản (JWT handoff — không cần domain)**, **Vercel
+> free mỗi app 1 project**, **pilot Bán hàng**, **hàng hóa dùng chung**,
+> **offline-first**, phạm vi Bán hàng theo app SMED (chi tiết gửi sau), **gửi
+> kế hoạch trước rồi mới làm**.
+>
+> **Căn bản nghiệp vụ — tool desktop SMED-MISA Task Runner v1.3.2 (Python):**
+> Đại ca gửi code để làm gốc. Đã chốt vai trò: **web điều khiển — tool chạy**;
+> 2 bộ tài khoản (user_3/user_16) là tài khoản SMED. Pipeline Excel 12 giai
+> đoạn đã phân tích thành `docs/smed-pipeline.md` trong repo mới (GĐ6 gom
+> trung tâm, GĐ7 đối chiếu BK/CT/TKTH, GĐ8 ghép TT/DT/XK/NK khóa đa cột,
+> GĐ9-10 lợi nhuận gộp + 10 cột Check, GĐ12 XK trả nợ DT đặt trước).
+>
+> **Đã dựng (commit đầu tiên repo `giong-apps`):** root monorepo npm
+> workspaces; apps/banhang — khung TanStack Start + Vite 8.1.5 pin (bài học
+> GĐ 12) + db.ts hai-backend Neon/PGLite nhân bản app tổng + migration 0001
+> (tên file prefix app — bảng `_migrations` dùng chung key theo basename) +
+> trang chủ có **ping Neon chung** (đếm employees) kiểm chứng kết nối;
+> AGENTS.md riêng cho repo mới; docs/smed-pipeline.md.
+>
+> **App tổng chỉ thêm:** 1 dòng `giong-apps/` trong .gitignore (repo mới được
+> clone NỘI BỘ cạnh repo chính để làm việc, không lẫn git) + version bump.
+>
+> **LESSON LEARNED — Repo monorepo song song (2026-09-14):** Khi làm việc trên
+> repo thứ 2, clone nó vào thư mục con của workspace chính + gitignore ngay —
+> giữ 1 cửa sổ làm việc duy nhất nhưng 2 git độc lập; KHÔNG tạo git submodule
+> (phức tạp không cần thiết cho quy mô 2 repo).
+>
+> **LESSON LEARNED — Migration DB dùng chung nhiều app (2026-09-14):** Mỗi app
+> con giữ migrations/ riêng; bảng `_migrations` key theo BASENAME nên tên file
+> phải prefix theo app (`0001_banhang_init.sql`) để 2 app không đụng tên trong
+> cùng DB. App con CHỈ ĐỌC bảng dùng chung (user/session/employees/centers);
+> bảng nghiệp vụ tách prefix (sales_*/wh_*/po_*/log_*/misa_*).
+>
+> **Tiêu chí kiểm chứng:** Repo giong-apps push thành công; Vercel project
+> giong-banhang chạy được URL riêng; trang chủ hiện Database = Neon (dùng
+> chung) + số employees khớp production; app tổng giong-vn-v6 KHÔNG đổi gì
+> ngoài .gitignore + version 2.1.1.
+
+*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 106 — Khởi đầu hệ sinh thái giong-apps)*
 *Người cập nhật: Trợ lý lập trình*

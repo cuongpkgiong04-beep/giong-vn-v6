@@ -20,3 +20,6 @@ page.html
 
 # Google Service Account key (GĐ 103 — backup Drive)
 .secrets/
+
+# Monorepo giong-apps (repo riêng — clone nội bộ để làm việc, GĐ A 2026-09-14)
+giong-apps/
