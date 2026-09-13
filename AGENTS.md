@@ -4095,5 +4095,56 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > hiện cho cả 2 role với đúng phạm vi; lối tắt Ghi chú dẫn đúng trang; typecheck
 > SẠCH 0 lỗi; 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 98 — Dashboard lọc theo user + bảng Ghi chú)*
+### Giai đoạn 99: Fix sort ghi chú Dashboard + Ẩn nhóm Quản trị khỏi Sidebar user thường (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| `1f833da` | fix(dashboard): sort ghi chú mới nhất lên đầu — hết hiện tượng "chỉ thấy ghi chú Admin" |
+| (mới) | fix(app-shell): SidebarNav nhận items={visibleNav} — nhóm Quản trị (Duyệt đăng ký + Phân quyền) chỉ hiện với Admin/SuperAdmin |
+| (mới) | chore: tăng version 1.7.0 → 1.7.1 (fix nhỏ — patch) |
+
+> **BUG REPORT 1 của Đại ca:** Card "Ghi chú gần đây" trên Dashboard chỉ thấy ghi chú
+> của Admin, không thấy của users khác.
+>
+> **Chẩn đoán (Playwright production):** KHÔNG mất data — module /ghi-chu hiện đủ 46
+> ghi chú của cả "Phạm Kiên Cường" lẫn "Phạm Kiên Cường_01". Lỗi là SORT: Dashboard
+> dùng thẳng thứ tự mảng store (sau merge offline không đảm bảo thứ tự ngày) → ghi chú
+> CŨ nhất (09/2025, 04/2026) lênh đầu — mà ghi chú cũ đã được migration 0026 (GĐ 91,
+> theo yêu cầu Đại ca) chuyển hết ownership về Admin Phạm Kiên Cường → nhìn như
+> "chỉ có ghi chú Admin", ghi chú mới của user khác bị chôn dưới đáy.
+>
+> **Fix 1:** memo `myNotesSorted` — sort ngày mới nhất lên đầu (cùng ngày so updatedAt);
+> card + dialog "Xem tất cả" đều dùng nguồn đã sort.
+>
+> **BUG REPORT 2 của Đại ca:** Nhóm Quản trị (Duyệt đăng ký + Phân quyền) trên Sidebar
+> phải CHỈ hiện khi người đăng nhập là admin hoặc super admin.
+>
+> **ROOT CAUSE:** `SidebarNav` render thẳng mảng `NAV` cứng — KHÔNG đi qua lớp phân
+> quyền `visibleNav` (NAV đã lọc theo `getAllowedNavItems`; module "admin" chỉ cấp
+> cho Admin/SuperAdmin qua `getDefaultModuleAccess`, không nằm trong bảng toggle).
+> Phân quyền đúng từ GĐ 71 nhưng RENDER bypass → 2 nút hiện với mọi user (bấm vào
+> vẫn bị route guard đá về trang chủ — lớp 2 vẫn hoạt động, chỉ lớp hiển thị sai).
+>
+> **Fix 2 (surgical — app-shell.tsx):** `SidebarNav` thêm prop `items?: NavItem[]`
+> (default `NAV` — không vỡ chỗ khác, deps useMemo thêm [items]); cả sidebar desktop
+> lẫn menu hamburger mobile đều truyền `items={visibleNav}`.
+>
+> **LESSON LEARNED — Hai lớp cùng điều khiển 1 tính năng phải cùng nguồn data (2026-09-13):
+> Phân quyền module điều khiển NAV qua `visibleNav` nhưng component render nhận mảng
+> CỨNG → route guard chặn được còn UI vẫn hiện. Khi có 2 cơ chế (nav + route guard),
+> cả hai phải đọc CÙNG nguồn (getAllowedNavItems) — checklist: grep mọi chỗ render
+> NAV/SidebarNav khi thêm module mới vào phân quyền.
+>
+> **LESSON LEARNED — Danh sách "gần đây" phải tự sort, đừng tin thứ tự mảng store:
+> Store offline-first merge giữ thứ tự localStorage từng máy — KHÔNG đảm bảo sort theo
+> ngày. Mọi card "X gần đây" trên Dashboard nên sort ngay tại chỗ (mới nhất lên đầu)
+> trước khi slice hiển thị.
+>
+> **Tiêu chí kiểm chứng:** User thường: sidebar desktop + menu mobile KHÔNG còn nhóm
+> Quản trị; gõ tay /admin/approvals vẫn bị đá về trang chủ. Admin/SuperAdmin: thấy
+> Duyệt đăng ký + Phân quyền như cũ. Card Ghi chú gần đây: ghi chú mới nhất lên đầu;
+> ghi chú của users khác hiện đúng phạm vi (user chỉ thấy của mình, Admin tất cả).
+> Typecheck SẠCH 0 lỗi; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 99 — Fix sort ghi chú + ẩn Quản trị khỏi Sidebar user thường)*
 *Người cập nhật: Trợ lý lập trình*

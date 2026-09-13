@@ -36,7 +36,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "1.7.0";
+const DEFAULT_VERSION = "1.7.1";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -171,16 +171,16 @@ function NavLink({
   );
 }
 
-function SidebarNav({ pathname, onNavigate, dark, collapsed = false, mobile = false }: { pathname: string; onNavigate?: () => void; dark?: boolean; collapsed?: boolean; mobile?: boolean }) {
+function SidebarNav({ pathname, onNavigate, dark, collapsed = false, mobile = false, items = NAV }: { pathname: string; onNavigate?: () => void; dark?: boolean; collapsed?: boolean; mobile?: boolean; items?: NavItem[] }) {
   const groups = useMemo(() => {
     const map = new Map<string, NavItem[]>();
-    for (const item of NAV) {
+    for (const item of items) {
       const g = item.group ?? "";
       if (!map.has(g)) map.set(g, []);
       map.get(g)!.push(item);
     }
     return [...map.entries()];
-  }, []);
+  }, [items]);
   return (
     <nav className="flex flex-col gap-3 px-1.5 pb-6">
       {groups.map(([group, items]) => (
@@ -356,7 +356,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden pt-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <SidebarNav pathname={pathname} dark collapsed />
+          <SidebarNav items={visibleNav} pathname={pathname} dark collapsed />
         </div>
         {/* Khối user — nền xanh accent đậm đồng nhất; w-fit + mx-auto để avatar
             VÀO GIỮA cột sidebar khi thu hẹp (44px = 12 + 8 + 24 khít), mở rộng thì full + chữ hiện */}
@@ -488,7 +488,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <X className="size-5" />
             </button>
           </div>
-          <SidebarNav pathname={pathname} onNavigate={() => setOpen(false)} dark mobile />
+          <SidebarNav items={visibleNav} pathname={pathname} onNavigate={() => setOpen(false)} dark mobile />
         </SheetContent>
       </Sheet>
 
