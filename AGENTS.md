@@ -4203,5 +4203,31 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > bấm notification mở đúng trang; đọc hết tin badge về 0; đề nghị mới → Admin nhận
 > badge; quá 6 hiển thị 6; typecheck SẠCH 0 lỗi; 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 100 — App Icon Badge: chat + đề nghị lên icon mobile)*
+### Giai đoạn 101: VERSION cuối thanh slide bar mobile (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): thêm khối VERSION cuối menu hamburger mobile — giống hệt sidebar desktop |
+| (mới) | chore: tăng version 1.8.0 → 1.8.1 (bổ sung nhỏ — patch) |
+
+> **Yêu cầu của Đại ca (2026-09-13):** Thanh slide bar (menu hamburger) phiên bản mobile
+> thêm phần version ứng dụng giống bản Desktop.
+>
+> **Fix (surgical — 1 chỗ trong `src/components/app-shell.tsx`):** Trong `SheetContent`
+> (menu mobile), sau `<SidebarNav>` thêm khối div y hệt khối VERSION của sidebar desktop
+> (cùng class `border-t border-forest-fg/10 px-2 pb-3 pt-2 text-center text-[9px]
+> tracking-[0.18em] text-forest-muted/85`), nội dung `VERSION {appVersion}` — state
+> `appVersion` đã có sẵn scope AppShell nên tái dùng trực tiếp (env VITE_APP_VERSION →
+> localStorage → DEFAULT_VERSION, cùng nguồn với desktop).
+>
+> **Chi tiết kỹ thuật:** SheetContent có `overflow-y-auto` → menu dài thì VERSION cuộn
+> theo nội dung nằm cuối danh sách (desktop là chân cột cố định — khác vị trí do layout
+> khác nhau: desktop là flex-col full height, mobile là sheet cuộn được). Logo + nút X
+> của sheet không đổi; phân quyền visibleNav áp dụng chung nên VERSION không lộ menu.
+>
+> **Tiêu chí kiểm chứng:** Mobile mở menu hamburger → cuộn xuống cuối menu thấy
+> "VERSION 1.8.1" canh giữa, có đường kẻ trên — giống hệt chân sidebar desktop;
+> desktop không đổi; typecheck SẠCH 0 lỗi.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 101 — VERSION cuối menu mobile)*
 *Người cập nhật: Trợ lý lập trình*

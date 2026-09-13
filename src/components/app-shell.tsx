@@ -37,7 +37,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "1.8.0";
+const DEFAULT_VERSION = "1.8.1";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -505,6 +505,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
           </div>
           <SidebarNav items={visibleNav} pathname={pathname} onNavigate={() => setOpen(false)} dark mobile />
+          {/* GĐ 101: VERSION cuối menu mobile — giống hệt khối VERSION sidebar desktop */}
+          <div className="border-t border-forest-fg/10 px-2 pb-3 pt-2 text-center text-[9px] tracking-[0.18em] text-forest-muted/85">
+            VERSION {appVersion}
+          </div>
         </SheetContent>
       </Sheet>
 
