@@ -4418,3 +4418,38 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-13 (Giai đoạn 104 — Backup tuần tự động + Excel + hướng dẫn khôi phục — đã test E2E production: cron 401/OK + 2 file JSON 518KB + XLSX 302KB)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 105: Check-in — video quay có âm thanh (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(check-in): video quay có âm thanh — xin micro riêng lúc bấm quay, gộp track audio vào MediaRecorder |
+| (mới) | chore: tăng version 2.0.1 → 2.1.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca (2026-09-13):** Trở lại phần quay video trong Check-in — cho
+> thêm âm thanh vào video (GĐ 102 quay không tiếng: audio:false).
+>
+> **Kiến trúc âm thanh (surgical — chỉ check-in.tsx):** camera chính GIỮ video-only
+> (không xin audio lúc mở camera — thiết bị thiếu mic sẽ làm vỡ flow check-in).
+> Khi bấm nút quay: xin micro RIÊNG `getUserMedia({ audio: true })` → gộp track
+> `new MediaStream([...canvasStream.getVideoTracks(), ...mic.getAudioTracks()])`
+> → MediaRecorder ghi canvas composite (có dấu) + tiếng micro. MIME ưu tiên có
+> Opus (vp9,opus → vp8,opus → vp9 → vp8 → webm → mp4).
+>
+> **Degradation an toàn:** micro fail (không mic / chặn quyền / bị app khác chiếm)
+> → catch và quay tiếp KHÔNG TIẾNG — toast báo rõ "(không tiếng — không lấy được
+> micro)"; không chặn quay, không crash. Micro được nhả NGAY khi recorder dừng
+> (onstop) + lưới an toàn kép trong stopRecording() + không dính stopCamera()
+> (stream riêng) → chuyển camera khi đang quay vẫn giữ tiếng.
+>
+> **LƯU Ý cho Đại ca khi test:** (1) Lần quay ĐẦU TIÊN trình duyệt hỏi quyền
+> micro → chọn Cho phép; (2) quay → nói vài câu → dừng → phát lại nghe được tiếng;
+> (3) file webm có track audio (opus); (4) chặn micro trong cài đặt trình duyệt →
+> vẫn quay được, toast báo không tiếng; (5) iOS Safari < 14.3 không hỗ trợ
+> MediaRecorder → nút quay ẩn như cũ (không đổi).
+>
+> **Tiêu chí kiểm chứng:** Quay video có tiếng rõ; dấu thời gian vẫn khớp từng
+> frame; thiếu mic không vỡ flow; typecheck SẠCH 0 lỗi; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 105 — Check-in video quay có âm thanh)*
+*Người cập nhật: Trợ lý lập trình*

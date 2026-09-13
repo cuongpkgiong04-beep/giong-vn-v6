@@ -81,6 +81,8 @@ function CheckInPage() {
   // GĐ 102: quay video có đóng dấu — MediaRecorder ghi từ canvas composite
   // (video frame + overlay stamp vẽ 15fps) thay vì ghi thẳng stream camera.
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  // GĐ 105: stream micro riêng cho âm thanh video (thiếu mic → vẫn quay không tiếng)
+  const micStreamRef = useRef<MediaStream | null>(null);
   const recordChunksRef = useRef<Blob[]>([]);
   const recordCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const recordRafRef = useRef<number | null>(null);
@@ -444,7 +446,7 @@ function CheckInPage() {
     }
   }
 
-  function startRecording() {
+  async function startRecording() {
     const video = videoRef.current;
     if (!video || !cameraActive || isRecording) return;
     if (typeof MediaRecorder === "undefined") {
@@ -455,8 +457,24 @@ function CheckInPage() {
     recordCanvasRef.current = rec;
     drawRecordFrame(rec, video);
 
-    const stream = rec.captureStream(15);
-    const mimeCandidates = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
+    // GĐ 105: xin micro RIÊNG lúc bấm quay — fail (không mic/chặn quyền) thì vẫn quay
+    // video không tiếng, không làm vỡ flow check-in. Camera chính giữ video-only
+    // nên mở camera không bị lỗi vì thiết bị thiếu micro.
+    let hasAudio = false;
+    try {
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = mic;
+      hasAudio = true;
+    } catch {
+      console.warn("[check-in] micro không khả dụng — quay video không tiếng");
+    }
+
+    const canvasStream = rec.captureStream(15);
+    const stream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...(micStreamRef.current?.getAudioTracks() ?? []),
+    ]);
+    const mimeCandidates = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
     const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 1_500_000 } : undefined);
     recordChunksRef.current = [];
@@ -464,12 +482,15 @@ function CheckInPage() {
       if (e.data.size > 0) recordChunksRef.current.push(e.data);
     };
     recorder.onstop = () => {
+      // GĐ 105: dừng micro ngay khi recorder dừng — không giữ mic bị chiếm sau khi quay
+      micStreamRef.current?.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
       const blob = new Blob(recordChunksRef.current, { type: mimeType || "video/webm" });
       const url = URL.createObjectURL(blob);
       const reader = new FileReader();
       reader.onloadend = () => {
         setVideoPreview({ url, base64: String(reader.result) });
-        toast.success(`Đã quay ${recordSeconds}s — bấm Xác nhận để gửi`);
+        toast.success(`Đã quay ${recordSeconds}s${hasAudio ? " (có âm thanh)" : " (không tiếng — không lấy được micro)"} — bấm Xác nhận để gửi`);
       };
       reader.readAsDataURL(blob);
     };
@@ -507,6 +528,12 @@ function CheckInPage() {
     }
     if (recorder && recorder.state !== "inactive") recorder.stop();
     mediaRecorderRef.current = null;
+    // GĐ 105: bảo đảm micro được nhả cả khi dừng từ ngoài onstop (đóng dialog,
+    // tự dừng 30s...) — onstop cũng dừng, ở đây là lưới an toàn kép.
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      micStreamRef.current = null;
+    }
     setIsRecording(false);
   }
 
