@@ -146,6 +146,20 @@ function Dashboard() {
   const myTasks = useMemo(() => (isAdmin ? tasks : tasks.filter(isMineTask)), [isAdmin, tasks, isMineTask]);
   const myProposals = useMemo(() => (isAdmin ? proposals : proposals.filter(isMineProposal)), [isAdmin, proposals, isMineProposal]);
   const myNotes = useMemo(() => (isAdmin ? notes : notes.filter(isMineNote)), [isAdmin, notes, isMineNote]);
+  // Fix GĐ 99 (2026-09-13): store sau merge offline KHÔNG đảm bảo thứ tự ngày —
+  // ghi chú cũ trên localStorage của máy lênh đầu → nhìn như "chỉ có ghi chú Admin"
+  // (ghi chú cũ đã được migration 0026 GĐ 91 chuyển hết về Admin theo yêu cầu).
+  // Dashboard tự sort: ngày mới nhất lên đầu, cùng ngày thì updatedAt mới lên trước.
+  const myNotesSorted = useMemo(
+    () =>
+      [...myNotes].sort((a, b) => {
+        if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+        const at = a.updatedAt ?? "";
+        const bt = b.updatedAt ?? "";
+        return at < bt ? 1 : at > bt ? -1 : 0;
+      }),
+    [myNotes],
+  );
 
   const openTasks = myTasks.filter((t) => t.status !== "Đã xong");
   const doneTasks = myTasks.filter((t) => t.status === "Đã xong");
@@ -452,11 +466,11 @@ function Dashboard() {
               Xem tất cả
             </button>
           </CardHeader>
-          {myNotes.length === 0 ? (
+          {myNotesSorted.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted">Chưa có ghi chú nào.</p>
           ) : (
             <ul className="divide-y divide-line">
-              {myNotes.slice(0, 6).map((n) => (
+              {myNotesSorted.slice(0, 6).map((n) => (
                 <li
                   key={n.id}
                   onClick={() => setDetailNote(n)}
@@ -581,7 +595,7 @@ function Dashboard() {
           <DialogTitle>Ghi chú — tất cả</DialogTitle>
           <p className="mt-1 text-xs text-muted">Bấm vào một dòng để xem chi tiết.</p>
           <ul className="mt-2 max-h-[60vh] divide-y divide-line overflow-auto">
-            {myNotes.map((n) => (
+            {myNotesSorted.map((n) => (
               <li
                 key={n.id}
                 onClick={() => { setDetailNote(n); setListDialog(null); }}
