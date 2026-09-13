@@ -5,11 +5,12 @@ import {
   ClipboardList,
   FileText,
   MapPin,
+  StickyNote,
   Timer,
   Users,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -23,10 +24,10 @@ import { ClientOnly } from "@/components/client-only";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/status-badge";
-import { findEmployeeByLooseText } from "@/lib/catalog";
+import { findEmployeeByLooseText, isAdminRole } from "@/lib/catalog";
 import { formatDate, formatLongDate, greetingVi, todayIso } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import type { Attendance, CheckIn, Proposal, Task } from "@/lib/types";
+import type { Attendance, CheckIn, Note, Proposal, Task } from "@/lib/types";
 
 export const Route = createFileRoute("/")({ component: Dashboard });
 
@@ -83,7 +84,7 @@ function DetailRow({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-type ListDialogKind = "attendance" | "tasks" | "checkins" | "proposals" | null;
+type ListDialogKind = "attendance" | "tasks" | "checkins" | "proposals" | "notes" | null;
 
 function Dashboard() {
   const tasks = useAppStore((s) => s.tasks);
@@ -93,6 +94,11 @@ function Dashboard() {
   const employees = useAppStore((s) => s.employees);
   const centers = useAppStore((s) => s.centers);
   const userName = useAppStore((s) => s.currentName());
+  const currentUserId = useAppStore((s) => s.currentUserId);
+  const notes = useAppStore((s) => s.notes);
+  const currentEmployee = useAppStore(
+    (s) => s.employees.find((e) => e.id === s.currentUserId) ?? null,
+  );
   const today = todayIso();
 
   // Dialog chi tiết + danh sách + lightbox
@@ -101,12 +107,50 @@ function Dashboard() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [detailCheckin, setDetailCheckin] = useState<CheckIn | null>(null);
   const [detailProposal, setDetailProposal] = useState<Proposal | null>(null);
+  const [detailNote, setDetailNote] = useState<Note | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
-  const openTasks = tasks.filter((t) => t.status !== "Đã xong");
-  const doneTasks = tasks.filter((t) => t.status === "Đã xong");
-  const todayAtt = attendance.filter((a) => a.date === today);
-  const todayCk = checkins.filter((c) => c.date === today);
+  // ===== Lọc theo user (yêu cầu Đại ca 2026-09-13): user thường chỉ thấy data
+  // MÀ MÌNH liên quan; Admin thấy tất cả như cũ. Định nghĩa "liên quan":
+  // - Chấm công/Check-in/Đề nghị/Ghi chú: do chính user tạo
+  // - Nhiệm vụ: tự tạo (createdBy) OR được giao (assignee) OR được hỗ trợ (support)
+  const isAdmin = isAdminRole(currentEmployee?.role);
+  const meName = currentEmployee?.name ?? userName;
+  const meId = currentEmployee?.id ?? currentUserId;
+  const isMineAtt = useCallback(
+    (a: Attendance) => a.name === meName || (a.employeeId && a.employeeId === meId) || false,
+    [meName, meId],
+  );
+  const isMineCk = useCallback((c: CheckIn) => c.name === meName, [meName]);
+  const isMineTask = useCallback(
+    (t: Task) => {
+      if (t.createdBy && t.createdBy === meId) return true;
+      if (t.assignee?.toLowerCase() === meName.toLowerCase()) return true;
+      const supports = (t.support ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+      return supports.includes(meName.toLowerCase());
+    },
+    [meName, meId],
+  );
+  const isMineProposal = useCallback(
+    (p: Proposal) => (p.createdBy ? p.createdBy === meId : p.requester === meName),
+    [meName, meId],
+  );
+  const isMineNote = useCallback(
+    (n: Note) => (n.createdBy ? n.createdBy === meId : n.author === meName),
+    [meName, meId],
+  );
+
+  // Nguồn data đã lọc — mọi số liệu + bảng dưới đây đều dùng các mảng này
+  const myAttendance = useMemo(() => (isAdmin ? attendance : attendance.filter(isMineAtt)), [isAdmin, attendance, isMineAtt]);
+  const myCheckins = useMemo(() => (isAdmin ? checkins : checkins.filter(isMineCk)), [isAdmin, checkins, isMineCk]);
+  const myTasks = useMemo(() => (isAdmin ? tasks : tasks.filter(isMineTask)), [isAdmin, tasks, isMineTask]);
+  const myProposals = useMemo(() => (isAdmin ? proposals : proposals.filter(isMineProposal)), [isAdmin, proposals, isMineProposal]);
+  const myNotes = useMemo(() => (isAdmin ? notes : notes.filter(isMineNote)), [isAdmin, notes, isMineNote]);
+
+  const openTasks = myTasks.filter((t) => t.status !== "Đã xong");
+  const doneTasks = myTasks.filter((t) => t.status === "Đã xong");
+  const todayAtt = myAttendance.filter((a) => a.date === today);
+  const todayCk = myCheckins.filter((c) => c.date === today);
   const todayInPeople = new Set(
     todayAtt
       .filter((a) => a.status.includes("vào"))
@@ -114,10 +158,10 @@ function Dashboard() {
   );
   const todayIn = todayInPeople.size;
 
-  // "14 phiên đông" = 14 ngày có nhiều lượt vào/ra nhất, tính từ data chấm công thật
+  // "14 phiên đông" = 14 ngày có nhiều lượt vào/ra nhất, tính từ data chấm công (đã lọc theo user)
   const attChart = useMemo(() => {
     const byDate = new Map<string, { in: number; out: number }>();
-    for (const a of attendance) {
+    for (const a of myAttendance) {
       const bucket = byDate.get(a.date) ?? { in: 0, out: 0 };
       if (a.status.includes("vào")) bucket.in += 1;
       if (a.status.includes("tan")) bucket.out += 1;
@@ -134,10 +178,10 @@ function Dashboard() {
         vào: d.in,
         ra: d.out,
       }));
-  }, [attendance]);
+  }, [myAttendance]);
 
   const firstName = userName.split(" ").slice(-1)[0];
-  const pending = proposals.filter((p) => p.status === "Chờ duyệt").length;
+  const pending = myProposals.filter((p) => p.status === "Chờ duyệt").length;
 
   const centerShort = (code?: string) =>
     (code ? centers.find((c) => c.code === code)?.short : "") ?? code ?? "—";
@@ -147,6 +191,7 @@ function Dashboard() {
     { to: "/check-in", label: "Check-in", desc: `${todayCk.length} lượt hôm nay`, icon: MapPin },
     { to: "/nhiem-vu", label: "Nhiệm vụ", desc: `${openTasks.length} việc mở`, icon: ClipboardList },
     { to: "/de-nghi", label: "Đề nghị", desc: `${pending} chờ duyệt`, icon: FileText },
+    { to: "/ghi-chu", label: "Ghi chú", desc: `${myNotes.length} ghi chú của tôi`, icon: StickyNote },
     { to: "/nhan-su", label: "Nhân sự", desc: `${employees.length} người`, icon: Users },
     { to: "/trung-tam", label: "Trung tâm", desc: `${centers.filter((c) => c.kind === "Trung tâm").length} điểm tiêm`, icon: Building2 },
   ];
@@ -267,11 +312,11 @@ function Dashboard() {
               Xem tất cả
             </button>
           </CardHeader>
-          {attendance.length === 0 ? (
+          {myAttendance.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted">Chưa có dữ liệu chấm công.</p>
           ) : (
             <ul className="divide-y divide-line">
-              {attendance.slice(0, 6).map((a) => (
+              {myAttendance.slice(0, 6).map((a) => (
                 <li
                   key={a.id}
                   onClick={() => setDetailAtt(a)}
@@ -336,11 +381,11 @@ function Dashboard() {
               Xem tất cả
             </button>
           </CardHeader>
-          {checkins.length === 0 ? (
+          {myCheckins.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted">Chưa có lượt check-in nào.</p>
           ) : (
             <ul className="divide-y divide-line">
-              {checkins.slice(0, 6).map((c) => (
+              {myCheckins.slice(0, 6).map((c) => (
                 <li
                   key={c.id}
                   onClick={() => setDetailCheckin(c)}
@@ -373,11 +418,11 @@ function Dashboard() {
               Xem tất cả
             </button>
           </CardHeader>
-          {proposals.length === 0 ? (
+          {myProposals.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted">Chưa có đề nghị nào.</p>
           ) : (
             <ul className="divide-y divide-line">
-              {proposals.slice(0, 6).map((p) => (
+              {myProposals.slice(0, 6).map((p) => (
                 <li
                   key={p.id}
                   onClick={() => setDetailProposal(p)}
@@ -394,6 +439,44 @@ function Dashboard() {
             </ul>
           )}
         </Card>
+
+        {/* 5. Ghi chú gần đây (mới thêm — user thấy ghi chú của mình, Admin thấy tất cả) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ghi chú gần đây</CardTitle>
+            <button
+              type="button"
+              onClick={() => setListDialog("notes")}
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              Xem tất cả
+            </button>
+          </CardHeader>
+          {myNotes.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted">Chưa có ghi chú nào.</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {myNotes.slice(0, 6).map((n) => (
+                <li
+                  key={n.id}
+                  onClick={() => setDetailNote(n)}
+                  className="-mx-2 cursor-pointer rounded-md px-2 py-2.5 transition-colors first:pt-0 hover:bg-surface-2"
+                >
+                  <p className="line-clamp-2 text-sm font-medium text-ink">{n.content}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                    <span>{n.author || "—"}</span>
+                    <span>· {formatDate(n.date)}</span>
+                    {n.deadline ? (
+                      <span className={n.deadline < today ? "font-medium text-red-600" : ""}>
+                        · hạn {formatDate(n.deadline)}
+                      </span>
+                    ) : null}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
 
       {/* ===== Dialog danh sách đầy đủ ===== */}
@@ -402,7 +485,7 @@ function Dashboard() {
           <DialogTitle>Chấm công — tất cả</DialogTitle>
           <p className="mt-1 text-xs text-muted">Bấm vào một dòng để xem chi tiết.</p>
           <ul className="mt-2 divide-y divide-line">
-            {attendance.map((a) => (
+            {myAttendance.map((a) => (
               <li
                 key={a.id}
                 onClick={() => { setDetailAtt(a); setListDialog(null); }}
@@ -449,7 +532,7 @@ function Dashboard() {
           <DialogTitle>Check-in — tất cả</DialogTitle>
           <p className="mt-1 text-xs text-muted">Bấm vào một dòng để xem chi tiết.</p>
           <ul className="mt-2 divide-y divide-line">
-            {checkins.map((c) => (
+            {myCheckins.map((c) => (
               <li
                 key={c.id}
                 onClick={() => { setDetailCheckin(c); setListDialog(null); }}
@@ -475,7 +558,7 @@ function Dashboard() {
           <DialogTitle>Đề nghị — tất cả</DialogTitle>
           <p className="mt-1 text-xs text-muted">Bấm vào một dòng để xem chi tiết.</p>
           <ul className="mt-2 divide-y divide-line">
-            {proposals.map((p) => (
+            {myProposals.map((p) => (
               <li
                 key={p.id}
                 onClick={() => { setDetailProposal(p); setListDialog(null); }}
@@ -486,6 +569,29 @@ function Dashboard() {
                   <span>{p.requester}</span>
                   <span>· {formatDate(p.date)}</span>
                   <StatusBadge value={p.status} />
+                </p>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={listDialog === "notes"} onOpenChange={(o) => !o && setListDialog(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogTitle>Ghi chú — tất cả</DialogTitle>
+          <p className="mt-1 text-xs text-muted">Bấm vào một dòng để xem chi tiết.</p>
+          <ul className="mt-2 max-h-[60vh] divide-y divide-line overflow-auto">
+            {myNotes.map((n) => (
+              <li
+                key={n.id}
+                onClick={() => { setDetailNote(n); setListDialog(null); }}
+                className="-mx-2 cursor-pointer rounded-md px-2 py-2.5 hover:bg-surface-2"
+              >
+                <p className="line-clamp-2 text-sm font-medium text-ink">{n.content}</p>
+                <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                  <span>{n.author || "—"}</span>
+                  <span>· {formatDate(n.date)}</span>
+                  {n.deadline ? <span>· hạn {formatDate(n.deadline)}</span> : null}
                 </p>
               </li>
             ))}
@@ -595,6 +701,31 @@ function Dashboard() {
             <DetailRow label="Ngày" value={detailProposal ? formatDate(detailProposal.date) : ""} />
             <DetailRow label="Đơn vị" value={detailProposal?.dept} />
             <DetailRow label="Nội dung" value={detailProposal?.detail} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Chi tiết Ghi chú */}
+      <Dialog open={!!detailNote} onOpenChange={(o) => !o && setDetailNote(null)}>
+        <DialogContent>
+          <DialogTitle>Chi tiết Ghi chú</DialogTitle>
+          <p className="mt-2 text-sm leading-5 whitespace-pre-wrap text-ink">{detailNote?.content}</p>
+          <div className="mt-3 divide-y divide-line">
+            <DetailRow label="Người tạo" value={detailNote?.author} />
+            <DetailRow label="Ngày" value={detailNote ? formatDate(detailNote.date) : ""} />
+            <DetailRow label="Hạn" value={detailNote?.deadline ? formatDate(detailNote.deadline) : ""} />
+            <DetailRow label="Người hỗ trợ" value={detailNote?.support} />
+            <DetailRow label="Phòng ban" value={detailNote?.dept} />
+            <DetailRow
+              label="Trạng thái"
+              value={
+                detailNote
+                  ? detailNote.deadline && detailNote.deadline < today
+                    ? "Quá hạn"
+                    : "Còn hạn"
+                  : ""
+              }
+            />
           </div>
         </DialogContent>
       </Dialog>

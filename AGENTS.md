@@ -4049,5 +4049,51 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > mới nhất); ảnh load xong không đẩy vị trí cuộn; badge per-user hoạt động đúng
 > (mỗi tài khoản tự đánh dấu riêng); typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-12 (Giai đoạn 97 — Giải đáp badge + fix cuộn đáy Chat)*
+### Giai đoạn 98: Dashboard — lọc theo user + thêm bảng Ghi chú (2026-09-13)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(dashboard): user thường chỉ thấy data MÀ MÌNH liên quan (chấm công/check-in/nhiệm vụ/đề nghị) — Admin thấy tất cả như cũ |
+| (mới) | feat(dashboard): thêm bảng tóm tắt "Ghi chú gần đây" (thứ 5) + dialog danh sách + dialog chi tiết Ghi chú |
+| (mới) | feat(dashboard): thêm lối tắt "Ghi chú" vào hàng lối tắt (7 nút) |
+| (mới) | chore: tăng version 1.6.1 → 1.7.0 (feature mới — minor) |
+
+> **Yêu cầu của Đại ca (2026-09-13):** Dashboard của user chỉ hiển thị những gì user đó
+> liên quan: chấm công, check-in, nhiệm vụ (tự tạo HOẶC được giao HOẶC được hỗ trợ),
+> đề nghị, ghi chú.
+>
+> **Đã hỏi lại 2 điểm trước khi làm (nguyên tắc Không tự đoán ý định):**
+> 1. Dashboard chưa có phần Ghi chú → Đại ca chọn THÊM bảng "Ghi chú gần đây".
+> 2. Phạm vi lọc → Đại ca chọn LỌC TOÀN BỘ: KPI + biểu đồ + số đếm lối tắt + 4 bảng
+>    tóm tắt đều theo data của user. KPI Nhân sự + lối tắt Nhân sự/Trung tâm giữ nguyên
+>    (danh mục công khai). Lối tắt "Ghi chú" (7 nút) em tự thêm cho đồng bộ — Đại ca
+>    chốt GIỮ sau khi hỏi.
+>
+> **Fix (chỉ `src/routes/index.tsx` — không đụng store hay module khác):**
+> 1. Định nghĩa "liên quan" per-collection:
+>    - Attendance: `a.name === meName` hoặc `a.employeeId === meId`
+>    - CheckIn: `c.name === meName`
+>    - Task: `createdBy === meId` OR `assignee === meName` OR meName nằm trong
+>      `support` (split dấu phẩy, so lowercase)
+>    - Proposal: `createdBy === meId` fallback `requester === meName`
+>    - Note: `createdBy === meId` fallback `author === meName`
+> 2. 5 memo `myAttendance/myCheckins/myTasks/myProposals/myNotes` — isAdmin thì
+>    nguyên mảng, không thì filter. Mọi consumer (KPI, attChart, openTasks,
+>    todayAtt/todayCk, bảng, dialog danh sách) đổi sang dùng mảng `my*`.
+> 3. Bảng Ghi chú gần đây: content (line-clamp-2), author + ngày + hạn (quá hạn
+>    tô đỏ), bấm dòng mở dialog chi tiết (content whitespace-pre-wrap, người tạo,
+>    ngày, hạn, hỗ trợ, phòng ban, trạng thái Còn hạn/Quá hạn tính từ deadline).
+>    Dialog danh sách notes có max-h-[60vh] overflow-auto (danh sách ghi chú dài).
+>
+> **LƯU Ý — Task.support là chuỗi tên phân tách dấu phẩy (không phải ID):** lọc
+> "được hỗ trợ" so theo TÊN lowercase. Task cũ trước GĐ 24 có thể thiếu createdBy →
+> fallback assignee/createdBy ID so theo tên vẫn bắt được. Nhiệm vụ mà user được
+> HỖ TRỢ giờ hiện trên Dashboard của user đó (trước đây chỉ theo assignee/creator).
+>
+> **Tiêu chí kiểm chứng:** User thường: KPI + biểu đồ + bảng chỉ hiện data của mình
+> (nhiệm vụ được giao/hỗ trợ vẫn hiện); Admin: thấy tất cả như cũ. Bảng Ghi chú
+> hiện cho cả 2 role với đúng phạm vi; lối tắt Ghi chú dẫn đúng trang; typecheck
+> SẠCH 0 lỗi; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 98 — Dashboard lọc theo user + bảng Ghi chú)*
 *Người cập nhật: Trợ lý lập trình*
