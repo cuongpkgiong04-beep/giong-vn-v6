@@ -4499,5 +4499,47 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > chung) + số employees khớp production; app tổng giong-vn-v6 KHÔNG đổi gì
 > ngoài .gitignore + version 2.1.1.
 
-*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 106 — Khởi đầu hệ sinh thái giong-apps)*
+### Giai đoạn 107: Sidebar — nhóm DỰ ÁN + nút Bán hàng dẫn sang app con (chỉ Admin) (2026-09-14)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(app-shell): nhóm mới "DỰ ÁN" trên Sidebar + nút Bán hàng mở app con tab mới — chỉ Admin thấy |
+| (mới) | chore: tăng version 2.1.1 → 2.2.0 (feature mới — minor) |
+
+> **Bối cảnh:** Đại ca hỏi "ấn vào đâu trên Sidebar app tổng để chuyển sang app
+> con?" — đúng phần GĐ B chưa làm. Em hỏi lại 2 điểm trước khi làm (nguyên tắc
+> không tự đoán ý định), Đại ca chốt: (1) nhóm mới "DỰ ÁN" ở cuối sidebar;
+> (2) app con mở TAB MỚI (an toàn khi SSO chưa có); kèm yêu cầu CHỈ Admin thấy,
+> phân quyền per-user cho user thường làm sau khi app con hoàn thành.
+>
+> **Triển khai (chỉ `src/components/app-shell.tsx`):**
+> 1. NAV thêm entry: `{ to: "https://giong-banhang.vercel.app", label: "Bán hàng",
+>    icon: ShoppingCart, group: "DỰ ÁN" }` — đặt TRƯỚC nhóm Quản trị. Các app con
+>    sau này (Logistics/Mua hàng/NXK) thêm vào cùng nhóm DỰ ÁN này.
+> 2. NavLink nhận diện link NGOÀI qua `item.to.startsWith("http")` → render
+>    `<a target="_blank" rel="noopener noreferrer">` thay vì `<Link>` nội bộ
+>    (router TanStack không handle URL tuyệt đối). Style khớp hệt nhánh dark:
+>    thu hẹp căn giữa icon 44px, hover mở rộng hiện chữ, nền trong suốt, KHÔNG
+>    có trạng thái active (không bao giờ active vì là trang khác), không badge.
+> 3. visibleNav thêm điều kiện `(isAdmin && item.to.startsWith("http"))` —
+>    user thường ẩn HOÀN TOÀN nhóm DỰ ÁN (khác Preview Mobile hiện nhưng chặn
+>    bên trong). Desktop sidebar + hamburger mobile cùng thấy (nguyên tắc
+>    Desktop + Mobile song song); bottom bar không đụng.
+>
+> **LESSON LEARNED — Link ngoài trong NAV phải render `<a>` riêng (2026-09-14):**
+> `NAV` vốn giả định mọi `to` là route nội bộ — `<Link to="https://...">` của
+> TanStack Router không navigate được URL tuyệt đối. Fix: nhánh sớm trong
+> NavLink theo tiền tố `http` → `<a target="_blank">` giữ nguyên hệ thống
+> style/分组 của sidebar. Khi thêm loại entry mới vào NAV (external, disabled,
+> dropdown...), luôn kiểm tra TẤT CẢ chỗ tiêu thụ NAV: NavLink, visibleNav
+> filter, MOBILE_PRIMARY, isRouteAllowed — entry external không thuộc route
+> guard (startsWith("http") tự loại khỏi allowedPaths check vì không match
+> pathname nội bộ → không bị đá về "/").
+>
+> **Tiêu chí kiểm chứng:** Đăng nhập Admin → sidebar có nhóm DỰ ÁN + nút
+> 🛒 Bán hàng → bấm mở tab mới `giong-banhang.vercel.app` (trang GIONG BÁN
+> HÀNG ping Neon); user thường không thấy nhóm này; thu hẹp sidebar icon căn
+> giữa như các nút khác; typecheck SẠCH 0 lỗi.
+
+*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 107 — Sidebar nhóm DỰ ÁN + nút Bán hàng)*
 *Người cập nhật: Trợ lý lập trình*

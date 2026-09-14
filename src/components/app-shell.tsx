@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Smartphone,
   ShieldCheck,
+  ShoppingCart,
   StickyNote,
   Timer,
   Users,
@@ -37,7 +38,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "2.1.1";
+const DEFAULT_VERSION = "2.2.0";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -80,6 +81,9 @@ const NAV: NavItem[] = [
   { to: "/nhan-su", label: "Nhân sự", icon: Users, group: "Danh mục" },
   { to: "/trung-tam", label: "Trung tâm", icon: Building2, group: "Danh mục" },
   { to: "/ho-so", label: "Hồ sơ", icon: FolderOpen, group: "Danh mục" },
+  // GĐ B hệ sinh thái (2026-09-14): app con Bán hàng — link NGOÀI mở tab mới;
+  // CHỈ Admin thấy (visibleNav lọc isAdmin), phân quyền chi tiết cho user thường làm sau khi app con hoàn thành
+  { to: "https://giong-banhang.vercel.app", label: "Bán hàng", icon: ShoppingCart, group: "DỰ ÁN" },
   { to: "/admin/approvals", label: "Duyệt đăng ký", icon: ShieldCheck, group: "Quản trị" },
   { to: "/admin/permissions", label: "Phân quyền", icon: ShieldCheck, group: "Quản trị" },
   { to: "/bao-cao", label: "Báo cáo", icon: BarChart3, group: "Hệ thống" },
@@ -118,6 +122,40 @@ function NavLink({
   const unreadBadge = useAppStore(
     (s) => (item.to === "/chat" ? totalUnreadCount(s.messages, s.currentUserId, s.chatGroups, employeeIds) : 0),
   );
+  // GĐ B hệ sinh thái (2026-09-14): link NGOÀI (app con) — render <a> mở tab mới,
+  // KHÔNG dùng <Link> nội bộ của router. Style khớp NavLink nhánh dark; không badge, không active.
+  if (item.to.startsWith("http")) {
+    return (
+      <a
+        href={item.to}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => onClick?.()}
+        className={cn(
+          "flex h-9 items-center rounded-lg font-medium transition-all duration-200",
+          mobile ? "text-[16px]" : "text-[13px]",
+          collapsed
+            ? "w-full justify-center gap-0 px-0 group-hover:justify-start group-hover:gap-2.5 group-hover:px-2.5"
+            : "justify-start gap-2.5 px-2.5",
+          dark
+            ? "bg-transparent text-forest-muted hover:bg-forest-fg/5 hover:text-forest-fg"
+            : "text-muted hover:bg-surface-2 hover:text-ink",
+        )}
+      >
+        <span className="relative shrink-0">
+          <Icon className={cn("size-4", dark && active && "text-white")} />
+        </span>
+        <span
+          className={cn(
+            "whitespace-nowrap transition-all duration-200",
+            collapsed ? "w-0 overflow-hidden opacity-0 group-hover:w-auto group-hover:opacity-100" : "w-auto opacity-100",
+          )}
+        >
+          {item.label}
+        </span>
+      </a>
+    );
+  }
   return (
     <Link
       to={item.to}
@@ -331,8 +369,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   const visibleNav = useMemo(
-    () => NAV.filter((item) => allowedPaths.includes(item.to) || item.to === "/preview"),
-    [allowedPaths],
+    () => NAV.filter((item) => allowedPaths.includes(item.to) || item.to === "/preview" || (isAdmin && item.to.startsWith("http"))),
+    [allowedPaths, isAdmin],
   );
 
   const PUBLIC_ROUTES = ["/login", "/forgot-password"];
