@@ -71,7 +71,9 @@ export const createSsoToken = createServerFn({ method: "GET" })
         .setSubject(emp.id)
         .sign(key);
 
-      const url = `https://giong-banhang.vercel.app/?sso=${encodeURIComponent(token)}`;
+      // PHẢI trỏ vào ROUTE xử lý SSO (verify + set cookie + redirect), không phải
+      // trang chủ — trang chủ không đọc ?sso (bug phát hiện qua E2E 2026-09-14)
+      const url = `https://giong-banhang.vercel.app/api/auth/sso?sso=${encodeURIComponent(token)}`;
       return { ok: true, token, url };
     } catch (err) {
       console.error("[createSsoToken]", err);

@@ -119,21 +119,23 @@
 - **KHÔNG** có khu vực code nào "cấm động" — em có quyền sửa bất kỳ file nào
 - Khi cần test: ưu tiên test tự động (unit) viết trong `*.test.ts` hoặc `*.test.mjs`
 
-### Nguyên tắc Push (bắt buộc tuân thủ — có hiệu lực từ 2026-09-07):
+### Nguyên tắc Push (bắt buộc tuân thủ — hiệu lực 2026-09-07, cập nhật 2026-09-14 áp dụng cho CẢ HAI repo):
 
-> **SAU KHI SỬA CODE XONG, EM PHẢI HỎI ĐẠI CA 1 TRONG 3 LỰA CHỌN TRƯỚC KHI PUSH:**
+> **SAU KHI SỬA CODE XONG (app tổng và/hoặc app con), EM PHẢI HỎI ĐẠI CA 1 TRONG 3 LỰA CHỌN TRƯỚC KHI COMMIT/PUSH:**
 >
-> 1️⃣ **Em sẽ Push lên GitHub bây giờ**
-> → Chỉ commit + push, KHÔNG cập nhật AGENTS.md hay version.
+> 1️⃣ **Commit cả hai repo + Ghi lịch sử công việc + Tăng Version**
+> → Commit tại máy + cập nhật AGENTS.md (cả repo nào có thay đổi) + tăng version — **CHƯA push**, để anh kiểm tra trước.
 >
-> 2️⃣ **Em sẽ ghi lại lịch sử và tăng số Version lên**
-> → Cập nhật AGENTS.md (giai đoạn mới, lesson learned) + tăng version ở `package.json` và `app-shell.tsx`.
+> 2️⃣ **Push lên GitHub từng dự án**
+> → Chỉ commit + push, KHÔNG cập nhật AGENTS.md hay tăng version.
 >
-> 3️⃣ **Anh muốn cả 2 điều trên**
-> → Push lên GitHub + cập nhật AGENTS.md + tăng version.
+> 3️⃣ **Cả hai điều trên**
+> → Commit + push + cập nhật AGENTS.md + tăng version (đầy đủ).
 >
-> **Em KHÔNG tự ý push mà KHÔNG hỏi.**
+> **Em KHÔNG tự ý commit/push mà KHÔNG hỏi.**
 > **Em KHÔNG tự ý tăng version mà KHÔNG được Đại ca đồng ý.**
+> **MỘT lần hỏi áp dụng cho CẢ HAI repo** (app tổng `giong-vn-v6` + app con `giong-apps`) — trừ khi Đại ca dặn riêng repo nào xử lý khác.
+> **Nơi tăng version:** app tổng = `package.json` + `DEFAULT_VERSION` (app-shell.tsx); app con = `apps/<tên>/package.json`.
 
 - **GitHub repo:** `https://github.com/cuongpkgiong04-beep/giong-vn-v6`
 - **Commit message** phải rõ ràng, mô tả chính xác thay đổi (feat/fix/refactor + mô tả).
@@ -4585,5 +4587,47 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > quyền không thấy nút; bật quyền → thấy ngay (refresh); typecheck 0 lỗi cả 2
 > repo; 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 108 — SSO JWT handoff + phân quyền Bán hàng)*
+### Giai đoạn 109: Hotfix SSO — URL handoff trỏ sai route + E2E verify production (2026-09-14)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(sso): URL handoff trỏ vào /api/auth/sso?sso=… thay vì trang chủ /?sso=… — bug bắt qua Playwright E2E |
+| (mới) | test: scripts/test-sso-e2e.mjs — 13 bước verify login → SSO → phiên → đăng xuất (tạm thời) |
+| (mới) | chore: tăng version 2.3.0 → 2.3.1 (fix — patch) |
+
+> **BUG REPORT — tự phát hiện khi verify production (2026-09-14):**
+> Chạy E2E Playwright 13 bước (login app tổng → bấm Bán hàng → tab app con →
+> kiểm tra phiên). Kết quả 6/13: tab mở đúng `?sso=<token>` NHƯNG không redirect,
+> không cookie, `/api/auth/me` trả null. Curl route `/api/auth/sso` (không token)
+> thì 302 → `?auth=missing` ĐÚNG → route hoạt động, lỗi nằm ở ĐÍCH ĐẾN của URL.
+>
+> **ROOT CAUSE:** `createSsoToken` tạo URL `https://giong-banhang.vercel.app
+> /?sso=<token>` — trỏ vào TRANG CHỦ. Trang chủ không có code nào đọc `?sso` →
+> token nằm chết trong URL, không ai verify, không set cookie. Route xử lý thật
+> là `/api/auth/sso`. Fix 1 dòng: URL = `.../api/auth/sso?sso=<token>`.
+>
+> **E2E cũng xác nhận những phần ĐÚNG:** login app tổng OK; nút Bán hàng hiện
+> (Admin); tab mới mở đúng app con; JWT 60s ký đúng (payload: empId e...003,
+> SuperAdmin, VP, iss/aud/sub chuẩn); logout route 302 OK; app tổng giữ phiên;
+> route guard không chặn link ngoài. Sau fix, luồng còn lại (redirect → cookie
+> → phiên → me) sẽ tự thông.
+>
+> **LESSON LEARNED — Query param phải có BÊN NHẬN xử lý (2026-09-14):**
+> Gửi `?sso=` về trang chủ trong khi code đọc param nằm ở route khác — dạng lỗi
+> "hai đầu không khớp" lần thứ N (GĐ 69 chat channel, GĐ 96 SQL column). Khi
+> thêm cơ chế truyền dữ liệu qua URL/param: kiểm tra NGAY bên nhận có parse
+> param đó không trước khi deploy. E2E 13 bước bắt lỗi trong 1 lần chạy —
+> không cần đợi Đại ca test rồi báo.
+>
+> **Quy trình E2E lưu lại:** script `scripts/test-sso-e2e.mjs` (Playwright:
+> login → click nút → waitForEvent("page") bắt tab mới → kiểm tra URL/cookie/
+> body text/`/api/auth/me` → logout → đối chiếu phiên app tổng). XÓA sau khi
+> ổn định. `waitForEvent("page")` phải Promise.all với click — bắt trước,
+> bấm sau, nếu không tab mở trước khi listener đăng ký.
+>
+> **Tiêu chí kiểm chứng (sau deploy):** chạy lại E2E ≥12/13 pass (bước 4-10
+> từ ❌ → ✅: URL sạch sau redirect, tên + phiên + Đăng xuất hiện, cookie
+> httpOnly, vào lại còn phiên, me trả đúng user, logout xóa cookie).
+
+*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 109 — Hotfix SSO URL handoff)*
 *Người cập nhật: Trợ lý lập trình*
