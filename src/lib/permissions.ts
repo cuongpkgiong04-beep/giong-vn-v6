@@ -58,7 +58,8 @@ export type ModuleKey =
   | "chat"
   | "guide"
   | "admin"
-  | "preview";
+  | "preview"
+  | "banhang"; // GĐ B hệ sinh thái — app con Bán hàng (SSO handoff), default TẮT (chốt 2026-09-14)
 
 export const MODULE_DEFINITIONS = [
   { key: "dashboard", label: "Tổng quan", paths: ["/"], group: "Điều hành" },
@@ -76,6 +77,9 @@ export const MODULE_DEFINITIONS = [
   { key: "guide", label: "Hướng dẫn", paths: ["/huong-dan"], group: "Hệ thống" },
   { key: "preview", label: "Preview Mobile", paths: ["/preview"], group: "Hệ thống" },
   { key: "admin", label: "Quản trị", paths: ["/admin/approvals", "/admin/permissions"], group: "Quản trị" },
+  // GĐ B hệ sinh thái — app con KHÔNG có path nội bộ (link ngoài, bắt đầu http) →
+  // getAllowedNavItems/route guard tự bỏ qua; Sidebar tự lọc qua getEffectiveModuleAccess("banhang")
+  { key: "banhang", label: "Bán hàng (Dự án)", paths: [], group: "DỰ ÁN" },
 ] as const;
 
 export const MODULE_LABELS: Record<ModuleKey, string> = Object.fromEntries(
@@ -182,6 +186,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
     chat: true,
     guide: true,
     preview: false, // Preview Mobile — chỉ Admin (chốt GĐ 71)
+    banhang: false, // GĐ B hệ sinh thái — default TẮT, anh bật từng người trong Phân quyền (chốt 2026-09-14)
   };
 
   if (!employee) return defaultMap;
@@ -203,6 +208,7 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       guide: true,
       admin: true,
       preview: true,
+      banhang: true,
     };
   }
 

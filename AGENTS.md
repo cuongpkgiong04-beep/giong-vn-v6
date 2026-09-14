@@ -4541,5 +4541,49 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > HÀNG ping Neon); user thường không thấy nhóm này; thu hẹp sidebar icon căn
 > giữa như các nút khác; typecheck SẠCH 0 lỗi.
 
-*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 107 — Sidebar nhóm DỰ ÁN + nút Bán hàng)*
+### Giai đoạn 108: SSO JWT handoff — đăng nhập app tổng là tự có phiên app con + phân quyền Bán hàng (2026-09-14)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(sso): server function createSsoToken — ký JWT 60s từ session Better Auth (issuer/audience riêng) |
+| (mới) | feat(app-shell): nút Bán hàng bấm → lấy token → mở ?sso=<token> (fallback link thẳng khi lỗi); hiện theo quyền 'banhang' |
+| (mới) | feat(permissions): module 'banhang' (default TẮT, Admin bật; paths rỗng — route guard tự bỏ qua) |
+| (repo giong-apps) | feat(sso): /api/auth/sso + /me + /logout — phiên cookie 7 ngày; version 0.1.0 → 0.2.0 |
+| (mới) | chore: thêm APP_JWT_SECRET cho cả 2 project Vercel qua CLI; tăng version 2.2.0 → 2.3.0 |
+
+> **Đã chốt với Đại ca (3 điểm):** (1) phiên app con = JWT cookie httpOnly 7 ngày;
+> (2) quyền Bán hàng default TẮT — chỉ Admin, bật từng người trong Phân quyền;
+> (3) làm cả SSO + phân quyền. Nút Bán hàng đã thêm sáng nay (GĐ 107) giờ tự
+> động SSO: bấm → `createSsoToken()` (JWT HS256 60s, map employee theo email +
+> fallback tên — cùng logic app-shell) → mở `giong-banhang.vercel.app/?sso=…`;
+> lỗi (chưa secret, chưa login) → fallback mở thẳng + toast info, không chặn.
+>
+> **Luồng token 2 lớp:** token handoff 60s (vé vào cổng) → app con verify rồi
+> **ký lại token phiên 7 ngày** (thẻ đành) set cookie httpOnly. KHÔNG lưu token
+> 60s vào cookie dài hạn — bản đầu sai như vậy, sau 60s user bị văng ra dù
+> cookie còn (đã fix trước khi push,lesson ghi ở AGENTS.md repo con).
+>
+> **Phân quyền per-user:** module 'banhang' trong MODULE_DEFINITIONS với
+> `paths: []` (link ngoài không thuộc route guard — getAllowedNavItems/route
+> check tự bỏ qua; sidebar lọc riêng qua getEffectiveModuleAccess(emp,
+> "banhang") || isAdmin). Trang Phân quyền tự hiện toggle mới (đã lọc
+> key !== 'admin' từ trước) → anh bật user nào user đó thấy nút + SSO được.
+>
+> **LESSON LEARNED — env chung cho hệ sinh thái (2026-09-14):**
+> `APP_JWT_SECRET` set qua CLI cho CẢ 2 project (giong-vn-v6 + giong-banhang),
+> kiểu Secret (không pull được qua CLI — GĐ 71) → mọi token ký/verify cùng bí
+> mật. Secret sinh bằng crypto.randomBytes(48) base64url, KHÔNG commit repo,
+> file tạm đã xóa. App con mới sau này (Logistics/Mua hàng/NXK) chỉ cần thêm
+> env này + audience riêng là SSO chạy ngay.
+>
+> **LƯU Ý:** APP_JWT_SECRET vừa set — Vercel PHẢI redeploy cả 2 project mới
+> nhận env (deploy tự động theo push lần này là đủ).
+>
+> **Tiêu chí kiểm chứng:** Đăng nhập app tổng (Admin) → bấm Bán hàng → tab mới
+> vào app con không cần đăng nhập lại, trang chủ hiện tên + role + center +
+> phiên 7 ngày; Đăng xuất app con → phiên app tổng còn; user thường chưa cấp
+> quyền không thấy nút; bật quyền → thấy ngay (refresh); typecheck 0 lỗi cả 2
+> repo; 17/17 test pass.
+
+*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 108 — SSO JWT handoff + phân quyền Bán hàng)*
 *Người cập nhật: Trợ lý lập trình*

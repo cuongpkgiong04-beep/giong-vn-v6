@@ -22,11 +22,13 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { createSsoToken } from "@/routes/api/sso-token";
+import { toast } from "sonner";
 import { Logo } from "@/components/logo";
 import { ClientOnly } from "@/components/client-only";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { isAdminRole } from "@/lib/catalog";
-import { getAllowedNavItems, setAllModuleAccessFromServer } from "@/lib/permissions";
+import { getAllowedNavItems, getEffectiveModuleAccess, setAllModuleAccessFromServer } from "@/lib/permissions";
 import { applyOsBadge, subscribePush } from "@/lib/push-client";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -38,7 +40,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "2.2.0";
+const DEFAULT_VERSION = "2.3.0";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -124,13 +126,34 @@ function NavLink({
   );
   // GĐ B hệ sinh thái (2026-09-14): link NGOÀI (app con) — render <a> mở tab mới,
   // KHÔNG dùng <Link> nội bộ của router. Style khớp NavLink nhánh dark; không badge, không active.
+  // SSO: bấm → lấy JWT 60s từ app tổng rồi mới mở ?sso=<token>; lỗi thì fallback
+  // mở link thẳng (không chặn — app con vẫn vào được bằng đăng nhập riêng).
+  const [ssoLoading, setSsoLoading] = useState(false);
   if (item.to.startsWith("http")) {
+    const openWithSso = async () => {
+      if (ssoLoading) return; // chặn double-click
+      setSsoLoading(true);
+      try {
+        const res = await createSsoToken();
+        window.open(res.ok && res.url ? res.url : item.to, "_blank", "noopener,noreferrer");
+        if (!res.ok) toast.info("Mở app con trực tiếp (SSO chưa sẵn sàng: " + (res.error ?? "") + ")");
+      } catch {
+        window.open(item.to, "_blank", "noopener,noreferrer");
+        toast.info("Mở app con trực tiếp (không lấy được token SSO)");
+      } finally {
+        setSsoLoading(false);
+      }
+    };
     return (
       <a
         href={item.to}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() => onClick?.()}
+        onClick={(e) => {
+          e.preventDefault(); // chặn mở href gốc — đi qua openWithSso
+          void openWithSso();
+          onClick?.();
+        }}
         className={cn(
           "flex h-9 items-center rounded-lg font-medium transition-all duration-200",
           mobile ? "text-[16px]" : "text-[13px]",
@@ -143,7 +166,7 @@ function NavLink({
         )}
       >
         <span className="relative shrink-0">
-          <Icon className={cn("size-4", dark && active && "text-white")} />
+          <Icon className={cn("size-4", dark && active && "text-white", ssoLoading && "animate-pulse")} />
         </span>
         <span
           className={cn(
@@ -368,9 +391,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     [currentUserEmployee, moduleAccessVersion],
   );
 
+  // GĐ B hệ sinh thái: nút app con (link http) hiện theo quyền module riêng
+  // ('banhang' — default TẮT, anh bật từng người trong Phân quyền; Admin luôn thấy)
+  const hasBanhang = useAppStore((s) => {
+    const emp = s.employees.find((e) => e.id === s.currentUserId) ?? null;
+    return isAdminRole(emp?.role) || getEffectiveModuleAccess(emp, "banhang");
+  });
   const visibleNav = useMemo(
-    () => NAV.filter((item) => allowedPaths.includes(item.to) || item.to === "/preview" || (isAdmin && item.to.startsWith("http"))),
-    [allowedPaths, isAdmin],
+    () => NAV.filter((item) => allowedPaths.includes(item.to) || item.to === "/preview" || (item.to.startsWith("http") && hasBanhang)),
+    [allowedPaths, hasBanhang],
   );
 
   const PUBLIC_ROUTES = ["/login", "/forgot-password"];
