@@ -4730,3 +4730,21 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 113 — hệ sinh thái: nhân bản phân hệ 2.DTTDT E2E PASS 19/19)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 114: Hệ sinh thái app con — nhân bản phân hệ BKCCN Bảng kê chung cuối ngày (repo giong-apps v0.8.0) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `4f0ebc0` | feat(banhang): nhân bản BKCCN — xóa mật khẩu tool 3 + REPORT_MAP bkccn + trang chungtu-cuoi-ngay thật |
+| `737e142` | docs(agents): ghi GĐ C.3 + E2E PASS + lưu ý tool chạy lâu |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.3):** Module "Bảng kê chung cuối ngày" đi từ placeholder → form tạo job thật (anh gõ nhầm tên "Doanh thu tổng hợp Chuỗi" — đã đối chiếu đúng module theo tool BKCCN). E2E production PASS: **19 file `BangKeChungCuongNgay_*.xlsx` về đúng `OUTPUT\4.BKCCN\2026-09-14`** — lưu ý tool này chạy ~21 phút (chậm hơn HĐĐT/DTTDT ~5 phút là bình thường).
+>
+> **Bảo mật:** tool 3 có khối hardcode user/password — đã xóa đúng dặn (lần 2 liên tiếp bắt được nhờ grep trực tiếp giá trị).
+>
+> **Hệ sinh thái hiện tại:** 3/4 phân hệ nhóm SMED đã chạy thật (HĐDDT · DTTDT · BKCCN). Còn "Doanh thu tổng hợp Chuỗi" chờ tool đúng từ anh.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 114 — hệ sinh thái: nhân bản BKCCN E2E PASS 19/19, tool chạy ~21 phút)*
+*Người cập nhật: Trợ lý lập trình*
