@@ -4998,3 +4998,34 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > tăm tắp, icon 16px hiện đủ; hover 320px — 7 pill nhóm 11px nền sáng + VERSION đủ;
 > mobile drawer 48 link 0 tràn; typecheck 0 lỗi; build OK; version app con 1.4.2
 > + app tổng 2.5.0 (2 nơi mỗi app khớp nhau).
+
+### Giai đoạn 127: Sidebar app con round 3 — pill ẩn chiếm chỗ là thủ phạm "mất icon" + nền navy SMED (2026-09-15, repo con v1.4.3)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(ui): pill nhóm thu hẹp `hidden group-hover:block` (không chiếm chỗ) + nền sidebar navy SMED #16223d→#1e2c4a; version 1.4.2 → 1.4.3 |
+
+> **Yêu cầu của Đại ca (2026-09-15, 2 điểm):** (1) rail VẪN còn nhiều icon không hiển
+> thị — xem lại lần nữa; (2) đổi nền màu sidebar cho giống giao diện SMED
+> (tcgiong.smed.vn — navy đậm).
+>
+> **Đo thật production 1.4.2 tìm ra thủ phạm thứ 2:** các pill tên nhóm ẩn bằng
+> `invisible` (fix 0.14.1) VẪN CHIẾM CHỐ chiều cao — pill "LẤY DỮ LIỆU TỪ SMED -
+> BÁN HÀNG" wrap nhiều dòng trong rail 32px chiếm 125px TRỐNG, tạo lỗ trống
+> 86-177px giữa các icon (histogram gap: 17×38px + 5 lỗ 86-177px). 24 icon rải
+> rác trên 4.5 màn hình với 5 khoảng trống lớn → cảm giác "nhiều icon không hiện".
+> Bài học: `invisible` giấu CHỮ nhưng giữ KHUNG — đúng cho mục đích giữ layout
+> của 0.14.1, nhưng SAI cho pill wrap nhiều dòng ở bề rộng 0.
+>
+> **Fix pill:** `hidden group-hover:block` — ẩn = không chiếm chỗ. An toàn với bẫy
+> thứ tự CSS 0.14.1 vì `inline-block` đã chuyển vào NHÁNH không-collapsed (pill
+> mobile) — không bao giờ có 2 utility display cùng phần tử. Kết quả đo: 7/7 pill
+> 0px khi ẩn, nhịp icon đều 38px (+10px tại ranh giới nhóm — tự nhiên như app tổng),
+> max gap 48px (từ 177px!).
+>
+> **Fix nền:** gradient `#12211c→#1b2d26` (xanh rêu GIONG) → `#16223d→#1e2c4a`
+> (navy SMED) cho CẢ rail desktop + drawer mobile; shadow chỉnh theo tông navy.
+>
+> **Tiêu chí kiểm chứng (đã PASS đo local):** rail 32px — nhịp icon đều, không còn
+> lỗ trống lớn; hover 320px đủ 7 pill + VERSION; mobile drawer 48 link 0 tràn + nền
+> navy; typecheck 0 lỗi; build OK; version 1.4.3 2 nơi khớp.
