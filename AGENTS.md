@@ -4683,5 +4683,31 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **E2E verify (job thật 11:04):** Hoàn thành 19/19 trung tâm, 19 file Excel nằm
 > đúng `OUTPUT\1.HDDT\2026-09-14\`, 0 file lạc, web báo đúng đường dẫn.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 111 — App con đổi thư mục lưu OUTPUT\1.HDDT\<từ ngày> — E2E PASS)*
+### Giai đoạn 112: App con — tách helper Chọn/Mở thư mục khỏi service (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo giong-apps `7919cf6`, v0.6.3) | 50_folder_helper.py chạy phiên user + .vbs Startup + agent service gỡ helper cũ |
+| (app tổng — chỉ bump version) | Không đụng code app tổng |
+
+> **BUG REPORT của Đại ca (kèm ảnh, 2026-09-15):** Bấm "Chọn" thư mục lưu file
+> trên web → 2 nút quay tròn mãi, không ra dialog.
+>
+> **ROOT CAUSE — Session 0 isolation (bài học lần 2 về giới hạn Windows Service):**
+> Helper Chọn/Mở nằm trong agent service → chạy ở session 0 → Windows cô lập
+> session 0: dialog + Explorer có mở thật nhưng VÔ HÌNH → treo mãi. Trước khi lên
+> service (chạy tay console) helper nằm phiên user nên không lộ.
+>
+> **Kiến trúc mới:** service (session 0) chỉ việc headless (poll job, chạy tool,
+> ghi file); helper riêng `50_folder_helper.py` chạy phiên user (pythonw ẩn qua
+> .vbs + shortcut Startup) lo mọi thứ có UI (dialog chọn, mở Explorer). Verify:
+> Đại ca xác nhận dialog hiện; mở Explorer đúng thư mục; service vẫn chạy đều.
+>
+> **LESSON LEARNED — Service KHÔNG được phép đụng UI:** Windows chặn mọi giao
+> diện từ session 0 từ Vista. Checklist đưa app lên Windows Service: (1) ổ ảo
+> (Google Drive)? (2) module/env theo user? (3) dialog/UI/Explorer? (4)
+> %LOCALAPPDATA%? — vâng mục nào là phải tách tiến trình phiên user cho mục đó.
+> Chi tiết ở AGENTS.md repo con GĐ C.1.9.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 112 — Tách helper phiên user — hết nút Chọn quay tròn)*
 *Người cập nhật: Trợ lý lập trình*
