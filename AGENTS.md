@@ -5155,3 +5155,44 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > hàng nút phải; KPI/3 card bắt đầu sát dưới header; cuộn xuống khối chào vẫn hiện
 > (sticky); các trang khác header như cũ; version app tổng 2.5.1 + repo con 1.5.2
 > (2 nơi mỗi app); typecheck 0 lỗi; build OK.
+
+### GĐ 131 — Xóa 4 file scratch untracked — sự thật về "tsc CLI hỏng" (2026-09-16, 2.5.1)
+
+> **Bối cảnh:** Sau GĐ 130, working tree app tổng còn 4 file/directory untracked
+> từ **06/09** (trước GĐ A monorepo 10 ngày): `src/lib/auth/overview.mjs`,
+> `src/lib/overview/intro.mjs`, `src/lib/validate-image.mjs`,
+> `src/lib/scripts/check.auth.flow.mjs`. Đại ca yêu cầu thẩm định giữ hay xóa.
+>
+> **Kết quả thẩm định (đọc từng file trước khi quyết — untracked xóa là mất
+> vĩnh viễn):** 2 file đầu KHÔNG phải JavaScript — là văn bản tài liệu
+> "Huấn luyện viên nắm 3 luồng auth" (đăng ký/duyệt/quên mk/đổi mk) bị AI ghi
+> nhầm đuôi .mjs; 2 file sau là test nháp chấm công (import .ts chưa từng chạy
+> được) + script one-off check auth flow (đã phục vụ xong).
+>
+> **PHÁT HIỆN LỚN — "tsc CLI hỏng" từ GĐ 70/78 thực chất do 2 file giả:** đo
+> `npx tsc --noEmit` trước khi xóa = **436 lỗi, 436/436 (100%) từ đúng 2 file
+> văn bản nhầm đuôi** (overview.mjs 229 + intro.mjs 207) — tsc quét cả .mjs theo
+> `include: ["src"]` và cố parse văn bản như code. **Sau khi xóa: tsc CLI exit 0
+> SẠCH HOÀN TOÀN — lần đầu tiên kể từ GĐ 70.** `scripts/typecheck.mjs` vẫn dùng
+> được (báo "bỏ qua 0" — cơ chế né .mjs lạ giờ rảnh việc), giữ làm chuẩn vì
+> nhanh hơn (cache/logic riêng) và phòng khi rác .mjs quay lại.
+>
+> **Xóa:** rm 4 file + rmdir 2 directory rỗng (`overview/`, `scripts/`) — each
+> path tường minh, không glob (bài học GĐ 126). Kiến thức auth trong 2 file văn
+> bản đã có đầy đủ trong AGENTS.md các GĐ trước + code thật (registrations.ts,
+> auth-reset.ts, auth-change-password.ts đều tồn tại và hoạt động — script
+> check.auth.flow.mjs xác nhận PASS trước khi xóa).
+>
+> **LESSON LEARNED — File .mjs văn bản trong src/ là bom nổ chậm cho typecheck
+> (2026-09-16):** tsconfig `include: ["src"]` quét MỌI file kể cả .mjs — 1 file
+> ghi chú AI đặt nhầm đuôi = hàng trăm lỗi parse làm cả team tưởng "CLI hỏng",
+> sinh ra script riêng (GĐ 70/78) sống chung với rác suốt 2 tuần. Quy tắc:
+> file ghi chú/tài liệu KHÔNG BAO GIỜ đặt trong src/ với đuôi code (.mjs/.ts);
+> khi tsc báo lỗi parse hàng loạt 1 file → kiểm tra file đó là code hay văn
+> bản TRƯỚC khi kết luận môi trường hỏng; dọn rác untracked định kỳ bằng thẩm
+> định từng file (đọc trước, hỏi sau, xóa tường minh từng path).
+>
+> **Tiêu chí kiểm chứng (đã PASS):** working tree app tổng sạch 100%; tsc
+> `--noEmit` exit 0; typecheck.mjs 0 diagnostics; không file nào trong repo bị
+> mất chức năng (4 file scratch chưa từng được import bởi code dự án — grep
+> xác nhận).
