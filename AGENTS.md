@@ -4911,6 +4911,33 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Version app con: 0.14.0. Chi tiết kỹ thuật GĐ C.12 ở AGENTS.md repo con.*
 
+### Giai đoạn 125: Hệ sinh thái — hotfix sidebar thu hẹp app con, pill tên nhóm lẫn lộn (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): GĐ 125 — hệ sinh thái: hotfix sidebar thu hẹp repo con v0.14.1 + version 2.4.9 → 2.4.10 |
+
+> **BUG REPORT của Đại ca (kèm ảnh production app con, 2026-09-15):** Sidebar thu hẹp của app
+> Bán hàng lẫn lộn — mảng chữ xanh "LẤY / DỮ / LIỆU…" tràn trong rail 44px, VERSION wrap
+> "VERSI/0.14.0". Chi tiết chẩn đoán + fix nằm ở AGENTS.md repo con (hotfix v0.14.1, commit
+> `3658ed2` đã push, Vercel auto-deploy).
+>
+> **Tóm tắt kỹ thuật cho bộ nhớ tổng:** pill tên nhóm (GĐ C.6 repo con) thêm `inline-block`
+> cùng phần tử với cơ chế ẩn `hidden` — cả hai cùng chỉnh thuộc tính CSS `display`, thứ tự CSS
+> output đưa `.inline-block` sau `.hidden` → ẩn bị qua mặt, 7 pill luôn hiện và cắt cụt trong
+> rail 44px. Fix: ẩn bằng `invisible`/`group-hover:visible` (thuộc tính `visibility`, không
+> xung đột với bất kỳ utility display nào) + VERSION `whitespace-nowrap` ẩn khi thu hẹp. Verify
+> bằng Playwright đo layout: thu hẹp 0 chữ lộ, hover 320px đủ 7 pill + VERSION, mobile drawer
+> 48/48 link không tràn.
+>
+> **LESSON LEARNED (chung cho cả hệ sinh thái) — `hidden` + utility display khác trên cùng
+> phần tử = bẫy thứ tự CSS:** ẩn/hiện theo hover-state dùng cặp `invisible`/`visible`; giữ
+> `hidden` cho toggle display thuần không lẫn class display khác. Verify UI state bằng đo
+> computed style + rect, không bằng grep HTML (nhất quán bài học 0.3.2/0.3.3 repo con).
+>
+> **Tiêu chí kiểm chứng:** giong-banhang.vercel.app deploy bản 0.14.1 — thu hẹp chỉ còn icon
+> + avatar giữa cột (giống app tổng), hover mở 320px hiện đủ tên nhóm + VERSION 1 dòng.
+
 ### Giai đoạn 124: Fix production đứng yên ở bản cũ — domain chính bị ghim deployment cũ (2026-09-15)
 
 | Commit | Thay đổi |
