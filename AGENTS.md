@@ -4711,3 +4711,22 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 112 — Tách helper phiên user — hết nút Chọn quay tròn)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 113: Hệ sinh thái app con — nhân bản phân hệ 2.DTTDT (repo giong-apps v0.7.0) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `55f43df` | feat(banhang): nhân bản phân hệ 2.DTTDT — agent REPORT_MAP + server nhận report + trang doanhthu-doituong thật |
+| `cf551d6` | docs(agents): ghi GĐ C.2 + E2E PASS + bài học bảo mật grep |
+
+> **Nội dung (chi tiết đầy đủ ở AGENTS.md repo con — GĐ C.2):**
+> Module "Thống kê doanh thu theo đối tượng" trên app con Bán hàng đi từ placeholder → form tạo job thật: chọn ngày → service ngầm `GIONG_SMED_Agent` nhận → chạy tool `2_smed_TKDTTDT.py` → **19 file Excel về `OUTPUT\2.DTTDT\<từ ngày yyyy-mm-dd>`** → web báo Hoàn thành. E2E production PASS 19/19 trung tâm (13:09–13:14 15/09).
+>
+> **Bảo mật theo dặn Đại ca:** tool 2 gốc còn fallback hardcode user/password SMED — đã xóa (credentials chỉ qua env vars, giống tool 1 GĐ C.1.4). Từ giờ tool nào anh copy vào `agent/` đều được kiểm tra mật khẩu trước khi push.
+>
+> **Kiến trúc nhân bản cho các phân hệ kế tiếp (3, 4, 5…):** copy tool vào `agent/` + xóa mật khẩu (nếu có) + 1 dòng trong `REPORT_MAP` (agent) + 1 trang nhân bản gửi `report` tương ứng — DB + server hỗ trợ multi-report sẵn.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version (quy tắc 1 lần hỏi áp dụng cả hai repo).
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 113 — hệ sinh thái: nhân bản phân hệ 2.DTTDT E2E PASS 19/19)*
+*Người cập nhật: Trợ lý lập trình*
