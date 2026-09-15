@@ -4822,3 +4822,19 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 119 — hệ sinh thái: nhân bản XUATKHO E2E PASS 19/19)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 120: Hệ sinh thái app con — nhân bản XNKT, HOÀN THÀNH nhóm KHO 3/3 (repo giong-apps v0.12.0) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `e109138` | feat(banhang): nhân bản XNKT — xóa mật khẩu tool 7 + REPORT_MAP xnkt + trang /m/kho-xnt wrapper |
+| `d1e8f87` | docs(agents): E2E PASS lần 2 + hotfix timeout menu Kho |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.9):** E2E production PASS lần 2 (lần 1 FAIL — hotfix timeout menu "Kho" 5s→15s + scroll_into_view đồng bộ tool 4): **19 file `bcnxt_*.xlsx` về đúng `OUTPUT\7.BCNXT_KT\2026-09-14`** (3 domain-1 + 16 domain-2). Mật khẩu hardcode tool 7 đã xóa (lần 5 theo dặn Đại ca).
+>
+> **✅ HOÀN THÀNH nhóm KHO 3/3** (Nhập kho · Xuất kho · NXT Kế toán). **Tiến độ nhóm SMED: 7/13 phân hệ chạy thật.** Còn: Marketing 3 · Báo cáo 6.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 120 — hệ sinh thái: nhân bản XNKT E2E PASS, hoàn thành nhóm KHO 3/3)*
+*Người cập nhật: Trợ lý lập trình*
