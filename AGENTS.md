@@ -4880,3 +4880,33 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 | KHO | 🟢🟢🟢 3/3 xong |
 | MARKETING | 🟢 **Chiết khấu** · ⬜ Lịch hẹn tiêm · ⬜ Gói tiêm - Đặt trước |
 | BÁO CÁO | ⬜ 6 phân hệ (chờ tool) |
+
+### Giai đoạn 123: Hệ sinh thái — Nhân bản đủ 2 phân hệ MARKETING còn lại: Lịch hẹn tiêm + Gói tiêm - Đặt trước Vắc Xin (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo giong-apps) `891bc2c` | feat(banhang): nhân bản hentiem + dattruoc — đủ nhóm MARKETING 3/3 (GĐ C.12), v0.14.0 |
+| (mới) | chore: tăng version 2.4.7 → 2.4.8 |
+
+> **Yêu cầu Đại ca:** Nhân bản đồng loạt "Lịch hẹn tiêm" + "Gói tiêm - Đặt trước Vắc Xin" (tool 19 + 23 anh copy vào agent/). Đặc thù lần này: làm + test thật trước, KHÔNG push — anh duyệt xong mới bảo push. Em chạy auto đúng quy trình.
+>
+> **Bảo mật — pattern credentials MỚI (khác 8 tool trước):** tool 19/23 dùng **19 tài khoản RIÊNG từng trung tâm** (dict CENTER_ACCOUNTS, user khác nhau, password dùng chung `Cuongpk@***_masked***` trong bản gốc). Đã xóa sạch khỏi code → guard env `SMED_CENTER_PASS` (thiếu → SystemExit); agent đọc từ `.secrets/center_pass.txt` (gitignored — KHÔNG commit, chỉ sống trên máy chủ). Grep password toàn repo = 0. **Kèm bài học: ghi chú AGENTS.md lần đầu có dính literal password trong commit 133f900 — phát hiện ngay khi commit (grep staged diff), viết lại history về commit sạch 891bc2c + force push — GitHub không còn dấu vết.**
+>
+> **E2E production PASS cả 2 (18:20–18:44):** Lịch hẹn tiêm 19/19 file về `9.LHT\2026-09-14` (~9.5 phút); Gói tiêm - Đặt trước 76 file = 19 TT × 4 loại về `10.GDTVX\2026-09-14` (~14 phút — đúng thiết kế tool 23).
+>
+> **INCIDENT deploy đã xử lý (app không hề hấn):** lần đầu `vercel deploy --prod` chạy từ `giong-apps/` khi thư mục cha có `.vercel` của project app tổng → CLI leo lên deploy nhầm vào project `giong-vn-v6`, chiếm auto-alias phụ vài phút. Domain chính `giong-vn-v6.vercel.app` verify serving đúng 100% trước lẫn sau. Đã: trả alias phụ về deployment đúng (`vercel alias`), tạo `.vercel` riêng cho giong-apps trỏ đúng project `giong-banhang`, deploy lại Ready. **LESSON: KHÔNG `vercel deploy` từ thư mục con khi ancestor có `.vercel` project khác — CLI tìm link bằng cách leo thư mục cha. Mỗi thư mục deploy phải có `.vercel` riêng đúng project.** URL deployment vercel.app trực tiếp hiện "Login – Vercel" = Deployment Protection có sẵn (không phải lỗi) — so sánh deployment phải qua domain chính hoặc `vercel inspect` xem Aliases.
+>
+> **Phát hiện khi commit:** **tool 20 (DTTHC — GĐ C.4) chưa bao giờ được commit** dù production đã dùng từ trước (file untracked) — bổ sung vào commit 891bc2c. **LESSON: sau khi nhân bản xong phân hệ, `git status` phải thấy file tool nằm trong commit — tool untracked = repo lệch production, nguy cơ mất file nếu máy hỏng.**
+>
+> **Tiêu chí kiểm chứng:** 2 trang web production tạo job được; file về `9.LHT`/`10.GDTVX\<ngày>`; lịch sử lọc đúng report; history GitHub không chứa password; Vercel build từ GitHub Ready.
+
+### 🏁 Tiến độ hệ sinh thái SMED — 10/13 phân hệ
+
+| Nhóm | Trạng thái |
+|---|---|
+| BÁN HÀNG | 🟢🟢🟢🟢 4/4 xong |
+| KHO | 🟢🟢🟢 3/3 xong |
+| MARKETING | 🟢🟢🟢 **3/3 XONG** |
+| BÁO CÁO | ⬜ 6 phân hệ (chờ tool) |
+
+*Version app con: 0.14.0. Chi tiết kỹ thuật GĐ C.12 ở AGENTS.md repo con.*
