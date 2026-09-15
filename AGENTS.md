@@ -4790,3 +4790,19 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 117 — hệ sinh thái: sidebar tên nhóm nền xanh)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 118: Hệ sinh thái app con — nhân bản NHAPKHO Bảng kê nhập kho, nhóm KHO đầu tiên (repo giong-apps v0.10.0) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `9e86131` | feat(banhang): nhân bản NHAPKHO — xóa mật khẩu tool 4 + REPORT_MAP nhapkho + trang /m/kho-nhap wrapper SmedPullModule |
+| `88a0023` | docs(agents): bổ sung kết quả E2E GĐ C.7 |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.7):** Phân hệ ĐẦU TIÊN của nhóm KHO trên nav. E2E production PASS: **19 file `tcgiong_nhap_*.xlsx` về đúng `OUTPUT\5.BKN\2026-09-14`** (tool chạy ~5 phút). Mật khẩu hardcode trong tool 4 đã xóa (lần 3 bắt được theo dặn Đại ca). Trang mới hưởng trọn UI GĐ C.5 qua wrapper SmedPullModule ~15 dòng — công thức nhân bản càng ngày càng gọn.
+>
+> **Tiến độ nhóm SMED: 5/13 phân hệ chạy thật** (HĐDDT · DTTDT · BKCCN · DTTHC · NHAPKHO). Còn: Bảng kê xuất kho (kho-xuat), NXT Kế toán (kho-xnt), 3 Marketing, 6 Báo cáo tổng.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 118 — hệ sinh thái: nhân bản NHAPKHO E2E PASS 19/19, mở màn nhóm KHO)*
+*Người cập nhật: Trợ lý lập trình*
