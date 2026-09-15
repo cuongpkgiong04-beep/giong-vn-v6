@@ -4748,3 +4748,21 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 114 — hệ sinh thái: nhân bản BKCCN E2E PASS 19/19, tool chạy ~21 phút)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 115: Hệ sinh thái app con — nhân bản DTTHC, HOÀN THÀNH 4/4 phân hệ SMED (repo giong-apps v0.9.0) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `a549926` | feat(banhang): nhân bản DTTHC — REPORT_MAP dtthc + trang doanhthu-chuoi thật (tool 20 sạch credentials sẵn) |
+| `3bca039` | docs(agents): ghi GĐ C.4 + E2E PASS |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.4):** Module "Thống kê doanh thu tổng hợp Chuỗi" đi từ placeholder → form tạo job thật. E2E production PASS: **2 file `ThongKeDoanhThuChuoi_*.XLSX` về đúng `OUTPUT\3.DTTHC\2026-09-14`** — 2 file là ĐÚNG thiết kế (báo cáo tổng hợp Chuỗi gộp sẵn trung tâm, tool chạy 2 account SMED), khác 3 tool kia ra 19 file. Tool chạy ~1 phút — nhanh nhất.
+>
+> **Tool 20 anh tự làm sạch credentials sẵn** — grep 0 match, không cần AI xóa (chuẩn hóa tốt từ phía tool gốc).
+>
+> **✅ MỐC QUAN TRỌNG — HOÀN THÀNH 4/4 phân hệ nhóm SMED:** HĐĐT (tool 1, ~5 phút) · DTTDT (tool 2, ~5 phút) · BKCCN (tool 3, ~21 phút) · DTTHC (tool 20, ~1 phút) — tất cả E2E production PASS, cùng 1 Windows Service `GIONG_SMED_Agent`, file về đúng cấu trúc `OUTPUT\<số>.<tên>\<từ ngày yyyy-mm-dd>` anh tạo sẵn.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 115 — HOÀN THÀNH 4/4 phân hệ SMED: HĐĐT · DTTDT · BKCCN · DTTHC)*
+*Người cập nhật: Trợ lý lập trình*
