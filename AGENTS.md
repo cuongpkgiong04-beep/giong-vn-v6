@@ -4911,6 +4911,27 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Version app con: 0.14.0. Chi tiết kỹ thuật GĐ C.12 ở AGENTS.md repo con.*
 
+### Giai đoạn 124: Fix production đứng yên ở bản cũ — domain chính bị ghim deployment cũ (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): GĐ 124 — chẩn đoán + fix domain chính serve version cũ + version 2.4.8 → 2.4.9 |
+
+> **BUG REPORT của Đại ca (2026-09-15):** Code mới nhất 2.4.8 nhưng mở web vẫn thấy VERSION 2.3.1.
+>
+> **Chẩn đoán (so version trong JS bundle qua curl/python):** Domain chính `giong-vn-v6.vercel.app` đang serve bundle chứa "2.3.1" — nhưng các deployment build từ GitHub (2.3.5 → 2.4.8) đều Ready. Kiểm tra `vercel alias ls` → **domain chính bị GHIM (pinned) vào deployment cũ 19 ngày trước** (source `giong-vn-v6-eaeb293ta`), trong khi mỗi lần push chỉ tạo deployment mới + gán alias git-branch (`-git-main-`) — KHÔNG BAO GIỜ nắm domain chính.
+>
+> **Gốc rễ (suy đoán mạnh):** state auto-aliasing của project bị lệch từ trước (có thể do các lần `vercel deploy --prod` thủ công + incident deploy nhầm project GĐ 123 làm xáo trộn). Vercel free plan: `vercel rollback` chỉ lùi 1 bậc (402), nhưng `vercel alias <deployment> <domain>` ghim tay được tự do.
+>
+> **Fix đã làm:** `vercel alias https://giong-vn-v6-qg789i0sx-... giong-vn-v6.vercel.app` → domain chính về đúng bản GĐ 123 (2.4.8). Verify bằng cách fetch JS bundle từ domain chính: version đọc được khớp code.
+>
+> **LESSON LEARNED — "Deploy Ready nhưng web vẫn cũ" ≠ lỗi build (2026-09-15):**
+> Vercel Ready chỉ nghĩa là BUILD xong, không nghĩa là domain chính đang trỏ vào nó. Khi nghi version lệch: (1) xác định version production thực bằng cách tải JS bundle từ domain và grep chuỗi version (version nằm trong bundle, không nhìn được qua curl HTML thường vì gzip + version render client); (2) `vercel alias ls` xem domain chính đang ghim vào source nào; (3) `vercel inspect <url>` xem Aliases của deployment mới — nếu thiếu domain chính = bị ghim bản cũ. Fix: `vercel alias` ghim sang deployment mới.
+>
+> **Xác minh bằng thử nghiệm thật (push GĐ 124 làm mồi):** deployment build từ GitHub mới (2.4.9) VẪN KHÔNG tự nắm domain chính → auto-aliasing chưa hồi phục; em ghim tay deployment GĐ 124 (`75qr3jvwu`) lên domain → LIVE = **2.4.9** ✓. **QUY TRÌNH CHUẨN TỪ GIAI ĐOẠN 124:** mỗi lần push app tổng xong, sau khi Vercel Ready (30-60s), chạy `vercel alias <url-deployment-mới> giong-vn-v6.vercel.app` để ghim domain chính — BẮT BUỘC cho đến khi có người có quyền Dashboard (Settings → Domains) kiểm tra và bỏ pin/ghim ở đó. Cách verify nhanh: tải `index-*.js` từ domain chính, grep chuỗi version khớp bản vừa bump.
+>
+> **KẾT LUẬN ghi cho Đại ca:** Version hiển thị trên web nằm trong JS bundle — so với `package.json` + `DEFAULT_VERSION` là đủ chắc. Từ giờ mỗi lần bump version, nếu sau 2-3 phút web vẫn hiện bản cũ → chạy `vercel alias ls` + ghim tay như trên (hoặc khi làm việc với em: em tự làm cả bước ghim sau mỗi lần push app tổng).
+
 ### Giai đoạn 125: Hệ sinh thái — hotfix sidebar thu hẹp app con, pill tên nhóm lẫn lộn (2026-09-15)
 
 | Commit | Thay đổi |
@@ -4938,23 +4959,42 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** giong-banhang.vercel.app deploy bản 0.14.1 — thu hẹp chỉ còn icon
 > + avatar giữa cột (giống app tổng), hover mở 320px hiện đủ tên nhóm + VERSION 1 dòng.
 
-### Giai đoạn 124: Fix production đứng yên ở bản cũ — domain chính bị ghim deployment cũ (2026-09-15)
+### Giai đoạn 126: Sidebar app con — rail thu gọn 32px, icon đều hàng + hiệu chỉnh hệ đánh số version toàn hệ sinh thái (2026-09-15)
 
 | Commit | Thay đổi |
 |---|---|
-| (mới) | docs(agents): GĐ 124 — chẩn đoán + fix domain chính serve version cũ + version 2.4.8 → 2.4.9 |
+| (repo con) | feat(ui): rail 44→32px (thu 1/4), nút thu hẹp h-9 cố định — 24 icon đều hàng 36px, pill nhóm chữ 11px nền sáng hơn, logo/avatar co theo rail; version 0.14.1 → 1.4.2 |
+| (mới) | chore: hiệu chỉnh version app tổng 2.4.10 → 2.5.0 — patch 2 chữ số KHÔNG hợp lệ trong hệ 1 chữ số (quy tắc GĐ 84: 2.4.9 + 1 patch = 2.5.0) |
 
-> **BUG REPORT của Đại ca (2026-09-15):** Code mới nhất 2.4.8 nhưng mở web vẫn thấy VERSION 2.3.1.
+> **Yêu cầu của Đại ca (2026-09-15, 4 điểm):** (1) rail thu hẹp vẫn còn nhiều icon không
+> hiển thị — xem lại; (2) xem lại cách đánh số Version — lấy theo app tổng giống 100%;
+> (3) thu gọn chiều rộng rail xuống còn 3/4; (4) chữ HOA tên nhóm to hơn + nền sáng hơn.
 >
-> **Chẩn đoán (so version trong JS bundle qua curl/python):** Domain chính `giong-vn-v6.vercel.app` đang serve bundle chứa "2.3.1" — nhưng các deployment build từ GitHub (2.3.5 → 2.4.8) đều Ready. Kiểm tra `vercel alias ls` → **domain chính bị GHIM (pinned) vào deployment cũ 19 ngày trước** (source `giong-vn-v6-eaeb293ta`), trong khi mỗi lần push chỉ tạo deployment mới + gán alias git-branch (`-git-main-`) — KHÔNG BAO GIỜ nắm domain chính.
+> **Đo thật (Playwright, production 0.14.1):** rail app con 24 nút cao LỆCH 51-207px
+> (nav dài 4080px ≈ 4.5 màn hình), 20/24 icon rơi dưới fold. So app tổng: 16 nút ĐỀU
+> 36px, 0 icon lệch. ROOT CAUSE: nhãn ẩn `w-0` ở rail nhưng app con dùng
+> `whitespace-normal` (0.3.2) trong khi app tổng dùng `whitespace-nowrap` — chữ wrap
+> từng chữ ở bề rộng 0 làm NỤT phình theo chiều cao, icon trôi giữa ô khổng lồ.
 >
-> **Gốc rễ (suy đoán mạnh):** state auto-aliasing của project bị lệch từ trước (có thể do các lần `vercel deploy --prod` thủ công + incident deploy nhầm project GĐ 123 làm xáo trộn). Vercel free plan: `vercel rollback` chỉ lùi 1 bậc (402), nhưng `vercel alias <deployment> <domain>` ghim tay được tự do.
+> **Fix (repo con, đúng 4 yêu cầu):** (1) nút thu hẹp `h-9` CỐT ĐỊNH + nhãn
+> `whitespace-nowrap` như app tổng — icon đều hàng 36px, hết trạng thái "mất icon";
+> mobile drawer giữ `min-h-9 + whitespace-normal` (không hồi quy fix 0.3.2).
+> (2) Version app con bỏ hệ 0.x: 0.14.1 → **1.4.2** (đúng tròn trăm tương lai
+> 1.9.9 → 2.0.0 như app tổng). (3) Rail `w-11` → `w-8` (44→32px = còn 3/4);
+> `lg:pl-11` → `lg:pl-8`; logo co 20px hover 24px, avatar 20px — vừa khít cột.
+> (4) Pill nhóm 10→11px + nền `bg-accent/25` → `/50` + chữ sáng đầy.
 >
-> **Fix đã làm:** `vercel alias https://giong-vn-v6-qg789i0sx-... giong-vn-v6.vercel.app` → domain chính về đúng bản GĐ 123 (2.4.8). Verify bằng cách fetch JS bundle từ domain chính: version đọc được khớp code.
+> **HIỆU CHỈNH version app tổng:** chính 2.4.10 (GĐ 125 ghi ngày hôm nay) vi phạm
+> hệ 1 chữ số — patch "10" là 2 chữ số. Theo GĐ 84: 2.4.9 đầy 9 patch → **2.5.0**.
+> Đã sửa package.json + DEFAULT_VERSION. GĐ 125 bên dưới giữ nguyên như bản đã
+> commit (đúng diễn biến lịch sử), GĐ 126 này là bản hiệu chỉnh.
 >
-> **LESSON LEARNED — "Deploy Ready nhưng web vẫn cũ" ≠ lỗi build (2026-09-15):**
-> Vercel Ready chỉ nghĩa là BUILD xong, không nghĩa là domain chính đang trỏ vào nó. Khi nghi version lệch: (1) xác định version production thực bằng cách tải JS bundle từ domain và grep chuỗi version (version nằm trong bundle, không nhìn được qua curl HTML thường vì gzip + version render client); (2) `vercel alias ls` xem domain chính đang ghim vào source nào; (3) `vercel inspect <url>` xem Aliases của deployment mới — nếu thiếu domain chính = bị ghim bản cũ. Fix: `vercel alias` ghim sang deployment mới.
+> **SỰ CỐ nhỏ (đã xử lý ngay):** lúc dọn file tạm em rm nhầm cả `AGENTS.project.md`
+> (file có sẵn, không phải temp) → khôi phục tức thì bằng `git checkout --`. Bài học:
+> KHÔNG gom nhiều đường dẫn không liên quan vào 1 lệnh xóa; lệnh dọn chỉ nhắm đúng
+> file .tmp-* mình vừa tạo.
 >
-> **Xác minh bằng thử nghiệm thật (push GĐ 124 làm mồi):** deployment build từ GitHub mới (2.4.9) VẪN KHÔNG tự nắm domain chính → auto-aliasing chưa hồi phục; em ghim tay deployment GĐ 124 (`75qr3jvwu`) lên domain → LIVE = **2.4.9** ✓. **QUY TRÌNH CHUẨN TỪ GIAI ĐOẠN 124:** mỗi lần push app tổng xong, sau khi Vercel Ready (30-60s), chạy `vercel alias <url-deployment-mới> giong-vn-v6.vercel.app` để ghim domain chính — BẮT BUỘC cho đến khi có người có quyền Dashboard (Settings → Domains) kiểm tra và bỏ pin/ghim ở đó. Cách verify nhanh: tải `index-*.js` từ domain chính, grep chuỗi version khớp bản vừa bump.
->
-> **KẾT LUẬN ghi cho Đại ca:** Version hiển thị trên web nằm trong JS bundle — so với `package.json` + `DEFAULT_VERSION` là đủ chắc. Từ giờ mỗi lần bump version, nếu sau 2-3 phút web vẫn hiện bản cũ → chạy `vercel alias ls` + ghim tay như trên (hoặc khi làm việc với em: em tự làm cả bước ghim sau mỗi lần push app tổng).
+> **Tiêu chí kiểm chứng (đã PASS đo local):** rail 32px — 24/24 nút đúng 36px đều
+> tăm tắp, icon 16px hiện đủ; hover 320px — 7 pill nhóm 11px nền sáng + VERSION đủ;
+> mobile drawer 48 link 0 tràn; typecheck 0 lỗi; build OK; version app con 1.4.2
+> + app tổng 2.5.0 (2 nơi mỗi app khớp nhau).
