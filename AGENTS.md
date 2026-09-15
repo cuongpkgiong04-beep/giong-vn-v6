@@ -4838,3 +4838,16 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 120 — hệ sinh thái: nhân bản XNKT E2E PASS, hoàn thành nhóm KHO 3/3)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 121: Hệ sinh thái app con — nguyên tắc download: xóa file cũ trước khi tải bộ mới (repo giong-apps v0.12.1) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `aa0098c` | feat(banhang): GĐ C.10 — agent dọn file cũ trong thư mục ngày trước khi chạy tool |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.10):** Nguyên tắc của Đại ca áp dụng TẤT CẢ phân hệ download: thư mục ngày đã có file cũ → xóa trước khi tải bộ mới. Sửa 1 chỗ trong agent — tự áp dụng 7 phân hệ hiện có + mọi phân hệ sau. E2E thật PASS: 19 file cũ → xóa → 19 file mới timestamp mới, 0 sót.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 121 — hệ sinh thái: nguyên tắc xóa file cũ trước khi tải bộ mới)*
+*Người cập nhật: Trợ lý lập trình*
