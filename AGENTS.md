@@ -4806,3 +4806,19 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 118 — hệ sinh thái: nhân bản NHAPKHO E2E PASS 19/19, mở màn nhóm KHO)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 119: Hệ sinh thái app con — nhân bản XUATKHO Bảng kê xuất kho (repo giong-apps v0.11.0) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `b124cc9` | feat(banhang): nhân bản XUATKHO — xóa mật khẩu tool 5 + REPORT_MAP xuatkho + trang /m/kho-xuat wrapper |
+| `107f6bb` | docs(agents): bổ sung kết quả E2E GĐ C.8 |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.8):** E2E production PASS: **19 file `tcgiong_xuat_*.xlsx` về đúng `OUTPUT\6.BKX\2026-09-14`** (tool chạy ~3.5 phút). Mật khẩu hardcode tool 5 đã xóa (lần 4 theo dặn Đại ca).
+>
+> **Tiến độ nhóm SMED: 6/13 phân hệ chạy thật** (Bán hàng 4/4 · KHO 2/3 — còn NXT Kế toán · Marketing 3 · Báo cáo 6).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 119 — hệ sinh thái: nhân bản XUATKHO E2E PASS 19/19)*
+*Người cập nhật: Trợ lý lập trình*
