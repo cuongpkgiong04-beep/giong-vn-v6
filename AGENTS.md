@@ -4910,3 +4910,22 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 | BÁO CÁO | ⬜ 6 phân hệ (chờ tool) |
 
 *Version app con: 0.14.0. Chi tiết kỹ thuật GĐ C.12 ở AGENTS.md repo con.*
+
+### Giai đoạn 124: Fix production đứng yên ở bản cũ — domain chính bị ghim deployment cũ (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): GĐ 124 — chẩn đoán + fix domain chính serve version cũ + version 2.4.8 → 2.4.9 |
+
+> **BUG REPORT của Đại ca (2026-09-15):** Code mới nhất 2.4.8 nhưng mở web vẫn thấy VERSION 2.3.1.
+>
+> **Chẩn đoán (so version trong JS bundle qua curl/python):** Domain chính `giong-vn-v6.vercel.app` đang serve bundle chứa "2.3.1" — nhưng các deployment build từ GitHub (2.3.5 → 2.4.8) đều Ready. Kiểm tra `vercel alias ls` → **domain chính bị GHIM (pinned) vào deployment cũ 19 ngày trước** (source `giong-vn-v6-eaeb293ta`), trong khi mỗi lần push chỉ tạo deployment mới + gán alias git-branch (`-git-main-`) — KHÔNG BAO GIỜ nắm domain chính.
+>
+> **Gốc rễ (suy đoán mạnh):** state auto-aliasing của project bị lệch từ trước (có thể do các lần `vercel deploy --prod` thủ công + incident deploy nhầm project GĐ 123 làm xáo trộn). Vercel free plan: `vercel rollback` chỉ lùi 1 bậc (402), nhưng `vercel alias <deployment> <domain>` ghim tay được tự do.
+>
+> **Fix đã làm:** `vercel alias https://giong-vn-v6-qg789i0sx-... giong-vn-v6.vercel.app` → domain chính về đúng bản GĐ 123 (2.4.8). Verify bằng cách fetch JS bundle từ domain chính: version đọc được khớp code.
+>
+> **LESSON LEARNED — "Deploy Ready nhưng web vẫn cũ" ≠ lỗi build (2026-09-15):**
+> Vercel Ready chỉ nghĩa là BUILD xong, không nghĩa là domain chính đang trỏ vào nó. Khi nghi version lệch: (1) xác định version production thực bằng cách tải JS bundle từ domain và grep chuỗi version (version nằm trong bundle, không nhìn được qua curl HTML thường vì gzip + version render client); (2) `vercel alias ls` xem domain chính đang ghim vào source nào; (3) `vercel inspect <url>` xem Aliases của deployment mới — nếu thiếu domain chính = bị ghim bản cũ. Fix: `vercel alias` ghim sang deployment mới.
+>
+> **KẾT LUẬN ghi cho Đại ca:** Version hiển thị trên web nằm trong JS bundle — so với `package.json` + `DEFAULT_VERSION` là đủ chắc. Từ giờ mỗi lần bump version, nếu sau 2-3 phút web vẫn hiện bản cũ → chạy `vercel alias ls` + ghim tay như trên (hoặc hỏi em).
