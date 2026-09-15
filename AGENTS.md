@@ -4629,5 +4629,39 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > từ ❌ → ✅: URL sạch sau redirect, tên + phiên + Đăng xuất hiện, cookie
 > httpOnly, vào lại còn phiên, me trả đúng user, logout xóa cookie).
 
-*Cập nhật lần cuối: 2026-09-14 (Giai đoạn 109 — Hotfix SSO URL handoff)*
+### Giai đoạn 110: Agent SMED chạy ẩn mặc định — Windows Service (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo giong-apps `5eeafb0`, v0.6.0) | Agent log ra file + bộ service .bat NSSM + service GIONG_SMED_Agent cài trên máy + rotate SMED_AGENT_TOKEN |
+| (app tổng — chỉ bump version) | Không đụng code app tổng |
+
+> **Câu hỏi của Đại ca:** `40_web_agent.py` (app con giong-banhang) chạy để làm
+> gì? Bỏ được không? Cho chạy ẩn mặc định khi mở máy — bắt user mở cửa sổ Python
+> đen là ứng dụng không đi vào thực tiễn.
+>
+> **Giải đáp + triển khai (chi tiết đầy đủ ở AGENTS.md repo con, GĐ C.1.7):**
+> Agent là cầu nối bắt buộc web ↔ tool SMED (poll job → chạy Playwright → Excel →
+> báo kết quả) — KHÔNG bỏ được vì Vercel serverless không chạy được Playwright.
+> Đại ca chọn Windows Service NSSM. 2 bài học lớn lưu lại:
+>
+> **LESSON LEARNED — Windows Service KHÔNG nhìn thấy ổ Google Drive ảo:** Lần
+> cài đầu service trỏ tool trên `G:\My Drive\...` → `CreateProcess failed: The
+> directory name is invalid`. Ổ G: là GoogleDriveFS — gắn vào PHIÊN ĐĂNG NHẬP
+> user; service chạy session 0 chỉ thấy ổ vật lý (C:, D:). DriveType vẫn hiện 3
+> (Fixed) + VolumeName tên Gmail = dấu hiệu nhận biết ổ ảo. Đại ca chốt chuyển
+> toàn bộ agent về ổ thật `D:\DuLieuChung\...\giong-apps\apps\banhang\agent` —
+> từ giờ KHÔNG dùng ổ ảo G: cho script chạy ngầm.
+>
+> **LESSON LEARNED — Chạy ẩn phải có log ra file:** Service không có console →
+> agent sửa `log()` ghi thêm file `agent/LOG/web_agent_*.log` (dual output khi
+> chạy tay). Bộ .bat service (install/uninstall/status/restart) nằm trong repo
+> `agent/service/` để cài lại máy khác được.
+>
+> **Trạng thái cuối:** Service RUNNING (tự bật khi đăng nhập, restart tự động,
+> không cửa sổ); helper `127.0.0.1:8765` cho nút Chọn/Mở thư mục hoạt động luôn
+> không cần mở cửa sổ đen; rotate `SMED_AGENT_TOKEN` mới lên Vercel (Secret cũ
+> không pull được) — agent 401 cho tới khi app con deploy lại theo push.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 110 — Agent SMED chạy ẩn mặc định — Windows Service NSSM)*
 *Người cập nhật: Trợ lý lập trình*
