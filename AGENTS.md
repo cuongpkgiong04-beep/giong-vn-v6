@@ -5257,3 +5257,26 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > quan mới: dropdown đơn vị 20 mục; 5 KPI màu đúng; 3 lô 60/40 + ô tồn kho;
 > dropdown thời gian từng ô đổi được; số liệu đang là MẪU — anh chạy báo cáo
 > SMED xong gửi cấu trúc file/DB là em nối dữ liệu thật vào fetch*.
+
+### GĐ 133 — Header app con cao hơn + chữ chào to (2026-09-16, 1.6.1)
+
+> **Yêu cầu của Đại ca (kèm ảnh, 16/09):** Header cao hơn chút để phóng to chữ
+> khu vực "Chào Cường, Hệ thống Bán hàng" — các dòng đỡ sát nhau, thoáng hơn.
+>
+> **Fix (4 chỗ — 3 file):** (1) header `h-16` (64px) → `h-20` (80px); (2) h1
+> `text-base sm:text-lg` → `text-lg sm:text-xl` (20px), desc `text-xs` →
+> `text-sm` (14px) + `space-y-1` tách dòng; (3) form sticky các trang lấy dữ
+> liệu `top-16` → `top-20` (đồng bộ header mới); (4) panel Tài khoản SMED
+> `top-[4.25rem]` → `top-[5.25rem]` (tránh che nút).
+>
+> **Sự cố môi trường (bài học cũ ăn quả lần 2 — GĐ C.1.6):** verify đầu báo
+> version "NOT" dù code đã 1.6.1 — nguyên nhân: **tiến trình dev mồ côi PID
+> cũ (564MB) vẫn giữ cổng 3100** nhận request thay server mới (code 1.6.0).
+> `netstat -ano` + tasklist bắt được, taskkill, chạy lại → PASS. Quy tắc:
+> verify FAIL bất thường khi code đã sửa → kiểm tra netstat port + kill mồ
+> côi TRƯỚC khi debug code.
+>
+> **Verify đo thật:** header đúng 80px; h1 computed 20px; desc 14px; h1 trong
+> header; version 1.6.1 hiện sidebar. Typecheck 0 lỗi; build OK.
+>
+> **Version:** 1.6.0 → 1.6.1 (hotfix UI — patch).
