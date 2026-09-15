@@ -4766,3 +4766,16 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 115 — HOÀN THÀNH 4/4 phân hệ SMED: HĐĐT · DTTDT · BKCCN · DTTHC)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 116: Hệ sinh thái app con — UI lấy dữ liệu SMED: lịch sử lọc theo report + khung cố định (repo giong-apps v0.9.1) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `ae8e5fc` | feat(banhang): GĐ C.5 — component chung SmedPullModule (lọc report + form sticky + lịch sử cuộn nội bộ), 4 trang thành wrapper |
+
+> **Nội dung (chi tiết ở AGENTS.md repo con — GĐ C.5):** Theo yêu cầu Đại ca áp dụng cho mọi module lấy báo cáo: (1) lịch sử mỗi trang chỉ hiện job của report mình (job cũ default hddt về trang HĐĐT); (2) form "Lấy báo cáo theo khoảng ngày" sticky trên cùng, lịch sử tiêu đề cố định + danh sách cuộn nội bộ. Toàn bộ logic gom 1 component `SmedPullModule` — module lấy báo cáo mới sau này chỉ cần wrapper ~20 dòng.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 116 — hệ sinh thái: UI SMED lọc lịch sử theo report + khung cố định)*
+*Người cập nhật: Trợ lý lập trình*
