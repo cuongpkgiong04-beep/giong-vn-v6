@@ -666,7 +666,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 
 | Commit | Thay đổi |
 |---|---|
-| `88181d3` | fix: loadEmployees query thiếu role column → tất cả员工都成User |
+| `88181d3` | fix: loadEmployees query thiếu role column → tất cả nhân viên đều thành User |
 | `456fdb2` | fix: forgot-password auto-create Better Auth account từ employees |
 | `c0317f7` | fix: column names camelCase trong auth INSERT |
 | `1738af1` | fix: ensureAuthUser dùng employee data thay vì registration |
@@ -884,7 +884,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 | `ffc1cc1` | feat(nhiem-vu): upgrade display format, sorting, and darker green for Đã xong |
 | `ce5e9a8` | feat(nhiem-vu): fix edit dialog + add updateTask |
 | `e9df039` | feat(nhiem-vu): replace 'Quá hạn' button with 'Xóa' + confirmation dialog |
-| `dae452d` | feat(nhiem-vu): dropdown Phụ特长 + Người hỗ trợ chỉ hiện nhân VP |
+| `dae452d` | feat(nhiem-vu): dropdown Phụ trách + Người hỗ trợ chỉ hiện nhân VP |
 | `e82c5a5` | feat(nhiem-vu): thêm bộ lọc người phụ trách + ngày khởi tạo |
 | `460655e` | fix(nhiem-vu): dropdown filter center='VP' → check cả 'VP' và 'Văn phòng' |
 | `9196aaf` | fix(nhiem-vu): dropdown VP employees reactive (useAppStore selector) |
@@ -929,7 +929,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 > - Board view 3 cột: Việc cần làm, Quá hạn, Đã xong
 > - Đã xong: xanh lá đậm (text-green-700, border-green-500)
 > - Quá hạn: đỏ (text-red-400, border-red-300), sort giảm dần
-> - Dropdown Phụ特长 + Người hỗ trợ: chỉ nhân VP, reactive từ store
+> - Dropdown Phụ trách + Người hỗ trợ: chỉ nhân VP, reactive từ store
 > - Bộ lọc: search text + dropdown phụ trách + date range + checkbox mine
 > - Edit dialog: phân biệt tạo/sửa, pre-fill đúng data
 > - Delete: dialog xác nhận "Chắc xóa" / "Lưu lại"
@@ -4532,7 +4532,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > `NAV` vốn giả định mọi `to` là route nội bộ — `<Link to="https://...">` của
 > TanStack Router không navigate được URL tuyệt đối. Fix: nhánh sớm trong
 > NavLink theo tiền tố `http` → `<a target="_blank">` giữ nguyên hệ thống
-> style/分组 của sidebar. Khi thêm loại entry mới vào NAV (external, disabled,
+> style/nhóm của sidebar. Khi thêm loại entry mới vào NAV (external, disabled,
 > dropdown...), luôn kiểm tra TẤT CẢ chỗ tiêu thụ NAV: NavLink, visibleNav
 > filter, MOBILE_PRIMARY, isRouteAllowed — entry external không thuộc route
 > guard (startsWith("http") tự loại khỏi allowedPaths check vì không match
