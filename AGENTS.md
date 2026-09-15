@@ -4779,3 +4779,14 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 116 — hệ sinh thái: UI SMED lọc lịch sử theo report + khung cố định)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 117: Hệ sinh thái app con — Sidebar tên nhóm nền xanh nhạt (repo giong-apps v0.9.2) (2026-09-15)
+
+| Commit (giong-apps) | Thay đổi |
+|---|---|
+| `cee2248` | feat(banhang): GĐ C.6 — tên nhóm Sidebar nền xanh nhạt pill cố định |
+
+> **Nội dung:** Theo yêu cầu Đại ca — các dòng tên nhóm trên Sidebar app con (CHÍNH, LẤY DỮ LIỆU TỪ SMED…) có nền xanh nhạt pill cố định để phân biệt dễ nhìn. Chi tiết ở AGENTS.md repo con (GĐ C.6). App tổng không đổi code — chỉ ghi lịch sử + version.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 117 — hệ sinh thái: sidebar tên nhóm nền xanh)*
+*Người cập nhật: Trợ lý lập trình*
