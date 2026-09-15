@@ -4663,5 +4663,25 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > không cần mở cửa sổ đen; rotate `SMED_AGENT_TOKEN` mới lên Vercel (Secret cũ
 > không pull được) — agent 401 cho tới khi app con deploy lại theo push.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 110 — Agent SMED chạy ẩn mặc định — Windows Service NSSM)*
+### Giai đoạn 111: App con — đổi thư mục lưu mặc định OUTPUT\1.HDDT\<từ ngày> (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo giong-apps `574b8a4`, v0.6.2) | Agent default OUTPUT\1.HDDT\<từ ngày YYYY-MM-DD> + luôn truyền SMED_OUTPUT_DIR + E2E PASS 19/19 đúng thư mục mới |
+| (app tổng — chỉ bump version) | Không đụng code app tổng |
+
+> **Yêu cầu của Đại ca (kèm 2 ảnh, 2026-09-15):** Anh đã tạo sẵn cấu trúc thư
+> mục `apps/banhang/OUTPUT/` với 10 phân hệ (1.HDDT → 10.GDTVX — cùng bộ tool
+> SMED) và 1.HDDT có sẵn thư mục ngày con → đổi đường dẫn lưu mặc định của agent
+> HĐĐT sang `OUTPUT\1.HDDT\<từ ngày>`; ai muốn lưu riêng thì chọn trong ô tùy
+> chọn trên web như cũ. Chi tiết kỹ thuật (kèm bài học tool fallback làm file rơi
+> lạc — bắt được nhờ E2E) ở AGENTS.md repo con, GĐ C.1.8.
+>
+> **Đã hỏi chốt trước khi làm:** thư mục ngày tính theo TỪ NGÀY của job (dữ liệu
+> ngày nào nằm thư mục ngày đó); file test cũ → xóa sạch.
+>
+> **E2E verify (job thật 11:04):** Hoàn thành 19/19 trung tâm, 19 file Excel nằm
+> đúng `OUTPUT\1.HDDT\2026-09-14\`, 0 file lạc, web báo đúng đường dẫn.
+
+*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 111 — App con đổi thư mục lưu OUTPUT\1.HDDT\<từ ngày> — E2E PASS)*
 *Người cập nhật: Trợ lý lập trình*
