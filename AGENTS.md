@@ -5196,3 +5196,64 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > `--noEmit` exit 0; typecheck.mjs 0 diagnostics; không file nào trong repo bị
 > mất chức năng (4 file scratch chưa từng được import bởi code dự án — grep
 > xác nhận).
+>
+> **Dọn tiếp (cùng ngày):** 4 ký tự lạ CŨ trong AGENTS.md (dòng 669/887/932/4535
+> — 员工都成 / Phụ特长 x2 / 分组) — dịch theo ngữ cảnh đối chiếu field thật
+> (nhiem-vu.tsx). Quét toàn file = 0 ký tự lạ (Cyrillic + Hoa + Nhật). Commit
+> `a93179e` docs-only + ghim domain `gzby783ln`.
+
+### GĐ 132 — Trang Tổng quan app con: kết cấu Dashboard SMED (2026-09-16, 1.6.0)
+
+> **Yêu cầu của Đại ca (kèm 4 ảnh tcgiong.smed.vn):** Xóa trắng phần Tổng quan
+> cũ (3 card trạng thái + lưới 23 module) — dựng lại theo kết cấu trang chủ
+> SMED, CHỈ CẦN KHUNG biểu đồ + dropdown, SỐ LIỆU anh bổ sung sau khi chạy
+> báo cáo. Liệt kê cụ thể 6 tầng: dropdown đơn vị, 5 hộp KPI màu, 3 lô 60/40,
+> ô tồn kho full-width.
+>
+> **Triển khai (2 file mới + index viết lại):**
+> 1. `lib/dashboard-data.ts` — data layer: types + fetchUnits (Công ty + 19 TT)
+>    + fetchKpis (5 hộp: Doanh thu xanh emerald / HĐ GTGT đỏ rose-600 / Lượt
+>    tiêm đỏ nhạt rose-400 / Nhập VX tím purple-600 / Tồn kho xanh da trời
+>    sky-500) + 6 fetcher chart + formatters. Dữ liệu mẫu SINH DETERMINISTIC
+>    từ seed cố định (mulberry32) — render giống nhau mỗi lần, không nhấp nháy
+>    SSR/hydration. **Điểm nối dữ liệu thật sau này = thay fetch*, không đụng UI.**
+> 2. `components/overview-dashboard.tsx` — ChartCard dùng chung (tiêu đề HOA +
+>    select thời gian riêng từng ô: Tháng này/Tháng trước/Năm nay/Năm trước);
+>    lô 60/40 = `lg:grid-cols-5` + `col-span-3/2` (đo thật ratio 1.5); ô cuối
+>    full-width. Charts recharts: AreaChart doanh thu (gradient xanh như SMED)
+>    + BarChart cột đứng mũi tiêm (đường TRUNG BÌNH cam ReferenceLine + nhãn
+>    từng cột) + BarChart ngang Top 10 nhiều/ít nhất + nhập theo loại + tồn kho.
+> 3. `routes/index.tsx` — viết lại còn 8 dòng render OverviewDashboard; lưới
+>    23 module BỎ (module mở từ sidebar); khối chào trong header giữ nguyên (GĐ 130).
+>
+> **Dep recharts:** app tổng có sẵn ^2.13.0 (lock resolve 2.15.4) — lockfile app
+> con (copy GĐ A) ĐÃ PIN sẵn recharts 2.15.4 + đầy đủ transitive deps từ trước
+> → chỉ khai báo dep vào package.json + `npm install` (lockfile-only trước, sau
+> mới cài) — KHÔNG phát sinh version mới nào. **Bài học lockfile-copy GĐ A ăn
+> quả lần 2:** dep mới thêm vào mà lockfile đã pin sẵn thì install không lệch
+> version — đúng kịch bản chống deploy-fail ngày đầu.
+>
+> **Bắt 2 lỗi thật qua đo Playwright (không đoán qua ảnh):**
+> 1. SVG text tick KHÔNG wrap: "Morcvax (Lọ 1 liều - 1.5ml)" dài 124px > vùng
+>    trục 118px → tràn khỏi card mobile. Fix: `shortVax()` cắt tên ngắn 10 ký
+>    tự + … cho TRỤC (tên đầy đủ vẫn trong tooltip) — thử 16→14→12→10, mỗi lần
+>    đo lại tràn còn 20→11→4→0px. (16/14/12 vẫn "PASS mắt" vì SVG tự clip —
+>    chỉ đo scrollWidth mới bắt được; tiêu chí sạch tuyệt đối: 0px tràn.)
+> 2. Kiểm tra đầu báo 6 element tràn — soi từng element: 4 là tick trục (fix
+>    trên), h1 header `truncate` CÓ SẠN theo thiết kế (cắt …), không phải lỗi.
+>
+> **Verify đo thật (dev server, Playwright):** Desktop 1440px — dropdown đơn vị
+> 20 lựa chọn (Công ty CP Giong VN + Trung tâm 1..19); 5/5 KPI đủ đúng màu;
+> 7/7 chart cards đủ tiêu đề đúng chữ anh yêu cầu; 7/7 dropdown thời gian;
+> 7/7 SVG recharts render width > 200px; 55 cột nhãn; tỷ lệ 3 lô đều 1.5 (60/40);
+> ô tồn kho full-width 1360px; đổi dropdown thời gian → path biểu đồ ĐỔI (seed
+> khác nhau per period). Mobile 390px — layout stack 1 cột, 0 tràn (trừ h1
+> truncate thiết kế). Typecheck 0 lỗi; build OK; 0 ký tự lạ trong code mới.
+>
+> **Version:** 1.5.2 → 1.6.0 (tính năng mới lớn — minor; package.json +
+> DEFAULT_VERSION).
+>
+> **Tiêu chí kiểm chứng (anh duyệt trên production sau deploy):** Trang Tổng
+> quan mới: dropdown đơn vị 20 mục; 5 KPI màu đúng; 3 lô 60/40 + ô tồn kho;
+> dropdown thời gian từng ô đổi được; số liệu đang là MẪU — anh chạy báo cáo
+> SMED xong gửi cấu trúc file/DB là em nối dữ liệu thật vào fetch*.
