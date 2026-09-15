@@ -5029,3 +5029,57 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng (đã PASS đo local):** rail 32px — nhịp icon đều, không còn
 > lỗ trống lớn; hover 320px đủ 7 pill + VERSION; mobile drawer 48 link 0 tràn + nền
 > navy; typecheck 0 lỗi; build OK; version 1.4.3 2 nơi khớp.
+
+### Giai đoạn 128: App con v1.5.0 — đổi tên NXT-Kế toán + chống job "Đang chạy" treo vô hạn (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(smed): job running quá 8 phút không cập nhật = QUÁ HẠN — UI cảnh báo + nút Hủy; agent watchdog kill tool quá hạn + báo lỗi rõ; đổi tên module thành "Báo cáo nhập xuất tồn - Kế toán"; version 1.4.3 → 1.5.0 |
+
+> **Yêu cầu của Đại ca (2026-09-15, 2 điểm):** (1) đổi tên module "Báo cáo XUẤT nhập
+> tồn - Kế toán" thành "Báo cáo NHẬP xuất tồn - Kế toán"; (2) lịch sử có job
+> "Đang chạy" treo mãi — anh đã chạy job mới thay thế nhưng job cũ vẫn hiện đang
+> chạy. Muốn: giới hạn thời gian (VD không quá 8 phút — quá là coi như lỗi để
+> người dùng chạy lại); lỗi giữa chừng (mạng…) phải báo người dùng biết để hủy +
+> chạy lại.
+>
+> **Đổi tên (2 chỗ):** nav.ts label + desc, kho-xnt.tsx title + desc — sidebar +
+> trang module tự đúng (render cùng từ NAV). Verify SSR HTML: cả sidebar lẫn trang
+> đều hiện "nhập xuất tồn".
+>
+> **Phân tích gốc rễ job treo:** agent chết giữa chừng (tắt service, mất mạng,
+> tool crash không bắt được) → job kẹt `running` VĨNH VIỄN — không ai cập nhật
+> trạng thái nữa. Tương tự job `pending` khi agent tắt hẳn.
+>
+> **Giải pháp 3 tầng:**
+> 1. **Server (mapJob):** tính `isStale` = running mà `updated_at` (hoặc
+>    claimed_at/created_at) cách now hơn 8 phút. UI hiện cảnh báo vàng "Job quá
+>    hạn — agent có thể đã tắt/mất mạng" + nút HỦY JOB TREO. 8 phút đếm từ LẦN
+>    CẬP NHẬT CUỐI (không phải từ lúc claim) — tool BKCCN thật chạy ~21 phút vẫn
+>    sống vì agent báo tiến độ doneCenters liên tục (updated_at luôn mới).
+> 2. **Server (cancelSmedJob):** trước chỉ hủy được job pending; giờ hủy được cả
+>    job running QUÁ HẠN (kiểm tra điều kiện trong SQL — không hủy nhầm job đang
+>    chạy còn trong hạn). Job pending thêm nút HỦY để rút khỏi hàng chờ khi agent
+>    tắt.
+> 3. **Agent (watchdog):** subprocess tool quá 8 phút (SMED_TOOL_TIMEOUT, mặc định
+>    480s) → kill + báo ERROR về web với thông điệp RÕ: nguyên nhân thường gặp +
+>    hướng dẫn hủy/tạo lại. Mọi lỗi tool (exit != 0, exception) vẫn báo error như
+>    cũ — web hiển thị chi tiết ngay trong lịch sử.
+>
+> **LESSON LEARNED — trạng thái "đang chạy" phải có CHỐT HẾT THỜI GIAN (2026-09-15):**
+> Mọi trạng thái dở dang trong queue đều phải trả lời được: "nếu executor chết thì
+> hệ thống tự nhận ra sau bao lâu?" — không có chốt thời gian là queue tích job ma
+> không ai dám xóa. Cặp kỹ thuật chuẩn: heartbeat (updated_at mỗi lần báo tiến độ)
+> + stale timeout (quá hạn mới coi treo, KHÔNG tự hủy hộ — để người dùng quyết vì
+> tool thật có phân hệ chạy 21 phút).
+>
+> **LƯU Ý cho Đại ca:** (1) copy lại agent/40_web_agent.py MỚI sang thư mục tool
+> trên D: (đè file cũ) — watchdog chỉ có ở bản mới; (2) job đang treo trên web sau
+> deploy sẽ tự chuyển "Quá hạn" sau 8 phút kể từ lần cập nhật cuối → bấm HỦY JOB
+> TREO rồi tạo job mới; (3) tool BKCCN ~21 phút KHÔNG bị ảnh hưởng — vẫn chạy
+> bình thường vì có báo tiến độ.
+>
+> **Tiêu chí kiểm chứng:** module hiển thị đúng tên mới; job treo hiển thị cảnh
+> báo vàng + nút hủy sau 8 phút; hủy được job pending + job running quá hạn; tool
+> quá 8 phút bị kill + báo lỗi rõ; tool đang chạy còn hạn KHÔNG hủy được; typecheck
+> 0 lỗi; build OK; version 1.5.0 2 nơi khớp.
