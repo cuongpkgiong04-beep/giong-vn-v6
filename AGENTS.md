@@ -4851,3 +4851,32 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-15 (Giai đoạn 121 — hệ sinh thái: nguyên tắc xóa file cũ trước khi tải bộ mới)*
 *Người cập nhật: Trợ lý lập trình*
+
+### Giai đoạn 122: Hệ sinh thái — Nhân bản phân hệ CHIETKHAU: Báo cáo chiết khấu (2026-09-15)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo giong-apps) `cd05915` | feat(banhang): nhân bản phân hệ CHIETKHAU — nhóm MARKETING đầu tiên (GĐ C.11) |
+| (repo giong-apps) `79197a3` | fix(banhang): commit sót hotfix tool 7 (timeout menu Kho 15s + scroll_into_view) |
+| (mới) | chore: tăng version 2.4.6 → 2.4.7 |
+
+> **Yêu cầu Đại ca:** Nhân bản "Báo cáo chiết khấu" với tool `17_smed_CHIETKHAU.py` anh copy vào agent/ — mở màn nhóm MARKETING.
+>
+> **Triển khai (công thức chuẩn GĐ C):** Tool 17 có khối fallback hardcode user/password (dòng 59-61) → xóa, thay `raise SystemExit` (lần 6 dặn của anh ăn quả). Agent REPORT_MAP + `chietkhau` → tool 17 + `OUTPUT\8.BCCK\<từ ngày>`. Server nhận report + trang `/m/mkt-chietkhau` (nhóm MARKETING) placeholder → wrapper SmedPullModule — tự đủ form sticky, lịch sử lọc theo report, cuộn nội bộ, xóa file cũ trước khi tải.
+>
+> **E2E production PASS (17:33–17:39):** login → SSO → tạo job 14/09 headless → agent nhận → tool chạy ~5 phút → **19/19 file** `tcgiong_chietkhau_*.xlsx` về đúng `8.BCCK\2026-09-14` → web báo Hoàn thành.
+>
+> **Phát hiện khi verify:** hotfix tool 7 lần trước (GĐ C.9 — timeout menu Kho 5s→15s) sót diff ở working tree, chưa nằm trong commit e109138 → commit bổ sung `79197a3`. **Bài học:** sau mỗi lần fix file, `git status` trước khi chuyển việc — diff sót = repo lệch bản đang chạy.
+>
+> **Tiêu chí kiểm chứng:** Trang "Báo cáo chiết khấu" tạo job được; file về `8.BCCK\<ngày>`; lịch sử chỉ hiện job chietkhau; grep mật khẩu = 0 match trong repo.
+
+*File test E2E: `apps/banhang/scripts/test-chietkhau-e2e.mjs` (tạm thời — xóa sau khi ổn định).*
+
+### 🏁 Tiến độ hệ sinh thái SMED — 8/13 phân hệ
+
+| Nhóm | Trạng thái |
+|---|---|
+| BÁN HÀNG | 🟢🟢🟢🟢 4/4 xong |
+| KHO | 🟢🟢🟢 3/3 xong |
+| MARKETING | 🟢 **Chiết khấu** · ⬜ Lịch hẹn tiêm · ⬜ Gói tiêm - Đặt trước |
+| BÁO CÁO | ⬜ 6 phân hệ (chờ tool) |
