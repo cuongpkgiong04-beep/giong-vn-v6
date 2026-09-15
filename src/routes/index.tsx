@@ -212,13 +212,15 @@ function Dashboard() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      {/* GĐ 129 (yêu cầu Đại ca): gom khu chào lên sát header — bỏ mt-6 của wrapper +
+          mt-1 giữa các dòng, ngày tháng lên cùng hàng dòng mô tả (justify-between) */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-medium tracking-[0.16em] text-accent uppercase">Dashboard</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl" suppressHydrationWarning>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl" suppressHydrationWarning>
             {greetingVi()}, {firstName}
           </h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="text-sm text-muted">
             Điều hành chuỗi {centers.filter((c) => c.kind === "Trung tâm").length} trung tâm tiêm chủng Gióng
             Việt Nam.
           </p>

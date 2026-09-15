@@ -5083,3 +5083,35 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > báo vàng + nút hủy sau 8 phút; hủy được job pending + job running quá hạn; tool
 > quá 8 phút bị kill + báo lỗi rõ; tool đang chạy còn hạn KHÔNG hủy được; typecheck
 > 0 lỗi; build OK; version 1.5.0 2 nơi khớp.
+
+### Giai đoạn 129: Dashboard app tổng + Tổng quan app con — khu chào lên sát header, hết khoảng trống (2026-09-15, repo con v1.5.1)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | fix(dashboard): bỏ mt-6 wrapper + mt-1 giữa các dòng — khu chào sát header, ngày tháng cùng hàng dòng mô tả (đã trong commit docs này) |
+| (repo con) | feat(ui): Tổng quan — khu chào lên sát header, "hệ thống" → "Hệ thống", desc rút gọn "Kết nối dữ liệu MISAmeInvoice / SMED."; main pt-6 → pt-4; version 1.5.0 → 1.5.1 |
+
+> **Yêu cầu của Đại ca (2026-09-15, kèm 2 ảnh khoanh đỏ):** (1) App tổng Dashboard:
+> kéo toàn bộ khối chào (Dashboard / Chào buổi tối / Điều hành chuỗi…) LÊN TRÊN sát
+> header, ngày tháng cùng hàng với dòng "Điều hành chuỗi 19 trung tâm…", phần dữ liệu
+> bên dưới đẩy lên theo; (2) App con Tổng quan: kéo khối chào lên trên + sửa "hệ
+> thống Bán hàng" → "Hệ thống Bán hàng" + desc "Khung nghiệp vụ đã dựng — chờ kết
+> nối dữ liệu MISAmeInvoice / SMED (Giai đoạn C)." → "Kết nối dữ liệu MISAmeInvoice /
+> SMED" — phần dưới đẩy lên theo chỗ trống mới tạo.
+>
+> **App tổng (1 chỗ — routes/index.tsx):** wrapper khu chào bỏ `mb-6` (khoảng cách
+> lớn giữa header và khối chào), các dòng bỏ `mt-1` — khối lên sát header; ngày
+> tháng vốn ở cột phải cùng hàng (flex sm:justify-between) giờ THẲNG HÀNG với dòng
+> mô tả vì các dòng trên hết margin. Phần KPI + biểu đồ tự đẩy lên theo (không còn
+> khoảng trống).
+>
+> **App con (2 file):** (1) header Tổng quan: `space-y-1.5` → `space-y-0.5`, text
+> "hệ thống" → "Hệ thống", desc rút gọn đúng chữ Đại ca yêu cầu; (2) app-shell
+> `main` pt-6 → pt-4 — MỌI trang của app con lên sát header hơn 8px (đúng ý "phần
+> dữ liệu đẩy lên tương ứng").
+>
+> **Verify (đo Playwright + SSR):** khoảng cách header → dòng đầu khối chào app con
+> = 16px (pt-4); h1 hiện "Tổng quan, Hệ thống Bán hàng" (H hoa); desc chính xác
+> "Kết nối dữ liệu MISAmeInvoice / SMED."; không còn chữ "Giai đoạn C"; typecheck 0
+> lỗi cả 2 repo (app tổng dùng scripts/typecheck.mjs — tsc CLI bị nhiễu file .mjs
+> lạ trong working tree, không phải lỗi dự án); build OK; version 1.5.1 2 nơi khớp.
