@@ -34,13 +34,14 @@ import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
 import { useAppStore, totalUnreadCount } from "@/lib/store";
+import { formatLongDate, greetingVi } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "2.5.0";
+const DEFAULT_VERSION = "2.5.1";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -303,6 +304,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     totalUnreadCount(s.messages, s.currentUserId, s.chatGroups, new Set(s.employees.map((e) => e.id))) +
       (s._chatReadTick ?? 0) - (s._chatReadTick ?? 0),
   );
+  // GĐ 130: khối chào trong header cần đếm trung tâm (dòng "Điều hành chuỗi N trung tâm…")
+  const centers = useAppStore((s) => s.centers);
   // Resolve current employee: ALWAYS use store userId (stable across server/client)
   // to avoid hydration mismatch. Auth email/name may differ between SSR and client.
   const byId = employees.find((e) => e.id === userId) ?? employees[0];
@@ -485,8 +488,27 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <RefreshCw className={`size-5 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
-          {/* Đệm đẩy nhóm nút bên phải xuống cuối header — thay chỗ ô tìm kiếm đã bỏ (2026-09-10) */}
-          <div className="min-w-0 flex-1" />
+          {/* GĐ 130 (chốt Đại ca 15/09/2026): khối chào Dashboard VÀO TRONG header —
+              bên trái, cùng hàng với nút Đổi mật khẩu/Đăng xuất bên phải; chỉ trang chủ.
+              Các trang khác giữ đệm cũ đẩy nút phải xuống cuối. */}
+          <div className="min-w-0 flex-1">
+            {pathname === "/" ? (
+              <div className="flex items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium uppercase leading-none tracking-[0.16em] text-accent">Dashboard</p>
+                  <h1 className="truncate text-lg font-semibold leading-tight tracking-tight text-ink sm:text-xl" suppressHydrationWarning>
+                    {greetingVi()}, {currentUserEmployee?.name.split(" ").slice(-1)[0] ?? ""}
+                  </h1>
+                  <p className="hidden truncate text-xs leading-tight text-muted sm:block">
+                    Điều hành chuỗi {centers.filter((c) => c.kind === "Trung tâm").length} trung tâm tiêm chủng Gióng Việt Nam.
+                  </p>
+                </div>
+                <p className="hidden shrink-0 text-xs text-faint tabular sm:block" suppressHydrationWarning>
+                  {formatLongDate()}
+                </p>
+              </div>
+            ) : null}
+          </div>
 
           {authEnabled ? (
             <div className="flex items-center gap-2">

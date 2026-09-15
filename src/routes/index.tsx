@@ -212,23 +212,8 @@ function Dashboard() {
 
   return (
     <div>
-      {/* GĐ 129 (yêu cầu Đại ca): gom khu chào lên sát header — bỏ mt-6 của wrapper +
-          mt-1 giữa các dòng, ngày tháng lên cùng hàng dòng mô tả (justify-between) */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-medium tracking-[0.16em] text-accent uppercase">Dashboard</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl" suppressHydrationWarning>
-            {greetingVi()}, {firstName}
-          </h1>
-          <p className="text-sm text-muted">
-            Điều hành chuỗi {centers.filter((c) => c.kind === "Trung tâm").length} trung tâm tiêm chủng Gióng
-            Việt Nam.
-          </p>
-        </div>
-        <p className="text-sm text-faint tabular" suppressHydrationWarning>
-          {formatLongDate()}
-        </p>
-      </div>
+      {/* GĐ 130: khối chào đã chuyển VÀO TRONG header (app-shell.tsx) — nội dung
+          trang bắt đầu thẳng KPI, hết khoảng trống dưới header */}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi

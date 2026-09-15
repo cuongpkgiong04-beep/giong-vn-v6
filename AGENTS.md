@@ -5115,3 +5115,43 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > "Kết nối dữ liệu MISAmeInvoice / SMED."; không còn chữ "Giai đoạn C"; typecheck 0
 > lỗi cả 2 repo (app tổng dùng scripts/typecheck.mjs — tsc CLI bị nhiễu file .mjs
 > lạ trong working tree, không phải lỗi dự án); build OK; version 1.5.1 2 nơi khớp.
+
+### Giai đoạn 130: Khối chào VÀO TRONG header — cùng hàng nút Đăng xuất (2026-09-16, app tổng 2.5.1 + repo con 1.5.2)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | feat(dashboard): khối chào Dashboard chuyển vào TRONG header (bên trái, cùng hàng Đổi mật khẩu/Đăng xuất, chỉ trang chủ); hero gỡ khỏi routes/index; version 2.5.0 → 2.5.1 |
+| (repo con) | feat(ui): khối chào Tổng quan vào TRONG header cùng cơ chế; version 1.5.1 → 1.5.2 |
+
+> **BUG REPORT của Đại ca (kèm 2 ảnh, 16/09):** GĐ 129 kéo khối chào lên nhưng VẪN
+> còn khoảng hở giữa header và khối chào ở CẢ 2 app; app tổng còn QUÊN TĂNG VERSION
+> (vẫn 2.5.0). Đại ca chốt phương án: khối chào VÀO TRONG header — nằm bên trái,
+> cùng hàng với nút Đổi mật khẩu/Tài khoản SMED/Đăng xuất bên phải.
+>
+> **Kiến trúc mới (cả 2 app cùng pattern):** AppShell nhận biết `pathname === "/"`
+> → cột giữa header (div min-w-0 flex-1) render khối chào 3 dòng gọn (eyebrow +
+> h1 truncate + mô tả ẩn trên mobile); các trang khác giữ đệm cũ. Hero gỡ KHỎI
+> routes/index — nội dung trang bắt đầu thẳng KPI/3 card, hết khoảng trống. Header
+> sticky → khối chào hiện luôn khi cuộn (đúng mong muốn "cùng hàng Đăng xuất").
+>
+> **App tổng:** cần 2 selector mới trong AppShell: `centers` (đếm trung tâm) +
+> import greetingVi/formatLongDate. BUG bắt qua dev SSR: lần đầu quên khai
+> `centers` → ReferenceError 500 toàn trang — dev log bắt ngay, fix 1 dòng.
+> h1 cỡ text-lg/xl (nhỏ hơn hero cũ) cho vừa chiều cao header h-16.
+>
+> **Verify:** app con đo Playwright — h1 trong header, tâm h1 lệch tâm header -3px
+> (căn giữa khít nút phải lệch 0px), main bắt đầu 16px dưới header (chỉ còn
+> padding pt-4), 0 h1 thừa trong main. App tổng verify SSR — header chứa đủ:
+> eyebrow Dashboard + Chào buổi + Điều hành chuỗi + ngày dài "Thứ Tư, 16 tháng 9,
+> 2026"; 0 h1 sót ngoài header; "Điều hành chuỗi" chỉ 1 lần (không trùng). Playwright
+> không tự đăng nhập được app tổng (Better Auth) → SSR HTML là bằng chứng render.
+>
+> **LESSON LEARNED — bump version là BƯỚC RIÊNG phải nhớ (2026-09-16):** GĐ 129 sửa
+> xong UI mà quên tăng version app tổng — Đại ca phát hiện qua ảnh. Quy tắc: hoàn
+> thành 1 thay đổi UI bất kỳ = checklist 3 việc (sửa code + bump version 2 chỗ +
+> ghi AGENTS) rồi MỚI hỏi push. Không coi bump là việc phụ của commit.
+>
+> **Tiêu chí kiểm chứng:** mở trang chủ 2 app → khối chào nằm TRONG header cùng
+> hàng nút phải; KPI/3 card bắt đầu sát dưới header; cuộn xuống khối chào vẫn hiện
+> (sticky); các trang khác header như cũ; version app tổng 2.5.1 + repo con 1.5.2
+> (2 nơi mỗi app); typecheck 0 lỗi; build OK.
