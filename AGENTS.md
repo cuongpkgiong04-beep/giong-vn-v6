@@ -5437,3 +5437,17 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **LESSON LEARNED — Pump thread đọc stdout là điểm gắn tiến độ tự nhiên (2026-09-16):** Tool đã in tín hiệu xong từng đơn vị (marker) — điểm gắn duy nhất cần thiết là BẮT marker trong thread đã đọc stdout realtime. Không sửa tool (12 file), không thêm file/log trung gian. Khi muốn thông tin từ tiến trình con: (1) tìm tín hiệu nó ĐÃ in ra, (2) gắn vào luồng đọc ĐÃ có, (3) gửi qua kênh ping ĐÃ có.
 >
 > **Tiêu chí kiểm chứng:** Tạo job (VD BLTH) → web cập nhật mỗi 10s hiện bar % tăng dần theo trung tâm (không còn đứng im 0/19 tới khi xong); job xong → "Hoàn thành 19/19 trung tâm · 19 file Excel đã lưu"; tool 19/23 bar tăng theo trung tâm bắt đầu; MISA/DTTHC bar theo file; Hủy từ xa vẫn hoạt động (heartbeat vẫn đọc cancelRequested).
+
+### GĐ 141: Sidebar mở → màn hình chính TRƯỢT theo, hết bị che (CẢ HAI app — app tổng 2.8.0 + repo con 2.2.0) (2026-09-16)
+
+> **Yêu cầu của Đại ca (kèm 2 ảnh app con, 16/09):** Sidebar ẩn → màn hình full như cũ là ổn; nhưng khi sidebar **hiện ra** để chọn menu thì màn hình chính vẫn full → sidebar CHE mất nội dung đang xem. Muốn lúc sidebar mở: màn hình chính **thu nhỏ lại**, mép phải sidebar DÍNH mép trái màn hình ứng dụng thành 1 khối liền — user đọc được luôn phần đang chọn. Đại ca chốt áp dụng **CẢ HAI app** (đồng nhất hành vi).
+>
+> **Cơ chế (CSS thuần — không thêm React state):** `aside.sidebar-desktop` + `div.app-content` là sibling liền kề trong DOM → `styles.css` (cả 2 app, trong `@media min-width 1024px`): `aside.sidebar-desktop:hover ~ div.app-content { padding-left: <chiều rộng sidebar mở> }` + transition `padding-left 300ms ease-out` ĐỒNG BỘ với `transition-all duration-300` của sidebar → 2 khối trượt cùng nhau mượt. Chiều rộng đẩy đúng theo từng app: app tổng = 176px (`hover:w-44`), app con = 320px (`hover:w-80`). Thu hẹp: rời chuột → padding về `lg:pl-8`/`lg:pl-11` gốc như cũ.
+>
+> **Vì sao không dùng React state:** hover là trạng thái CSS thuần của sidebar từ GĐ C.6/126 — thêm state onMouseEnter/Leave phải sync với CSS hover (dễ lệch khi di chuột nhanh qua ranh giới), còn sibling selector miễn phí, không re-render, không thể lệch.
+>
+> **Verify (đo Playwright — dev server app con, viewport 1440×900):** TRƯỚC hover {asideRight:32, contentLeft:32} — KHI hover {asideW:320, asideRight:320, contentLeft:320, padLeft:320px} — SAU rời chuột {asideW:32, contentLeft:32}: mép DÍNH khít 3 trạng thái, không che nội dung; `scrollWidth = clientWidth = 1440` → không tràn ngang, nội dung co tự nhiên. Lần đo đầu FAIL do test đo sai: `getBoundingClientRect().left` của div = mép viền (padding nằm TRONG div) — mép nội dung thực = `rect.left + parseFloat(paddingLeft)`. Typecheck 0 lỗi cả 2 app; build repo con OK.
+>
+> **SỐC nhỏ khi bump version (đã sửa sạch):** chạy 2 lệnh node bump liên tiếp mà quên cd — lệnh 2 ghi package.json app tổng thành 2.8.0 NHƯNG DEFAULT_VERSION repo con nhảy vào 2.8.0 lộn xộn 2 nơi. Phát hiện ngay nhờ grep đối chiếu 4 giá trị (bước 3 checklist GĐ 138) → sửa lại bằng 1 script node duy nhất đọc/ghi ĐƯỜNG DẪN TUYỆT ĐỐI từ root cho cả 4 chỗ. **Bài học: bump version nhiều repo = MỘT script duy nhất + đường dẫn tuyệt đối từ root, KHÔNG cd giữa 2 lệnh node.**
+>
+> **Tiêu chí kiểm chứng:** Hover sidebar (cả 2 app, desktop ≥1024px) → nội dung trượt sang phải, mép phải sidebar khít mép trái nội dung, không che chữ; rời chuột → về rail như cũ mượt; mobile (hamburger overlay) giữ nguyên; version app tổng 2.8.0 + repo con 2.2.0 (2 nơi mỗi app khớp).

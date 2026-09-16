@@ -41,7 +41,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "2.7.0";
+const DEFAULT_VERSION = "2.8.0";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -435,7 +435,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-[radial-gradient(circle_at_top,_rgba(28,107,88,0.08),_transparent_35%),var(--color-bg)]">
-      <aside className="group fixed inset-y-0 left-0 z-30 hidden w-11 flex-col overflow-hidden bg-[linear-gradient(180deg,#12211c_0%,#1b2d26_100%)] text-forest-fg shadow-[12px_0_30px_-18px_rgba(18,33,28,0.9)] transition-all duration-300 ease-out hover:w-44 lg:flex">
+      {/* GĐ 140: class sidebar-desktop + app-content (sibling kế nhau) — CSS styles.css
+          đẩy nội dung sang phải khi hover (mép dính mép, không che nội dung) */}
+      <aside className="sidebar-desktop group fixed inset-y-0 left-0 z-30 hidden w-11 flex-col overflow-hidden bg-[linear-gradient(180deg,#12211c_0%,#1b2d26_100%)] text-forest-fg shadow-[12px_0_30px_-18px_rgba(18,33,28,0.9)] transition-all duration-300 ease-out hover:w-44 lg:flex">
         <div className="flex h-14 items-center border-b border-forest-fg/10 px-2 transition-all duration-300 group-hover:px-3">
           <Link to="/" className="text-forest-fg">
             <Logo compact className="group-hover:[&>span:last-child]:opacity-100" />
@@ -466,7 +468,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="lg:pl-11">
+      <div className="app-content lg:pl-11">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line/80 bg-bg/80 px-4 backdrop-blur-xl sm:px-6">
           <button
             type="button"
