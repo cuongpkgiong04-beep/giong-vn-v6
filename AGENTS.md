@@ -5351,3 +5351,25 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-16 (GĐ 136 — hệ sinh thái: nhân bản BLTH E2E PASS 19/19, nhóm BÁN HÀNG đủ 5/5)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 137: Hệ sinh thái — BỎ watchdog 8 phút kill oan + Hủy job running từ xa (repo giong-apps v1.10.0) (2026-09-16)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `fce6dd4` | feat(smed): bỏ watchdog 8 phút + hủy từ xa qua heartbeat (GĐ C.18) |
+| (mới) | chore: tăng version app tổng 2.6.0 → 2.6.1 |
+
+> **BUG REPORT Đại ca (kèm ảnh, 16/09):** "Tình trạng lỗi không tiếp tục được vẫn diễn ra" — job BKCCN 15:51 liên tục bị watchdog kill oan lúc 15:59 ("Tool im lặng 8 phút"). Đại ca hỏi: bỏ giới hạn 8 phút thì có ảnh hưởng gì?
+>
+> **ROOT CAUSE — chứng minh bằng mô phỏng (không đoán):** `bufsize=1` phía agent Popen KHÔNG lan sang tiến trình con — Python block-buffer ~8KB khi stdout là pipe, dòng chỉ xả khi buffer đầy hoặc tool thoát. Mô phỏng: tool in ngay giây 0 → agent nhận +10.1s (lúc tool kết thúc). Job 15:51: tool có 41 lệnh print nhưng 0 dòng tới agent trong 8 phút → watchdog nhìn tín hiệu MÙ → kết án tool "im lặng" → kill oan. Các lần BKCCN 21 phút trước sống sót là do tool in đủ dày xả buffer thường xuyên.
+>
+> **Đại ca chốt BỎ HẲN 8 phút.** Em báo trước ảnh hưởng (mất tự phục hồi tool treo thật vì heartbeat nuôi updated_at → web cũng không stale được) → xây lưới an toàn thay thế cùng lúc: **người dùng Hủy từ xa** — web trả `cancelRequested` qua endpoint report → agent heartbeat (30s) nhận lệnh → kill tool → job "Đã hủy bởi người dùng". UI: nút Hủy trên mọi job running; isStale chỉ còn cảnh báo. Kèm `PYTHONUNBUFFERED=1` cho log realtime + tail lỗi chẩn đoán được.
+>
+> **LESSON — bufsize=1 của Popen không lan sang tiến trình con (2026-09-16):** tiến trình con tự quyết buffer khi stdout là pipe. Muốn xả ngay: `PYTHONUNBUFFERED=1` vào env, `python -u`, hoặc tool `flush=True`. Watchdog dựa trên output tiến trình con PHẢI xử lý buffer trước — không thì "im lặng" chỉ là ảo giác của người quan sát. (Bổ sung GĐ C.16: tín hiệu gắn đồng hồ phải được kiểm chứng KHÔNG đệm/giữ trên đường truyền.)
+>
+> **Chi tiết kỹ thuật đầy đủ:** AGENTS.md repo con GĐ C.18.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 2.6.1.
+
+*Cập nhật lần cuối: 2026-09-16 (GĐ 137 — hệ sinh thái: bỏ watchdog kill oan, hủy từ xa qua heartbeat)*
+*Người cập nhật: Trợ lý lập trình*
