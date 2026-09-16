@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/lib/store";
 import { isAdminRole } from "@/lib/catalog";
-import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess } from "@/lib/permissions";
+import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess, BANHANG_GROUP_KEYS, BANHANG_GROUP_LABELS, getBanhangGroups, type BanhangGroupKey } from "@/lib/permissions";
 import { saveModuleAccess, clearModuleAccess } from "@/routes/api/employee-crud";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -22,6 +22,13 @@ type ModulePermissionRow = {
   userEnabled: boolean;
 };
 
+/** GĐ 142 — 4 toggle con của quyền "Bán hàng (Dự án)" (nhóm bộ phận app con) */
+type BanhangGroupRow = {
+  key: BanhangGroupKey;
+  label: string;
+  enabled: boolean;
+};
+
 function AdminPermissionsPage() {
   const { user, isPending } = useCurrentUserState();
   const employees = useAppStore((s) => s.employees);
@@ -29,6 +36,7 @@ function AdminPermissionsPage() {
   const [search, setSearch] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [moduleRows, setModuleRows] = useState<ModulePermissionRow[]>([]);
+  const [banhangRows, setBanhangRows] = useState<BanhangGroupRow[]>([]);
 
   const byEmail = user ? employees.find((e) => e.email === (user.primaryEmail ?? "")) : null;
   const byName = user ? employees.find((e) => e.name === (user.displayName ?? "")) : null;
@@ -68,6 +76,15 @@ function AdminPermissionsPage() {
     }));
 
     setModuleRows(nextRows);
+
+    // GĐ 142 — quyền nhóm Bán hàng của user được chọn (Admin = đủ 4; user thường
+    // theo override; đã bật "banhang" mà chưa cấu hình nhóm nào → đủ 4)
+    const groups = getBanhangGroups(selected);
+    setBanhangRows(BANHANG_GROUP_KEYS.map((key) => ({
+      key,
+      label: BANHANG_GROUP_LABELS[key],
+      enabled: groups[key],
+    })));
   }, [selectedEmployeeId, employees, filteredEmployees]);
 
   // Wait for session to resolve
@@ -105,6 +122,21 @@ function AdminPermissionsPage() {
       );
   };
 
+  const updateBanhangGroup = (groupKey: BanhangGroupKey, enabled: boolean) => {
+    if (!selectedEmployee) return;
+    if (isAdmin) return; // Admin luôn đủ 4 nhóm — toggle chỉ dành cho user thường
+    // Bật 1 nhóm con → tự bật "banhang" (cửa vào app con) nếu chưa; tắt nhóm cuối
+    // vẫn giữ banhang (user chỉ không thấy nhóm đó).
+    setUserModuleAccess(selectedEmployee.id, groupKey, enabled);
+    setBanhangRows((rows) => rows.map((r) => (r.key === groupKey ? { ...r, enabled } : r)));
+    const next = { ...getUserModuleAccess(selectedEmployee.id), [groupKey]: enabled, banhang: true };
+    saveModuleAccess(
+      { data: { employeeId: selectedEmployee.id, modules: next as Record<string, boolean> } },
+    )
+      .then(() => toast.success(`${selectedEmployee.name}: ${enabled ? "đã bật" : "đã tắt"} ${BANHANG_GROUP_LABELS[groupKey]}`))
+      .catch(() => toast.error("Lưu phân quyền thất bại — kiểm tra mạng và thử lại"));
+  };
+
   const resetModules = () => {
     if (!selectedEmployee) return;
     resetUserModuleAccess(selectedEmployee.id);
@@ -115,6 +147,9 @@ function AdminPermissionsPage() {
         userEnabled: Boolean(defaultMap[row.key]),
       })),
     );
+    // GĐ 142: reset cả quyền nhóm Bán hàng (đi theo default của getBanhangGroups)
+    const resetGroups = getBanhangGroups(selectedEmployee);
+    setBanhangRows((rows) => rows.map((r) => ({ ...r, enabled: resetGroups[r.key] })));
     clearModuleAccess({ data: { employeeId: selectedEmployee.id } })
       .then(() =>
         toast.success(`Đã reset quyền mặc định cho ${selectedEmployee.name}`),
@@ -188,30 +223,63 @@ function AdminPermissionsPage() {
 
           <div className="space-y-3 px-4 pb-4">
             {moduleRows.map((row) => (
-              <div
-                key={row.key}
-                className="flex items-center justify-between gap-4 rounded-xl border border-line bg-surface px-3 py-3"
-              >
-                <div>
-                  <div className="font-medium text-ink">{row.label}</div>
-                  <div className="text-xs text-muted">
-                    Mặc định: {row.defaultEnabled ? "Có" : "Không"}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => updateModule(row.key, !row.userEnabled)}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-                    row.userEnabled ? "bg-accent" : "bg-slate-300"
-                  }`}
-                  aria-label={`Bật/tắt quyền ${row.label}`}
+              <div key={row.key}>
+                <div
+                  className="flex items-center justify-between gap-4 rounded-xl border border-line bg-surface px-3 py-3"
                 >
-                  <span
-                    className={`inline-block size-5 rounded-full bg-white shadow transition ${
-                      row.userEnabled ? "translate-x-6" : "translate-x-1"
+                  <div>
+                    <div className="font-medium text-ink">{row.label}</div>
+                    <div className="text-xs text-muted">
+                      Mặc định: {row.defaultEnabled ? "Có" : "Không"}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateModule(row.key, !row.userEnabled)}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
+                      row.userEnabled ? "bg-accent" : "bg-slate-300"
                     }`}
-                  />
-                </button>
+                    aria-label={`Bật/tắt quyền ${row.label}`}
+                  >
+                    <span
+                      className={`inline-block size-5 rounded-full bg-white shadow transition ${
+                        row.userEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+                {/* GĐ 142 — 4 nhóm bộ phận của app Bán hàng (chỉ hiện khi "Bán hàng" bật
+                    và user KHÔNG phải Admin — Admin luôn đủ 4 nhóm). Bật nhóm con tự
+                    bật "banhang" (cửa vào app con). */}
+                {row.key === "banhang" && row.userEnabled && !isAdmin ? (
+                  <div className="mt-1.5 space-y-1 rounded-xl border border-dashed border-accent/30 bg-accent-soft/40 p-2">
+                    <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                      Nhóm bộ phận trong app Bán hàng
+                    </p>
+                    {banhangRows.map((bh) => (
+                      <div
+                        key={bh.key}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2"
+                      >
+                        <span className="text-sm text-ink">{bh.label}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateBanhangGroup(bh.key, !bh.enabled)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                            bh.enabled ? "bg-accent" : "bg-slate-300"
+                          }`}
+                          aria-label={`Bật/tắt ${bh.label}`}
+                        >
+                          <span
+                            className={`inline-block size-4 rounded-full bg-white shadow transition ${
+                              bh.enabled ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

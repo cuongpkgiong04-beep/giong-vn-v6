@@ -5451,3 +5451,66 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **SỐC nhỏ khi bump version (đã sửa sạch):** chạy 2 lệnh node bump liên tiếp mà quên cd — lệnh 2 ghi package.json app tổng thành 2.8.0 NHƯNG DEFAULT_VERSION repo con nhảy vào 2.8.0 lộn xộn 2 nơi. Phát hiện ngay nhờ grep đối chiếu 4 giá trị (bước 3 checklist GĐ 138) → sửa lại bằng 1 script node duy nhất đọc/ghi ĐƯỜNG DẪN TUYỆT ĐỐI từ root cho cả 4 chỗ. **Bài học: bump version nhiều repo = MỘT script duy nhất + đường dẫn tuyệt đối từ root, KHÔNG cd giữa 2 lệnh node.**
 >
 > **Tiêu chí kiểm chứng:** Hover sidebar (cả 2 app, desktop ≥1024px) → nội dung trượt sang phải, mép phải sidebar khít mép trái nội dung, không che chữ; rời chuột → về rail như cũ mượt; mobile (hamburger overlay) giữ nguyên; version app tổng 2.8.0 + repo con 2.2.0 (2 nơi mỗi app khớp).
+
+### GĐ 143 — Phân quyền CHI TIẾT app Bán hàng theo NHÓM BỘ PHẬN (2026-09-16, 2.9.0 + repo con 2.3.0)
+
+> **Yêu cầu của Đại ca (kèm 2 ảnh, 16/09):** Quyền "Bán hàng" hiện là 1 công tắc duy nhất —
+> ai được cấp là thấy TOÀN BỘ phân hệ (MISA + SMED Bán hàng + Kho + Marketing). Muốn chi
+> tiết hơn: Kế toán chỉ thấy nhóm Kế toán, thủ kho chỉ nhóm Kho, Marketing chỉ nhóm Marketing.
+> Em trình phương án 4 quyền nhóm + 1 quyền cửa → anh chốt "Làm theo phương án trên".
+
+**Mô hình 5 quyền (1 cửa + 4 nhóm):**
+
+| Quyền (key trong module_access) | Điều khiển |
+|---|---|
+| `banhang` (cửa vào — có sẵn GĐ 108) | Nút Bán hàng trên sidebar app tổng + SSO vào app con |
+| `banhang-misa` | Nhóm LẤY DỮ LIỆU TỪ MISAmeInvoice (bảng kê hóa đơn) |
+| `banhang-banhang` | Nhóm SMED - BÁN HÀNG (HĐĐT, DT đối tượng, DT chuỗi, BKCCN, BLTH) |
+| `banhang-kho` | Nhóm SMED - KHO (nhập kho, xuất kho, NXT kế toán) |
+| `banhang-marketing` | Nhóm SMED - MARKETING (chiết khấu, lịch hẹn tiêm, gói tiêm đặt trước) |
+
+**Kiến trúc liên thông — quyền đi kèm JWT + đọc LIVE DB dùng chung:**
+
+1. **App tổng `permissions.ts`:** `BANHANG_GROUP_KEYS` + `BANHANG_GROUP_LABELS` +
+   `getBanhangGroups(employee)` (Admin = đủ 4; user cần `banhang=true`; đã bật banhang mà
+   chưa cấu hình nhóm nào → đủ 4 — backward-compat GĐ 108, ai đang dùng không mất quyền).
+   Nhóm KHÔNG nằm trong MODULE_DEFINITIONS (không path nội bộ, không thuộc route guard app tổng).
+2. **`sso-token.ts`:** ký `mods` vào JWT handoff — đọc TRỰC TIẾP bảng `module_access` trong
+   server function (KHÔNG dùng getEmployeeById/getBanhangGroups — hàm đó đọc store phía
+   client, luôn rỗng trong server function — bug bắt trước khi push).
+3. **Trang Phân quyền:** bật "Bán hàng (Dự án)" → xổ ra 4 toggle con (khung viền nét đứt,
+   CHỈ hiện cho user thường — Admin luôn đủ 4). Bật nhóm con tự bật `banhang` (cửa vào).
+   Lưu cùng ô JSONB `module_access` — KHÔNG migration mới.
+4. **App con `smed-auth.ts`:** `REPORT_GROUP` map report → nhóm + `getBanhangGroups()` đọc
+   LIVE từ module_access (đổi quyền có hiệu lực NGAY, không đợi SSO lại — JWT mods chỉ là
+   fallback khi DB lỗi) + `canAccessReport(user, report)`.
+5. **App con `app-shell.tsx`:** `NAV_GROUP_TO_MOD` map nhóm sidebar → quyền +
+   `filterNavByMods(user)` — sidebar chỉ hiện nhóm được cấp; `SidebarNav` nhận `items`
+   prop (default NAV — không vỡ chỗ gọi cũ); mobile drawer cùng nguồn lọc.
+6. **App con `-smed.ts` (server):** `createSmedJob` chặn lớp 2 theo nhóm — che menu chưa
+   đủ, tạo job tay qua API cũng bị chặn với thông báo rõ. `can-create?report=` trả
+   `canThisReport` → form tạo job chỉ hiện ở phân hệ đúng nhóm.
+
+**LESSON LEARNED — Server function KHÔNG thấy store client (2026-09-16):**
+`getEmployeeById()`/`getBanhangGroups()` của app tổng đọc Zustand `useAppStore.getState()`
+— store chỉ tồn tại ở browser. Trong server function (sso-token) employee luôn null →
+mods rỗng mặc dù code "đúng type". Quy tắc: server function cần dữ liệu phân quyền →
+query thẳng bảng DB (module_access) trong handler, không tái dùng hàm đọc store.
+
+**LESSON LEARNED — Quyền chi tiết: che menu (lớp UI) phải đi đôi chặn server (lớp data):**
+Nếu chỉ lọc sidebar, user vẫn tạo được job bằng gọi API tay — giống lesson GĐ 99 (2 lớp
+cùng điều khiển 1 tính năng phải cùng nguồn). Ở đây 3 điểm tiêu thụ quyền khớp 1 nguồn:
+sidebar (mods/me), can-create (canThisReport), createSmedJob (canAccessReport) — tất cả
+đọc cùng logic `getBanhangGroups` từ cùng bảng `module_access`.
+
+**LƯU Ý cho Đại ca khi test:**
+- Trang Phân quyền: chọn 1 user thường đã bật "Bán hàng" → thấy 4 toggle con xổ ra.
+  Bật/tắt từng nhóm → user đó mở app con chỉ thấy đúng nhóm (đổi quyền có hiệu lực khi
+  user tải lại trang app con — không cần đăng nhập lại).
+- User ĐANG dùng app con từ trước (bật banhang, chưa cấu hình nhóm) → tự có đủ 4 nhóm
+  (backward-compat) — không ai mất quyền đột ngột. Muốn thu hẹp: chỉ cần tắt nhóm.
+- Admin/SuperAdmin: luôn đủ 4 nhóm, không thấy toggle con (vô nghĩa với Admin).
+
+**Tiêu chí kiểm chứng:** Kế toán chỉ thấy MISA + (tùy cấu hình) nhóm Bán hàng; thủ kho chỉ
+thấy nhóm Kho; tạo job đúng nhóm được, nhóm khác bị chặn cả UI lẫn API; typecheck 0 lỗi
+cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơi mỗi app).

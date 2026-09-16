@@ -55,6 +55,30 @@ export const createSsoToken = createServerFn({ method: "GET" })
         return { ok: false, error: "APP_JWT_SECRET chưa cấu hình" };
       }
 
+      // GĐ 142 — nhét quyền nhóm Bán hàng vào payload: app con đọc `mods` từ
+      // phiên (không cần DB riêng / đồng bộ 2 chiều). Nguồn sự thật = bảng
+      // module_access DB dùng chung — đọc TRỰC TIẾP tại đây (KHÔNG dùng
+      // getEmployeeById/getBanhangGroups — hàm đó đọc store phía client, luôn
+      // rỗng trong server function).
+      const GROUP_KEYS = ["banhang-misa", "banhang-banhang", "banhang-kho", "banhang-marketing"] as const;
+      let mods: string[] = [];
+      const isAdminRole = emp.role === "SuperAdmin" || emp.role === "Admin";
+      if (isAdminRole) {
+        mods = [...GROUP_KEYS];
+      } else {
+        const accessRows = await sql<{ modules: Record<string, boolean> | null }>`
+          SELECT modules FROM module_access WHERE employee_id = ${emp.id} LIMIT 1
+        `;
+        const modules = (accessRows[0]?.modules ?? {}) as Record<string, unknown>;
+        if (modules.banhang === true) {
+          const anyConfigured = GROUP_KEYS.some((k) => k in modules);
+          // Đã bật "banhang" mà chưa cấu hình nhóm nào → đủ 4 (backward-compat)
+          mods = anyConfigured
+            ? GROUP_KEYS.filter((k) => modules[k] === true)
+            : [...GROUP_KEYS];
+        }
+      }
+
       const key = new TextEncoder().encode(secret);
       const token = await new SignJWT({
         empId: emp.id,
@@ -62,6 +86,7 @@ export const createSsoToken = createServerFn({ method: "GET" })
         email,
         role: emp.role,
         center: emp.center,
+        mods,
       })
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()

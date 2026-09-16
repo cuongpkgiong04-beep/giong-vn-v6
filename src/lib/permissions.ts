@@ -59,7 +59,14 @@ export type ModuleKey =
   | "guide"
   | "admin"
   | "preview"
-  | "banhang"; // GĐ B hệ sinh thái — app con Bán hàng (SSO handoff), default TẮT (chốt 2026-09-14)
+  | "banhang" // GĐ B hệ sinh thái — app con Bán hàng (SSO handoff), default TẮT (chốt 2026-09-14)
+  // GĐ 142 (16/09/2026) — phân quyền CHI TIẾT app Bán hàng theo nhóm bộ phận
+  // (yêu cầu Đại ca: Kế toán/Kho/Marketing chỉ thấy nhóm của mình). Quyền chi tiết
+  // đi kèm JWT SSO (mods) → app con đọc là có, KHÔNG cần DB riêng ở app con.
+  | "banhang-misa" // nhóm MISA meInvoice (bảng kê hóa đơn đã sử dụng)
+  | "banhang-banhang" // nhóm SMED - BÁN HÀNG (HĐĐT, DT đối tượng, DT chuỗi, BKCCN, BLTH)
+  | "banhang-kho" // nhóm SMED - KHO (nhập kho, xuất kho, NXT kế toán)
+  | "banhang-marketing"; // nhóm SMED - MARKETING (chiết khấu, lịch hẹn tiêm, gói tiêm đặt trước)
 
 export const MODULE_DEFINITIONS = [
   { key: "dashboard", label: "Tổng quan", paths: ["/"], group: "Điều hành" },
@@ -81,6 +88,56 @@ export const MODULE_DEFINITIONS = [
   // getAllowedNavItems/route guard tự bỏ qua; Sidebar tự lọc qua getEffectiveModuleAccess("banhang")
   { key: "banhang", label: "Bán hàng (Dự án)", paths: [], group: "DỰ ÁN" },
 ] as const;
+
+/**
+ * GĐ 142 — 4 quyền CHI TIẾT của app Bán hàng (KHÔNG nằm trong MODULE_DEFINITIONS:
+ * không có path nội bộ, không thuộc route guard app tổng — chỉ dùng để (1) toggle
+ * riêng trên trang Phân quyền, (2) nhét vào JWT SSO cho app con lọc menu/job).
+ * Quyền nhóm nào BẬT → user thấy đúng nhóm module đó trong app con.
+ */
+export const BANHANG_GROUP_KEYS = [
+  "banhang-misa",
+  "banhang-banhang",
+  "banhang-kho",
+  "banhang-marketing",
+] as const;
+
+export type BanhangGroupKey = (typeof BANHANG_GROUP_KEYS)[number];
+
+export const BANHANG_GROUP_LABELS: Record<BanhangGroupKey, string> = {
+  "banhang-misa": "BH — MISA meInvoice",
+  "banhang-banhang": "BH — SMED Bán hàng",
+  "banhang-kho": "BH — SMED Kho",
+  "banhang-marketing": "BH — SMED Marketing",
+};
+
+/**
+ * GĐ 142 — quyền nhóm BÁN HÀNG hiệu lực của 1 employee:
+ * Admin/SuperAdmin = đủ 4 nhóm; user thường = override trong module_access
+ * (default TẤT CẢ 4 nhóm khi ĐÃ bật "banhang" — backward-compatible: ai đang
+ * dùng app con không bị mất quyền; khi chưa bật banhang → không nhóm nào).
+ */
+export function getBanhangGroups(employee: Employee | null): Record<BanhangGroupKey, boolean> {
+  const none = { "banhang-misa": false, "banhang-banhang": false, "banhang-kho": false, "banhang-marketing": false };
+  if (!employee) return none;
+  if (isAdminRole(employee.role)) {
+    return { "banhang-misa": true, "banhang-banhang": true, "banhang-kho": true, "banhang-marketing": true };
+  }
+  const hasBanhang = getEffectiveModuleAccess(employee, "banhang");
+  if (!hasBanhang) return none;
+  const explicit = getUserModuleAccess(employee.id);
+  // ĐÃ bật banhang mà chưa cấu hình nhóm nào → đủ 4 (backward-compatible GĐ 108)
+  const anyConfigured = BANHANG_GROUP_KEYS.some((k) => k in explicit);
+  if (!anyConfigured) {
+    return { "banhang-misa": true, "banhang-banhang": true, "banhang-kho": true, "banhang-marketing": true };
+  }
+  return {
+    "banhang-misa": explicit["banhang-misa"] === true,
+    "banhang-banhang": explicit["banhang-banhang"] === true,
+    "banhang-kho": explicit["banhang-kho"] === true,
+    "banhang-marketing": explicit["banhang-marketing"] === true,
+  };
+}
 
 export const MODULE_LABELS: Record<ModuleKey, string> = Object.fromEntries(
   MODULE_DEFINITIONS.map((module) => [module.key, module.label]),
@@ -151,7 +208,7 @@ export function getUserModuleAccess(employeeId: string): ModuleAccessMap {
 }
 
 /** Optimistic update tại máy — trang Phân quyền tự lưu DB qua `saveModuleAccess`. */
-export function setUserModuleAccess(employeeId: string, moduleKey: ModuleKey, enabled: boolean) {
+export function setUserModuleAccess(employeeId: string, moduleKey: ModuleKey | BanhangGroupKey, enabled: boolean) {
   if (!employeeId) return;
   ensureSeeded();
   const current = dbModuleAccess[employeeId] ?? {};
