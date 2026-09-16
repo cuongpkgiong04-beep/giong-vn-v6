@@ -41,7 +41,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "2.5.2";
+const DEFAULT_VERSION = "2.5.3";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -489,11 +489,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <RefreshCw className={`size-5 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
           {/* GĐ 130 (chốt Đại ca 15/09/2026): khối chào Dashboard VÀO TRONG header —
-              bên trái, cùng hàng với nút Đổi mật khẩu/Đăng xuất bên phải; chỉ trang chủ.
-              Các trang khác giữ đệm cũ đẩy nút phải xuống cuối. */}
+              bên trái, cùng hàng với nút Đổi mật khẩu/Đăng xuất bên phải.
+              GĐ 135 (yêu cầu 16/09): hiện ở MỌI trang — đồng nhất kiểu Tổng quan
+              trên toàn app (đồng bộ GĐ C.15b app con). */}
           <div className="min-w-0 flex-1">
-            {pathname === "/" ? (
-              <div className="flex items-end justify-between gap-3">
+            <div className="flex items-end justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-medium uppercase leading-none tracking-[0.16em] text-accent">Dashboard</p>
                   <h1 className="truncate text-lg font-semibold leading-tight tracking-tight text-ink sm:text-xl" suppressHydrationWarning>
@@ -507,7 +507,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {formatLongDate()}
                 </p>
               </div>
-            ) : null}
           </div>
 
           {authEnabled ? (

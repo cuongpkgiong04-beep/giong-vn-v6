@@ -5303,3 +5303,22 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiến độ hệ sinh thái:** nhóm SMED 10/13 + **mở màn nguồn MISA meInvoice 1 phân hệ**. Kiến trúc OTP-qua-IMAP tái dùng được cho các trang MISA sau (nếu cần).
 >
 > **Tiêu chí kiểm chứng (đã PASS):** trang /m/misa-hoadon tạo job được; lần đầu tự lấy OTP, lần sau vào thẳng; file XLSX về đúng thư mục ngày; ngày rỗng = thành công 0 file; typecheck 0 lỗi; commit 46565d0 sạch password; push GitHub OK — Vercel auto-deploy.
+
+### GĐ 135 — Header đồng nhất kiểu Tổng quan trên MỌI trang — CẢ HAI app (2026-09-16, app tổng 2.5.3 + repo con 1.7.1)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `af59f93` | feat(ui): header khối chào hiện MỌI trang (GĐ C.15b, v1.7.1) |
+| (mới) | feat(app-shell): khối chào header hiện mọi trang app tổng + version 2.5.3 |
+
+> **Yêu cầu Đại ca (kèm 2 ảnh app con, 16/09):** Các trang phải có header giống trang "Tổng quan" — khối chào hiện ở TẤT CẢ các trang (ảnh 2: /m/misa-hoadon header trái trống, mũi tên đỏ). Đại ca chốt mở rộng: **đồng bộ CẢ app tổng**.
+>
+> **Fix song song (cùng pattern — bỏ điều kiện `pathname === "/"` quanh khối chào trong header):**
+> - **App con (GĐ C.15b, v1.7.1, commit af59f93):** app-shell.tsx — 3 dòng eyebrow/Chào/desc render mọi trang.
+> - **App tổng (GĐ 135, v2.5.3):** app-shell.tsx — khối chào Dashboard (greeting + Điều hành chuỗi N trung tâm + ngày dài) render mọi trang, giữ suppressHydrationWarning.
+>
+> **⚠️ PHÁT HIỆN + SỬA khi commit app con — package-lock.json repo con bị HỎNG TỪ TRƯA (GĐ C.13.1):** lệnh `npm install --package-lock-only` chạy từ ROOT qua `--prefix` đã GHI ĐÈ lockfile app con bằng lockfile workspace root ("app-builder-workspace") — commit 46565d0 mang lockfile sai. Commit af59f93 regenerate đúng `@giong/banhang@1.7.1` (275 packages, đủ react/router/recharts). **LESSON LEARNED — KHÔNG chạy npm với --prefix chéo thư mục khi có lockfile per-package; luôn cd vào đúng package rồi chạy. Khi commit thấy diff lockfile ± hàng nghìn dòng = nghi sai gốc, dừng kiểm tra trước khi push.**
+>
+> **Verify SSR (dev server + curl --compressed — response gzip phải giải nén trước khi grep):** app tổng 3 trang (/, /cham-cong, /nhiem-vu) đều chứa "Điều hành chuỗi" ✓; app con /m/misa-hoadon chứa "Hệ sinh thái GIONG VN" ✓. Kill dev server mồ côi sau đo (bài học GĐ 133). Typecheck 0 lỗi cả 2 app.
+>
+> **Tiêu chí kiểm chứng:** mở BẤT KỲ trang nào của CẢ HAI app → header trái hiện khối chào giống trang chủ; nút phải không đổi; Vercel deploy app con af59f93 build OK với lockfile đúng.
