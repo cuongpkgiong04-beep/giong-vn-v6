@@ -144,17 +144,27 @@
 
 ### Cách tăng Version:
 
-- **2 nơi cần sửa:**
+- **2 nơi cần sửa (luôn bump CẢ HAI cùng lúc):**
   1. `package.json` → field `"version": "x.y.z"`
   2. `src/components/app-shell.tsx` → `const DEFAULT_VERSION = "x.y.z"`
 - **Quy tắc tăng:** Patch (x.y.Z+1) cho fix nhỏ, Minor (x.Y.0+1) cho feature mới.
 - **Hệ đánh số (chốt 2026-09-10 — Đại ca chọn giữ hệ 1 chữ số):** Vị trí MINOR và PATCH mỗi nơi chỉ dùng MỘT chữ số 0→9; khi đầy 9 thì về 0 và "nhớ" sang số trước (giống phép cộng số). MAJOR tăng tự do khi được nhớ sang (kể cả `9.9.9 → 10.0.0`).
+- **NHỚ SANG SỐ TRƯỚC áp dụng cho MỌI lần tăng — không chỉ khi patch đầy 9 (bổ sung 2026-09-16 sau khi sai lần 3):**
+  - Tăng PATCH khi patch < 9: `2.6.0 → 2.6.1`
+  - Tăng PATCH khi patch = 9 (minor 0→8): `2.4.9 → 2.5.0` (KHÔNG PHẢI 2.4.10)
+  - Tăng MINOR khi minor < 9: `2.5.0 → 2.6.0`
+  - **Tăng MINOR khi minor = 9 (BẤT KỂ patch đang là gì):** `1.9.0 → 2.0.0`; `1.9.9 → 2.0.0` (KHÔNG PHẢI 1.10.0)
+  - Minor = 9 + patch = 9 + tăng minor: cũng `x.9.9 → x+1.0.0`
 - **Tròn chục (minor đang 0→8, patch đầy 9):** minor +1 bậc, patch về 0:
   - `1.0.9` → `1.1.0`; `1.1.9` → `1.2.0`; `1.8.9` → `1.9.0`
 - **Tròn trăm (minor ĐANG 9, patch đầy 9):** minor về 0, MAJOR +1:
   - `0.9.9` → `1.0.0` (NHẢY QUA 0.10.0)
   - `1.9.9` → `2.0.0`
 - **KHÔNG bao giờ tồn tại** dạng `x.10.y` hay `x.y.10` — số như `1.19.9` KHÔNG HỢP LỆ trong hệ này (minor có 2 chữ số), không được dùng làm ví dụ tăng.
+- **✅ CHECKLIST BẮT BUỘC khi bump (3 bước — làm trước khi ghi số vào file/commit, áp dụng CẢ app tổng lẫn repo con — hiệu lực 2026-09-16 sau khi sai 3 lần: 0.1.10, 2.4.10, 1.10.0):**
+  1. **Xác định loại tăng:** fix nhỏ = patch, feature = minor, nhớ major = major.
+  2. **Tính số mới rồi TỰ KIỂM TRA:** mỗi thành phần (major.minor.patch) phải còn MỘT chữ số 0-9. Hỏi thẳng: *"Số mới có chỗ nào ≥ 10 không?"* — CÓ = SAI, tính lại theo nhớ (9 → về 0, nhớ sang trái).
+  3. **Ghi 2 nơi đồng thời + đối chiếu:** package.json + DEFAULT_VERSION phải cùng một giá trị mới (grep xác nhận), rồi mới commit.
 
 ### Ngôn ngữ & Ghi nhớ (bắt buộc tuân thủ):
 
@@ -5352,11 +5362,12 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 *Cập nhật lần cuối: 2026-09-16 (GĐ 136 — hệ sinh thái: nhân bản BLTH E2E PASS 19/19, nhóm BÁN HÀNG đủ 5/5)*
 *Người cập nhật: Trợ lý lập trình*
 
-### GĐ 137: Hệ sinh thái — BỎ watchdog 8 phút kill oan + Hủy job running từ xa (repo giong-apps v1.10.0) (2026-09-16)
+### GĐ 137: Hệ sinh thái — BỎ watchdog 8 phút kill oan + Hủy job running từ xa (repo giong-apps v2.0.0 — hiệu chỉnh từ 1.10.0 sai) (2026-09-16)
 
 | Commit | Thay đổi |
 |---|---|
 | (repo con) `fce6dd4` | feat(smed): bỏ watchdog 8 phút + hủy từ xa qua heartbeat (GĐ C.18) |
+| (repo con, sửa) | fix: hiệu chỉnh version 1.10.0 → 2.0.0 — sai quy tắc tròn trăm (GĐ 126 tái diễn, Đại ca bắt lỗi) |
 | (mới) | chore: tăng version app tổng 2.6.0 → 2.6.1 |
 
 > **BUG REPORT Đại ca (kèm ảnh, 16/09):** "Tình trạng lỗi không tiếp tục được vẫn diễn ra" — job BKCCN 15:51 liên tục bị watchdog kill oan lúc 15:59 ("Tool im lặng 8 phút"). Đại ca hỏi: bỏ giới hạn 8 phút thì có ảnh hưởng gì?
@@ -5373,3 +5384,29 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 *Cập nhật lần cuối: 2026-09-16 (GĐ 137 — hệ sinh thái: bỏ watchdog kill oan, hủy từ xa qua heartbeat)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 138: Rà soát quy tắc Version — tìm GỐC RỄ sai lặp 3 lần + chốt 3 điểm sửa (2026-09-16, 2.6.2)
+
+> **Yêu cầu Đại ca (2026-09-16, sau khi bắt lỗi lần 3):** Rà soát lại toàn bộ quy tắc version trong AGENTS.md để ngừa tái diễn lần 3.
+>
+> **Rà bằng chứng kể (grep toàn bộ cặp bump trong lịch sử 2 repo) — 3 lần sai cùng 1 mẫu:**
+> | Lần | Sai | Đúng | Hoàn cảnh |
+> |---|---|---|---|
+> | 1 (GĐ 51 app tổng) | `0.1.9 → 0.1.10` | `0.2.0` | patch đầy 9 |
+> | 2 (GĐ 125 app tổng) | `2.4.9 → 2.4.10` | `2.5.0` | patch đầy 9 (GĐ 126 sửa) |
+> | 3 (GĐ C.18 repo con) | `1.9.0 → 1.10.0` | `2.0.0` | minor đầy 9 |
+>
+> **GỐC RỄ (3 lỗ hổng đan nhau):**
+> 1. Quy tắc cũ chỉ viết cho hướng "patch đầy 9" — KHÔNG có câu nào nói tăng minor khi minor đang 9 cũng phải nhớ (`1.9.0 + minor` không rơi vào ví dụ nào → suy luận số học thường → ra 1.10.0).
+> 2. Quy tắc nằm CHỈ ở AGENTS.md app tổng; repo con chỉ có 1 dòng tham chiếu mờ nhạt — làm trên repo con không đọc lại app tổng → vi phạm.
+> 3. Không có "cổng kiểm" bắt buộc lúc bump — quy tắc là kiến thức nền, không gắn vào thao tác.
+>
+> **Đại ca chốt sửa CẢ 3 điểm:**
+> 1. **AGENTS.md app tổng** — mục Cách tăng Version thêm bảng "NHỚ áp dụng MỌI lần tăng" (4 hướng: patch thường / patch đầy 9 / minor thường / **minor đang 9 bất kể patch** → `1.9.0 → 2.0.0`) + **CHECKLIST BẮT BUỘC 3 bước** khi bump: (1) xác định loại tăng; (2) tính số mới + tự hỏi *"số mới có chỗ nào ≥ 10 không?"* — CÓ = SAI, tính lại theo nhớ; (3) ghi 2 nơi cùng lúc + grep đối chiếu trước khi commit.
+> 2. **AGENTS.md repo con** — thay dòng tham chiếu bằng quy tắc đầy đủ (rút gọn) + checklist 3 bước — không còn phụ thuộc việc nhớ đọc app tổng.
+> 3. **Kiểm chứng logic bằng mô phỏng:** viết hàm bump tính nhớ chuỗi, chạy 9 trường hợp (gồm cả 3 lần sai lịch sử + các trường hợp biên 0.9.9/1.8.9/1.9.9) — **9/9 OK**, checklist chặn được cả 3 lần sai.
+>
+> **LESSON — Quy tắc phải nằm ở NƠI LÀM VIỆC + phải có CỔNG KIỂM gắn thao tác (2026-09-16):**
+> Kiến thức chỉ trong 1 file của 1 repo thì khi làm ở repo khác không được kích hoạt; quy tắc "nền" không gắn vào thao tác thì bỏ qua được lúc vội. Sửa triệt để = (a) nội dung đầy đủ tại mọi nơi cần dùng + (b) bước tự-kiểm tra bắt buộc ngay lúc thực hiện, không chỉ "hiểu nguyên tắc". Đây là lần thứ 3 cùng một lỗi — với lỗi lặp ≥ 2 lần, tìm thêm lỗ hổng QUY TRÌNH chứ không chỉ sửa kết quả.
+>
+> **Tiêu chí kiểm chứng:** grep cả 2 repo thấy quy tắc mới + checklist; mô phỏng 9/9 OK; các bump sau này không thể sinh số có thành phần ≥ 10 (checklist bước 2).
