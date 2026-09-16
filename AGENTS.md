@@ -5322,3 +5322,32 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Verify SSR (dev server + curl --compressed — response gzip phải giải nén trước khi grep):** app tổng 3 trang (/, /cham-cong, /nhiem-vu) đều chứa "Điều hành chuỗi" ✓; app con /m/misa-hoadon chứa "Hệ sinh thái GIONG VN" ✓. Kill dev server mồ côi sau đo (bài học GĐ 133). Typecheck 0 lỗi cả 2 app.
 >
 > **Tiêu chí kiểm chứng:** mở BẤT KỲ trang nào của CẢ HAI app → header trái hiện khối chào giống trang chủ; nút phải không đổi; Vercel deploy app con af59f93 build OK với lockfile đúng.
+
+### GĐ 136: Hệ sinh thái — Nhân bản phân hệ BLTH: Thống kê DT theo ĐT_BLTH (repo giong-apps v1.9.0) (2026-09-16)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `f9b4caf` | feat(banhang): nhân bản BLTH — xóa mật khẩu tool 22 + REPORT_MAP blth + trang /m/smed-dt-blth (GĐ C.17) |
+| (repo con) `5ba3871` | docs(agents): bổ sung kết quả E2E PASS 19/19 |
+| (mới) | chore: tăng version app tổng 2.5.3 → 2.6.0 |
+
+> **Yêu cầu Đại ca (kèm ảnh sidebar, 16/09):** Nhân bản module mới tại nhóm "LẤY DỮ LIỆU TỪ SMED - BÁN HÀNG", số thứ tự "5. Thống kê DT theo ĐT_BLTH" — tool `22_smed_TKDTTDT_BLTH.py` anh copy vào agent/.
+>
+> **Hỏi chốt trước khi làm (2 điểm):** (1) thư mục OUTPUT chưa có → Đại ca chốt **`12.DTTDT_BLTH`** (tiếp đánh số 12, em tự tạo); (2) khi chuẩn bị E2E thấy service agent đang chạy job BKCCN thật của người dùng → Đại ca chốt "Restart ngay".
+>
+> **Bảo mật (lần 9 theo dặn):** tool 22 còn fallback hardcode user/password SMED (2 account user_3/user_16) → xóa, thay `raise SystemExit` — đúng pattern tool 2. Grep staged diff trước commit = 0 match (match đầu tiên là chữ trong câu ghi chép AGENTS.md — đã đổi cách viết để grep tương lai luôn sạch).
+>
+> **Triển khai (công thức chuẩn GĐ C):** agent REPORT_MAP "blth" (hưởng hàng đợi + watchdog theo tín hiệu GĐ C.16) → server whitelist "blth" → nav số 5 nhóm BÁN HÀNG (icon BarChart2) → trang wrapper SmedPullModule ~15 dòng.
+>
+> **Self-correct trước commit:** route ban đầu `/m/smed-dt-bLTH` (chữ hoa trong path) → đổi `/m/smed-dt-blth` chữ thường toàn bộ (chuẩn URL); desc giữ trung tính "BLTH" — không đoán nghĩa viết tắt (nguyên tắc Không tự đoán ý định).
+>
+> **⚠️ LESSON — restart service agent = gián đoạn job người dùng:** LUÔN `tasklist` + `wmic process` xem có tool SMED đang chạy trước khi restart GIONG_SMED_Agent.
+>
+> **✅ E2E production PASS (16:19–16:25):** tạo job 15/09 headless → agent nhận → tool chạy ~5 phút → **19/19 file** `{abbr}_DTTDT_BLTH_20260915.xlsx` về đúng `OUTPUT\12.DTTDT_BLTH\2026-09-15\` → web báo Hoàn thành. Deploy qua GitHub push (Đại ca chốt "Push GitHub luôn" — lần đầu nhân bản không dùng deploy --prod tay).
+>
+> **🏁 Tiến độ hệ sinh thái SMED: 8/13 phân hệ** (BÁN HÀNG 5/5 — DT theo ĐT_BLTH mới · KHO 3/3 · MARKETING 3/3 · BÁO CÁO 0/6 chờ tool) + MISA meInvoice 1 phân hệ.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 2.6.0.
+
+*Cập nhật lần cuối: 2026-09-16 (GĐ 136 — hệ sinh thái: nhân bản BLTH E2E PASS 19/19, nhóm BÁN HÀNG đủ 5/5)*
+*Người cập nhật: Trợ lý lập trình*
