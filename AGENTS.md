@@ -5410,3 +5410,30 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > Kiến thức chỉ trong 1 file của 1 repo thì khi làm ở repo khác không được kích hoạt; quy tắc "nền" không gắn vào thao tác thì bỏ qua được lúc vội. Sửa triệt để = (a) nội dung đầy đủ tại mọi nơi cần dùng + (b) bước tự-kiểm tra bắt buộc ngay lúc thực hiện, không chỉ "hiểu nguyên tắc". Đây là lần thứ 3 cùng một lỗi — với lỗi lặp ≥ 2 lần, tìm thêm lỗ hổng QUY TRÌNH chứ không chỉ sửa kết quả.
 >
 > **Tiêu chí kiểm chứng:** grep cả 2 repo thấy quy tắc mới + checklist; mô phỏng 9/9 OK; các bump sau này không thể sinh số có thành phần ≥ 10 (checklist bước 2).
+
+### GĐ 139: Hệ sinh thái — Thanh tiến độ % hoàn thành realtime cho lịch sử lấy dữ liệu (repo con v2.1.0) (2026-09-16)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(smed): GĐ C.19 — agent đếm tiến độ theo marker stdout từng tool + heartbeat gửi doneCenters realtime; web thanh bar % chữ đè trên bar (2.0.0 → 2.1.0) |
+| (mới) | chore: tăng version app tổng 2.6.2 → 2.7.0 |
+
+> **Yêu cầu của Đại ca (kèm ảnh, 16/09):** Lịch sử lấy dữ liệu có thanh trạng thái tỷ lệ % hoàn thành khi đang chạy + hoàn thành hiện "X file/tổng số file" (VD: "Đã export 2/19 trung tâm").
+>
+> **Hiện trạng trước khi làm:** dòng chữ "Đã export 0/19 trung tâm…" đã có nhưng chỉ đếm đúng lúc job XONG (agent chỉ gửi doneCenters 1 lần trong report cuối — heartbeat chỉ gửi status running không kèm tiến độ). Web poll 10s → số đứng im suốt lúc chạy.
+>
+> **Kiến trúc realtime (2 đầu):**
+> 1. **Agent (40_web_agent.py):** bảng PROGRESS_DONE_MARKERS theo TỪNG report (marker lấy từ chính tool bằng grep — 10 marker done: "✅ HOÀN THÀNH: " ×4 tool, "✅ Đã tải: " ×4 logger, "✅ Đã tải xong: " tool 20, "📥 Đã tải: " MISA; 2 marker start "] Xử lý: " cho tool 19/23 — done = started − 1 vì chỉ in khi BẮT ĐẦU trung tâm). Thread pump (đã đọc stdout realtime từ GĐ C.16) gọi _count_progress trong lock; heartbeat đổi nhịp 3s — gửi doneCenters NGAY khi số ĐỔI, nhịp 30s giữ updated_at (chống stale) + đọc lệnh hủy. Dòng TỔNG KẾT cuối tool ("HOÀN THÀNH TOÀN BỘ", "KẾT QUẢ: …") cố tính không khớp marker để không đếm trùng. Lock khai báo TRƯỚC khi start heartbeat (tránh 2 object lock).
+> 2. **Web (smed-pull-module.tsx — dùng chung mọi module):** job running → thanh bar accent cao 20px + chữ đè trên bar "Đã export X/Y trung tâm · N%" (role progressbar + aria-valuenow, transition-all 500ms mượt khi % nhảy); job hoàn thành → "Hoàn thành X/Y trung tâm · N file Excel đã lưu". isStale giữ nguyên cảnh báo vàng thay bar.
+>
+> **Đặc thù từng tool đã đối chiếu:** tool 20 (DTTHC) chỉ ra 2 file tổng hợp → bar chạy theo số FILE (2 đơn vị); MISA 1 file; tool 23 ra 4 file/trung tâm nhưng đếm theo TRUNG TÂM (marker "[i/N] Xử lý"). Report lạ (tương lai) không có marker → heartbeat vẫn chạy như cũ, không crash.
+>
+> **Verify (không đợi máy chạy service thật):** py_compile agent OK (SyntaxWarning invalid escape '\ ' có sẵn ở docstring dòng 3 CẢ bản cũ — vô hại, không thuộc phạm vi); tsc --noEmit exit 0; **test mô phỏng PASS** — fake tool in 3 marker cách nhau 4s (> nhịp check 3s) → heartbeat gửi running/0 → running/1 → running/2 tăng dần đúng từng mốc, dòng tổng kết không bị đếm thừa; service + tool thật KHÔNG chạy trên máy này (máy cá nhân — service chỉ có trên máy chạy tool) nên E2E job thật chờ Đại ca copy agent mới + restart service.
+>
+> **⚠️ VIỆC CẦN LÀM tại máy chạy tool (như GĐ 128):** copy lại agent/40_web_agent.py MỚI sang thư mục tool trên D: (đè file cũ) → restart GIONG_SMED_Agent — tiến độ realtime chỉ có ở bản mới.
+>
+> **LESSON LEARNED — Tiến độ job phải đi qua kênh đã có, không cần API mới (2026-09-16):** Server từ đầu đã nhận doneCenters trong agentReport (GĐ C.2) nhưng chỉ agent report LẠC QUAN trọng này lúc kết thúc. Heartbeat đang gọi cùng endpoint mỗi 30s — thêm 1 trường vào payload có sẵn là có tiến độ realtime, không đụng DB/web/server. Trước khi thêm API mới cho tính năng realtime, rà các kênh đã chạy đều đặn (heartbeat, poll) xem có mang được dữ liệu không.
+>
+> **LESSON LEARNED — Pump thread đọc stdout là điểm gắn tiến độ tự nhiên (2026-09-16):** Tool đã in tín hiệu xong từng đơn vị (marker) — điểm gắn duy nhất cần thiết là BẮT marker trong thread đã đọc stdout realtime. Không sửa tool (12 file), không thêm file/log trung gian. Khi muốn thông tin từ tiến trình con: (1) tìm tín hiệu nó ĐÃ in ra, (2) gắn vào luồng đọc ĐÃ có, (3) gửi qua kênh ping ĐÃ có.
+>
+> **Tiêu chí kiểm chứng:** Tạo job (VD BLTH) → web cập nhật mỗi 10s hiện bar % tăng dần theo trung tâm (không còn đứng im 0/19 tới khi xong); job xong → "Hoàn thành 19/19 trung tâm · 19 file Excel đã lưu"; tool 19/23 bar tăng theo trung tâm bắt đầu; MISA/DTTHC bar theo file; Hủy từ xa vẫn hoạt động (heartbeat vẫn đọc cancelRequested).
