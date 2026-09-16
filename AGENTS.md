@@ -5280,3 +5280,26 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > header; version 1.6.1 hiện sidebar. Typecheck 0 lỗi; build OK.
 >
 > **Version:** 1.6.0 → 1.6.1 (hotfix UI — patch).
+
+### GĐ 134 — Hệ sinh thái — phân hệ MỚI ngoài SMED: Bảng kê chi tiết hóa đơn đã sử dụng từ MISA meInvoice (2026-09-16, repo con v1.7.0)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `46565d0` | feat(banhang): phân hệ Bảng kê chi tiết hóa đơn đã sử dụng từ MISA meInvoice — tool 30 + OTP tự động Gmail IMAP + web wrapper (GĐ C.13.1) |
+| (mới) | chore: tăng version app tổng 2.5.1 → 2.5.2 |
+
+> **Yêu cầu của Đại ca (16/09):** Phân hệ ĐẦU TIÊN lấy dữ liệu từ nguồn KHÁC SMED — MISA meInvoice `app3.meinvoice.vn` (MST 0108321182, user cuongpk.giong01@gmail.com): đăng nhập → OTP email → Báo cáo/Bảng kê chi tiết/Bảng kê hóa đơn đã sử dụng → Lọc (ngày + Tất cả + Tất cả + **Đã cấp mã**) → Áp dụng → Xuất XLSX về `OUTPUT\11.BKCT_HDGTGT\<từ ngày>`. Đại ca gửi code Playwright codegen (cho id `#Password` + nút Tiếp tục/Đăng nhập/Xác nhận) và hỏi có cần hỗ trợ gửi code OTP — **KHÔNG cần: tool tự lấy OTP qua Gmail IMAP**.
+>
+> **OTP tự động:** Gmail App Password (Đại ca cung cấp) + IMAP — đọc email OTP MISA đến SAU thời điểm bắt đầu đăng nhập (chốt "giữ email, lọc theo thời gian" — không nhầm 17 email cũ); tick "Không hỏi lại trên máy này" + lưu phiên `storage_state` → lần sau KHÔNG cần OTP (verify thật).
+>
+> **Chi tiết kỹ thuật + 4 bẫy UI MISA** (ô ngày revert khi Escape → dùng Enter; dropdown chặn hit-test Áp dụng → JS click; popup onboarding `#getting-started-noti` chui ra ngẫu nhiên; export chạy nền server MISA — file download event có thể về TRƯỚC dialog kết quả → phải listen download TRƯỚC khi bấm) — ghi đầy đủ ở **AGENTS.md repo con GĐ C.13.1**.
+>
+> **Phát hiện dữ liệu (không phải lỗi tool):** tài khoản MST 0108321182 hiện hầu như KHÔNG có hóa đơn "Đã cấp mã" (Tất cả = 208 trang, Chờ cấp mã = 209 trang, Đã cấp mã = ~0 — toàn bộ ~2.083 hóa đơn đang "Chờ cấp mã"). Tool coi "Không có phát sinh dữ liệu" là THÀNH CÔNG 0 file. Khi Đại ca phát hành mã xong sẽ có data — không cần sửa tool.
+>
+> **E2E PASS 2 kịch bản:** (A) "Đã cấp mã" 16/09 (rỗng) → Hoàn thành 0 file; (B) test kỹ thuật `MISA_PUBLISH=Tất cả` → **XLSX 71 dòng × 28 cột** về đúng `11.BKCT_HDGTGT\2026-09-16` — verify nội dung chuẩn nghiệp vụ (sheet Bảng kê chi tiết HĐ đã sử dụng, header STT/Ký hiệu/Số hóa đơn...).
+>
+> **Bảo mật (dặn ăn quả lần 8):** MISA pass + Gmail App Password + phiên đăng nhập đều trong `agent/.secrets/` (gitignored); grep password staged diff trước commit = 0 match.
+>
+> **Tiến độ hệ sinh thái:** nhóm SMED 10/13 + **mở màn nguồn MISA meInvoice 1 phân hệ**. Kiến trúc OTP-qua-IMAP tái dùng được cho các trang MISA sau (nếu cần).
+>
+> **Tiêu chí kiểm chứng (đã PASS):** trang /m/misa-hoadon tạo job được; lần đầu tự lấy OTP, lần sau vào thẳng; file XLSX về đúng thư mục ngày; ngày rỗng = thành công 0 file; typecheck 0 lỗi; commit 46565d0 sạch password; push GitHub OK — Vercel auto-deploy.
