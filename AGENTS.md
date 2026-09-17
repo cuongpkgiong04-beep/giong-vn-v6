@@ -5938,3 +5938,37 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > được/mở lại được; rail 40px logo + icon nguyên vẹn; mobile drawer 273px; dropdown
 > Tổng quan 20 mục tên thật; typecheck 0 lỗi; version app tổng 3.3.0 + repo con 3.1.0.
 
+
+### GĐ 155: Icon PWA TRÒN TO full-khung cả 2 app + app con thêm Service Worker (2026-09-17, 3.3.1)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | fix(pwa): icon tròn 96% khung (trước artwork 37% → icon bé) + cache-bust ?v=2; version 3.3.0 → 3.3.1 |
+| (repo con `66fda06`, v3.1.1) | cùng fix icon + sw.js tối giản + đăng ký SW — chi tiết GĐ C.33 AGENTS.md repo con |
+
+> **BUG REPORT của Đại ca (kèm 2 ảnh, 17/09):** Sau GĐ 153 + 3 bước gỡ/cài lại:
+> (1) App tổng CÓ icon nhưng BÉ và VUÔNG; (2) App con CHƯA THẤY icon. Muốn icon
+> TO và HÌNH TRÒN cho cả 2 app.
+>
+> **ROOT CAUSE (đo thật, chi tiết đầy đủ ở GĐ C.33 repo con):**
+> 1. **Icon bé:** artwork chỉ chiếm 37% khung (bbox PIL) — crop GĐ 153 giữ nguyên
+>    tỷ lệ ngang logo → icon any phải thành hình TRÒN full-khung 96%.
+> 2. **App con không cài PWA:** thiếu service worker — Chrome bắt buộc SW + fetch
+>    handler. Fix bằng sw.js tối giản pass-through (không cache — không stale).
+> 3. **Icon cũ dai dẳng:** cache theo URL → cache-bust `?v=2` cho manifest + icon
+>    + apple-touch-icon ở head cả 2 app.
+>
+> **LESSON LEARNED — Icon PWA phải chiếm ĐẦY khung, không nhúng logo ngang nguyên bản (2026-09-17):**
+> OS render nguyên file PNG trong khung icon — artwork dáng ngang + padding trong
+> suốt nhiều → hiển thị "bé" dù manifest khai báo đúng sizes. Đo coverage bằng
+> alpha.getbbox() trước khi kết luận; tách hình tròn khỏi chữ bằng quét khoảng
+> trắng phân tách giữa 2 vùng nội dung (y658→688).
+>
+> **LESSON LEARNED — Đổi icon app đã cài phải đổi cả URL (2026-09-17):**
+> Trình duyệt + Windows cache icon/manifest theo URL — thay file cùng URL không có
+> tác dụng với app đã cài. Cache-bust query (?v=N) là bắt buộc khi thay icon, kèm
+> quy trình phía user: gỡ app cũ + ie4uinit.exe -show + cài lại.
+>
+> **Tiêu chí kiểm chứng:** sau push + cài lại: icon taskbar/màn hình chính = hình
+> tròn TO đầy khung cả 2 app; app con hiện nút "Cài đặt ứng dụng" trong Chrome;
+> typecheck 0 lỗi cả 2 app.
