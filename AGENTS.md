@@ -5710,12 +5710,21 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > dropdown báo cáo + kỳ + bảng kết quả Tổng cộng + lịch sử + poll 10s). Báo cáo #1
 > **revenue-by-day**: doanh thu TM/CK theo ngày.
 >
-> **✅ ĐỐI CHỨNG SỐ LIỆU:** SQL 14–16/09 = 187.645.000đ (15/09 = 81.765.000đ) —
-> quét lại 19 file Excel gốc BLTH 15/09 tính tay: KHỚP TỪNG ĐỒNG. Typecheck 0 lỗi;
-> build OK; restart service 11:22 (agent mới chạy). E2E production chạy sau push.
+> **✅ ĐỐI CHỨNG SỐ LIỆU + E2E PRODUCTION PASS 7/7 (cùng ngày, bổ sung):** SQL
+> 14–16/09 = 187.645.000đ (15/09 = 81.765.000đ) — quét lại 19 file Excel gốc BLTH
+> 15/09 tính tay: KHỚP TỪNG ĐỒNG. E2E thật (login app tổng → SSO → tạo job →
+> agent claim → ETL → SQL → web hiện Tổng cộng khớp) PASS. Trước đó bắt 2 lỗi:
+> (1) UI gửi ngày ISO nhưng server validate DD/MM/YYYY — fix isoToDdmmyyyy;
+> (2) SQL Server chặn NT AUTHORITY\SYSTEM (service NSSM) login GiongDB — grant
+> db_owner 1 lần trên SQL Server (không đụng repo).
+>
+> **LESSON — Windows Service account phải được grant trong SQL Server (2026-09-17):**
+> DB local mà service chạm vào cần grant cho đúng ACCOUNT SERVICE (SYSTEM), không
+> chỉ account người cài — ETL tay bằng Administrator không lộ lớp quyền này; chỉ
+> E2E qua service thật mới bắt được.
 >
 > **LESSON LEARNED — Server function return type phải serializer-friendly (2026-09-17):**
 > Record<string, unknown> bị createServerFn chặn ("Type may not be serializable") —
 > dùng Record<string, string | number> cho JSON payload tự do. Lần 2 gặp (GĐ 59).
 >
-> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.0.4.
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.0.5 (bổ sung E2E + hotfix repo con 2.6.1).
