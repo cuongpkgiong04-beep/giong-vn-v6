@@ -5514,3 +5514,30 @@ sidebar (mods/me), can-create (canThisReport), createSmedJob (canAccessReport) �
 **Tiêu chí kiểm chứng:** Kế toán chỉ thấy MISA + (tùy cấu hình) nhóm Bán hàng; thủ kho chỉ
 thấy nhóm Kho; tạo job đúng nhóm được, nhóm khác bị chặn cả UI lẫn API; typecheck 0 lỗi
 cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơi mỗi app).
+
+### GĐ 144: Hệ sinh thái — fix tool MISA login kẹt ô MST ẩn (repo con v2.3.1) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(misa): trang login app3.meinvoice.vn ẩn ô MST (type=hidden, trang đã nhớ value) → fill() chờ visible vĩnh viễn → timeout 45s — fix: chỉ điền ô visible, ô ẩn bỏ qua (GĐ C.22, v2.3.1) |
+| (mới) | docs(agents): GĐ 144 + version 2.9.0 → 2.9.1 |
+
+> **BUG REPORT của Đại ca (17/09):** Lấy Bảng kê chi tiết hóa đơn MISA không tải về
+> được — 2 job 16/09 (20:47 + 22:02) fail cùng `Page.fill: Timeout 45000ms`.
+>
+> **Chẩn đoán:** Log agent cắt traceback; chạy thẳng tool bằng tay (env secrets từ
+> .secrets/) lấy FULL Call log: `<input id="TaxCode" type="hidden" value="0108321182"/>`
+> — trang login MISA đổi UI so với lúc viết tool: ô MST giờ ẨN, trang tự nhớ MST,
+> chỉ hiện ô mật khẩu. Playwright fill() chờ visible → chết ở bước 1 login.
+>
+> **Fix repo con (GĐ C.22):** check `is_visible()` trước khi fill #TaxCode + #UserName;
+> ô ẩn → log + bỏ qua. Verify chạy thật: đăng nhập OK → vào báo cáo → lọc 'Đã cấp
+> mã' → 0 file (đúng hiện trạng data — hóa đơn đang "Chờ cấp mã", GĐ C.13.1).
+>
+> **LESSON LEARNED — site UI tự thay đổi, tool automation phải chịu được:** vùng
+> login của site ngoài là điểm thay đổi thường xuyên nhất — check visible trước khi
+> fill mọi ô, không hardcode "ô này chắc chắn luôn hiện". Khi log agent cắt traceback,
+> chạy tool bằng tay với env secrets để lấy FULL Call log — chẩn đoán 1 lần ra ngay.
+>
+> **Tiêu chí kiểm chứng:** tạo job MISA trên web chạy thông suốt; phiên lưu sẵn vào
+> thẳng; các tool SMED khác không bị ảnh hưởng.
