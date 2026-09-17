@@ -5853,3 +5853,26 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 
 *Cập nhật lần cuối: 2026-09-17 (GĐ 151 — ETL ngày thật + pilot PA1 PASS, repo con v2.9.0)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 152: Hệ sinh thái — nhân bản MISA thứ 2: Bảng kê hóa đơn đã sử dụng (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `226152c` | feat(misa): nhân bản MISA thứ 2 — tool 31 + trang /m/misa-bkth (GĐ C.27, v3.0.0) |
+| (mới) | chore: tăng version app tổng 3.2.0 → 3.2.1 |
+
+> **Yêu cầu Đại ca (kèm code Playwright codegen, 17/09):** Thêm module "Bảng kê hóa đơn đã sử dụng" vào nhóm DOWNLOAD DỮ LIỆU → DỮ LIỆU TỪ MISAmeInvoice — viết tool tương tự "Bảng kê chi tiết hóa đơn đã sử dụng" (tool 30), thư mục `OUTPUT\13.BKTH_HDGTGT` (anh tạo sẵn).
+>
+> **Nội dung (chi tiết ở AGENTS.md repo con GĐ C.27):** Probe thật trang `/v3/bao-cao/bang-ke-hd` (KHÁC trang tool 30) → tool 31 theo đúng công thức chuẩn: không hardcode password (dùng chung credentials + phiên OTP .secrets với tool 30), export MISA chạy nền ~30s (listen download trước khi bấm). Agent REPORT_MAP + marker tiến độ; server whitelist; phân quyền nhóm **banhang-misa** điều khiển cả 2 trang MISA; nav mục mới; trang web có 2 dropdown trạng thái trên web.
+>
+> **E2E thật PASS (15/09/2026, Đã cấp mã + CQT Tất cả):** file XLSX về đúng `OUTPUT\13.BKTH_HDGTGT\2026-09-15\` — **100 dòng hóa đơn thật** (ngày 15/09, 18 ký hiệu 1C26MA*, đủ mã CQT). (Đại ca đối chứng 102 dòng lúc chạy tay — lệch vài dòng là data MISA biến động giữa 2 lần chạy; cơ chế lọc chính xác.)
+>
+> **Version repo con:** 2.9.0 → **3.0.0** — minor đang 9 đầy → nhớ major (quy tắc tròn trăm GĐ 138, checklist 3 bước ✓).
+>
+> **Tiến độ hệ sinh thái:** MISA meInvoice **2/2 phân hệ** (Bảng kê chi tiết + Bảng kê hóa đơn đã sử dụng) · SMED 11/13.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.2.1.
+
+*Cập nhật lần cuối: 2026-09-17 (GĐ 152 — hệ sinh thái: MISA thứ 2 Bảng kê hóa đơn đã sử dụng, E2E PASS 100 dòng)*
+*Người cập nhật: Trợ lý lập trình*
+
