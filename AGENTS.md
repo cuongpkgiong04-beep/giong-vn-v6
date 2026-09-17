@@ -5876,3 +5876,23 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 *Cập nhật lần cuối: 2026-09-17 (GĐ 152 — hệ sinh thái: MISA thứ 2 Bảng kê hóa đơn đã sử dụng, E2E PASS 100 dòng)*
 *Người cập nhật: Trợ lý lập trình*
 
+
+### GĐ 153: Icon Gióng chuẩn PWA — favicon tab + icon cài app, CẢ HAI app (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `ed35c74` | feat(ui): icon Gióng chuẩn PWA — favicon + manifest (GĐ C.29, v3.0.2) |
+| (mới) | feat(pwa): app tổng — bộ icon vuông + manifest tách any/maskable + favicon mới; version 3.2.1 → 3.2.2 |
+
+> **Yêu cầu Đại ca (kèm 3 ảnh, 17/09):** Cho biểu tượng Gióng vào (1) icon các tab trình duyệt, (2) icon khi tải/cài web về máy (PWA) — áp dụng CẢ app tổng + app con.
+>
+> **ROOT CAUSE chữ "G" vàng thay logo (ảnh Đại ca):** các icon trong `public/icons/` là bản copy NGUYÊN BẢN logo 1289×832 chưa resize vuông (icon-192.png thật ra 1289×832!) → trình cài PWA bỏ file sai kích thước → fallback letter "G". Favicon tab dùng cả logo có chữ + nền trắng → nhỏ khó nhìn.
+>
+> **Xử lý (chi tiết kỹ thuật ở AGENTS.md repo con GĐ C.29):** tách hình ngựa + sóng khỏi chữ (quét bbox + crop PIL) → bộ icon vuông 10 file (8 size nền trong suốt "any" + 2 maskable nền xanh #1465B2) → manifest tách purpose any/maskable 2 entry riêng → head favicon + apple-touch-icon → `/icons/icon-192.png`. Áp dụng ĐỒNG NHẤT cả 2 app (app con có manifest mới).
+>
+> **Version:** app tổng 3.2.1 → 3.2.2 · repo con 3.0.1 → 3.0.2 (fix — patch, checklist GĐ 138 ✓).
+>
+> **LESSON — PWA icon phải đủ 2 lớp "any" + "maskable" và file phải đúng kích thước khai báo (2026-09-17):** chi tiết ở AGENTS.md repo con GĐ C.29.
+>
+> **Tiêu chí kiểm chứng:** Tab trình duyệt 2 app hiện logo Gióng; cài PWA icon Gióng đẹp cả Android + desktop; typecheck 0 lỗi; build repo con OK.
+

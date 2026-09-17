@@ -25,10 +25,12 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      { rel: "icon", type: "image/png", href: "/giong-vina-logo.png" }, // favicon logo Giong (giống sidebar)
+      // GĐ 153: favicon + PWA icon = logo Gióng VUÔNG (tách hình từ logo gốc —
+      // bộ icons/icon-*.png chuẩn any + maskable trong manifest.json)
+      { rel: "icon", type: "image/png", href: "/icons/icon-192.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json" },
-      { rel: "apple-touch-icon", href: "/giong-vina-logo.png" },
+      { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { rel: "stylesheet", href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" },
