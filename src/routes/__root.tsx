@@ -26,11 +26,11 @@ export const Route = createRootRoute({
     ],
     links: [
       // GĐ 153: favicon + PWA icon = logo Gióng (tách hình tròn từ logo gốc).
-      // GĐ 155: icon TRÒN full-khung + cache-bust ?v=2 — ép trình duyệt bỏ bản cache cũ.
-      { rel: "icon", type: "image/png", href: "/icons/icon-192.png?v=2" },
+      // GĐ 155: icon TRÒN full-khung + cache-bust ?v=3 — ép trình duyệt bỏ bản cache cũ.
+      { rel: "icon", type: "image/png", href: "/icons/icon-192.png?v=3" },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.json?v=2" },
-      { rel: "apple-touch-icon", href: "/icons/icon-192.png?v=2" },
+      { rel: "manifest", href: "/manifest.json?v=3" },
+      { rel: "apple-touch-icon", href: "/icons/icon-192.png?v=3" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { rel: "stylesheet", href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" },

@@ -5972,3 +5972,32 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > **Tiêu chí kiểm chứng:** sau push + cài lại: icon taskbar/màn hình chính = hình
 > tròn TO đầy khung cả 2 app; app con hiện nút "Cài đặt ứng dụng" trong Chrome;
 > typecheck 0 lỗi cả 2 app.
+
+### GĐ 156: Icon căn GIỮA hình trong khung tròn — cả 2 app (2026-09-17, 3.3.2)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | fix(pwa): artwork đặt giữa canvas tròn (hết lệch góc) + cache-bust ?v=3; version 3.3.1 → 3.3.2 |
+| (repo con `a259abb`, v3.1.2) | cùng fix — chi tiết GĐ C.34 AGENTS.md repo con |
+
+> **BUG REPORT của Đại ca (kèm ảnh chrome://apps, 17/09):** Icon đã hiện nhưng
+> "cắt tay quá" — hình chính KHÔNG vào giữa khung logo (vòng xanh lệch lên góc
+> phải). Yêu cầu: hình chính vào GIỮA khung tròn giống ảnh mẫu.
+>
+> **ROOT CAUSE (chi tiết GĐ C.34 repo con):** logo gốc có sóng tràn RỘNG hơn vòng
+> tròn xanh cả 2 bên → mọi crop theo bbox "sát nội dung" đều tạo khung lệch tâm.
+> Đo màu tìm tâm cũng fail vì sóng cùng màu xanh với vòng.
+>
+> **Fix — đổi tư duy CROP sang COMPOSE:** bbox toàn bộ hình (trừ chữ) → paste vào
+> canvas trắng vuông 1600×1600 scale 78% CĂN GIỮA 2 trục → mask tròn 96%. Cache-bust
+> ?v=3 buộc thiết bị tải icon mới.
+>
+> **LESSON LEARNED — Logo có yếu tố tràn ngoài phải COMPOSE, không CROP (2026-09-17):**
+> Icon tròn từ logo dạng "vòng tròn + sóng/tia tràn" cần artwork scale-vừa + căn
+> giữa canvas vuông rồi mới mask tròn — crop-bbox không bao giờ cân vì bbox bị
+> yếu tố tràn kéo lệch. Khi nhiều thành phần cùng màu, đo màu tìm tâm không đáng
+> tin — vẽ grid overlay + bbox từng phần lên ảnh rồi NHÌN trước khi viết công thức.
+>
+> **Tiêu chí kiểm chứng:** icon mới: vòng xanh + ngựa + sóng nằm GIỮA vòng tròn
+> trắng đều 2 bên; Đại ca cài lại (gỡ app cũ + ie4uinit -show + cài) thấy icon cân
+> như ảnh mẫu; typecheck 0 lỗi; version 3.3.2 / 3.1.2 khớp 2 nơi mỗi app.
