@@ -5678,3 +5678,44 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > **Tiêu chí kiểm chứng (Đã PASS test thật):** job 15/09 Đã cấp mã + CQT Tất cả → file XLSX
 > 100 hóa đơn đúng ngày 15/09; job "Tất cả" giữ hành vi cũ; log tool ghi "tắt N trạng thái
 > khác"; ngày lọc giữ đúng sau Escape/Apply.
+
+### GĐ 148: Hệ sinh thái — GĐ B.1 + B.2: Database GiongDB + pipeline báo cáo SQL (repo con v2.6.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(etl): GĐ B.1 — DB GiongDB (SQL Server Express, file tại D:\...\giong_database) + ETL nạp 772 file Excel OUTPUT → 12 bảng staging (7.941 dòng, dedupe hash, idempotency PASS) |
+| (repo con) | feat(sqlreport): GĐ B.2 — pipeline báo cáo web→agent→GiondDB→web + trang /m/bc-cuoi-ngay + báo cáo Doanh thu theo ngày (đối chứng Excel KHỚP TỪNG ĐỒNG) |
+| (mới) | docs(agents): GĐ 148 + version 3.0.3 → 3.0.4 |
+
+> **Bối cảnh (đã chốt với Đại ca qua 3 câu hỏi):** Giai đoạn mới — **Thiết lập
+> báo cáo**: (1) SQL TẠI MÁY CHỦ; (2) nạp file Excel MISA/SMED đã tải vào database
+> SQL tại `D:\DuLieuChung\CUONG_2026\giong_database`; (3) xử lý theo yêu cầu (làm
+> sau); (4) web yêu cầu + nhận kết quả; (5) Tổng quan đọc từ SQL này. Đại ca chốt:
+> **SQL Server Express** (sẵn có, kèm instance MISA) + **qua agent + Neon** (không
+> tunnel — Vercel không truy cập được SQL nội bộ) + **nạp hết file hiện có**
+> (sau mở rộng tải lịch sử 01/01/2025 → nay — ETL dedupe hash, chạy lại không trùng).
+>
+> **Kiến trúc:** `OUTPUT Excel → ETL Python (agent/etl/) → GiongDB (SQL Server
+> Express) → agent chạy SQL theo yêu cầu web → JSON qua Neon (smed_pull_jobs.result)
+> → web hiển thị`. Tận dụng 100% pipeline job SMED (bảng job + claim + heartbeat +
+> hủy + lịch sử) — chỉ thêm job type `sqlreport` (migration 0006: result jsonb +
+> query_key).
+>
+> **GĐ B.1:** DB GiongDB + 12 bảng staging generic + import_log + etl_run. Nạp
+> 772 file → 7.941 dòng, 0 lỗi, idempotency PASS.
+>
+> **GĐ B.2:** Agent nhánh run_sql_task (ETL → sql_reports.py pyodbc Trusted_Connection
+> — không password repo); claim job SQL không cần tài khoản SMED; web trang
+> `/m/bc-cuoi-ngay` (module BÁO CÁO đầu tiên hết placeholder — SqlReportModule:
+> dropdown báo cáo + kỳ + bảng kết quả Tổng cộng + lịch sử + poll 10s). Báo cáo #1
+> **revenue-by-day**: doanh thu TM/CK theo ngày.
+>
+> **✅ ĐỐI CHỨNG SỐ LIỆU:** SQL 14–16/09 = 187.645.000đ (15/09 = 81.765.000đ) —
+> quét lại 19 file Excel gốc BLTH 15/09 tính tay: KHỚP TỪNG ĐỒNG. Typecheck 0 lỗi;
+> build OK; restart service 11:22 (agent mới chạy). E2E production chạy sau push.
+>
+> **LESSON LEARNED — Server function return type phải serializer-friendly (2026-09-17):**
+> Record<string, unknown> bị createServerFn chặn ("Type may not be serializable") —
+> dùng Record<string, string | number> cho JSON payload tự do. Lần 2 gặp (GĐ 59).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.0.4.
