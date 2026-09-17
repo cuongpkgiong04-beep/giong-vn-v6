@@ -5728,3 +5728,39 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > dùng Record<string, string | number> cho JSON payload tự do. Lần 2 gặp (GĐ 59).
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 3.0.5 (bổ sung E2E + hotfix repo con 2.6.1).
+
+### GĐ 149: Hệ sinh thái — Sidebar app con XÂY DỰNG LẠI 4 bậc (repo con v2.7.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(ui): GĐ C.26 — Sidebar 4 bậc: Bậc 0 ĐIỀU HÀNH → Bậc 1 DOWNLOAD DỮ LIỆU/BÁO CÁO/UPLOAD → Bậc 2 nhóm con → Bậc 3/4 module; 4 trang báo cáo mới; verify Playwright 10/10 |
+| (mới) | docs(agents): GĐ 149 + version 3.0.5 → 3.1.0 |
+
+> **Yêu cầu Đại ca (mô tả chi tiết từng bậc + cơ chế ẩn/hiện + đánh số):**
+> Kết cấu lại Sidebar app con theo cây: Bậc 0 ĐIỀU HÀNH (Tổng quan giữ nguyên) →
+> Bậc 1 gồm DOWNLOAD DỮ LIỆU · BÁO CÁO · UPLOAD - MISA AMIS → Bậc 2: download có
+> 4 nhóm (MISAmeInvoice / SMED-Bán hàng / SMED-Kho / SMED-Marketing), báo cáo có
+> 3 nhóm (KẾ TOÁN / KHO / MARKETING), upload giữ nguyên → Bậc 3 module download
+> (giữ nguyên) → Bậc 4 module báo cáo. Ẩn/hiện: bấm bậc nào hiện con bậc đó.
+>
+> **Đã hỏi chốt trước khi làm (4 điểm):** 4 trang báo cáo chưa có → khung
+> placeholder; toggle nhóm MỞ/ĐÓNG ĐỘC LẬP (mở được nhiều nhánh); "BC bán hàng
+> (theo ngày mặc định hôm nay)" = bộ lọc ngày mặc định hôm nay khi nối data;
+> đánh số MỖI NHÓM báo cáo tự đánh lại 1,2,3…
+>
+> **Triển khai repo con (chi tiết đầy đủ GĐ C.26):** nav.ts viết lại thành cây
+> `CAY_BAC1` (mọi route/desc giữ nguyên — không vỡ ModuleRoute); app-shell.tsx
+> SidebarNhom đệ quy + toggle độc lập + pathToActiveLeaf mở sẵn nhánh trang đang
+> mở + filterTreeByMods giữ phân quyền nhóm bộ phận; 4 route mới (bc-banhang,
+> bc-nhap-kho, bc-xuat-kho, bc-nxt-luong-tien); routeTree sinh lại.
+>
+> **✅ Verify:** Playwright 10/10 PASS (từng bậc đúng bảng, đánh số riêng, toggle
+> độc lập, nhánh mở sẵn, 4 trang render); typecheck 0 lỗi; build OK; version repo
+> con 2.7.0 khớp 2 nơi.
+>
+> **LESSON — innerText chỉ đọc text visible (2026-09-17):** đo UI rail thu hẹp
+> (tiêu đề nhóm hidden group-hover:flex) bằng innerText → đọc thiếu text, tưởng
+> bug render. Luôn hover/mở đúng state cần đo trước khi assert (bổ sung cách đo
+> Playwright của GĐ 126/127).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.1.0.
