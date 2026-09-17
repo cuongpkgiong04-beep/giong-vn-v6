@@ -5896,3 +5896,45 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 >
 > **Tiêu chí kiểm chứng:** Tab trình duyệt 2 app hiện logo Gióng; cài PWA icon Gióng đẹp cả Android + desktop; typecheck 0 lỗi; build repo con OK.
 
+
+### GĐ 154: Hệ sinh thái — Sidebar app con 4 điểm hiệu chỉnh + Tổng quan tên trung tâm thật (repo con v3.1.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `cb905ce` | feat(ui): GĐ C.32 — 4 điểm sidebar + /api/units tên thật; version 3.0.4 → 3.1.0 |
+| (mới) | docs(agents): GĐ 154 + version app tổng 3.2.2 → 3.3.0 |
+
+> **Yêu cầu của Đại ca (kèm 3 ảnh, 17/09) — 4 điểm Sidebar app con + 1 điểm Tổng quan:**
+> (1) cao ô Cấp 1 bằng Cấp 0; (2) bấm Tổng quan thu gọn hết chỉ còn Cấp 0 + Cấp 1;
+> (3) rail ẩn che icon → cho icon nhìn rõ; (4) rail rộng hơn desktop / NHỎ lại mobile
+> (mobile có xuống dòng); + dropdown Tổng quan: "Công ty CP Giong VN" + 19 trung tâm
+> viết tắt "Trung tâm TC Ngọc Lâm", "Trung tâm TC Long Biên"…
+
+> **Triển khai (chi tiết đầy đủ ở AGENTS.md repo con — GĐ C.32):**
+> 1. **Cao Cấp 1 = Cấp 0:** `min-h-9 px-2 py-1.5 text-[12px]` — đo 36px đồng đều cả 4 ô.
+> 2. **Tổng quan thu gọn:** `extraClick` → `collapseAll` (toggle Set rỗng ↔ activePath);
+>    nhóm mở lại bình thường sau thu gọn.
+> 3. **Rail 40px desktop:** logo mark tròn trước đây bị cắt mép giờ nguyên vẹn
+>    (logo 20px, left=4 right=24); content `lg:pl-8` → `lg:pl-10`.
+> 4. **Drawer mobile `w-[70vw] max-w-[290px]`:** 390px viewport = 273px.
+> 5. **Server route `/api/units`:** SELECT code, name, short_name FROM centers
+>    WHERE status='active' → label `Trung tâm TC {short_name}` (fallback name);
+>    DB lỗi → client fallback "Trung tâm tiêm chủng N".
+
+> **LESSON LEARNED — Test script đo TRẠNG THÁI ĐÚNG trước khi kết luận code sai (2026-09-17):**
+> Lần đầu chạy verify 3/10 fail khiến nghi code — rà lại toàn bộ là PHÉP ĐO sai:
+> (1) đo chiều cao button lúc rail thu hẹp (`hidden group-hover:flex` → height=0) —
+> phải đo khi hover; (2) kỳ vọng "thu gọn = 0 button" sai — baseline 3 nhóm bậc 1
+> luôn hiện, đúng = 7 → 3; (3) đo content đẩy bằng `rect.left` (mép viền = 0) thay vì
+> `paddingLeft` computed — tái diễn lesson GĐ 141 lần 2. **Quy tắc: test FAIL → tự hỏi
+> phép đo có phản ánh đúng điều kiện UI (hover/collapsed/active-path) chưa, đo lại đúng
+> trạng thái rồi hẵng sửa code.** Code sau sửa script: 0 thay đổi, 11/11 PASS.
+
+> **Push đồng loạt 4 commit repo con** (theo lựa chọn 3 của Đại ca): `ed35c74` GĐ C.29
+> icon PWA · `c9040d2` GĐ C.30 báo cáo bán hàng · `a7385f1` GĐ C.31 nút Mở · `cb905ce`
+> GĐ C.32 sidebar. Grep mật khẩu staged diff = 0 match.
+
+> **Tiêu chí kiểm chứng:** Sidebar app con: Cấp 1 cao bằng Cấp 0; Tổng quan thu gọn
+> được/mở lại được; rail 40px logo + icon nguyên vẹn; mobile drawer 273px; dropdown
+> Tổng quan 20 mục tên thật; typecheck 0 lỗi; version app tổng 3.3.0 + repo con 3.1.0.
+
