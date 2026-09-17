@@ -5764,3 +5764,45 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > Playwright của GĐ 126/127).
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 3.1.0.
+
+### GĐ 150: Hệ sinh thái — Auto-ETL 60 phút + Nạp đè theo ngày (repo con v2.8.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `47c35d5` | feat(etl): nạp đè theo ngày (wipe-once per phân hệ+ngày) + auto-ETL nền mỗi 60 phút trong agent (GĐ B.2.2) |
+| (mới) | docs(agents): GĐ 150 + version 3.1.0 → 3.1.1 |
+
+> **Câu hỏi của Đại ca (17/09):** (1) SQL lấy dữ liệu OUTPUT có bị trùng lặp không?
+> (2) Cần động tác gì để update dữ liệu mới? (3) Chương trình có tự lấy khi có file
+> mới download về không?
+>
+> **Câu trả lời (đã chốt với Đại ca):** (1) KHÔNG trùng — dedupe hash GĐ B.1 chống
+> nạp lại file, nay thêm **nạp đè theo ngày** chống trùng logic khi tải lại cùng
+> ngày có data sửa (xóa dòng cũ phân hệ+ngày trước khi nạp file mới); (2) KHÔNG cần
+> động tác riêng — job báo cáo tự ETL trước khi chạy SQL, giờ thêm auto-ETL nền;
+> (3) CÓ — **auto-ETL mỗi 60 phút** (thread daemon trong agent, vòng đầu sau 5 phút,
+> exception nuốt + log, không đụng job web).
+>
+> **Bug bắt được nhờ test N file cùng ngày:** lần đầu đặt DELETE theo TỪNG file —
+> file sau xóa mất dòng file trước vừa nạp (89 dòng → còn 10 = chỉ file cuối).
+> Fix: set `wiped` — xóa ĐÚNG 1 LẦN mỗi (phân hệ, ngày), file sau NỐI TIẾP.
+> Re-test: 19 file gốc + 1 file test = 91 dòng đúng công thức; dọn test xong về
+> đúng 89 dòng/16 trung tâm. Data test đã dọn sạch (264 dòng staging chuẩn).
+>
+> **LESSON — Nạp đè theo ngày phải wipe MỘT LẦN/ngày, không theo file (2026-09-17):**
+> ETL nạp từng file trong loop — logic "xóa cũ trước khi nạp" nếu đặt trong loop
+> theo file tự phá dữ liệu file khác cùng ngày. Test đơn file PASS KHÔNG đủ —
+> phải test N file cùng ngày.
+>
+> **Vận hành:** service GIONG_SMED_Agent chạy trực tiếp từ repo (nssm Application =
+> python + AppParameters trỏ thẳng 40_web_agent.py trong repo) → sửa code repo =
+> bản service dùng, chỉ cần restart. Đã restart 14:20 SAU khi đợi job thật đang
+> chạy xong (log 14:19 "Job SQL xong") — log mới xác nhận "⏱️ Auto-ETL bật".
+> Chi tiết kỹ thuật ở AGENTS.md repo con GĐ B.2.2.
+>
+> **Tiêu chí kiểm chứng:** log agent có dòng Auto-ETL mỗi giờ; tải lại cùng ngày
+> (data sửa) → staging đúng số dòng bản mới nhất, không nhân đôi; job báo cáo
+> vẫn hoạt động như cũ.
+
+*Cập nhật lần cuối: 2026-09-17 (GĐ 150 — Auto-ETL 60 phút + nạp đè theo ngày, repo con v2.8.0, service đã chạy bản mới)*
+*Người cập nhật: Trợ lý lập trình*
