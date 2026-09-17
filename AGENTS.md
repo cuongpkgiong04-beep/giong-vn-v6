@@ -6001,3 +6001,67 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > **Tiêu chí kiểm chứng:** icon mới: vòng xanh + ngựa + sóng nằm GIỮA vòng tròn
 > trắng đều 2 bên; Đại ca cài lại (gỡ app cũ + ie4uinit -show + cài) thấy icon cân
 > như ảnh mẫu; typecheck 0 lỗi; version 3.3.2 / 3.1.2 khớp 2 nơi mỗi app.
+
+### GĐ 157: Báo cáo Truy xuất - Đối soát + 5 báo cáo nguồn SQL (repo con v3.2.0) (2026-09-18)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `07e007b` | feat(txds): Báo cáo TX-DS + 5 báo cáo nguồn SQL — agent nhánh txds chạy tool 6 nguyên bản + dialog cảnh báo thiếu dữ liệu (GĐ C.28, v3.2.0) |
+| (mới) | chore: tăng version app tổng 3.3.2 → 3.3.3 |
+
+> **Yêu cầu lớn của Đại ca (18/09):** Tận dụng tool `6_BC_TX-DS_2026_Vr1.5_0705.py` (tool
+> TỔNG HỢP + ĐỐI SOÁT 12 giai đoạn chạy cục bộ — đọc 7 nguồn file Excel trong 1 thư mục,
+> không đăng nhập web nào) làm **Báo cáo Truy xuất - Đối soát**. Khi chạy mà SQL chưa đủ
+> dữ liệu → cảnh báo "Chưa đủ dữ liệu thực hiện. Bạn có muốn download dữ liệu để chạy báo
+> cáo này không?" (Có/Không) — Có → treo lệnh download vào hàng chờ.
+>
+> **Đã chốt với Đại ca:** làm 7 nguồn TRƯỚC rồi mới tổng hợp TX-DS; chỉ tải nguồn thiếu;
+> 5 báo cáo nguồn = nội dung các sheet tool 6 (NK/XK/DT/TT/TKTHSD-HĐĐT) tổng hợp 19 trung tâm.
+>
+> **Triển khai (chi tiết đầy đủ GĐ C.28 AGENTS.md repo con):**
+> 1. **5 báo cáo nguồn SQL** (SqlDataModule bảng generic): nhập kho NK (stg_5BKN),
+>    xuất kho XK (stg_6BKX), bán hàng DT (stg_4BKCCN), **thu tiền TT (mới)** (stg_2DTTDT),
+>    **tình hình SD-HĐĐT (mới)** (stg_1HĐĐT) — 1 dòng data OUTPUT = 1 dòng báo cáo.
+> 2. **ETL:** bảng stg_11BKTH (13.BKTH) + **center suy ra theo THỨ TỰ FILE (mtime)**
+>    cho 1HĐĐT/2DTTDT/4BKCCN — khớp 100% cách tool 6 gán trung tâm qua `new_names[i]`
+>    (đã đối chiếu CENTERS_3/CENTERS_16 tool download = new_names tool 6). Regex center
+>    chuẩn mã ngắn TD/HM/QO + nhánh BLTH prefix-mã.
+> 3. **Agent nhánh txds:** kiểm tra 7 nguồn OUTPUT (thư mục TỪ NGÀY — PA1) → thiếu →
+>    status `needsData` + missing; đủ → stage re-stamp mtime (ngày + index tải) → chạy
+>    tool 6 nguyên bản (SMED_OUTPUT_DIR) → file 1.BC_TX-DS_*.xlsx.
+> 4. **Web:** dialog cảnh báo ĐÚNG VĂN BẢN Đại ca — bấm **Có** → treo job download CHỈ
+>    nguồn thiếu (dùng form/progress module sẵn có); **Không** → dừng. claim.ts txds
+>    không đòi tài khoản SMED; report.ts nhận status needsData.
+>
+> **✅ E2E thật trên máy (nguồn ghép 16-17/09 — chưa ngày nào đủ 7 nguồn):** 7/7 nguồn
+> → 97 file staged → tool 6 chạy 14s → file 174KB: sheet ĐỐI CHIẾU hiện "Khớp"/"Chuẩn",
+> sheet TT dữ liệu thật trung tâm TD. Test xong dọn sạch môi trường tạm.
+>
+> **LESSON LEARNED — Kỳ TX-DS phải theo quy ước PA1 (1 lượt tải gộp cả khoảng nằm ở
+> thư mục TỪ NGÀY) (2026-09-18):** Tool 6 gán trung tâm theo mảng `new_names` (19 tên
+> cố định) khớp THỨ TỰ file trong thư mục — copy nguồn NHIỀU ngày vào 1 thư mục làm
+> lệch (38 file > 19 tên). ĐÚNG: stage từ đúng thư mục TỪ NGÀY (1 lượt download = 19
+> file/nguồn gộp cả khoảng — PA1 GĐ 151) + re-stamp mtime theo index để deterministic.
+> Khi kết hợp tool cũ (giả thiết dữ liệu theo lượt-tải) với pipeline mới (giả thiết
+> theo-ngày), phải đối chiếu GIẢ THIẾT của tool trước khi nối.
+>
+> **LESSON LEARNED — Đường dẫn tương đối trong test Python vs cwd (2026-09-18):**
+> Test script chạy từ project root dùng `Path('OUTPUT/...')` tương đối → trỏ vào
+> `agent/OUTPUT` KHÁC (thư mục rác cũ) trong khi service dùng OUTPUT tuyệt đối
+> `apps/banhang/OUTPUT`. Mất 15 phút debug "file tồn tại theo ls nhưng Python bảo
+> không". Quy tắc: test nhánh agent PHẢI load module + dùng `m.OUTPUT_BASE` của chính
+> nó (đường dẫn tuyệt đối TOOL_DIR.parent/OUTPUT), không tự chế path tương đối.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.3.3.
+>
+> **⚠️ VIỆC CẦN LÀM cho Đại ca khi test trên production:** Vào `/m/bc-truyxuat` chọn kỳ
+> (VD 14-17/09) → bấm chạy → hiện cảnh báo thiếu nguồn (16/09 thiếu MISA 13.BKTH,
+> 17/09 thiếu 5 nguồn SMED) → bấm **Có** → job download tự treo → xong bấm chạy lại
+> TX-DS → agent tổng hợp file Excel tại máy. Service agent ĐÃ restart 06:18 chạy bản mới.
+>
+> **Tiêu chí kiểm chứng:** 5 trang báo cáo nguồn hiện bảng theo ngày + trung tâm;
+> TX-DS cảnh báo đúng văn bản khi thiếu; Có = treo đúng nguồn thiếu; đủ 7 nguồn →
+> file 1.BC_TX-DS tại OUTPUT\.txds_work + tên hiện trên web; typecheck 0 lỗi cả 2 app.
+
+*Cập nhật lần cuối: 2026-09-18 (GĐ 157 — Báo cáo Truy xuất - Đối soát E2E PASS + 5 báo cáo nguồn SQL, repo con v3.2.0)*
+*Người cập nhật: Trợ lý lập trình*
