@@ -5590,5 +5590,43 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > chọn đúng trạng thái trên trang MISA; 'Tất cả' = giữ mặc định (không chạm);
 > các trang SMED khác form không đổi; typecheck 0 lỗi cả 2 repo.
 
-*Cập nhật lần cuối: 2026-09-17 (GĐ 145 — hệ sinh thái: dropdown chọn trạng thái web cho Bảng kê chi tiết hóa đơn MISA — repo con v2.4.0, app tổng 3.0.1)*
+### GĐ 146: Hệ sinh thái — Badge vàng "không có dữ liệu theo bộ lọc" cho job MISA rỗng (repo con v2.4.1) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(misa): agent nhận diện "không có phát sinh dữ liệu" → web badge vàng "Hoàn thành — không có dữ liệu theo bộ lọc" — hết nhầm "chưa về file" với "không có data" (GĐ C.24, v2.4.1) |
+| (mới) | docs(agents): GĐ 146 + version 3.0.1 → 3.0.2 |
+
+> **BUG REPORT của Đại ca (17/09, kèm 2 ảnh):** Job 15/09 lọc 'Đã cấp mã' web báo
+> "Hoàn thành" xanh nhưng thư mục ngày RỖNG — đợi mãi không thấy file (lần trước
+> 16/09 "đợi một lúc thì file xuất hiện"). Anh khẳng định: tự làm tay trực tiếp,
+> dữ liệu CÓ và ĐÃ được cấp mã.
+>
+> **Chẩn đoán (đọc log riêng tool 30 — misa_bkct_170926.log):** KHÔNG phải độ trễ.
+> Từng job tool chạy đúng, kết thúc "📭 MISA báo: không có phát sinh dữ liệu theo
+> điều kiện lọc" (0 file là HỢP LỆ theo bộ lọc). File "xuất hiện sau" ngày 16/09
+> thực là của job KHÁC lúc 07:49 chọn 'Tất cả' (1 file 29KB, 140 dòng — verify
+> openpyxl) rơi vào cùng thư mục ngày. Web cũ xanh "Hoàn thành" cho CẢ 2 trường
+> hợp → không phân biệt được.
+>
+> **Fix theo chỉ đạo (agent + 1 dòng hiển thị web):** (1) agent đọc out_lines
+> (pump stdout đã có) — thấy "không có phát sinh dữ liệu" → gửi noData=true;
+> (2) migration 0005 cột `no_data boolean` (UPDATE chỉ set-true — heartbeat
+> không xóa cờ); (3) mapJob trả về; (4) badge done+noData = VÀNG "Hoàn thành —
+> không có dữ liệu theo bộ lọc" + dòng chú thích nguyên nhân rỗng. Tool SMED
+> khác không in câu này → vô hại.
+>
+> **LESSON LEARNED — "Hoàn thành" phải mang NGHĨA kết quả (2026-09-17):** job
+> xong 0-file có 2 nghĩa: tool lỗi (cần lo) vs nguồn rỗng theo bộ lọc (bình
+> thường). Một trạng thái phát sinh từ nhiều nguyên nhân → hiển thị phải phân
+> biệt được nguyên nhân, báo "thành công" cho kết quả rỗng phải kèm LÝ DO rỗng.
+>
+> **Version:** app con 2.4.0 → 2.4.1 (patch); app tổng 3.0.1 → 3.0.2 (docs-only
+> — patch; checklist GĐ 138 ✓).
+>
+> **Tiêu chí kiểm chứng:** Job lọc rỗng → badge vàng + chú thích; job có file →
+> xanh như cũ; log agent "📭 Job xong — KHÔNG có dữ liệu theo bộ lọc";
+> typecheck 0 lỗi cả 2 repo.
+
+*Cập nhật lần cuối: 2026-09-17 (GĐ 146 — hệ sinh thái: badge vàng job MISA rỗng theo bộ lọc — repo con v2.4.1, app tổng 3.0.2)*
 *Người cập nhật: Trợ lý lập trình*
