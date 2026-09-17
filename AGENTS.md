@@ -5806,3 +5806,50 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 
 *Cập nhật lần cuối: 2026-09-17 (GĐ 150 — Auto-ETL 60 phút + nạp đè theo ngày, repo con v2.8.0, service đã chạy bản mới)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 151: Hệ sinh thái — ETL đọc ngày thật + chốt PA1 lấy lịch sử theo tháng (repo con v2.9.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `5473980` | feat(etl): DATE_COL map cột ngày 12 phân hệ + nạp đè theo TẤT CẢ ngày trong file + pilot PA1 (GĐ B.2.3) |
+| (mới) | docs(agents): GĐ 151 + version 3.1.1 → 3.2.0 |
+
+> **Câu hỏi của Đại ca (17/09):** Lấy dữ liệu theo khoảng thời gian (năm 2025,
+> tháng 1–8/2026, 1 tháng cụ thể) thì file lưu thư mục nào? Phải làm gì?
+>
+> **Trả lời đã chốt (PA1):** file luôn về `OUTPUT\<phân hệ>\<TỪ NGÀY>` — tool xuất
+> **19 file GỘP cả khoảng** (1 file/trung tâm). 3 phương án đã trình: PA1 theo tháng
+> (chốt) / PA2 theo ngày (~365 job/phân hệ, BKCCN 21 phút/ngày = KHÔNG khả thi) /
+> PA3 cả khoảng 1 job. **Động tác của Đại ca = chỉ tạo job trên web** (Từ ngày =
+> 01/tháng, Đến ngày = cuối tháng), ETL tự nạp SQL.
+>
+> **Điều kiện tiên quyết đã làm trước:** ETL gắn `report_date` theo tên thư mục
+> → file gộp cả tháng mang nhãn 1 ngày, báo cáo không phân rã được. **Fix:
+> DATE_COL** map vị trí cột ngày theo 12/12 phân hệ (probe file thật 17/09:
+> 1HDDT=6, 2DTTDT=2, 3DTTHC=None, 4BKCCN=10, 5BKN=3, 6BKX=2, 7BCNXT=None,
+> 8BCCK=2, 9LHT=9, 10GDTVX=3, 11BKCT=4, 12BLTH=14) + `parse_cell_date()` nhận
+> DD/MM/YYYY (kèm giờ) + YYYY-MM-DD, fallback ngày thư mục. Nạp đè mở rộng xóa
+> theo TẤT CẢ ngày xuất hiện trong file.
+>
+> **Re-import toàn bộ:** 791 file = 8.088 dòng, 0 lỗi — verify 8BCCK 14/09 = 89
+> dòng khớp đối chứng cũ.
+>
+> **Pilot PA1 PASS:** job DTTDT 01/09→30/09/2026 → 19 file gộp về
+> `OUTPUT\2.DTTDT\2026-09-01\` (~5 phút) → SQL phân rã **17 ngày riêng**
+> (06/09: 742, 12/09: 515, 13/09: 787 — cuối tuần đông đúng thực tế), tổng
+> 4.260 dòng, nạp đè không nhân đôi.
+>
+> **LESSON — File gộp khoảng ngày: ngày từng dòng nằm trong DATA (2026-09-17):**
+> Tên thư mục chỉ mang ý nghĩa "ngày tải" với file gộp. Dữ liệu lịch sử dùng cho
+> báo cáo phải đọc ngày từ cột dữ liệu từng dòng + map vị trí cột theo từng format
+> xuất (probe trước, fallback ngày thư mục khi thiếu cột).
+>
+> **Lịch lấy lịch sử gợi ý:** phân hệ nhanh trước (DTTDT/BLTH/HĐĐT/DTTHC/CHIETKHAU/
+> LHT/GDTVX/BKN/BKX ~5 phút/tháng) → XNKT ~6 phút → BKCCN ~21 phút cuối. Mỗi tháng
+> 1 job, chạy dần 1-2 ngày là đủ 2025 + 1–8/2026.
+>
+> **Tiêu chí kiểm chứng:** job khoảng nhiều ngày → file về thư mục từ-ngày; SQL
+> phân rã đúng từng ngày; tổng dòng khớp; nạp đè không nhân đôi.
+
+*Cập nhật lần cuối: 2026-09-17 (GĐ 151 — ETL ngày thật + pilot PA1 PASS, repo con v2.9.0)*
+*Người cập nhật: Trợ lý lập trình*
