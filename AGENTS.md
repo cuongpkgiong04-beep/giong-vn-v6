@@ -5628,5 +5628,53 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > xanh như cũ; log agent "📭 Job xong — KHÔNG có dữ liệu theo bộ lọc";
 > typecheck 0 lỗi cả 2 repo.
 
-*Cập nhật lần cuối: 2026-09-17 (GĐ 146 — hệ sinh thái: badge vàng job MISA rỗng theo bộ lọc — repo con v2.4.1, app tổng 3.0.2)*
+*Cập nhật lần cuối: 2026-09-17 (GĐ 147 — fix ROOT CAUSE tool MISA lọc ngược: multicombobox toggle-loại-trừ — repo con v2.5.0, app tổng 3.0.3)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 147: Hệ sinh thái — Fix ROOT CAUSE tool MISA lọc NGƯỢC (repo con v2.5.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `3dad719` | fix(misa): chọn dropdown multicombobox đúng cơ chế toggle-loại-trừ — hết lọc ngược (GĐ C.25) |
+| (mới) | docs(agents): GĐ 147 + version 3.0.2 → 3.0.3 |
+
+> **BUG REPORT của Đại ca (17/09, kèm 5 ảnh — ĐÃ CẢNH BÁO EM SAI Ở GĐ 146):** Em chẩn đoán sai —
+> ảnh MISA chứng minh ngày 15/09 lọc "Đã cấp mã" + CQT "Tất cả" CÓ 100 bản ghi thật (102 dòng
+> Excel anh đếm tay), nhưng job tool vẫn "không có phát sinh dữ liệu". Kèm 2 yêu cầu: sửa dropdown
+> theo đúng bộ lọc ảnh MISA + test lại tới khi đúng 102 dòng; và job "Tất cả" bị lệch ngày
+> 15/09 → 17/09.
+>
+> **ROOT CAUSE (phơi bày bằng probe DOM trực tiếp trên máy — 2 script Playwright nạp phiên
+> misa_state.json, dump trạng thái checkbox TRƯỚC/SAU click, không export):** multicombobox
+> MISA mặc định MỌI item CHECKED (= "Tất cả"); click 1 item = TOGGLE TẮT nó (loại-trừ),
+> KHÔNG phải chọn duy nhất. Tool cũ click "Đã cấp mã" thực chất LOẠI TRỪ "Đã cấp mã" → ngày
+> toàn hóa đơn đã-cấp-mã trả 0 dòng → tool hiểu "không có data". Chọn "Tất cả" (không chạm
+> dropdown) lại đúng → có file. Dấu hiệu đáng nhớ: thao tác log "✔ Đã chọn" thành công nhưng
+> kết quả NGƯỢC kỳ vọng; "không làm gì" lại ra đúng — contradiction kiểu này phải probe DOM,
+> đừng sửa mò.
+>
+> **Fix repo con (GĐ C.25):** helper `check_only_option` — mở dropdown → uncheck TẤT CẢ item
+> đang CHECK khác target → Escape đóng → còn duy nhất target CHECK. Áp cả 2 dropdown (phát
+> hành + CQT); "Tất cả" = không chạm như cũ. Escape nằm TRONG helper → ô ngày giữ đúng sau
+> Escape/Apply (probe verify; hết lỗi 15→17/09).
+>
+> **Test E2E THẬT sau sửa (chạy tool trực tiếp, BKCT_BASE đè sang thư mục test riêng — không
+> đụng file anh đang mở Excel trong OUTPUT thật):** 15/09→15/09 Đã cấp mã + CQT Tất cả → log
+> "tắt 4 trạng thái khác" → download → **100/100 hóa đơn unique, toàn bộ ngày 15/09/2026** —
+> khớp "100 bản ghi" MISA + 102 dòng Excel (100 hóa đơn + header + dòng tổng; 1 hóa đơn nhiều
+> mã hàng = nhiều dòng STT là đúng bản chất "bảng kê chi tiết" — ảnh anh cũng có STT 263/264
+> cùng số 00005579). File test/probe đã xóa sau khi xong.
+>
+> **LESSON LEARNED — chẩn đoán sai do thiếu bằng chứng tầng UI (2026-09-17):** GĐ 146 khép án
+> "MISA không có hóa đơn Đã cấp mã" dựa trên log tool + file rỗng, KHÔNG đối chiếu màn hình
+> MISA thật của người dùng. Khi người dùng khẳng định "tôi thấy data có thật" — bằng chứng
+> của họ trên UI chính xác là tầng cần probe, không phải suy luận từ log. Script probe DOM
+> (nạp phiên lưu sẵn, dump trạng thái widget) là công cụ chuẩn từ giờ cho mọi case UI automation
+> "bấm đúng nhưng kết quả sai".
+>
+> **Version:** app con 2.4.1 → 2.5.0 (fix lớn + verified E2E — minor); app tổng 3.0.2 → 3.0.3
+> (docs-only — patch; checklist GĐ 138 ✓, không thành phần nào ≥ 10).
+>
+> **Tiêu chí kiểm chứng (Đã PASS test thật):** job 15/09 Đã cấp mã + CQT Tất cả → file XLSX
+> 100 hóa đơn đúng ngày 15/09; job "Tất cả" giữ hành vi cũ; log tool ghi "tắt N trạng thái
+> khác"; ngày lọc giữ đúng sau Escape/Apply.
