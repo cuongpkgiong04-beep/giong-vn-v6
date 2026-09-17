@@ -5541,3 +5541,54 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 >
 > **Tiêu chí kiểm chứng:** tạo job MISA trên web chạy thông suốt; phiên lưu sẵn vào
 > thẳng; các tool SMED khác không bị ảnh hưởng.
+
+### GĐ 145: Hệ sinh thái — Dropdown chọn trạng thái trên web cho Bảng kê chi tiết hóa đơn MISA (repo con v2.4.0) (2026-09-17)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(misa): dropdown Trạng thái phát hành + Trạng thái gửi CQT trên web — job → agent env → tool chọn (GĐ C.23, v2.4.0) |
+| (app tổng) | chore: tăng version 2.9.1 → 3.0.1 (minor 9 đầy → nhớ major — lần 2 đạt major 3) |
+
+> **Yêu cầu của Đại ca (17/09):** Trong phần "Bảng kê chi tiết hóa đơn đã sử dụng"
+> thêm dropdown chọn trạng thái trên web. Đã hỏi chốt 2 điểm: (1) CẢ HAI dropdown
+> — Trạng thái phát hành + Trạng thái gửi CQT; (2) mỗi dropdown 3 giá trị: Đã cấp
+> mã / Chờ cấp mã / Tất cả (mặc định 'Đã cấp mã' khớp hành vi cũ).
+>
+> **Dây chuyền end-to-end (web → tool) — tận dụng kênh có sẵn, không thêm API:**
+> 1. **Migration 0004** `smed_pull_jobs` thêm `publish_status text default 'Đã
+>    cấp mã'` + `cqt_status text default 'Tất cả'` — default khớp hành vi cũ,
+>    job cũ không đổi. Tự chạy khi Vercel build.
+> 2. **Server `-smed.ts`:** createSmedJob nhận + validate 2 giá trị (whitelist
+>    `MISA_STATUS_VALUES`, lạ → default) + INSERT; mapJob trả về → lịch sử hiện
+>    "Lọc: … · CQT: …". agentClaim SELECT * + mapJob → TỰ mang 2 field mới.
+> 3. **Agent:** env `MISA_PUBLISH` (đã có từ GĐ C.13.1 dùng test) + `MISA_CQT`
+>    (mới) đọc từ job — các tool SMED khác không đọc 2 env này, vô hại.
+> 4. **Tool 30:** khối publish đổi 'Tất cả' = KHÔNG chạm dropdown (giữ mặc định
+>    MISA — an toàn vì tool trước giờ vẫn giữ default); khối CQT MỚI theo cùng
+>    pattern (selector `#sendToTaxStatusFilter` + `[key="sendToTaxStatusFilter-lst"]`)
+>    — Escape sau chọn để dropdown không phủ nút Áp dụng (lesson E2E 16/09).
+> 5. **UI:** prop tùy chọn `showStatusFilters` trong SmedPullModule — CHỈ trang
+>    MISA bật; mọi trang SMED khác không truyền = form giữ nguyên 100%.
+>
+> **LESSON LEARNED — Env channel có sẵn là đường truyền tự nhiên web→tool (2026-09-17):**
+> Tool 30 từ GĐ C.13.1 đã đọc `MISA_PUBLISH` env (lúc đó chỉ để test) — tính năng
+> dropdown chỉ cần nối dây: web → cột DB → job → env → tool, KHÔNG sửa logic tool,
+> không thêm endpoint. Trước khi thiết kế kênh truyền mới, grep tool xem đã có
+> biến env/tín hiệu nào chưa dùng hết công suất chưa.
+>
+> **⚠️ VIỆC CẦN LÀM tại máy chạy tool (như GĐ 128/139):** copy agent/40_web_agent.py
+> MỚI sang thư mục tool trên D: (đè file cũ) → restart GIONG_SMED_Agent — nếu không,
+> dropdown vẫn hiện nhưng chọn 'Chờ cấp mã'/'Tất cả' sẽ không có tác dụng.
+>
+> **Version — lần 2 nhớ major:** app con 2.3.1 → 2.4.0 (feature = minor); app tổng
+> 2.9.1 → 3.0.1 (minor đang 9 đầy → về 0 + nhớ major 2→3, patch giữ 1 — pattern GĐ
+> 104). Checklist GĐ 138 bước 2: không thành phần nào ≥ 10 ✓ — em đã tự bắt được
+> lần bump đầu tiên sai quy tắc (2.3.2 patch) trước khi commit.
+>
+> **Tiêu chí kiểm chứng:** Trang MISA hiện 2 dropdown mới trong form tạo job;
+> chọn xong job ghi đúng 2 giá trị (xem trong lịch sử); agent mới nhận env → tool
+> chọn đúng trạng thái trên trang MISA; 'Tất cả' = giữ mặc định (không chạm);
+> các trang SMED khác form không đổi; typecheck 0 lỗi cả 2 repo.
+
+*Cập nhật lần cuối: 2026-09-17 (GĐ 145 — hệ sinh thái: dropdown chọn trạng thái web cho Bảng kê chi tiết hóa đơn MISA — repo con v2.4.0, app tổng 3.0.1)*
+*Người cập nhật: Trợ lý lập trình*
