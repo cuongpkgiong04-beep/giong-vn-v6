@@ -264,6 +264,12 @@ src/
 - **Được phép truy cập Neon** — Em có quyền truy cập Neon PostgreSQL console để kiểm tra dữ liệu, chạy SQL query, và thực hiện lệnh cần thiết. Kết nối qua `DATABASE_URL` env var trên Vercel. Dùng khi cần verify data, debug query, hoặc thực hiện migration thủ công.
 - **Được phép truy cập Cloudinary** — Em có quyền truy cập Cloudinary console (`https://console.cloudinary.com`) để kiểm tra Media Library (ảnh/file đã upload), dung lượng, debug upload lỗi. Dùng khi cần verify file đã lên CDN, tìm file thừa, hoặc kiểm tra lỗi transformation.
 - **Quy tắc truy cập trực tiếp 3 hệ thống (bổ sung 2026-09-10, theo yêu cầu Đại ca):** Em được phép truy cập TRỰC TIẾP, KHÔNG cần hỏi lại từng lần: (1) **Vercel** — website + CLI (`vercel logs`, `vercel env ls`, `vercel project ls`, deploy...); (2) **Neon** — console SQL + mọi query đọc/kiểm tra; (3) **Cloudinary** — console + API. Mặc định được phép: đọc, kiểm tra, debug, xem logs. VẪN PHẢI HỎI Đại ca trước khi làm thao tác PHÁ HỦY: xóa sạch dữ liệu (drop table, delete all), xóa media hàng loạt, reset môi trường, đổi cấu hình quan trọng (domain, env, connection string). Lưu ý GĐ 71: env đánh dấu Sensitive trên Vercel không pull được qua CLI (`[SENSITIVE]`) — cần giá trị thật thì nhờ Đại ca cung cấp hoặc bỏ dấu Sensitive.
+- **Quy ước tiết kiệm egress Neon (GĐ 159 — 18/09/2026, sau khi 4.83GB/5GB):** Neon free chỉ 5GB egress/project/tháng (đo cả dữ liệu Neon gửi ra cho Vercel, agent, lẫn SELECT trong Neon Console). Quy tắc bắt buộc:
+  1. **KHÔNG `select *` trên bảng có cột payload lớn** (`result_full` — bảng TX-DS 6-8MB/job; `attachments`/`reactions` jsonb...). Liệt kê cột cụ thể ở MỌI query chạy thường xuyên (poll, hydrate, claim).
+  2. Payload lớn chỉ tải khi user chủ động bấm xem (`loadTxdsResult` phân trang), không bao giờ nằm trong response poll.
+  3. Khi debug trên Neon Console: tránh `SELECT *` bảng lớn — đọc của em cũng tính egress; ưu tiên `COUNT(*)` + LIMIT.
+  4. Hydrate app tổng tải ~2-3MB/phiên mở — chấp nhận được; KHÔNG thêm collection mới vào hydrate nếu không cần thiết (dùng lazy-load theo trang như employees/centers).
+  5. Theo dõi mức egress: Neon Console → Organization → Usage (ảnh Đại ca gửi); vượt 60-70% là rà lại query mới thêm trong tháng.
 
 ---
 
@@ -6124,5 +6130,56 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > kỳ thiếu nguồn vẫn cảnh báo đúng văn bản + treo download đúng nguồn; typecheck
 > 0 lỗi; build OK.
 
-*Cập nhật lần cuối: 2026-09-18 (GĐ 158 — TX-DS tổng hợp từ GiongDB 1 bảng ~110 cột + chunk upload, repo con v3.3.0)*
+*Cập nhật lần cuối: 2026-09-18 (GĐ 159 — tiết kiệm egress Neon: loại result_full khỏi poll, repo con v3.3.1)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 159: Egress Neon cạn 4.83/5GB — chặn select * kéo result_full + quy ước tiết kiệm (repo con v3.3.1) (2026-09-18)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `07114ab` | perf(egress): loadSmedJobs + claim.ts loại result_full — hết đốt egress |
+| (app tổng) `782746c` | fix(data): LIMIT tin nhắn 1000→300 + docs quy ước egress + version 3.3.5 |
+
+> **Bối cảnh:** Ảnh Neon Console 18/09 (đúng 1 tháng sau GĐ 128 khởi tạo usage):
+> **Network transfer 4.83GB/5GB (~97%)** — vượt là Neon khoá compute đến đầu chu kỳ
+> → CẢ HAI app ngừng hoạt động. Đại ca hỏi: cách hiểu 2 luồng dữ liệu có đúng không,
+> dự tính thế nào, giải pháp gì.
+>
+> **Chẩn đoán — trả lời Đại ca:**
+> 1. **Cách hiểu GẦN ĐÚNG, 2 điểm chỉnh:** (a) Neon KHÔNG gửi lệnh cho SQL Server
+>    máy công ty — Agent (service GIONG_SMED_Agent) TỰ POLL Vercel 20s → Vercel hỏi
+>    Neon; tính toán ở GiongDB cục bộ KHÔNG tốn egress Neon; kết quả gửi ngược lên
+>    Vercel GHI vào Neon (ghi = ingress, miễn phí). (b) Cả 2 app dùng chung 1 project
+>    Neon `giong-vn` → chung hạn mức 5GB.
+> 2. **Thủ phạm chính:** GĐ 158 thêm cột `result_full` (bảng TX-DS 6-8MB/job) vào
+>    `smed_pull_jobs`, mà `loadSmedJobs` (app con) + `claim.ts` (agent) dùng select */
+>    returning * → mỗi poll 10s khi mở trang SMED = kéo 6-8MB ≈ 36MB/phút → đốt 5GB
+>    trong vài giờ. Đây giải thích vì sao 18 ngày đã ngốn 4.83GB.
+>
+> **Fix (surgical — 3 query + 1 tài liệu):**
+> 1. `loadSmedJobs` (app con): select * → liệt kê 21 cột, LOẠI result_full.
+> 2. `claim.ts` (app con): returning * → cột cụ thể, LOẠI result_full (job retry
+>    có thể còn result_full cũ — phòng ngừa).
+> 3. `data.ts` (app tổng): LIMIT tin nhắn 1000 → 300 (attachments/reactions jsonb
+>    nặng; tin cũ vẫn nằm DB).
+> 4. AGENTS.md mục 9: quy ước 5 điểm tiết kiệm egress (cấm select * bảng payload
+>    lớn; payload chỉ tải khi bấm xem; Neon Console tránh select *; hydrate không
+>    thêm collection mới tuỳ tiện; theo dõi Usage vượt 60-70% rà query mới).
+>
+> **LESSON LEARNED — Cột JSONB lớn trong bảng job là bom egress khi có select * (2026-09-18):**
+> Thêm cột payload lớn vào bảng CHUNG (smed_pull_jobs) thay vì bảng riêng khiến MỌI
+> query cũ select * tự kéo thêm hàng MB. Quy tắc từ giờ: (a) payload > 100KB phải
+> nằm bảng riêng hoặc phải có mặt trong danh sách "cột cấm select *"; (b) khi thêm
+> cột lớn, grep `select *` + `returning *` trên bảng đó và sửa tất cả; (c) response
+> poll/hydrate phải nhẹ theo thiết kế, không phụ thuộc dữ liệu hiện tại nhỏ.
+>
+> **LESSON LEARNED — Egress Neon tính cả SELECT của người (Neon Console) (2026-09-18):**
+> Mọi byte Neon gửi ra internet đều tính — kể cả khi Đại ca/em mở bảng trong Console
+> Console SQL. Debug nên dùng COUNT(*) + LIMIT, tránh mở nguyên bảng lớn.
+>
+> **Vận hành:** theo dõi Neon Console → Usage; nếu vượt ~60-70% giữa tháng thì rà
+> lại query mới thêm. Kỳ vọng sau fix: ~100-200MB/ngày (tuỳ tần suất mở app).
+>
+> **Tiêu chí kiểm chứng:** Mở trang app con (SMED/báo cáo) → network tab request
+> loadSmedJobs chỉ vài KB (không còn MB); agent poll log không đổi; TX-DS bấm xem
+> vẫn hiện đủ bảng (fetch riêng result_full); typecheck 0 lỗi cả 2 app.

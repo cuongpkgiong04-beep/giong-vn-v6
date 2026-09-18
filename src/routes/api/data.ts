@@ -671,7 +671,9 @@ export const loadAllMessages = createServerFn({ method: "GET" })
              reactions, reply_to_id, forwarded_from, pinned, pinned_by, starred_by, deleted_by
       FROM messages
       ORDER BY at DESC
-      LIMIT 1000
+      -- GĐ 159: 1000 → 300 — cột attachments/reactions/mentions jsonb nặng;
+      -- tin cũ vẫn nằm DB, chỉ không tải hết về máy (tiết kiệm egress Neon 5GB)
+      LIMIT 300
     `;
     return rows.reverse().map(mapMessageRow);
   });
