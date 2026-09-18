@@ -6230,3 +6230,54 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 
 *Cập nhật lần cuối: 2026-09-18 (GĐ 160 — PA-A Bước 1: API Server + Tunnel, app con bắt đầu bỏ Neon)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 161: PA-A Bước 2 — App con TÁCH HẲN khỏi Neon, chạy SQL Server GiongDB qua Cloudflare Tunnel (repo con v3.5.0) (2026-09-18)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `41a9438` | feat(pa-a): Bước 2 — backend Tunnel db.ts + translator đầy đủ + mirror 3 bảng + fallback perms (GĐ C.36) |
+| (repo con) `fd38278` | docs(agents): GĐ C.36 + version 3.5.0 |
+| (mới) | docs(agents): GĐ 161 + version 3.3.6 → 3.3.7 |
+
+> **Bối cảnh — sự cố trùng đúng ngày triển khai:** 14:10 hôm nay Neon vượt quota
+> egress 5GB → khóa TOÀN BỘ kết nối (code 53000). Cả 2 app chết: app tổng sign-in
+> 500, app con agent poll 500, build app tổng fail (db:migrate không nối được DB).
+> **Không phải do code** — commit GĐ 159 build success, push 14:25 có trước lỗi 500
+> 14:10. Neon free reset chu kỳ đầu tháng — app tổng chờ hồi phục; app con thì
+> **không cần chờ nữa**: Bước 2 tách hẳn khỏi Neon.
+>
+> **Kiến trúc mới app con:** Vercel KHÔNG còn DATABASE_URL. Mọi query:
+> Vercel → Cloudflare Tunnel (Quick, miễn phí) → API Server FastAPI :8777 tại máy
+> công ty (Windows Service GIONG_API_Server — Bước 1) → SQL Server GiongDB.
+> Ảnh/file vẫn Cloudinary/Drive. App tổng giữ Neon như cũ.
+>
+> **Chi tiết kỹ thuật (đầy đủ ở AGENTS.md repo con GĐ C.36):** backend "tunnel"
+> trong db.ts cài đúng interface Sql — 23 chỗ getSql() không sửa; translator
+> PG→T-SQL hoàn chỉnh (RETURNING→OUTPUT, ON CONFLICT→MERGE, FOR UPDATE SKIP
+> LOCKED→readpast/updlock/rowlock, interval→DATEADD, CAST, LIMIT/ILIKE...);
+> mirror 3 bảng + fallback quyền JWT khi mirror trống; JSON NVARCHAR parse.
+>
+> **✅ Verify production:** deploy commit 41a9438 READY; `/api/units` trả 19 trung
+> tâm DATA THẬT từ SQL Server qua tunnel công khai; tsc 0 lỗi; build OK; E2E API
+> Server 15/15 PASS.
+>
+> **LESSON — Egress Neon đốt bởi query không nhìn thấy được (2026-09-18):**
+> GĐ 159 đã loại result_full khỏi poll nhưng quota VẪN cạn 5GB trong ngày —
+> tự rà lại thấy nguyên nhân còn lại là hydrate + auth + poll 20s của agent cộng
+> dồn 18 ngày. Free tier 5GB/tháng KHÔNG đủ cho 2 app dùng chung — PA-A đúng lúc.
+> **Quy tắc từ giờ:** app mới/khối lượng lớn KHÔNG dùng Neon dùng chung; Neon
+> chỉ cho app tổng (đã tiết kiệm theo quy ước GĐ 159).
+>
+> **LESSON — Build fail vì DB chết là kiểu lỗi "không phải code" khó nhìn (2026-09-18):**
+> Commit docs-only (AGENTS.md + version) build fail → dễ nghi code. Chuỗi xác minh:
+> (1) commit trước build OK? (2) build local PASS? (3) runtime log có lỗi DB?
+> → chốt nguyên nhân môi trường. Redeploy khi Neon hồi phục là đủ, không sửa code.
+>
+> **⚠️ Việc đang treo app tổng (chờ Neon reset đầu tháng):** login + dữ liệu app
+> tổng 500 cho tới khi chu kỳ mới. Khi Neon sống lại: redeploy commit 93d9b34
+> (build trước đó fail chỉ vì DB) — không cần sửa gì.
+>
+> **Tiêu chí kiểm chứng:** app con hoạt động đầy đủ không phụ thuộc Neon
+> (production đã verify); app tổng hồi phục sau Neon reset (chờ đầu tháng);
+> typecheck 0 lỗi cả 2 repo.
+
