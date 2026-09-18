@@ -6183,3 +6183,50 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > **Tiêu chí kiểm chứng:** Mở trang app con (SMED/báo cáo) → network tab request
 > loadSmedJobs chỉ vài KB (không còn MB); agent poll log không đổi; TX-DS bấm xem
 > vẫn hiện đủ bảng (fetch riêng result_full); typecheck 0 lỗi cả 2 app.
+
+### GĐ 160: Hệ sinh thái — PA-A Bước 1: API Server tại công ty + Cloudflare Tunnel, app con bắt đầu bỏ Neon (repo con v3.4.0) (2026-09-18)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(api-server): FastAPI :8777 + tunnel keeper + SQL translator PG→T-SQL + migration 0008 + service GIONG_API_Server (GĐ C.35) |
+| (mới) | docs(agents): GĐ 160 + version 3.3.5 → 3.3.6 |
+
+> **Bối cảnh — đã chốt với Đại ca (2026-09-18):** Egress Neon free 5GB/tháng dùng CHUNG
+> app tổng + app con (GĐ 159 đã đốt 4.83GB). Dữ liệu bán hàng SMED 01/01/2025→nay và
+> tương lai RẤT LỚN (stg_2DTTDT một phân hệ đã 130.295 dòng) → không thể dựa Neon lâu dài.
+> Đại ca duyệt **PA-A**: app con BỎ Neon — Vercel chỉ render UI, mọi dữ liệu về
+> **SQL Server Express GiongDB tại công ty** qua **Cloudflare Tunnel miễn phí**; app tổng
+> GIỮ Neon (chấm công/check-in/nhiệm vụ...). Đại ca chốt PA-1: gộp hướng FastAPI của phiên
+> GĐ 160 sáng với tunnel + SQL translator của phiên chiều.
+>
+> **Kiến trúc (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.35):**
+> ```
+> Vercel (app con) ──HTTPS──► Cloudflare Tunnel ──► API Server (máy cty, FastAPI :8777)
+>                                                        │ 127.0.0.1
+>                                                        ▼
+>                                        SQL Server Express .\SQLEXPRESS — GiongDB
+> ```
+>
+> **Lộ trình 7 bước (Bước 1 đã XONG, E2E toàn tuyến PASS):**
+> 1. ✅ Cloudflare Quick Tunnel + API Server khung + Windows Service `GIONG_API_Server`
+> 2. ⬜ Backend TunnelSql trong `db.ts` app con (3 backend Neon/PGLite/Tunnel)
+> 3. ⬜ ETL nạp đủ lịch sử 01/01/2025 → nay
+> 4. ⬜ Agent chuyển poll API Server nội bộ (bỏ qua Vercel — chết nguồn egress lớn nhất)
+> 5. ⬜ Deploy app con không DATABASE_URL
+> 6. ⬜ Kháng hóa 30 ngày song song (Neon bật để đối chiếu)
+> 7. ⬜ Rút env Neon khỏi app con
+>
+> **SỰ CỐ đã xử lý — ghi cho vòng sau:** file `api_server.py` FastAPI của phiên sáng
+> (chưa commit) bị phiên chiều ghi đè mất. Dựng lại được nhờ file test E2E + migration
+> còn sót (15/15 PASS). Bài học: file quan trọng commit sớm làm checkpoint; trước khi
+> ghi file vào thư mục có hoạt động dở phải liệt kê + git status trước.
+>
+> **Version:** app tổng 3.3.5 → 3.3.6 (docs-only — patch); repo con 3.3.1 → 3.4.0
+> (feature kiến trúc — minor). Checklist GĐ 138 ✓ (không thành phần nào ≥ 10).
+>
+> **Tiêu chí kiểm chứng:** service `GIONG_API_Server` RUNNING tự khởi động; /health local
+> + qua tunnel OK; curl internet → SQL Server trả data thật; 15/15 E2E + 6/6 translator;
+> token sai 401, không quyền 403; Neon app con CHƯA rút (kháng hóa bước 6).
+
+*Cập nhật lần cuối: 2026-09-18 (GĐ 160 — PA-A Bước 1: API Server + Tunnel, app con bắt đầu bỏ Neon)*
+*Người cập nhật: Trợ lý lập trình*
