@@ -35,7 +35,8 @@ import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
-import { ensureDbReady, getPglite } from "../db";
+import { dbSource, ensureDbReady, getPglite } from "../db";
+import { tunnelDialect } from "./tunnel-dialect";
 import { emailAndPasswordEnabled } from "./email-password";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
 import { GROK_PROVIDERS } from "./providers";
@@ -137,9 +138,14 @@ const databaseUrl = env("DATABASE_URL");
 // SAME DB as app data, including email/password users. Both use the Better Auth
 // schema from `migrations/auth/0001_auth.sql`, copied into `migrations/` when
 // the app turns sign-in on.
-const database = databaseUrl
-  ? new Pool({ connectionString: databaseUrl })
-  : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
+// GĐ 162 (PA-A): khi backend tunnel active → Better Auth QUA TUNNEL (Kysely
+// dialect → POST /query → SQL Server GiongDB). Ưu tiên cao hơn DATABASE_URL.
+const database =
+  dbSource === "tunnel"
+    ? { dialect: tunnelDialect(), type: "postgres" as const }
+    : databaseUrl
+      ? new Pool({ connectionString: databaseUrl })
+      : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
 
 /** Session token cookie name — also read by the live-preview popup completion page. */
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";

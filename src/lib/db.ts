@@ -1,7 +1,7 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
 
 /** Which database backend is active. */
-export type DbSource = "neon" | "pglite";
+export type DbSource = "tunnel" | "neon" | "pglite";
 
 // An empty/whitespace DATABASE_URL (an easy misconfig in deploy UIs) must mean
 // "unset" — otherwise production would silently run on the PGLite fallback.
@@ -11,12 +11,27 @@ const databaseUrl =
   rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
 
 /**
- * Active backend: real **Neon** when `DATABASE_URL` is set (deployed / configured
- * sandbox), otherwise a local embedded **PGLite** (Postgres compiled to WASM) so
- * the app has a working database even with nothing configured — the live preview
- * included. Swap in Neon later by just setting `DATABASE_URL`; no code changes.
+ * GĐ 162 (PA-A): SQL Server GiongDB tại máy công ty qua Cloudflare Tunnel.
+ * `TUNNEL_API_BASE_URL` = URL tunnel hiện hành (service GIONG_API_Server tự
+ * đăng ký) + `API_TOKEN` xác thực. Ưu tiên CAO NHẤT — app tổng tách hẳn khỏi
+ * Neon (không đốt egress, không chết khi Neon khóa quota — sự cố 14/10 18/09).
  */
-export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
+const tunnelBaseUrl =
+  typeof process !== "undefined"
+    ? (process.env.TUNNEL_API_BASE_URL ?? "").trim()
+    : "";
+const apiToken =
+  typeof process !== "undefined" ? (process.env.API_TOKEN ?? "").trim() : "";
+
+/**
+ * Active backend: **tunnel** (SQL Server tại công ty — PA-A) khi có
+ * `TUNNEL_API_BASE_URL`, else **Neon** khi `DATABASE_URL` set, else PGLite.
+ */
+export const dbSource: DbSource = tunnelBaseUrl
+  ? "tunnel"
+  : databaseUrl
+    ? "neon"
+    : "pglite";
 
 /**
  * Minimal shared SQL surface, satisfied by both Neon and PGLite. Both the
@@ -46,6 +61,7 @@ export interface Sql {
  */
 const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
+  __tunnelWarmup__?: number;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
 };
@@ -83,6 +99,62 @@ function toSql(run: Run): Sql {
   sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
     run<T>(text, params);
   return sql;
+}
+
+/**
+ * GĐ 162 (PA-A): backend Tunnel — SQL Server GiongDB tại máy công ty.
+ * Gọi API Server FastAPI (:8777, service GIONG_API_Server) qua Cloudflare
+ * Tunnel: POST /query {text, params} → {rows}. API Server tự DỊCH SQL
+ * PostgreSQL → T-SQL (CAST/now()/interval/LIMIT/ILIKE/RETURNING/ON CONFLICT —
+ * đã test 15/15). Fetch mỗi lần query (không pool — serverless instance ngắn
+ * hạn); timeout 30s + retry 1 lần cho lần gọi đầu (tunnel cold-start ~2-5s).
+ */
+/** Runner tunnel dùng chung — getSql() lẫn tunnel-dialect (Better Auth) đều gọi. */
+export async function tunnelQueryRun<T>(
+  text: string,
+  params: unknown[],
+): Promise<T[]> {
+  const base = tunnelBaseUrl.replace(/\/+$/, "");
+  const doFetch = () =>
+    fetch(`${base}/query`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-token": apiToken,
+      },
+      body: JSON.stringify({ text, params }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  let res: Response;
+  try {
+    res = await doFetch();
+  } catch (err) {
+    // Lần đầu sau cold-start (tunnel mới / instance mới) thường timeout —
+    // thử lại 1 lần trước khi báo lỗi thật.
+    globalRef.__tunnelWarmup__ = (globalRef.__tunnelWarmup__ ?? 0) + 1;
+    if (globalRef.__tunnelWarmup__ <= 2) {
+      await new Promise((r) => setTimeout(r, 2_000));
+      res = await doFetch();
+    } else {
+      throw err;
+    }
+  }
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Tunnel SQL ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  const json = (await res.json()) as { rows?: T[] };
+  return json.rows ?? [];
+}
+
+function createTunnelSql(): Promise<Sql> {
+  globalRef.__pgSqlPromise__ ??= (async () => {
+    return toSql(tunnelQueryRun);
+  })().catch((err) => {
+    globalRef.__pgSqlPromise__ = undefined;
+    throw err;
+  });
+  return globalRef.__pgSqlPromise__;
 }
 
 function createNeonSql(): Promise<Sql> {
@@ -176,7 +248,11 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
-  return dbSource === "neon" ? createNeonSql() : createPgliteSql();
+  return dbSource === "tunnel"
+    ? createTunnelSql()
+    : dbSource === "neon"
+      ? createNeonSql()
+      : createPgliteSql();
 }
 
 /**
