@@ -1042,8 +1042,7 @@ SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca'...
 >
 > **Key files:** `src/routes/cham-cong.tsx` — functions `drawOverlay`, `doStamp`, `capturePhoto`, `startCamera`, `stopCamera`, `retakePhoto`
 
-*Cập nhật lần cuối: 2026-09-09 (Giai đoạn 65 — Lightbox ảnh Check-in + đổi nền trắng)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ---
 
@@ -2583,8 +2582,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > **Tiêu chí kiểm chứng:** Sidebar: chỉ nút của module đang mở có nền xanh đậm + icon trắng;
 > các nút còn lại nền trong như trước GĐ 64, hover mới hiện nền; icon vẫn căn giữa khi thu hẹp.
 
-*Cập nhật lần cuối: 2026-09-10 (Giai đoạn 84 — Chấm công: retry sync tự thích ứng + nút Thử lại ngay)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ---
 
@@ -4434,8 +4432,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > (Settings → Crons); hướng dẫn đọc/khôi phục hiện cho Admin; typecheck SẠCH 0 lỗi;
 > 17/17 test pass.
 
-*Cập nhật lần cuối: 2026-09-13 (Giai đoạn 104 — Backup tuần tự động + Excel + hướng dẫn khôi phục — đã test E2E production: cron 401/OK + 2 file JSON 518KB + XLSX 302KB)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 105: Check-in — video quay có âm thanh (2026-09-13)
 
@@ -4725,8 +4722,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 > %LOCALAPPDATA%? — vâng mục nào là phải tách tiến trình phiên user cho mục đó.
 > Chi tiết ở AGENTS.md repo con GĐ C.1.9.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 112 — Tách helper phiên user — hết nút Chọn quay tròn)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 113: Hệ sinh thái app con — nhân bản phân hệ 2.DTTDT (repo giong-apps v0.7.0) (2026-09-15)
 
@@ -4744,8 +4740,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version (quy tắc 1 lần hỏi áp dụng cả hai repo).
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 113 — hệ sinh thái: nhân bản phân hệ 2.DTTDT E2E PASS 19/19)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 114: Hệ sinh thái app con — nhân bản phân hệ BKCCN Bảng kê chung cuối ngày (repo giong-apps v0.8.0) (2026-09-15)
 
@@ -4762,8 +4757,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 114 — hệ sinh thái: nhân bản BKCCN E2E PASS 19/19, tool chạy ~21 phút)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 115: Hệ sinh thái app con — nhân bản DTTHC, HOÀN THÀNH 4/4 phân hệ SMED (repo giong-apps v0.9.0) (2026-09-15)
 
@@ -4780,8 +4774,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 115 — HOÀN THÀNH 4/4 phân hệ SMED: HĐĐT · DTTDT · BKCCN · DTTHC)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 116: Hệ sinh thái app con — UI lấy dữ liệu SMED: lịch sử lọc theo report + khung cố định (repo giong-apps v0.9.1) (2026-09-15)
 
@@ -4793,8 +4786,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 116 — hệ sinh thái: UI SMED lọc lịch sử theo report + khung cố định)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 117: Hệ sinh thái app con — Sidebar tên nhóm nền xanh nhạt (repo giong-apps v0.9.2) (2026-09-15)
 
@@ -4804,8 +4796,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 
 > **Nội dung:** Theo yêu cầu Đại ca — các dòng tên nhóm trên Sidebar app con (CHÍNH, LẤY DỮ LIỆU TỪ SMED…) có nền xanh nhạt pill cố định để phân biệt dễ nhìn. Chi tiết ở AGENTS.md repo con (GĐ C.6). App tổng không đổi code — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 117 — hệ sinh thái: sidebar tên nhóm nền xanh)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 118: Hệ sinh thái app con — nhân bản NHAPKHO Bảng kê nhập kho, nhóm KHO đầu tiên (repo giong-apps v0.10.0) (2026-09-15)
 
@@ -4820,8 +4811,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 118 — hệ sinh thái: nhân bản NHAPKHO E2E PASS 19/19, mở màn nhóm KHO)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 119: Hệ sinh thái app con — nhân bản XUATKHO Bảng kê xuất kho (repo giong-apps v0.11.0) (2026-09-15)
 
@@ -4836,8 +4826,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 119 — hệ sinh thái: nhân bản XUATKHO E2E PASS 19/19)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 120: Hệ sinh thái app con — nhân bản XNKT, HOÀN THÀNH nhóm KHO 3/3 (repo giong-apps v0.12.0) (2026-09-15)
 
@@ -4852,8 +4841,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 120 — hệ sinh thái: nhân bản XNKT E2E PASS, hoàn thành nhóm KHO 3/3)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 121: Hệ sinh thái app con — nguyên tắc download: xóa file cũ trước khi tải bộ mới (repo giong-apps v0.12.1) (2026-09-15)
 
@@ -4865,8 +4853,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version.
 
-*Cập nhật lần cuối: 2026-09-15 (Giai đoạn 121 — hệ sinh thái: nguyên tắc xóa file cũ trước khi tải bộ mới)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### Giai đoạn 122: Hệ sinh thái — Nhân bản phân hệ CHIETKHAU: Báo cáo chiết khấu (2026-09-15)
 
@@ -5365,8 +5352,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 2.6.0.
 
-*Cập nhật lần cuối: 2026-09-16 (GĐ 136 — hệ sinh thái: nhân bản BLTH E2E PASS 19/19, nhóm BÁN HÀNG đủ 5/5)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 137: Hệ sinh thái — BỎ watchdog 8 phút kill oan + Hủy job running từ xa (repo giong-apps v2.0.0 — hiệu chỉnh từ 1.10.0 sai) (2026-09-16)
 
@@ -5388,8 +5374,7 @@ Lưu ý: nếu build pipeline inject `VITE_APP_VERSION` từ `package.json`, ver
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 2.6.1.
 
-*Cập nhật lần cuối: 2026-09-16 (GĐ 137 — hệ sinh thái: bỏ watchdog kill oan, hủy từ xa qua heartbeat)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 138: Rà soát quy tắc Version — tìm GỐC RỄ sai lặp 3 lần + chốt 3 điểm sửa (2026-09-16, 2.6.2)
 
@@ -5634,8 +5619,7 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > xanh như cũ; log agent "📭 Job xong — KHÔNG có dữ liệu theo bộ lọc";
 > typecheck 0 lỗi cả 2 repo.
 
-*Cập nhật lần cuối: 2026-09-17 (GĐ 147 — fix ROOT CAUSE tool MISA lọc ngược: multicombobox toggle-loại-trừ — repo con v2.5.0, app tổng 3.0.3)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 147: Hệ sinh thái — Fix ROOT CAUSE tool MISA lọc NGƯỢC (repo con v2.5.0) (2026-09-17)
 
@@ -5810,8 +5794,7 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > (data sửa) → staging đúng số dòng bản mới nhất, không nhân đôi; job báo cáo
 > vẫn hoạt động như cũ.
 
-*Cập nhật lần cuối: 2026-09-17 (GĐ 150 — Auto-ETL 60 phút + nạp đè theo ngày, repo con v2.8.0, service đã chạy bản mới)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 151: Hệ sinh thái — ETL đọc ngày thật + chốt PA1 lấy lịch sử theo tháng (repo con v2.9.0) (2026-09-17)
 
@@ -5857,8 +5840,7 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > **Tiêu chí kiểm chứng:** job khoảng nhiều ngày → file về thư mục từ-ngày; SQL
 > phân rã đúng từng ngày; tổng dòng khớp; nạp đè không nhân đôi.
 
-*Cập nhật lần cuối: 2026-09-17 (GĐ 151 — ETL ngày thật + pilot PA1 PASS, repo con v2.9.0)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 152: Hệ sinh thái — nhân bản MISA thứ 2: Bảng kê hóa đơn đã sử dụng (2026-09-17)
 
@@ -5879,8 +5861,7 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 3.2.1.
 
-*Cập nhật lần cuối: 2026-09-17 (GĐ 152 — hệ sinh thái: MISA thứ 2 Bảng kê hóa đơn đã sử dụng, E2E PASS 100 dòng)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 
 ### GĐ 153: Icon Gióng chuẩn PWA — favicon tab + icon cài app, CẢ HAI app (2026-09-17)
@@ -6130,8 +6111,7 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > kỳ thiếu nguồn vẫn cảnh báo đúng văn bản + treo download đúng nguồn; typecheck
 > 0 lỗi; build OK.
 
-*Cập nhật lần cuối: 2026-09-18 (GĐ 159 — tiết kiệm egress Neon: loại result_full khỏi poll, repo con v3.3.1)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 159: Egress Neon cạn 4.83/5GB — chặn select * kéo result_full + quy ước tiết kiệm (repo con v3.3.1) (2026-09-18)
 
@@ -6228,8 +6208,7 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > + qua tunnel OK; curl internet → SQL Server trả data thật; 15/15 E2E + 6/6 translator;
 > token sai 401, không quyền 403; Neon app con CHƯA rút (kháng hóa bước 6).
 
-*Cập nhật lần cuối: 2026-09-18 (GĐ 160 — PA-A Bước 1: API Server + Tunnel, app con bắt đầu bỏ Neon)*
-*Người cập nhật: Trợ lý lập trình*
+
 
 ### GĐ 161: PA-A Bước 2 — App con TÁCH HẲN khỏi Neon, chạy SQL Server GiongDB qua Cloudflare Tunnel (repo con v3.5.0) (2026-09-18)
 
@@ -6281,3 +6260,92 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > (production đã verify); app tổng hồi phục sau Neon reset (chờ đầu tháng);
 > typecheck 0 lỗi cả 2 repo.
 
+
+### GĐ 164: PA-A HOÀN TẤT — App tổng bỏ Neon, chạy SQL Server GiongDB qua tunnel (2026-09-18, 3.4.0)
+
+| Commit | Thay đổi |
+|---|---|
+| `5d6af0c` | feat(pa-a): db.ts backend tunnel + Better Auth qua tunnel-dialect + seed backup 12 bảng vào GiongDB |
+| (mới) | feat(pa-a): Bước 4 agent poll nội bộ + toàn tuyến verify + version 3.4.0 |
+
+> **Chỉ thị của Đại ca (18/09):** Neon đã khóa do vượt quota 5GB — app tổng
+> không còn dùng được. **Bỏ hẳn Neon cho CẢ HAI app** — dùng SQL Server tại
+> máy chủ công ty (như app con Bước 2). Ảnh vẫn qua Cloudinary. Lấy dữ liệu
+> backup Neon tại `attachments/`. Sau đó **Bước 4: Agent poll API Server nội
+> bộ** (bỏ hẳn đường Vercel→Neon).
+
+**1. Nạp backup vào GiondDB (`scripts/seed-giongdb-from-backup.py`):**
+Backup JSON 14/09 (cron tuần GĐ 104) gồm 12 bảng app. Script suy kiểu cột từ
+dữ liệu thật (DATETIME2/NVARCHAR(n)/BIT), khóa NVARCHAR(128) NOT NULL,
+DELETE+INSERT nạp đè (idempotent), đánh dấu `_migrations` để Vercel build
+không áp lại migration Postgres lên SQL Server. Kết quả: 70 chấm công, 67
+check-in, 221 nhiệm vụ, 10 đề nghị, 47 ghi chú, 35 nhân sự, 20 trung tâm...
+Bảng auth (user/session/account/verification) tạo rỗng — `ensureAuthUser`
+tự tạo tài khoản từ employees lần đăng nhập đầu (GĐ 19).
+
+**2. `db.ts` backend tunnel + Better Auth `tunnel-dialect.ts`:**
+- db.ts: thêm backend "tunnel" ưu tiên cao nhất (`TUNNEL_API_BASE_URL` +
+  `API_TOKEN`), xuất `tunnelQueryRun` dùng chung. Vercel: XÓA `DATABASE_URL`
+  (app tổng không thể chết vì Neon nữa), thêm API_TOKEN +
+  TUNNEL_API_BASE_URL.
+- **Better Auth không đi qua getSql()** — khi xóa DATABASE_URL nó rơi nhánh
+  PGLite → getPglite() throw → login chết. Fix: `tunnel-dialect.ts` (Kysely
+  dialect gọi tunnelQueryRun; compiler Postgres — SQL PG-style do API Server
+  tự dịch; transaction NO-OP vì HTTP stateless). Xác minh thật: đăng nhập
+  tạo user/account/session trong SQL Server — đăng nhập production hoạt động.
+
+**3. Bổ sung translator API Server (3 bug thật):**
+- `/query` với INSERT/UPDATE/DELETE: fetchall() trên DML raise "No results"
+  → commit KHÔNG chạy → ghi mất. Fix: chỉ fetch khi `cur.description` khác
+  None; DML commit + trả rows rỗng.
+- `= ANY($1::text[])` (push.ts) → `IN (SELECT value FROM OPENJSON(...))`;
+  param list → JSON string trước execute; quy tắc ANY đặt TRƯỚC quy tắc
+  `$N::text` (nếu không bị xé `CAST(... )[]`).
+- Cast biểu thức không tham số: `max(x)::text`, `hire_date::text`...
+
+**4. Bước 4 — Agent poll nội bộ (`SMED_INTERNAL_API_URL`):**
+Agent thêm env opt-in: đặt `SMED_INTERNAL_API_URL=http://127.0.0.1:8777` trên
+service → claim/report chạy localhost (KHÔNG qua Vercel → hết phụ thuộc
+internet/Neon; offline vẫn nhận job nếu API Server sống). Path nội bộ khác
+Vercel (`/agent/claim` vs `/api/agent/claim` — 404 đầu tiên nhờ log bắt ngay);
+`call_web` gửi thêm header Authorization Bearer (guard token API Server).
+Không đặt env → tự giữ đường Vercel cũ (backward-compat).
+
+**Toàn tuyến đã verify (production):**
+- App tổng: trang chủ 200, đăng nhập tạo user+session trong SQL Server,
+  menu đầy đủ, data render từ GiongDB.
+- App con: `/api/units` trả 19 trung tâm qua tunnel (từ Bước 2).
+- Agent: poll nội bộ sạch 20s/lần, không còn lỗi 404/Vercel.
+- Typecheck 0 lỗi; build OK; E2E API Server 15/15.
+
+**LESSON LEARNED — Better Auth cần dialect riêng khi đổi backend (2026-09-18):**
+Better Auth nhận `database` trực tiếp (Pool/PGLite dialect), KHÔNG đi qua
+getSql() của app. Đổi backend DB = phải viết Kysely dialect tương ứng
+(pglite-dialect là mẫu). Kiểm tra: grep `new Pool|dialect` toàn src/ trước
+khi tuyên bố "app đã tách backend".
+
+**LESSON LEARNED — fetchall() trên DML pyodbc raise, commit bị nhảy qua
+(2026-09-18):** pyodbc không cho fetchall trên INSERT/UPDATE/DELETE ("No
+results. Previous SQL was not a query."). Code `rows = fetchall(); commit()`
+với DML = commit KHÔNG BAO GIỜ chạy → ghi âm thầm mất. Fix: phân nhánh theo
+`cur.description`. Bài học GĐ 96 lặp lại ở tầng khác: lỗi chạy được nhưng sai
+kết quả nguy hiểm hơn lỗi throw.
+
+**⚠️ Việc còn mở (báo Đại ca):**
+1. **Quick Tunnel đổi URL mỗi lần restart API Server** — env Vercel phải cập
+   nhật tay + redeploy. Kênh tự đăng ký (tunnel-register) đã có nhưng secret
+   service ↔ Vercel đang lệch (401) — cần đối chiếu secret 2 đầu. **Cách chữa
+   tận gốc: Named Tunnel với domain riêng** (URL cố định vĩnh viễn) — chờ anh
+   cung cấp domain (VD `api.tcgiong.smed.vn`).
+2. Bảng auth rỗng ban đầu — user nào đăng nhập trước, tài khoản tự tạo
+   (ensureAuthUser). Nếu cần mật khẩu cũ: dùng flow Quên mật khẩu.
+3. Data 14/09→18/09 (4 ngày Neon đã khóa) KHÔNG có trong backup — mất 4 ngày
+   data mới. Nếu anh có nhập gì trong 4 ngày đó thì cần nhập lại.
+
+**Tiêu chí kiểm chứng:** Đăng nhập app tổng trên production OK (session lưu
+SQL Server); data 12 bảng hiện đúng; app con tạo job → agent nhận nội bộ →
+chạy tool → báo kết quả — KHÔNG còn request nào tới Neon từ cả 3 thành phần;
+sidebar VERSION 3.4.0 (app tổng) / 3.6.0 (repo con) sau deploy.
+
+*Cập nhật lần cuối: 2026-09-18 (GĐ 164 — PA-A HOÀN TẤT: app tổng bỏ Neon, SQL Server GiongDB qua tunnel, agent poll nội bộ)*
+*Người cập nhật: Trợ lý lập trình*
