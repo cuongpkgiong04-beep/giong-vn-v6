@@ -6347,5 +6347,65 @@ SQL Server); data 12 bảng hiện đúng; app con tạo job → agent nhận n�
 chạy tool → báo kết quả — KHÔNG còn request nào tới Neon từ cả 3 thành phần;
 sidebar VERSION 3.4.0 (app tổng) / 3.6.0 (repo con) sau deploy.
 
-*Cập nhật lần cuối: 2026-09-18 (GĐ 164 — PA-A HOÀN TẤT: app tổng bỏ Neon, SQL Server GiongDB qua tunnel, agent poll nội bộ)*
+### GĐ 165: E2E user flow production — login/SSO/sqlreport PASS, fix 4 bug translator/contract (2026-09-18)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `fc14aba`, v3.6.1) | fix(api-server): claim trả camelCase + report nhận result/missing/driveDir + translator LIMIT $N/subquery + smed_accounts cần nạp |
+| (app tổng, v3.4.1) | docs + version — toàn bộ fix nằm ở repo con |
+
+> **Mục tiêu:** Test ĐẦY ĐỦ user flow trên production sau PA-A: đăng nhập app tổng →
+> SSO app con → tạo job SMED → agent chạy → file về OUTPUT.
+
+**Kết quả — flow SỐNG, còn 1 khối chờ config:**
+
+| Bước | Trạng thái |
+|---|---|
+| Đăng nhập app tổng (Better Auth qua tunnel) | ✅ 200 + session trong GiongDB |
+| SSO sang app con | ✅ me trả user + phiên 7 ngày |
+| Tạo job trên web app con | ✅ job vào GiongDB |
+| Agent poll nội bộ nhận job | ✅ không còn KeyError (fix contract `fc14aba`) |
+| Chuỗi sqlreport (ETL + SQL → result) | ✅ doanh thu 16/09 = 105.880.000đ (384 biên lai) — kết quả thật |
+| Phân hệ SMED (cần credentials user_3/16) | ⏳ smed_accounts GiongDB RỖNG — credentials ở Neon đã chết, backup 14/09 không chứa bảng này (sinh sau mốc backup). **Cần Đại ca nhập lại trên web (SmedAccountsMenu — Admin)** hoặc gửi em file để nạp |
+
+**4 lỗi bắt được + sửa (chi tiết kỹ thuật ở AGENTS.md repo con GĐ C.38):**
+
+1. **Sign-in 500** — Better Auth/Kysely sinh `LIMIT $2` dạng THAM SỐ, translator chỉ
+   dịch `LIMIT <số>` → fix `limit $N` → `top (CAST($N AS INT))` + quy tắc subquery wrap
+   (LIMIT NGOÀI cuối câu → `top (N)` trong ngoặc).
+2. **BUG NGHIÊM TRỌNG** — regex `\$(\d+)` bắt nhầm SỐ THỨ TỰ tham số làm GIÁ TRỊ limit
+   (`limit $2` → `top (CAST(2 AS INT))` = top 2 dòng!) → session lookup sai → SSO fail.
+   Fix: giữ token `$N` nguyên vẹn.
+3. **Tài khoản auth hash sai mật khẩu** — user đầu tạo qua ensureAuthUser trúng password
+   random fallback → đăng nhập luôn 401. Fix pattern GĐ 19 (xóa auth rows → đăng nhập
+   lại → tạo đúng mật khẩu). Verify: session trong GiongDB.
+4. **Contract claim/report lệch** — API Server trả snake_case, agent đọc camelCase →
+   `KeyError 'dateFrom'` job kẹt running. Fix map camelCase + nhận đủ result/missing/driveDir.
+
+**✅ Chuỗi sqlreport verify THẬT qua đường nội bộ:** job test → agent poll
+localhost:8777 nhận trong 20s → ETL + SQL → done + result JSON doanh thu thật.
+Đường đời job KHÔNG chạm Vercel/Neon — mục tiêu Bước 4 đạt trọn.
+
+**Vận hành tunnel:** restart service → Quick Tunnel đổi URL → 2 app đọc URL từ
+BUILD-TIME env → mỗi lần đổi phải cập nhật env + redeploy cả 2 app (đã làm hôm
+nay, URL holly-locked-yours-enjoyed). Cơ chế tự đăng ký kv_settings có sẵn
+nhưng app chưa ĐỌC nó lúc runtime — Named Tunnel (URL cố định) giải tận gốc khi
+anh cấp domain.
+
+**LESSON LEARNED — Dữ liệu config phụ thuộc runtime DB cũng phải có kế hoạch di dời
+(2026-09-18):** credentials SMED sống trong Neon (AES-GCM) — tách DB mà quên di dời
+dữ liệu config → schema đủ mà hệ thống không chạy được. Checklist tách hạ tầng:
+(a) schema + (b) DATA (kể cả bảng config sinh SAU mốc backup cuối) + (c) cơ chế nhập
+lại khi mất.
+
+**LESSON LEARNED — Regex dịch SQL test bằng SQL THẬT từ log, không SQL tự chế
+(2026-09-18):** translator test bằng SQL tự chế PASS nhưng SQL thật của Better Auth
+sập ngay (LIMIT tham số, subquery, bắt nhầm $N). Mọi quy tắc dịch mới: bật log [SQL]
+→ lấy SQL thật → test đúng SQL đó → verify kết quả business (session tạo được, me
+trả user) chứ không chỉ "query không lỗi".
+
+**Tiêu chí kiểm chứng:** login + SSO + tạo job + agent claim nội bộ + sqlreport PASS
+như bảng trên; sau khi Đại ca nhập lại credentials SMED → phân hệ SMED chạy full.
+
+*Cập nhật lần cuối: 2026-09-18 (GĐ 165 — E2E user flow: login/SSO/sqlreport PASS, chờ credentials SMED — repo con v3.6.1)*
 *Người cập nhật: Trợ lý lập trình*
