@@ -6425,5 +6425,27 @@ Tunnel keeper hiện chỉ tạo URL MỚI khi restart service — cần thêm w
 định kỳ nslookup URL hiện hành, chết tự restart (việc kế tiếp cùng Named
 Tunnel — giải tận gốc).
 
+
+### GĐ 166: Credentials SMED nạp GiongDB + E2E PASS full user flow trên kiến trúc mới (2026-09-19, 3.4.1)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(smed): nạp 2 account SMED + API Server decrypt accounts + E2E PASS (GĐ C.39, v3.6.2) |
+| (app tổng) | docs(agents): GĐ 166 — không đổi code |
+
+> **Bối cảnh:** Đại ca gửi credentials SMED thật (2 account văn phòng + 15 trung tâm). `smed_accounts` đang rỗng (ciphertext cũ ở Neon đã chết) → tools SMED fail thiếu đăng nhập.
+>
+> **Đã làm (chi tiết kỹ thuật ở AGENTS.md repo con GĐ C.39):**
+> 1. Nạp user_3 (tcgiongts) + user_16 (tcgiong) vào `dbo.smed_accounts` GiongDB — AES-256-GCM khóa SHA-256(APP_JWT_SECRET) (khóa mới, `.secrets/app_jwt_secret.txt` gitignored). 15 account trung tâm NẠP SAU (tool chỉ dùng 2 account VP).
+> 2. API Server `/agent/claim` giờ DECRYPT accounts + trả camelCase (`accountKey/username/password/baseUrl`) khớp contract agent.
+> 3. Bắt 2 bug khi nạp: mật khẩu parse dính "01" (số thứ tự trung tâm trong tin nhắn — pass thật `Cuongpk@123@` 12 ký tự, SMED AJAX trả Success:false im lặng) + format AES ghi nhầm `iv:ct:tag` (chuẩn `iv:tag:ct`) → InvalidTag.
+> 4. Quick Tunnel restart lần nữa (URL `screening-comics-…`) → env + redeploy + GHIM domain app tổng (quy tắc GĐ 124 — lần này deployment thủ công KHÔNG tự nắm domain).
+>
+> **✅ E2E PASS full user flow production (~60 giây):** login app tổng → SSO → tạo job DTTHC 18/09 từ UI → agent claim nội bộ + credentials → tool login SMED OK cả 2 account → **Hoàn thành 19/19** → 2 file XLSX về `OUTPUT.DTTHC6-09-18\`.
+>
+> **Version:** repo con 3.6.1 → **3.6.2** (patch); app tổng giữ 3.4.1 (không đổi code).
+>
+> **Tiêu chí kiểm chứng:** Tool chạy tay 2 account OK; E2E web→agent PASS; smed_accounts decrypt round-trip OK; script test tạm dọn sạch.
+
 *Cập nhật lần cuối: 2026-09-18 (GĐ 165 — E2E user flow: login/SSO/sqlreport PASS, chờ credentials SMED — repo con v3.6.1)*
 *Người cập nhật: Trợ lý lập trình*
