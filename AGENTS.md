@@ -6063,5 +6063,66 @@ cả 2 repo; build repo con OK; version app tổng 2.9.0 + repo con 2.3.0 (2 nơ
 > TX-DS cảnh báo đúng văn bản khi thiếu; Có = treo đúng nguồn thiếu; đủ 7 nguồn →
 > file 1.BC_TX-DS tại OUTPUT\.txds_work + tên hiện trên web; typecheck 0 lỗi cả 2 app.
 
-*Cập nhật lần cuối: 2026-09-18 (GĐ 157 — Báo cáo Truy xuất - Đối soát E2E PASS + 5 báo cáo nguồn SQL, repo con v3.2.0)*
+### GĐ 158: Đường B đổi kiến trúc — TX-DS = 1 bảng tổng hợp từ GiongDB, BỎ tool 6 (repo con v3.3.0) (2026-09-18)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `2b9fac8` | feat(txds): GĐ 158 — txds_report.py tổng hợp từ GiongDB + Excel 1 sheet + chunk upload; bỏ stage+tool 6 |
+| (mới) | docs(agents): GĐ 158 + version app tổng 3.3.3 → 3.3.4 |
+
+> **Yêu cầu của Đại ca (18/09):** Khi đủ dữ liệu KHÔNG chạy tool 6 (chỉ để tham khảo
+> cách lấy dữ liệu), KHÔNG tạo file Excel 9 sheet — chỉ cần báo cáo nội dung sheet
+> "1.BC_TX-DS"; các sheet kia (ĐỐI CHIẾU/TT/DT/XK/NK/TKTH/2 bảng kê MISA) là dữ
+> liệu đã có trong SQL, khi cần sẽ làm báo cáo riêng. Đã hỏi chốt 4 điểm: bảng chính
+> = Bảng kê chi tiết HĐ (MISA 11BKCT); tính Check + Lợi nhuận gộp thẳng khi tổng
+> hợp; web = bảng tìm kiếm + phân trang + CÓ file Excel 1 sheet (subtotal + tô vàng
+> giữ như tool 6); giữ flow job txds + cảnh báo Có/Không.
+>
+> **Kiến trúc mới (repo con):**
+> 1. **txds_report.py (etl/):** tái hiện 12 giai đoạn tool 6 bằng Python/pandas đọc
+>    thẳng bảng stg_* (lọc ngày thật từng dòng — GĐ 151): TKTH bung Nội dung thu →
+>    map Trung tâm HĐ + Phiếu bán hàng → ghép TT 1-1 dòng-theo-dòng (TT_THỪA thêm
+>    cuối) → DT/XK/NK theo khóa đa cột → Lợi nhuận gộp + 10 cột Check. Nguồn đặt
+>    tên nội bộ `tt__/dt__/xk__/nk__` tránh trùng tên cột (tool 6 dùng iloc vị trí
+>    nên không vấp — bài học đã ghi), map về tên hiển thị khi xuất. Lưu GiongDB
+>    (txds_result) + sinh Excel 1 sheet OUTPUT\14.TXDS\<từ ngày> (openpyxl).
+> 2. **Chunk upload (mới — kênh truyền payload lớn):** web không vào được GiongDB,
+>    server function Vercel giới hạn body 4.5MB → agent chia payload (~0.8KB/đo,
+>    cả tháng ~6-8MB) thành phần ~1.2MB POST qua report endpoint → server ghép vào
+>    cột `result_full` jsonb (migration 0007) khi đủ. Status 'running' trong lúc
+>    upload giữ updated_at mới. Web fetch RIÊNG qua loadTxdsResult (phân trang 100
+>    dòng + tìm kiếm server-side + subtotal tính trên TOÀN BỘ bảng) — list jobs
+>    poll 10s vẫn nhẹ, không kéo payload nặng.
+> 3. **Agent run_txds_task:** check 7 nguồn qua SQL (không đếm file OUTPUT) →
+>    thiếu → needsData; đủ → ETL nạp file mới → txds_report.py → Excel + chunk.
+>
+> **Bug bắt được khi test thật:** cột ngày 6BKX trong staging là ISO datetime
+> (`2026-09-14 15:49:28` — tool 5 xuất datetime object) trong khi lọc chỉ dùng
+> TRY_CONVERT style 103 (DD/MM/YYYY) → XK bị coi THIẾU dù có data. Fix COALESCE
+> 3 cách parse (103 + 120 + không style) ở CẢ txds_report._load lẫn
+> _txds_check_sources — 2 chỗ phải luôn đồng bộ.
+>
+> **LESSON LEARNED — Payload lớn web↔agent: chia chunk qua kênh có sẵn (2026-09-18):**
+> Kết quả báo cáo chi tiết (hàng nghìn dòng × 110 cột) không thể nằm trong list
+> jobs (poll 10s phải nhẹ) cũng không gói 1 request (giới hạn body). Giải pháp 3
+> tầng: agent lưu bản đầy đủ ở DB cục bộ (GiongDB txds_result) + upload chunk lên
+> Neon result_full + web fetch phân trang server-side theo nhu cầu. Trước khi thêm
+> kênh truyền mới, rà giới hạn từng tầng (body size, serializer, poll frequency).
+>
+> **LESSON LEARNED — __file__ không tồn tại trong python -c (2026-09-18):**
+> Probe đường dẫn bằng python -c khai báo `Path(__file__)` → NameError vì -c chạy
+> chuỗi không phải file. Dùng file thật + import module có guard, hoặc hardcode
+> đường dẫn probe.
+>
+> **LƯU Ý:** Job TX-DS của GĐ 157 (bản tool 6) không có result_full — chạy lại kỳ
+> đó sẽ có bảng. Service agent PHẢI restart SAU khi Vercel deploy xong (restart
+> sớm → chunk endpoint 500). Output test OUTPUT\14.TXDS\2026-09-14 đã tạo thật,
+> 442KB A1:DF795.
+>
+> **Tiêu chí kiểm chứng:** Chạy TX-DS kỳ đủ 7 nguồn → web hiện bảng ~110 cột
+> tìm kiếm + phân trang + subtotal + tổng kết đối soát; Excel 1 sheet tại máy;
+> kỳ thiếu nguồn vẫn cảnh báo đúng văn bản + treo download đúng nguồn; typecheck
+> 0 lỗi; build OK.
+
+*Cập nhật lần cuối: 2026-09-18 (GĐ 158 — TX-DS tổng hợp từ GiongDB 1 bảng ~110 cột + chunk upload, repo con v3.3.0)*
 *Người cập nhật: Trợ lý lập trình*
