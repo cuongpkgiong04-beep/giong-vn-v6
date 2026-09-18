@@ -6407,5 +6407,23 @@ trả user) chứ không chỉ "query không lỗi".
 **Tiêu chí kiểm chứng:** login + SSO + tạo job + agent claim nội bộ + sqlreport PASS
 như bảng trên; sau khi Đại ca nhập lại credentials SMED → phân hệ SMED chạy full.
 
+**Bổ sung GĐ 165 (23:50 — vận hành sau khi ghi):** Quick Tunnel `holly-locked…`
+CHẾT NGẦM giữa chừng — DNS trả Non-existent domain (Cloudflare hủy tunnel) dù
+process cloudflared còn sống, service không hề hay biết → app 2 bên trả rỗng
+im lặng. Đã restart service → tunnel mới `usual-produce-playing-curious` →
+cập nhật env + redeploy 2 app (app tổng deploy tay `bcw3hcq62` + ghim domain;
+app con push commit rỗng `cfe1974` — auto-aliasing phía app con ĐÃ hồi phục,
+deployment mới tự nắm domain). Verify cuối: bundle app tổng = 3.4.1 ✓,
+`/api/units` trả đầy đủ 19 trung tâm ✓.
+
+**LESSON LEARNED — Quick Tunnel chết NGẦM: DNS hủy trước process (2026-09-18):**
+`tasklist` thấy cloudflared sống KHÔNG có nghĩa tunnel còn hoạt động — Quick
+Tunnel bị Cloudflare thu hồi bất cứ lúc nào, process không nhận tín hiệu.
+Triệu chứng: API trả rỗng/không lỗi rõ ràng. Chẩn đoán nhanh: `nslookup
+<tunnel-url>` → Non-existent domain = tunnel chết, không cần debug code.
+Tunnel keeper hiện chỉ tạo URL MỚI khi restart service — cần thêm watchdog
+định kỳ nslookup URL hiện hành, chết tự restart (việc kế tiếp cùng Named
+Tunnel — giải tận gốc).
+
 *Cập nhật lần cuối: 2026-09-18 (GĐ 165 — E2E user flow: login/SSO/sqlreport PASS, chờ credentials SMED — repo con v3.6.1)*
 *Người cập nhật: Trợ lý lập trình*
