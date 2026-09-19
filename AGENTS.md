@@ -6721,5 +6721,55 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 173 — verify GĐ 172 cho 3 thiết bị + GĐ C.44 repo con chuẩn hóa BÁO CÁO; app tổng giữ 3.5.4)*
+### GĐ 174: Hệ sinh thái — Cảnh báo thiếu dữ liệu cho MỌI báo cáo + chuỗi 3 bước TỰ ĐỘNG (repo con v4.0.1) (2026-09-19)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `ae9e649` | feat(báo cáo): GĐ C.45 — cảnh báo thiếu dữ liệu MỌI báo cáo + chuỗi 3 bước tự động + hiệu chỉnh version 3.10.0 sai → 4.0.1 |
+| (mới) | docs(agents): GĐ 174 + version app tổng 3.5.4 → 3.5.5 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (kèm ghi chú quan trọng, 19/09):** Ghi vào lịch sử AGENTS.md làm **QUY TẮC
+> NGHIỆP VỤ**: Khi chạy khởi tạo báo cáo mà chưa có dữ liệu được cập nhật download về máy để SQL
+> không có dữ liệu tổng hợp → phải có cảnh báo: **"Chưa đủ dữ liệu thực hiện. Bạn có muốn download
+> dữ liệu để chạy báo cáo này không?"** — 2 lựa chọn (Có)/(Không). Chọn **CÓ** → 3 bước: (1) treo
+> lệnh chạy báo cáo vào hàng chờ đợi; (2) chạy các lệnh download dữ liệu phục vụ báo cáo đó; (3)
+> chạy lại job đang chờ và thực thi báo cáo. Áp dụng cho **MỌI báo cáo** trong phần BÁO CÁO kể cả
+> các báo cáo chưa lập.
+>
+> **Trước đây:** cơ chế này CHỈ có ở TX-DS (GĐ C.28) — 5 báo cáo nguồn + 2 bảng kê MISA chạy mà
+> staging rỗng chỉ trả bảng rỗng im lặng, không ai biết thiếu dữ liệu.
+>
+> **Triển khai (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.45):**
+> 1. **etl/sql_reports.py** — `REPORT_SOURCE_TABLES` (8 query_key → nguồn staging + reportKey
+>    download + điều kiện dòng hợp lệ khớp WHERE builder) + `check_source_data()` +
+>    `NoSourceDataError` — `run_sql_report()` kết quả 0 dòng → raise mang danh sách nguồn thiếu.
+> 2. **Agent** — `run_sql_task` bắt lỗi → trả needsData; main loop báo web (đồng bộ luồng TX-DS;
+>    API Server không cần sửa).
+> 3. **Web** — `requeueReportJob` (wait/rerun); dialog cảnh báo hiện cho MỌI báo cáo (bỏ
+>    enableTxdsDialog); bấm CÓ = treo job 'waitdownload' + treo download nguồn thiếu; **bước 3
+>    TỰ ĐỘNG**: poll 6s thấy đủ download xong → tự requeue 'pending' (FIFO sau download); badge
+>    "Chờ tải dữ liệu" + nút Chạy lại cho user đổi ý.
+>
+> **✅ Verify:** logic test Python PASS; py_compile agent OK; tsc 0 lỗi; build OK; grep staged diff
+> 0 password; version app con **4.0.1** khớp 2 nơi.
+>
+> **⚠️ HIỆU CHỈNH version lần 4 — checklist GĐ 138 tự bắt được:** bump GĐ C.44 lần trước ghi
+> `3.9.1 → 3.10.0` — SAI hệ 1 chữ số (minor 9 đầy + tăng minor phải nhớ major: `3.9.1 → 4.0.0`).
+> GĐ C.45 fix nhỏ → hiệu chỉnh gộp **4.0.1**. Lần này em tự chạy checklist bước 2 và phát hiện
+> ngay, không cần Đại ca nhắc — quy tắc nằm ở NƠI LÀM VIỆC + CỔNG KIỂM gắn thao tác (GĐ 138)
+> bắt đầu phát huy.
+>
+> **LESSON LEARNED — xóa khối code phải assert biến khối ĐỊNH NGHĨA (lần 3):** xóa hàm theo
+> ranh giới "def đến def" nuốt luôn TXDS_SOURCES + comment GĐ C.28 nằm giữa 2 def — py_compile
+> PASS (cú pháp đúng!) chỉ grep biến mới thấy. Git checkout khôi phục + patch lại bằng
+> assert-count từng chuỗi. Sau xóa khối lớn: grep TẤT CẢ biến khối định nghĩa, đừng tin py_compile.
+>
+> **⚠️ VIỆC CẦN LÀM tại máy chạy tool:** copy agent/40_web_agent.py MỚI sang thư mục tool trên
+> D: (đè file cũ) → restart GIONG_SMED_Agent SAU khi Vercel deploy xong.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.5.5.
+
+---
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 174 — cảnh báo thiếu dữ liệu MỌI báo cáo + chuỗi 3 bước tự động, repo con 4.0.1; app tổng 3.5.5)*
 *Người cập nhật: Trợ lý lập trình*
