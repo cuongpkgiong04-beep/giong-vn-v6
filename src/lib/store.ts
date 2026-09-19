@@ -336,6 +336,18 @@ async function retryPendingSync() {
   if (succeeded.length > 0) {
     clearPendingSync(succeeded);
     console.log(`[store] Retry sync: ${succeeded.length}/${pending.length} records synced`);
+    // GĐ 171: flip synced=true ngay trên state + localStorage — trước đây chỉ path
+    // clock() (điểm danh trực tiếp) làm, còn retry offline thành công thì synced
+    // vẫn false → badge "Lỗi sync"/"Đang chờ" kẹt mãi dù data đã lên server.
+    // (synced chỉ là client-only flag trên Attendance — các collection khác
+    //  không hiển thị badge nên không cần đụng.)
+    const succeededSet = new Set(succeeded);
+    useAppStore.setState((s) => ({
+      attendance: s.attendance.map((a: Attendance) =>
+        succeededSet.has(a.id) ? { ...a, synced: true } : a,
+      ),
+    }));
+    saveLs(useAppStore.getState());
   }
   // Save updated attempts back to localStorage
   try {

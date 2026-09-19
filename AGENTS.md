@@ -6589,5 +6589,58 @@ Tunnel — giải tận gốc).
 >
 > **Version:** 3.5.1 → **3.5.2** (fix sync — patch; checklist GĐ 138 ✓).
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 170 — phủ tombstone + pending queue mọi module + fix migration pipeline sau PA-A; version 3.5.2)*
+### GĐ 171: Fix badge đỏ "Lỗi sync" kẹt vĩnh viễn sau khi đã sync thành công (2026-09-19, 3.5.3)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(store): retryPendingSync thành công với attendance → flip `synced: true` trong store (trước chỉ path `clock()` làm) |
+| (mới) | fix(cham-cong): nút '↻ Thử lại ngay' xong → cập nhật lại pendingRecords/syncStats (trước chỉ set expiringSoon) |
+| (mới) | chore: tăng version 3.5.2 → 3.5.3 |
+
+> **BUG REPORT của Đại ca (2026-09-19):** Dòng chấm công khi lỗi mạng hiện "Đang chờ";
+> Admin có nút "Thử lại ngay" + bảng "Đang chờ đồng bộ". NHƯNG khi mạng hồi phục,
+> data ĐÃ lên server rồi mà dòng vẫn báo đỏ **"Lỗi sync"** mãi — muốn hết màu đỏ.
+>
+> **ROOT CAUSE (2 lớp):**
+> 1. **Store không flip `synced` khi retry thành công:** GĐ 84 thêm `retryPendingSync`
+>    (backoff + nút Thử lại ngay) — nó đọc `_neonInsertAttendance(rec)` và xóa khỏi
+>    queue, nhưng KHÔNG cập nhật `synced: true` lên record trong store. Duy nhất path
+>    `clock()` (điểm danh khi online ngay lúc bấm) có flip. → Hệ quả: badge "Lỗi sync"
+>    render từ `a.synced === false` → dù server đã có data, dòng vẫn đỏ. **Đây chính là
+>    dạng bug của GĐ 17 (badge "Đang chờ" kẹt vĩnh viễn) TÁI DIỄN** — GĐ 17 fix bằng
+>    LWW merge theo updatedAt (máy khác tự lành khi hydrate), nhưng TRÊN CHÍNH THIẾT
+>    BỊ đã sync, store local không được cập nhật vì hydrate không chạy lại tự động.
+> 2. **Nút "Thử lại ngay" xong không làm mới UI:** chỉ set `expiringSoon` —
+>    `pendingRecords` (đếm + bảng "Đang chờ đồng bộ") không được tính lại.
+>
+> **Fix (2 chỗ — surgical):**
+> 1. `retryPendingSync` case attendance: sau khi push OK, collect id thành công →
+>    `useAppStore.setState((s) => ({ attendance: s.attendance.map(...) }))` flip
+>    `synced: true` (dùng `useAppStore` module-level — lesson GĐ 84: hàm ngoài store
+>    không thấy `set/get`, phải qua `getState()`/`setState()`).
+> 2. `cham-cong.tsx` handler nút Thử lại ngay: sau `await`, tính lại `setPendingRecords(...)`
+>    + `setSyncStats(...)` từ `getPendingSyncStats()` — bảng + badge cập nhật ngay.
+>
+> **LESSON LEARNED — Trạng thái hiển thị (synced/sync-error) phải được cập nhật tại MỌI
+> đường sync thành công, không chỉ đường chính (2026-09-19):** `synced: false` là TRẠNG
+> THÁI HIỂN THỊ phụ thuộc luồng ghi; luồng retry của GĐ 84 tạo ra đường sync THỨ 2
+> (backoff + nút tay) nhưng quên cập nhật trạng thái → badge kẹt. Checklist khi thêm
+> đường sync mới: grep các field trạng thái hiển thị (`synced`, `_syncTs`, error flag)
+> và cập nhật TẤT CẢ các đường — tạo-mới, retry-backoff, retry-thủ-công, hydrate.
+>
+> **LESSON LEARNED — Lỗi badge-kẹt dạng tái diễn: kiểm tra TRÊN THIẾT BỊ đã sync
+> không chỉ thiết bị khác (2026-09-19):** GĐ 17 đã gặp badge "Đang chờ" kẹt (fix LWW
+> merge — tự lành ở MÁY KHÁC nhờ hydrate). GĐ 171 cùng triệu chứng nhưng ở MÁY ĐÃ
+> SYNC — máy đó không hydrate lại tự động nên LWW merge không cứu được. Khi fix kiểu
+> này nhớ phủ CẢ 2 thiết bị: (a) thiết bị khác → merge LWW; (b) thiết bị chính →
+> flip state ngay trong luồng sync thành công.
+>
+> **Tiêu chí kiểm chứng:** Điểm danh offline → "Đang chờ"; bật mạng → retry tự chạy
+> → dòng HẾT đỏ (không còn "Lỗi sync"); Admin bấm "Thử lại ngay" → bảng "Đang chờ
+> đồng bộ" + badge cập nhật ngay sau khi xong; data trên Neon/GiondDB đúng như cũ
+> (không đổi gì tầng data).
+
+---
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 171 — fix badge đỏ "Lỗi sync" kẹt sau khi đã sync; version 3.5.3)*
 *Người cập nhật: Trợ lý lập trình*

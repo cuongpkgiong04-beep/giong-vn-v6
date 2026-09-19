@@ -807,6 +807,10 @@ function ChamCongPage() {
                       setIsRetryingNow(false);
                       setPendingRecords(getPendingSyncRecords());
                       setExpiringSoon(getPendingSyncStats().expiringSoon);
+                      // GĐ 171: làm mới data sau retry — flip synced=true (store GĐ 171)
+                      // cần được hydrate mới đọc lại từ queue/local; giữ dialog chi tiết
+                      // không mở thêm.
+                      useAppStore.getState().hydrate();
                     }
                   }}
                   className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-accent/40 bg-accent-soft px-3 py-1 text-xs font-medium text-accent transition hover:bg-accent hover:text-white disabled:opacity-50"
