@@ -6583,9 +6583,11 @@ Tunnel — giải tận gốc).
 >
 > **LESSON LEARNED — Rà sync theo 3 chiều bảng (2026-09-19):** đi từng module × từng thao tác (INSERT/UPDATE/DELETE) × từng tầng (store action → server function → SQL schema) mới thấy đủ lỗ hổng; chỉ rà theo module thì mỗi lần chỉ bắt được 1 góc (GĐ 84 bắt INSERT, GĐ 59/91/94 bắt DELETE từng module riêng lẻ, UPDATE lọt hết).
 >
+> **LESSON LEARNED — Đổi backend DB mà quên rà migration pipeline (2026-09-19, bắt khi verify GĐ 170):** GĐ 164 chuyển GiondDB SQL Server + XÓA DATABASE_URL khỏi Vercel → `scripts/migrate.mjs` (chạy khi build, chỉ nối DATABASE_URL) SKIP IM LẶNG trên production → migration 0030 KHÔNG TỰ ÁP như mọi giai đoạn trước (tưởng "migration tự chạy khi build" còn đúng — KHÔNG còn nữa). Cột `deleted_at` đã thiếu cho tới khi em verify qua tunnel (`SELECT COUNT(*) ... COLUMN_NAME = 'deleted_at'` = 0) và chạy tay qua API Server `/query` (ALTER TABLE tasks ADD deleted_at DATETIME2 NULL + đánh dấu `_migrations` filename `0030_tasks_tombstone.sql` — bảng _migrations GiondDB dùng cột `filename`, khác Postgres `name`). E2E thật: INSERT task test → tombstone → `deleted_at` set → loadTasks filter loại đúng → dọn sạch. **Quy tắc từ giờ:** thêm migration mới sau GĐ 164 PHẢI chạy tay qua tunnel (hoặc em báo Đại ca bổ sung runner); đừng tin "tự chạy khi build" như Neon — verify bằng query INFORMATION_SCHEMA sau deploy.
+>
 > **LƯU Ý cho Đại ca khi test:** offline sửa/xóa nhiệm vụ + ghi chú + reaction/ghim chat + duyệt đề nghị + xóa check-in → bật lại mạng → mở thiết bị khác → dữ liệu khớp. Migration 0030 tự chạy khi Vercel build. Task xóa vật lý trước GĐ 170 (nếu có) không phục hồi được — nhưng từ giờ xóa lan truyền đúng.
 >
 > **Version:** 3.5.1 → **3.5.2** (fix sync — patch; checklist GĐ 138 ✓).
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 170 — phủ tombstone + pending queue cho UPDATE/DELETE mọi module; version 3.5.2)*
+*Cập nhật lần cuối: 2026-09-19 (GĐ 170 — phủ tombstone + pending queue mọi module + fix migration pipeline sau PA-A; version 3.5.2)*
 *Người cập nhật: Trợ lý lập trình*
