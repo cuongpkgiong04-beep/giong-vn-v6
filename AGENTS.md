@@ -6447,5 +6447,54 @@ Tunnel — giải tận gốc).
 >
 > **Tiêu chí kiểm chứng:** Tool chạy tay 2 account OK; E2E web→agent PASS; smed_accounts decrypt round-trip OK; script test tạm dọn sạch.
 
-*Cập nhật lần cuối: 2026-09-18 (GĐ 165 — E2E user flow: login/SSO/sqlreport PASS, chờ credentials SMED — repo con v3.6.1)*
+### GĐ 167: Test production toàn diện 7/7 PASS + fix bấm Đăng nhập sớm bị reload (2026-09-19, 3.4.2)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(login): guard hydrated — bấm Đăng nhập/Enter trước khi hydrate xong không còn native submit reload trang vô hiệu |
+| (mới) | test(scripts): test-prod-suite.mjs — bộ E2E chuẩn tái sử dụng (login + 5 module + SSO) |
+| (mới) | chore: tăng version 3.4.1 → 3.4.2 |
+
+> **Bối cảnh:** Đại ca yêu cầu "test production". Em chạy quy trình 4 tầng theo bài học tích lũy:
+>
+> **1. Version bundle (quy tắc GĐ 124):** curl domain chính → grep `/assets/index-*.js` trong HTML
+> (--compressed vì response gzip — lesson GĐ 135) → tải bundle → grep version → **3.4.1 khớp
+> package.json** = domain chính đang trỏ đúng bản mới, không bị ghim deployment cũ.
+>
+> **2. Tunnel + app con:** `/api/units` HTTP 200 trả 19 trung tâm data thật từ SQL Server qua
+> Cloudflare Tunnel (2.5s) — tunnel sống, API Server sống, GiongDB sống.
+>
+> **3. E2E Playwright app tổng — 7/7 PASS:** đăng nhập (POST sign-in 200 sau 1.4s) → Dashboard
+> (khối chào) → Chấm công 67 dòng → Nhiệm vụ board đầy đủ → Đề nghị 10 dòng → Check-in 57 dòng →
+> SSO app con (me trả đúng user + mods, KPI SMED OK, module MISA có form + lịch sử). Số dòng
+> khớp backup GĐ 164 (70 chấm công / 57 check-in... — vài dòng chênh là data mới thêm).
+>
+> **4. Phát hiện thật từ test:** các lần đầu bấm Đăng nhập NGAY sau khi mở trang (~2-3 giây đầu)
+> bị kẹt lại /login. Debug qua capture network: **KHÔNG hề có POST sign-in** — form SSR render
+> sẵn trong HTML, bấm trước khi JS hydrate = native form submit → trang reload login, không
+> đăng nhập, không toast lỗi. Test chờ form hydrate xong mới bấm → sign-in 1.4s PASS ngay.
+>
+> **Fix (surgical — chỉ src/routes/login.tsx, 4 chỗ):** state `hydrated` (false → useEffect set
+> true) + guard `onSubmit` (e.preventDefault khi chưa hydrate — trị gốc native submit) + nút
+> submit `disabled={loading || !hydrated}` + tooltip hướng dẫn. Theo HTML spec, nút submit mặc
+> định disabled thì Enter trong input cũng không submit được → chặn trọn cả 2 đường bấm/Enter.
+> SSR và lần render đầu đều hydrated=false → không hydration mismatch. Sau hydrate nút tự bật.
+>
+> **LESSON LEARNED — Test E2E phải phân biệt "app lỗi" và "test bấm quá sớm" (2026-09-19):**
+> 2 lần chạy đầu kết luận sai chiều ngược lại: lần 1 tưởng Nhiệm vụ/Đề nghị trống (thật ra chỉ
+> render 583 ký tự sidebar vì đang bị đá về login); lần 2 tưởng phiên chết (thật ra script bấm
+> nút trước khi hydrate). Dấu hiệu phân biệt: (a) nếu server fn calls có POST sign-in 200 nhưng
+> vẫn kẹt → lỗi phiên thật; (b) KHÔNG có POST sign-in nào trong network → form submit không qua
+> JS → bấm quá sớm. **Mọi assertion bấm nút trên trang SSR phải đợi hydration (nút enabled /
+> network idle) trước khi click.** Kết luận "X trống / phiên chết" cần bằng chứng network, đừng
+> tin text trang khi chưa chắc đã login xong.
+>
+> **Bộ test chuẩn:** `scripts/test-prod-suite.mjs` (login + full-load 5 module + SSO, xuất
+> screenshots/). Lần sau test production chỉ cần `node scripts/test-prod-suite.mjs`.
+>
+> **Tiêu chí kiểm chứng (sau deploy):** Mở /login → bấm Đăng nhập trong 1-2 giây đầu → nút mờ,
+> KHÔNG reload trang → sau một nhịp nút sáng → bấm → vào thẳng Dashboard. Dùng thường (bấm khi
+> trang đứng yên) không đổi gì. Sidebar hiện VERSION 3.4.2.
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 167 — test production 7/7 PASS + fix login sớm; version 3.4.2)*
 *Người cập nhật: Trợ lý lập trình*

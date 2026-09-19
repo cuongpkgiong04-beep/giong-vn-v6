@@ -21,6 +21,12 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
+  // Chặn submit sớm trước khi hydrate xong — bấm/Enter lúc SSR-only sẽ native submit vô hiệu
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(REMEMBER_KEY);
@@ -57,7 +63,7 @@ function Login() {
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
+    if (!hydrated || !email.trim() || !password.trim()) return;
     setLoading(true);
 
     try {
@@ -187,7 +193,16 @@ function Login() {
         {authEnabled ? (
           <>
             {/* Email / Password Form */}
-            <form onSubmit={handleEmailAuth} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                if (!hydrated) {
+                  e.preventDefault();
+                  return;
+                }
+                void handleEmailAuth(e);
+              }}
+              className="space-y-4"
+            >
               {isSignUp && (
                 <div>
                   <Label htmlFor="name">Họ và tên</Label>
@@ -262,7 +277,12 @@ function Login() {
                 </div>
               ) : null}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || !hydrated}
+                title={hydrated ? undefined : "Đang tải — vui lòng chờ một nhịp rồi bấm lại"}
+              >
                 {loading
                   ? "Đang xử lý..."
                   : isSignUp
