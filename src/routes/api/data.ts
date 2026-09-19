@@ -121,6 +121,10 @@ export const loadDeletedAttendanceIds = createServerFn({ method: "GET" })
 export const loadTasks = createServerFn({ method: "GET" })
   .handler(async () => {
     const sql = await getSql();
+    // GĐ 172 (19/09): LIMIT 200 → 1000 — DB đã 222 tasks nhưng chỉ trả 200 gần
+    // nhất → các thiết bị thấy thiếu lệch nhau (số Nhiệm vụ trên Dashboard 3 máy
+    // không khớp). 1000 là trần an toàn cho nhiều năm; tasks thuộc bảng nhẹ
+    // (mỗi dòng ~0.5KB) nên 1000 dòng vẫn nhẹ hơn 1 ảnh check-in.
     // Fallback nếu cột assigner chưa có (migration 0016 chưa chạy)
     return sql<{
       id: string;
@@ -136,7 +140,7 @@ export const loadTasks = createServerFn({ method: "GET" })
       assigner: string;
       photo: string | null;
       location: string;
-    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks WHERE deleted_at IS NULL ORDER BY created DESC LIMIT 200`
+    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks WHERE deleted_at IS NULL ORDER BY created DESC LIMIT 1000`
       .catch(() => sql<{
         id: string;
         assignee: string;
@@ -151,7 +155,7 @@ export const loadTasks = createServerFn({ method: "GET" })
         assigner: string;
         photo: string | null;
         location: string;
-      }>`SELECT *, created_by as "createdBy", '' as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`);
+      }>`SELECT *, created_by as "createdBy", '' as "assigner" FROM tasks ORDER BY created DESC LIMIT 1000`);
   });
 
 /** GĐ 170: danh sách task đã xóa (tombstone) — hydrate filter bỏ ở mọi thiết bị. */

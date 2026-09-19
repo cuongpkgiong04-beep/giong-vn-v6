@@ -6642,5 +6642,55 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 171 — fix badge đỏ "Lỗi sync" kẹt sau khi đã sync; version 3.5.3)*
+### GĐ 172: Dashboard 3 thiết bị lệch số Nhiệm vụ — DB là nguồn sự thật tuyệt đối (2026-09-19, 3.5.4)
+
+> **BUG REPORT của Đại ca (19/09):** Cùng 1 user Admin, Dashboard "Nhiệm vụ mở" trên
+> 3 thiết bị KHÁC NHAU: Android **75/139** · iOS **81/140** · Desktop **70/132** —
+> đã xóa cache + refresh mà vẫn lệch. Không biết số nào đúng.
+>
+> **Nguồn sự thật (query GiondDB qua tunnel):** `tasks` = **222 dòng sống**
+> (86 Việc cần làm / 136 Đã xong) — KHÔNG khớp con số nào của 3 thiết bị.
+>
+> **ROOT CAUSE — 2 lớp chồng nhau:**
+> 1. **`loadTasks` LIMIT 200** — DB 222 dòng nhưng chỉ trả 200 gần nhất → NHIỆM VỤ
+>    THIẾU trên mọi thiết bị (đây là lý do tổng các máy 132-140 < 222).
+> 2. **Task "mồ côi" local** — trước GĐ 170 tasks bị XÓA VẬT LÝ (không tombstone);
+>    bản cũ còn kẹt trong localStorage từng máy. Merge offline-first giữ MỌI task
+>    local mãi mãi (local là nguồn chân lý theo thiết kế GĐ 17) → máy nào lưu task
+>    gì từ trước thì thấy nấy → mỗi thiết bị một con số.
+>
+> **Fix (phương án tối ưu tự chọn theo ủy quyền của Đại ca — 2 file):**
+> 1. `data.ts`: LIMIT 200 → **1000** (tasks bảng nhẹ ~0.5KB/dòng, 1000 dòng vẫn
+>    nhẹ hơn 1 ảnh check-in — không đụng quy ước egress GĐ 159).
+> 2. `store.ts`: sau merge, **DB là nguồn sự thật tuyệt đối** — task local KHÔNG
+>    pending mà không tồn tại trên DB (kể cả tombstone) bị LOẠI khỏi store.
+>    Neo trên neonTasks (LIMIT 1000 đủ) + deletedTaskIds — không thêm query mới.
+>    Offline vẫn an toàn: task mới tạo offline đang pending GIỮ NGUYÊN cho tới khi
+>    sync lên DB thành công.
+>
+> **Kết quả:** 3 thiết bị về cùng 1 con số = số thật trong DB (86 mở / 136 xong).
+> Lần mở đầu sau deploy mỗi máy tự dọn task mồ côi của chính nó.
+>
+> **LESSON LEARNED — "local là nguồn chân lý" chỉ đúng cho record CÒN TỒN TẠI ở
+> server (2026-09-19):** Merge offline-first phải trả lời được: "record local không
+> có trên server là (a) offline chờ sync hay (b) đã bị xóa ở nơi khác?" — chưa có
+> tombstone (GĐ 170 mới phủ đủ) thì (b) không phân biệt được → task ma sống mãi
+> trong localStorage. Quy tắc: collection nào đã đủ tombstone + có version field
+> thì DB PHẢI là nguồn sự thật tuyệt đối; local chỉ giữ record ĐANG pending.
+>
+> **LESSON LEARNED — LIMIT 200 lặng lẽ cắt data khi bảng lớn dần (2026-09-19):**
+> LIMIT đặt ra ngày đầu để "an toàn egress" nhưng bảng lớn dần theo thời gian →
+> cắt data ÂM THẦM, không lỗi không cảnh báo — chỉ phát hiện khi user so sánh số
+> giữa các máy. Mọi query LIMIT phải đi kèm con số kiểm chứng định kỳ (COUNT(*)
+> bảng so với số dòng app thấy) hoặc LIMIT trần đủ lớn cho nhiều năm.
+>
+> **Tiêu chí kiểm chứng:** Mở Dashboard trên cả 3 thiết bị sau deploy → 3 máy
+> cùng hiện 86 việc mở / 136 đã xong (hoặc số mới hơn nếu data đổi giữa lúc test —
+> QUAN TRỌNG là 3 máy GIỐNG NHAU); trang Nhiệm vụ tổng số khớp Dashboard;
+> tạo task mới offline → vẫn giữ được khi mạng yếu (pending queue hoạt động);
+> typecheck SẠCH 0 lỗi; 17/17 test pass.
+
+---
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 172 — đồng bộ số Nhiệm vụ 3 thiết bị: DB nguồn sự thật; version 3.5.4)*
 *Người cập nhật: Trợ lý lập trình*

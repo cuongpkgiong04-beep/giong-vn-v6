@@ -1085,8 +1085,20 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
 
         set({
           attendance: mergedAttendance,
-          tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated)
-            .filter((t) => !deletedTaskIds.has(t.id)), // GĐ 170: tombstone — task đã xóa biến mất mọi thiết bị
+          tasks: (() => {
+            const merged = mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated)
+              .filter((t) => !deletedTaskIds.has(t.id)); // GĐ 170: tombstone — task đã xóa biến mất mọi thiết bị
+            // GĐ 172 (19/09): DB (GiondDB) là NGUỒN SỰ THẬT tuyệt đối — task local
+            // KHÔNG pending mà không tồn tại trên DB bị loại. Nguyên nhân: trước
+            // GĐ 170 tasks bị XÓA VẬT LÝ (không tombstone) → bản cũ còn kẹt trong
+            // localStorage từng máy → mỗi thiết bị một số khác nhau (3 máy của Đại
+            // ca: 75/139 · 81/140 · 70/132 trong khi DB = 222). Neo trên neonTasks
+            // (đã LIMIT 1000 — đủ) + tombstone IDs để không cần thêm query.
+            const known = new Set<string>([...neonTasks.map((t) => String(t.id)), ...deletedTaskIds]);
+            return merged.filter(
+              (t) => taskPendingIds.has(t.id) || known.has(String(t.id)),
+            );
+          })(),
           proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds, (r) => r.updatedAt ?? "")
             .filter((p) => !p.deletedAt), // tombstone — loại phiếu đã xóa khỏi mọi thiết bị
           documents: mergeByTs(get().documents, neonDocuments, docPendingIds, (r) => r.updatedAt ?? "")
