@@ -227,7 +227,10 @@ async function tunnelFetch<T>(text: string, params: unknown[]): Promise<T[]> {
   }
   // GĐ 169: query vẫn fail sau retry → tunnel có thể đã đổi URL/chết ngầm →
   // đọc Gist lấy URL mới và thử ĐÚNG 1 LẦN trên URL mới.
-  if (res === null && gistToken && gistId) {
+  // ⚠️ !res.ok cũng phải đọc Gist: tunnel chết ngầm thường trả HTTP 530/5xx
+  // CÓ response (Cloudflare edge vẫn resolve hostname cũ) — chỉ check res === null
+  // sẽ bỏ sót trường hợp này (bắt được khi verify 13:13 — /api/units rỗng 0.6s).
+  if ((res === null || !res.ok) && gistToken && gistId) {
     const fresh = await fetchTunnelUrlFromGist();
     if (fresh && fresh !== base) {
       console.log(`[db] tunnel ${base} không phản hồi → thử URL mới từ Gist: ${fresh}`);
