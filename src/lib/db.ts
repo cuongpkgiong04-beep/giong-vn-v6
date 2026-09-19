@@ -24,6 +24,20 @@ const apiToken =
   typeof process !== "undefined" ? (process.env.API_TOKEN ?? "").trim() : "";
 
 /**
+ * GĐ 169 (PA-1 — tự cập nhật URL Quick Tunnel, duyệt 19/09):
+ * Quick Tunnel đổi URL mỗi lần tunnel restart — env TUNNEL_API_BASE_URL là
+ * build-time, mỗi lần đổi phải sửa env + redeploy (điểm nghẽn vận hành).
+ * Kênh mới: API Server (service GIONG_API_Server) tự PATCH **GitHub Secret
+ * Gist** mỗi lần URL đổi (kênh NGOÀI tunnel — sống độc lập); app khi query
+ * tunnel thất bại (tunnel chết/đổi URL) → đọc gist → lấy URL mới → cache
+ * dùng tiếp. Không cần redeploy nữa.
+ */
+const gistToken =
+  typeof process !== "undefined" ? (process.env.GH_GIST_TOKEN ?? "").trim() : "";
+const gistId =
+  typeof process !== "undefined" ? (process.env.TUNNEL_GIST_ID ?? "").trim() : "";
+
+/**
  * Active backend: **tunnel** (SQL Server tại công ty — PA-A) khi có
  * `TUNNEL_API_BASE_URL`, else **Neon** khi `DATABASE_URL` set, else PGLite.
  */
@@ -114,9 +128,76 @@ export async function tunnelQueryRun<T>(
   text: string,
   params: unknown[],
 ): Promise<T[]> {
-  const base = tunnelBaseUrl.replace(/\/+$/, "");
-  const doFetch = () =>
-    fetch(`${base}/query`, {
+  return tunnelFetch<T>(text, params);
+}
+
+/* GĐ 169 — Runtime tunnel-URL resolution:
+ * 1. env TUNNEL_API_BASE_URL (giá trị build-time — nhánh nhanh, cache 60s)
+ * 2. GitHub Secret Gist (URL mới do API Server tự ghi khi tunnel đổi)
+ * Cache module-level: gist chỉ được đọc 1 lần/giây tối đa, URL hợp lệ được
+ * giữ trong memory cho tới khi được thay bằng URL mới hơn. */
+let __tunnelUrlCache: { url: string; at: number; fromGist: boolean } | null = null;
+let __gistFetchLock: Promise<string | null> | null = null;
+
+function gistUrlExtract(text: string): string | null {
+  const m = text.match(/^base_url:\s*(https:\/\/[a-z0-9-]+\.trycloudflare\.com)\s*$/m);
+  return m ? m[1] : null;
+}
+
+async function fetchTunnelUrlFromGist(): Promise<string | null> {
+  if (!gistToken || !gistId) return null; // chưa cấu hình — giữ env build-time
+  __gistFetchLock ??= (async () => {
+    try {
+      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: {
+          Authorization: `Bearer ${gistToken}`,
+          Accept: "application/vnd.github+json",
+        },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as {
+        files?: Record<string, { content?: string }>;
+      };
+      const content = json.files?.["giong-tunnel-gist.txt"]?.content ?? "";
+      const url = gistUrlExtract(content);
+      if (url) {
+        __tunnelUrlCache = { url, at: Date.now(), fromGist: true };
+        console.log(`[db] tunnel URL mới từ Gist: ${url}`);
+      }
+      return url;
+    } catch {
+      return null; // gist lỗi (mạng/token) — dùng URL cache/env hiện có
+    } finally {
+      // nhả lock sau 1s để lần fail tiếp theo (tunnel lại chết) còn được đọc lại
+      setTimeout(() => {
+        __gistFetchLock = null;
+      }, 1_000);
+    }
+  })();
+  return __gistFetchLock;
+}
+
+async function resolveTunnelBaseUrl(): Promise<string> {
+  const cached = __tunnelUrlCache;
+  // URL từ Gist (mới hơn env) dùng trực tiếp; URL từ env chỉ cache 60s để
+  // cơ hội đọc Gist định kỳ (API Server có thể đã đổi URL lúc app không có traffic)
+  if (cached && (cached.fromGist || Date.now() - cached.at < 60_000)) {
+    return cached.url;
+  }
+  const envUrl = tunnelBaseUrl.replace(/\/+$/, "");
+  if (envUrl) {
+    __tunnelUrlCache = { url: envUrl, at: Date.now(), fromGist: false };
+  }
+  if (!envUrl) return envUrl; // không có env → trả rỗng (lỗi cấu hình, giữ hành vi cũ)
+  void fetchTunnelUrlFromGist().catch(() => undefined); // nền: cập nhật cache sớm nếu có URL mới
+  return envUrl;
+}
+
+async function tunnelFetch<T>(text: string, params: unknown[]): Promise<T[]> {
+  const base = (await resolveTunnelBaseUrl()).replace(/\/+$/, "");
+  const doFetch = (b: string) =>
+    fetch(`${b}/query`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -125,19 +206,41 @@ export async function tunnelQueryRun<T>(
       body: JSON.stringify({ text, params }),
       signal: AbortSignal.timeout(30_000),
     });
-  let res: Response;
+  let res: Response | null = null;
+  let lastErr: unknown = null;
   try {
-    res = await doFetch();
+    res = await doFetch(base);
   } catch (err) {
+    lastErr = err;
     // Lần đầu sau cold-start (tunnel mới / instance mới) thường timeout —
-    // thử lại 1 lần trước khi báo lỗi thật.
+    // thử lại 1 lần trước khi coi là tunnel chết.
     globalRef.__tunnelWarmup__ = (globalRef.__tunnelWarmup__ ?? 0) + 1;
     if (globalRef.__tunnelWarmup__ <= 2) {
       await new Promise((r) => setTimeout(r, 2_000));
-      res = await doFetch();
-    } else {
-      throw err;
+      try {
+        res = await doFetch(base);
+        lastErr = null;
+      } catch (err2) {
+        lastErr = err2;
+      }
     }
+  }
+  // GĐ 169: query vẫn fail sau retry → tunnel có thể đã đổi URL/chết ngầm →
+  // đọc Gist lấy URL mới và thử ĐÚNG 1 LẦN trên URL mới.
+  if (res === null && gistToken && gistId) {
+    const fresh = await fetchTunnelUrlFromGist();
+    if (fresh && fresh !== base) {
+      console.log(`[db] tunnel ${base} không phản hồi → thử URL mới từ Gist: ${fresh}`);
+      try {
+        res = await doFetch(fresh);
+        lastErr = null;
+      } catch (err3) {
+        lastErr = err3;
+      }
+    }
+  }
+  if (res === null) {
+    throw lastErr ?? new Error("Tunnel SQL: không kết nối được");
   }
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -149,7 +252,7 @@ export async function tunnelQueryRun<T>(
 
 function createTunnelSql(): Promise<Sql> {
   globalRef.__pgSqlPromise__ ??= (async () => {
-    return toSql(tunnelQueryRun);
+    return toSql(tunnelFetch);
   })().catch((err) => {
     globalRef.__pgSqlPromise__ = undefined;
     throw err;

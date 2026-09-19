@@ -6496,5 +6496,51 @@ Tunnel — giải tận gốc).
 > KHÔNG reload trang → sau một nhịp nút sáng → bấm → vào thẳng Dashboard. Dùng thường (bấm khi
 > trang đứng yên) không đổi gì. Sidebar hiện VERSION 3.4.2.
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 167 — test production 7/7 PASS + fix login sớm; version 3.4.2)*
+### GĐ 168: Fix sync chấm công — translator UPSERT 1 dòng + contract đăng ký tunnel (2026-09-19, 3.4.3)
+
+> **BUG REPORT của Đại ca (2026-09-19):** App tổng — Chấm công bị lỗi sync, không lấy dữ liệu về được máy chủ.
+>
+> **Chẩn đoán — 2 lỗi chồng nhau (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.40):**
+> 1. **Lỗi A:** bộ dò mệnh đề WHERE-LWW trong `translate_sql()` (api_server.py) có guard thừa nhìn ký tự trước dấu cách → luôn alnum → bỏ sót WHERE khi UPSERT viết 1 dòng (format thật production) → T-SQL lỗi 156 → mọi ghi chấm công/check-in văng lỗi, retry vô hạn.
+> 2. **Lỗi B:** lệch contract 2 đầu — `register_tunnel_url()` gửi secret trong body JSON, còn route `/api/tunnel-register` đọc secret từ header → luôn 401 → URL tunnel mới không bao giờ đăng ký được → Vercel giữ URL cũ đã chết → mọi server function `fetch failed`.
+>
+> **Fix:** bỏ guard thừa trong api_server.py; route tunnel-register đọc secret từ body trước (header fallback); restart service + cập nhật env TUNNEL_API_BASE_URL + redeploy + ghim domain (quy trình GĐ 124).
+>
+> **✅ Verify:** UPSERT 1 dòng dịch đúng; ghi qua tunnel từ internet HTTP 200; E2E UI production: login → Vào ca → chụp → Xác nhận → record nằm trong GiongDB; tsc 0 lỗi.
+>
+> **LESSON LEARNED — Test translator bằng SQL ĐÚNG FORMAT production (2026-09-19):** test nhiều dòng “đẹp” không bắt được bug 1 dòng. Copy format SQL THẬT từ code app khi mô phỏng.
+>
+> **LESSON LEARNED — Process Python giữ code cũ, __pycache__ stale (2026-09-19):** sau sửa file Python của service: xóa __pycache__ + restart + verify QUA ENDPOINT THẬT, không chỉ py_compile.
+>
+> **Version:** 3.4.2 → **3.4.3** (patch — fix bug).
+
+### GĐ 169: PA-1 — Tự cập nhật Quick Tunnel URL qua GitHub Gist + watchdog chống chết ngầm (2026-09-19, 3.5.0)
+
+> **Yêu cầu của Đại ca (kèm sơ đồ 4 khâu, 2026-09-19):** “Làm tự động để app nhận Quick Tunnel khi khởi động lại máy tính/server” — Khởi động Windows → Server → cloudflared → lấy URL mới → **cập nhật URL vào nơi ứng dụng đang sử dụng** → Web/App lấy URL mới. Bước 1-3 ĐÃ có từ GĐ 160; khâu 4 đang là điểm nghẽn: mỗi lần tunnel restart phải sửa env TUNNEL_API_BASE_URL + redeploy CẢ HAI app bằng tay (GĐ 165/166/168 lặp lại quy trình này 3 lần).
+>
+> **Chẩn đoán khâu 4 (đo thật trước khi làm):** (1) đăng ký URL lên Vercel 401 — secret lệch 2 đầu; (2) nghiêm trọng hơn — thiết kế vòng lặp VÔ DỤNG: route tunnel-register ghi URL vào kv_settings QUA CHÍNH TUNNEL (tunnel chết → không ghi được; ghi được → app cũng không đọc kv_settings lúc runtime, vẫn dùng env build-time).
+>
+> **Đã chốt với Đại ca (2 câu hỏi):** PA-1 tự cập nhật (GitHub Secret Gist + app tự đọc runtime + watchdog, không cần domain) — Đại ca chọn PA-1; đồng bộ/thêm env Vercel — Đại ca duyệt.
+>
+> **Kiến trúc PA-1 (2 kênh ghi, 1 kênh đọc runtime):**
+> 1. **Gist = kênh CHÍNH (NGOÀI tunnel, sống độc lập):** api_server.py `gist_publish_tunnel_url()` PATCH gist mỗi lần tunnel lên URL mới (GitHub REST, urllib thuần). Gist id `db3dae34ac285bc7935a72f365cb0d21`, file `giong-tunnel-gist.txt`, format `base_url: https://…`. Token `gh auth token` (scope gist) lưu `.secrets/gh_gist_token.txt` (gitignored) + env `GH_GIST_TOKEN` Vercel; gist id env `TUNNEL_GIST_ID` cả 2 project.
+> 2. **Kênh Vercel = PHỤ (tương thích ngược):** POST /api/tunnel-register giữ nguyên (kênh Gist sống độc lập nên 401 cũ không còn chặn vận hành).
+> 3. **App tự phục hồi runtime (db.ts CẢ HAI app):** `tunnelFetch()` — query fail sau retry (cold-start 2 lần) → đọc Gist → URL mới ≠ URL cũ → thử ĐÚNG 1 lần trên URL mới. URL Gist được cache (fromGist=true dùng trực tiếp); URL env chỉ cache 60s → có cơ hội đọc Gist định kỳ. `tunnelQueryRun` export giữ nguyên cho tunnel-dialect (Better Auth) — tự hưởng fallback.
+> 4. **Watchdog DNS (chống chết ngầm — lesson GĐ 165):** `_watchdog_tunnel()` kiểm tra DNS URL hiện hành mỗi 60s; fail 3 lần LIÊN TIẾP → kill cloudflared → vòng keep_tunnel tự tạo tunnel mới + tự ghi Gist. Không còn `proc.wait()` bị động.
+>
+> **Env đã set (đều Secret, CẢ 2 project giong-vn-v6 + giong-banhang):** REGISTER_SECRET (đồng bộ giá trị service `8ec874dd…` — trị 401), GH_GIST_TOKEN, TUNNEL_GIST_ID. Service dùng file .secrets (không cần đụng NSSM env).
+>
+> **✅ Verify (đo thật):** py_compile + import module OK; gist publish probe OK (PATCH 200 → GET đọc đúng `base_url`); typecheck SẠCH 0 lỗi cả 2 repo; restart service → tunnel mới `streaming-newer-tax-april` → log `[gist] cập nhật URL lên Gist OK: HTTP 200` → GET gist xác nhận URL mới; `/health` qua tunnel internet OK; `/query` từ internet + x-api-token → `{"rows":[{"n":35}]}` (35 employees) — chuỗi server hoàn chỉnh.
+>
+> **LESSON LEARNED — Kênh cập nhật cấu hình phải NGOÀI chính đối tượng nó cập nhật (2026-09-19):** route tunnel-register cũ ghi URL mới QUA tunnel cũ đang chết — tự đánh mất đường đi khi cần nhất (tương tự “lưu mật khẩu trong máy đã khóa”). Thiết kế kênh cấu hình/fallback: luôn hỏi “kênh này sống khi đối tượng chính chết không?”. Gist ngoài tunnel + API GitHub độc lập hoàn toàn với tunnel/Neon/Vercel.
+>
+> **LESSON LEARNED — Env build-time KHÔNG phải cấu hình runtime (2026-09-19):** Vercel env chỉ thay lúc build/redeploy; cấu hình đổi động (tunnel URL) phải có đường runtime (DB/CDN/Gist) + cơ chế app tự đọc khi lỗi. Giá trị build-time chỉ làm nhánh nhanh đầu tiên, không phải nguồn sự thật duy nhất.
+>
+> **LƯU Ý cho Đại ca khi test:** (1) restart máy/server → service tự bật → tunnel mới tự ghi Gist trong ~10s; (2) app tổng + app con sau khi deploy bản này TỰ nhận URL mới khi query (không cần sửa env/redeploy — có thể phải đợi tối đa 60s cache env); (3) nếu tunnel chết ngầm, watchdog tự phát hiện trong ≤3 phút và đổi URL mới; (4) log theo dõi: `LOG/api_server_*.log` (dòng [gist]/[tunnel-watchdog]) + console Vercel (dòng [db] tunnel URL mới từ Gist).
+>
+> **⚠️ Việc còn mở:** bản deployed hiện vẫn đang chạy URL cũ trong env build-time — sau khi push bản này, app tự đọc Gist; khi Đại ca cấp domain → chuyển Named Tunnel (PA-3) làm URL cố định vĩnh viễn, PA-1 giữ làm lớp dự phòng.
+>
+> **Version:** 3.4.3 → **3.5.0** (feature — minor; checklist GĐ 138 ✓ — không thành phần nào ≥10).
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 169 — PA-1 tự cập nhật Quick Tunnel qua Gist + watchdog; version 3.5.0)*
 *Người cập nhật: Trợ lý lập trình*
