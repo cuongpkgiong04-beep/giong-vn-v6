@@ -6692,5 +6692,34 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 172 — đồng bộ số Nhiệm vụ 3 thiết bị: DB nguồn sự thật; version 3.5.4)*
+### GĐ 173: Phiên verify GĐ 172 + Hệ sinh thái — chuẩn hóa BÁO CÁO app con (không đổi code app tổng) (2026-09-19, 3.5.4)
+
+> **Phần 1 — Verify GĐ 172 cho Đại ca (không đổi code):** Đại ca báo 3 thiết bị
+> lệch số Nhiệm vụ — em query GiondDB qua tunnel API Server: **222 tasks = 86
+> "Việc cần làm" + 136 "Đã xong", tombstone 0** — đúng số GĐ 172 ghi. Câu SQL
+> thật của app (LIMIT 1000 + subquery tombstone) qua translator trả đủ 222 dòng.
+> E2E Playwright production (bản bundle 3.5.4): KPI Dashboard hiện đúng
+> "86 mở / 136 đã xong" = KHỚP DB. Kết luận: fix GĐ 172 hoạt động đúng; 3 máy
+> lệch là bundle cũ/PWA + localStorage mồ côi chưa dọn — hướng dẫn Đại ca:
+> desktop F12 → Application → Clear site data; điện thoại gỡ app PWA cài lại
+> (hoặc xóa "Cookie và dữ liệu trang web" — xóa cache thường KHÔNG đụng
+> localStorage). Đã chụp bằng chứng screenshots/verify-tasks-172.png.
+>
+> **Phần 2 — Hệ sinh thái (repo con GĐ C.44, v3.10.0):** chuẩn hóa TOÀN BỘ
+> phần BÁO CÁO app con Bán hàng theo 9 điểm yêu cầu của Đại ca: định dạng số
+> '#,##0' nguyên (text trái/số phải), Tên hàng hóa −40% (ẩn, không đè cột
+> phải), Số lượng −50%, Ngày/Trung tâm hẹp nhường NCC rộng, mọi báo cáo vừa
+> màn hình không cuộn ngang, SUBTOTAL cộng THEO LỌC (kiểu Subtotal Excel),
+> nút "Tải Excel" xuất client-side (dep xlsx 0.18.5), TX-DS giữ cuộn ngang +
+> Tải Excel toàn bộ (3 điểm đã chốt trước khi làm). Chi tiết kỹ thuật + 2
+> lesson (lockfile workspaces --workspaces=false; format hiển thị vs làm tròn
+> dữ liệu) ở AGENTS.md repo con GĐ C.44. **App tổng không đổi code.**
+>
+> **Tiêu chí kiểm chứng:** 3 thiết bị sau khi dọn site data/PWA → cùng số 86/136;
+> app con các trang BÁO CÁO: lịch sử trên, số nguyên canh phải, bảng vừa màn
+> hình, SUBTOTAL theo lọc, Tải Excel về Downloads; version app con 3.10.0.
+
+---
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 173 — verify GĐ 172 cho 3 thiết bị + GĐ C.44 repo con chuẩn hóa BÁO CÁO; app tổng giữ 3.5.4)*
 *Người cập nhật: Trợ lý lập trình*
