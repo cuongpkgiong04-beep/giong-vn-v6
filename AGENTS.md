@@ -6771,6 +6771,43 @@ Tunnel — giải tận gốc).
 
 ---
 
+### GĐ 176: Hệ sinh thái — Báo cáo cuối ngày - Đối soát HĐ-XK (repo con v4.0.3) (2026-09-20)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `64c173f` | feat(bc-cuoi-ngay): Báo cáo cuối ngày - Đối soát HĐ-XK giống sheet DS_SL_XK-DT-HD tool 21 — builder dsxk_comparison viết lại đúng 100% nguồn (DTTHC/BKX-PX-/BKCT-ký hiệu) + needsData 3 nguồn + quyền sqlreport theo query key (GĐ C.47, v4.0.3) |
+| (mới) | docs(agents): GĐ 176 + version app tổng 3.5.6 → 3.5.7 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (2026-09-20 — giao tự chủ, không hỏi lại, làm xong tự ghi +
+> push):** Đọc tool `21_DS_DT_XK.py` anh tải vào `agent/` → làm **Báo cáo cuối ngày -
+> Đối soát HĐ-XK** trong nhóm BÁO CÁO KẾ TOÁN giống Sheet "DS_SL_XK-DT-HD"; các sheet
+> khác chỉ bổ trợ.
+
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.47):**
+> 1. **Trace nguồn sheet DS tool 21** — B bán ra = file **DTTHC** (không phải BKCCN
+>    như suy từ tên cột — soi code mới thấy); C xuất kho bán = BKX chứng từ `PX-`;
+>    E HĐGTGT = placeholder 0 ĐIỀN TAY của tool, nay **tự tính từ BKCT MISA ánh xạ
+>    KÝ HIỆU hóa đơn** (HD_SYMBOL_MAP 1C26MAA→LB … + pattern động bền sang năm mới).
+> 2. Builder SQL tổng hợp từ GiondDB (KHÔNG chạy tool 21); B CHỈ nhận lượt tải DTTHC
+>    từ đúng TỪ NGÀY (PA1) — không fallback lệch kỳ; thiếu nguồn B/C/E → needsData →
+>    chuỗi 3 bước GĐ C.45 (treo job → download → tự chạy lại).
+> 3. Trang /m/bc-cuoi-ngay hết placeholder → SqlDataModule queryKey=dsxk-comparison
+>    — tự hưởng chuẩn GĐ C.44 (lọc cột + SUBTOTAL theo lọc + #,##0 + Tải Excel).
+> 4. Quyền job sqlreport theo QUERY KEY (dsxk cần đủ 3 nhóm Bán hàng+Kho+MISA) —
+>    sửa kèm lỗi user thường bị chặn oan (sqlreport rơi nhánh "report lạ → chỉ Admin").
+
+> **✅ Verify (chạy thật trên GiongDB):** kỳ 14→16/09 = 20 dòng (TỔNG B=147 bán,
+> C=390 xuất, E=388 HĐGTGT, D=-243, F=-241); kỳ 18/09 thiếu BKX → raise đúng nguồn
+> `xuatkho`; py_compile + tsc + build PASS; grep staged diff 0 password.
+
+> **LESSON (repo con đã ghi đủ):** (1) "giống 100% tool X" phải TRACE TỪNG nguồn trong
+> code tool, không suy từ tên cột/file; (2) fallback dữ liệu lệch kỳ nguy hiểm hơn
+> báo thiếu — với báo cáo ĐỐI SOÁT, thiếu phải cảnh báo, không thay bằng data gần đúng.
+
+> **⚠️ Việc cho Đại ca (như GĐ 128/139/145):** copy `agent/etl/sql_reports.py` MỚI
+> sang thư mục tool trên D: (đè file cũ) + restart GIONG_SMED_Agent khi tiện — trước
+> khi restart, báo cáo mới trên web vẫn hiện needsData (agent cũ chưa biết builder).
+
 ### GĐ 175: Hệ sinh thái — Icon trình duyệt giống 100% app tổng + Sidebar app con hiệu chỉnh 6 điểm (repo con v4.0.2) (2026-09-19)
 
 | Commit | Thay đổi |
@@ -6827,5 +6864,5 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 175 — icon trình duyệt + Sidebar app con 6 điểm, repo con 4.0.2; app tổng 3.5.6)*
+*Cập nhật lần cuối: 2026-09-20 (GĐ 176 — Báo cáo Đối soát HĐ-XK, repo con 4.0.3; app tổng 3.5.7)*
 *Người cập nhật: Trợ lý lập trình*
