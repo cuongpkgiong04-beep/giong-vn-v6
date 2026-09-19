@@ -6771,5 +6771,61 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 174 — cảnh báo thiếu dữ liệu MỌI báo cáo + chuỗi 3 bước tự động, repo con 4.0.1; app tổng 3.5.5)*
+### GĐ 175: Hệ sinh thái — Icon trình duyệt giống 100% app tổng + Sidebar app con hiệu chỉnh 6 điểm (repo con v4.0.2) (2026-09-19)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `0c6f0a8` | feat(ui): icon trình duyệt đồng bộ app tổng (?v=4 + meta apple) + Sidebar 6 điểm — rail 48px, dãn cấp 2, Tổng quan 3 trạng thái, vệt sáng chính xác, đổi 4 nhãn nav (GĐ C.46, v4.0.2) |
+| (mới) | docs(agents): GĐ 175 + version app tổng 3.5.5 → 3.5.6 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (2026-09-19, 9 điểm):** (1) gắn biểu tượng trình duyệt GIỐNG 100%
+> app tổng; Sidebar app con: (2) tăng độ rộng khi ẩn vì biểu tượng bị che; (3) dãn khoảng
+> cách dòng tiêu đề cấp 2; (4) nút Tổng quan bấm lần 1 sổ ra cấp 1 + cấp 2, bấm lần nữa
+> thu gọn còn cấp 1; (5) "Thống kê doanh thu theo đối tượng" → "Thống kê DT theo đối tượng";
+> (6) "Thống kê doanh thu tổng hợp Chuỗi" → "Thống kê DT tổng hợp Chuỗi"; (7) vệt sáng
+> LAN — chọn "Báo cáo TH_NXT kho theo lượng-tiền" thì "...theo lượng" cũng sáng; (8-9)
+> 2 nhãn "Báo cáo Tổng hợp NXT kho theo lượng[-tiền]" → "Báo cáo TH_NXT kho theo lượng[-tiền]".
+
+> **Icon — điều tra trước khi sửa:** so MD5 10 file PNG `icons/` của 2 app = GIỐNG NHAU
+> 100% (GĐ 153 đã đồng bộ bộ icon chung từ trước). Lý do thiết bị của anh còn thấy khác:
+> app con thiếu 2 meta `apple-mobile-web-app-capable` + `apple-mobile-web-app-status-bar-style`
+> (app tổng có) + cache-bust còn `?v=3` (trình duyệt giữ icon cũ). Fix: thêm 2 meta +
+> bump cache-bust **?v=4** cho head (icon/apple-touch/manifest) + 10 icon trong
+> manifest.json — SW app con pass-through không cache nên cache-bust là đủ.
+
+> **Tổng quan 3 TRẠNG THÁI (mở rộng toggle 2 trạng thái GĐ C.32):** bấm lần 1 (mặc định
+> = nhánh active) → SỔ RA hết (cấp 1 + cấp 2); lần 2 → THU GỌN còn cấp 1; lần 3 → về
+> mặc định. Cơ chế: nhận diện trạng thái hiện tại bằng cách so Set `openNhom` với
+> full-set nhãn nhóm (isAll → thu gọn; rỗng → mặc định; còn lại → sổ hết).
+
+> **Vệt sáng lan — ROOT CAUSE:** 3 chỗ so route bằng `startsWith` (`SidebarLeaf` active
+> + `pathToActiveLeaf`) — `/m/bc-nxt-luong` là TIỀN TỐ của `/m/bc-nxt-luong-tien` → mở
+> trang tiền thì lá "lượng" cũng sáng. Fix: so KHỚP TUYỆT ĐỐI `pathname === item.to`.
+
+> **Sidebar:** rail `w-10` (40px) → **`w-12` (48px)** — icon hết bị che; content đẩy
+> theo `lg:pl-12` (styles.css hover 320px giữ nguyên — mép sidebar MỞ không đổi).
+> Dãn cấp 2: container con nhóm bậc 1 `gap-0.5 → gap-1.5` + tiêu đề cấp 2 `py-1 → py-1.5`.
+
+> **Nhãn nav:** đổi 4 chỗ trong `nav.ts` + 2 trang SMED (`title` prop) — trang bc-nxt
+> dùng `ModuleRoute` đọc nhãn từ NAV nên tự đúng sau khi đổi NAV.
+
+> **LESSON LEARNED — `startsWith` trên route lá = vệt sáng lan khi 1 path là tiền tố
+> path khác (2026-09-19):** nav có cặp path tiền tố (`bc-nxt-luong` / `bc-nxt-luong-tien`)
+> thì mọi phép so route "lỏng" đều sáng nhầm. Route lá trong nav tự quản → so `===` luôn
+> chính xác; nếu sau này cần hỗ trợ sub-route, phải so trên danh sách path lá chính xác
+> chứ không dùng prefix mù.
+
+> **LESSON LEARNED — Playwright đo text phải mở ĐỦ nhánh trước khi assert (2026-09-19):**
+> lần đo 1 báo "nhãn THIẾU" dù nav đã đổi — nhãn nằm trong nhóm đang ĐÓNG + `innerText`
+> chỉ đọc text visible (GĐ 149). Phép đo đúng trạng thái UI: mở nhóm → hover giữ rail
+> mở → đo; hoặc đo class bằng `get_attribute("class")` (không phụ thuộc visibility).
+
+> **Verify (Playwright dev server, PASS hết):** rail 48px + content pl 48px; hover 320px
+> mép dính mép; 4 nhãn mới hiện + nhãn cũ sạch; Tổng quan lần 1 sổ hết / lần 2 còn cấp 1
+> / lần 3 nhánh active mở lại; mở `/m/bc-nxt-luong-tien` → CHỈ lá "lượng-tiền" sáng (và
+> ngược lại); ô cấp 1 giữ 36px; head có `?v=4` + 2 meta apple; tsc 0 lỗi; build OK.
+
+---
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 175 — icon trình duyệt + Sidebar app con 6 điểm, repo con 4.0.2; app tổng 3.5.6)*
 *Người cập nhật: Trợ lý lập trình*
