@@ -6530,7 +6530,17 @@ Tunnel — giải tận gốc).
 >
 > **Env đã set (đều Secret, CẢ 2 project giong-vn-v6 + giong-banhang):** REGISTER_SECRET (đồng bộ giá trị service `8ec874dd…` — trị 401), GH_GIST_TOKEN, TUNNEL_GIST_ID. Service dùng file .secrets (không cần đụng NSSM env).
 >
-> **✅ Verify (đo thật):** py_compile + import module OK; gist publish probe OK (PATCH 200 → GET đọc đúng `base_url`); typecheck SẠCH 0 lỗi cả 2 repo; restart service → tunnel mới `streaming-newer-tax-april` → log `[gist] cập nhật URL lên Gist OK: HTTP 200` → GET gist xác nhận URL mới; `/health` qua tunnel internet OK; `/query` từ internet + x-api-token → `{"rows":[{"n":35}]}` (35 employees) — chuỗi server hoàn chỉnh.
+> **✅ Verify (đo thật):** py_compile + import module OK; gist round-trip PATCH 200 → GET đúng `base_url`; typecheck SẠCH 0 lỗi cả 2 repo; restart service ×3, mỗi lần tunnel mới đều `[gist] cập nhật URL lên Gist OK: HTTP 200`; GET gist xác nhận URL mới; `/health` + `/query` internet qua tunnel OK (`{"rows":[{"n":35}]}`); `/api/units` app con trả 19 trung tâm; version bundle 2 app khớp (3.5.0 / 3.7.0).
+>
+> **🐛 ROOT CAUSE 503 lặp (bắt thêm khi verify):** route tunnel-register cũ ghi kv_settings QUA CHÍNH TUNNEL — repo con đã bỏ Neon nên kv_settings nằm GiongDB, đường duy nhất tới GiongDB là CHÍNH tunnel vừa đăng ký (DNS chưa lan edge Vercel) → Tunnel SQL 530/503 ~1 phút đầu; retry 5×15s vẫn fail vì mỗi lần probe lại qua đúng tunnel đó. Fix tận gốc: route BỎ ghi kv_settings — chỉ xác thực secret + ack `ok:true`; URL lan qua Gist (kênh chính). Sau deploy route mới: đăng ký HTTP 200 ngay lần đầu.
+>
+> **⚠️ QUAN TRỌNG — kv_settings không còn được ghi tự động từ nay:** app tự đọc Gist runtime (tunnelFetch trong db.ts cả 2 app) khi query fail. URL cũ trong kv_settings thành stale — không ai đọc.
+>
+> **LESSON LEARNED — Kênh cập nhật cấu hình phải NGOÀI chính đối tượng nó cập nhật (2026-09-19):** route cũ ghi URL mới QUA tunnel cũ đang chết/vừa tạo (vòng lặp vô dụng — đã chẩn đoán đầu phiên nhưng chỉ sửa tuyến API Server, còn sót consumer cũ ở route Vercel). Cấu hình động phải đi kênh độc lập (Gist + GitHub API không phụ thuộc tunnel/Neon/Vercel), không qua chính đối tượng đang được cấu hình.
+>
+> **LESSON LEARNED — Đổi kênh lưu trữ = rà TẤT CẢ consumer cũ (2026-09-19):** chuyển kv_settings → Gist thì route tunnel-register (consumer cũ của kv_settings) phải sửa theo; bỏ sót consumer cũ là dạng lỗi "hai đầu không khớp" lần thứ N (GĐ 69 chat channel, GĐ 96 SQL column, GĐ 109 handoff URL). Khi chuyển kênh, grep mọi chỗ ghi/đọc của kênh cũ trước khi tuyên bố chuyển xong.
+>
+> **LESSON LEARNED — Tunnel chết ngầm trả HTTP 530 CÓ response, không phải lỗi mạng (2026-09-19, fix sau deploy đầu):** fallback Gist đầu tiên chỉ chạy khi `res === null` (fetch throw) — nhưng Cloudflare vẫn RESOLVE hostname tunnel cũ dù tunnel đã chết → trả HTTP 530/5xx có response → không vào nhánh đọc Gist → app kẹt URL chết mãi (bắt được khi verify: /api/units trả rỗng 0.6s). Fix: điều kiện fallback thêm `!res.ok` (2 app đồng bộ). Bài học: "lỗi hạ tầng" có 2 dạng — lỗi MẠNG (throw, res null) và lỗi Ở TẦNG HẠ TẦNG (HTTP error code có response); xử lý fallback phải bao CẢ HAI, không chỉ catch exception.
 >
 > **LESSON LEARNED — Kênh cập nhật cấu hình phải NGOÀI chính đối tượng nó cập nhật (2026-09-19):** route tunnel-register cũ ghi URL mới QUA tunnel cũ đang chết — tự đánh mất đường đi khi cần nhất (tương tự “lưu mật khẩu trong máy đã khóa”). Thiết kế kênh cấu hình/fallback: luôn hỏi “kênh này sống khi đối tượng chính chết không?”. Gist ngoài tunnel + API GitHub độc lập hoàn toàn với tunnel/Neon/Vercel.
 >
@@ -6542,5 +6552,5 @@ Tunnel — giải tận gốc).
 >
 > **Version:** 3.4.3 → **3.5.0** (feature — minor; checklist GĐ 138 ✓ — không thành phần nào ≥10).
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 169 — PA-1 tự cập nhật Quick Tunnel qua Gist + watchdog; version 3.5.0)*
+*Cập nhật lần cuối: 2026-09-19 (GĐ 169 — PA-1 tự cập nhật Quick Tunnel qua Gist + watchdog + fix fallback 530; version 3.5.1)*
 *Người cập nhật: Trợ lý lập trình*
