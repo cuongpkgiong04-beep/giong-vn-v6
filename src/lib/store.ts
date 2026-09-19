@@ -196,7 +196,8 @@ let _syncRunning = false;
 // GĐ 84: timeout của lịch retry backoff — reschedule sau mỗi lần chạy
 let _retryTimeout: ReturnType<typeof setTimeout> | null = null;
 
-type PendingRecord = { collection: string; data: any; attempts?: number };
+// GĐ 170: key — định danh xóa khỏi queue (mặc định data.id; update/meta dùng `${id}:update`/`${id}:meta`)
+type PendingRecord = { collection: string; data: any; attempts?: number; key?: string };
 
 const PENDING_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -224,6 +225,11 @@ function addPendingSync(record: PendingRecord) {
   const pending = getPendingSync();
   // Add timestamp for expiry tracking
   record.data._syncTs = Date.now();
+  // GĐ 170: bản ghi update/meta dùng key trực quan `${id}:update` / `${id}:meta` —
+  // đặt vào record.key để clearPendingSync nhận diện đúng (không đụng data.id).
+  if (!record.key && record.data._tombstoneUpdate) record.key = `${record.data.id}:update`;
+  if (!record.key && record.data._tombstoneMeta) record.key = `${record.data.id}:meta`;
+  if (!record.key && record.data._tombstone) record.key = record.data.id;
   pending.push(record);
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
@@ -237,7 +243,10 @@ function addPendingSync(record: PendingRecord) {
 
 function clearPendingSync(ids: string[]) {
   if (ids.length === 0) return;
-  const pending = getPendingSync().filter((r) => !ids.includes(r.data.id));
+  // GĐ 170: khớp theo record.key (update/meta) HOẶC data.id (bản ghi thường).
+  const pending = getPendingSync().filter(
+    (r) => !ids.includes((r as any).key ?? r.data.id),
+  );
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
   } catch {
@@ -261,15 +270,51 @@ async function retryPendingSync() {
           await api.insertAttendance({ data: record.data });
           break;
         case "tasks":
-          await _neonInsertTask(record.data as Task);
+          // GĐ 170: tombstone (removeTask) đi qua deleteTask; bản ghi thường đi qua
+          // insertTask UPSERT LWW.
+          if (record.data._tombstone) {
+            await api.deleteTask({ data: { id: record.data.id, deletedAt: record.data.deletedAt } });
+          } else {
+            await _neonInsertTask(record.data as Task);
+          }
+          break;
+        case "checkins":
+          // GĐ 170: tombstone (removeCheckin) đi qua deleteCheckin; bản ghi thường
+          // đi qua insertCheckin UPSERT LWW.
+          if (record.data._tombstone) {
+            await api.deleteCheckin({ data: { id: record.data.id } });
+          } else {
+            await _neonInsertCheckin(record.data as CheckIn);
+          }
+          break;
+        case "messages":
+          // GĐ 170: meta (reaction/ghim/⭐/xóa phía tôi) đi qua updateMessageMeta;
+          // tombstone (removeMessage) đi qua insertMessage UPSERT như cũ.
+          if (record.data._tombstoneMeta) {
+            const { updateMessageMeta } = api;
+            await updateMessageMeta({ data: record.data.meta });
+          } else {
+            await _neonInsertMessage(record.data as ChatMessage);
+          }
           break;
         case "notes":
           // GĐ 91: tombstone (removeNote) đi qua insert UPSERT — preserve deleted_at
           // như proposals; bản ghi thường thì UPSERT LWW như cũ.
-          await _neonInsertNote(record.data as Note);
+          // GĐ 170: tombstone-update (updateNote offline) đi qua updateNote server.
+          if (record.data._tombstoneUpdate) {
+            await _neonUpdateNote(record.data.id, record.data.update);
+          } else {
+            await _neonInsertNote(record.data as Note);
+          }
           break;
         case "proposals":
-          await _neonInsertProposal(record.data as Proposal);
+          // GĐ 170: tombstone-update (updateProposal/duyệt offline) đi qua updateProposal
+          // server; bản ghi thường thì UPSERT LWW như cũ.
+          if (record.data._tombstoneUpdate) {
+            await _neonUpdateProposal(record.data.id, record.data.update);
+          } else {
+            await _neonInsertProposal(record.data as Proposal);
+          }
           break;
         case "messages":
           await _neonInsertMessage(record.data as ChatMessage);
@@ -695,9 +740,9 @@ async function _neonUpdateTask(id: string, data: { assignee: string; title: stri
   await updateTask({ data: { id, ...data } });
 }
 
-async function _neonDeleteTask(id: string) {
+async function _neonDeleteTask(id: string, deletedAt?: string) {
   const { deleteTask } = await import("@/routes/api/data");
-  await deleteTask({ data: { id } });
+  await deleteTask({ data: { id, deletedAt } });
 }
 
 async function _neonUpdateProposalStatus(id: string, status: string, approver?: string) {
@@ -744,6 +789,17 @@ async function _neonDeleteDocument(id: string, deletedAt: string) {
   const { deleteDocument } = await import("@/routes/api/data");
   await deleteDocument({ data: { id, deletedAt } });
 }
+
+/**
+ * Normalize timestamptz → ISO string: node-postgres (và serializer) trả Date
+ * cho cột timestamptz — Date làm hỏng string ops (.localeCompare/.slice) xuống
+ * route. GĐ 170: chuyển ra module level vì refreshMessages cũng dùng.
+ */
+const isoStr = (v: unknown): string | null => {
+  if (v == null) return null;
+  if (v instanceof Date) return v.toISOString();
+  return String(v);
+};
 
 export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   ...initial,
@@ -796,6 +852,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           loadDeletedAttendanceIds,
           loadDeletedCheckinIds,
           loadDeletedNoteIds,
+          loadDeletedTaskIds,
         } = await import(
           "@/routes/api/data"
         );
@@ -852,11 +909,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
         // Normalize timestamptz → ISO string: node-postgres returns Date objects
         // for timestamptz columns (no parser override in db.ts), and Date breaks
         // downstream string ops (.localeCompare/.slice) in routes.
-        const isoStr = (v: unknown): string | null => {
-          if (v == null) return null;
-          if (v instanceof Date) return v.toISOString();
-          return String(v);
-        };
+        // (isoStr moved to module level — GĐ 170: refreshMessages cũng dùng)
         const neonAttendance: Attendance[] = (att as any[]).map((r) => ({
           id: r.id, name: r.name, status: r.status, time: r.time,
           date: r.date, weekday: r.weekday, gps: r.gps ?? "",
@@ -899,8 +952,10 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
             channel: r.channel ?? "Chung", fromId: r.createdBy ?? "",
             directKey: r.directKey ?? "",
             attachments: Array.isArray(r.attachments) ? r.attachments : [],
-            updatedAt: isoStr(r.updatedAt) ?? r.at,
-            deletedAt: isoStr(r.deletedAt) ?? undefined,
+            // Fix GĐ 170: rows từ DB là snake_case (updated_at/deleted_at) —
+            // camelCase luôn undefined → updatedAt sai = at, tombstone không lọc.
+            updatedAt: isoStr(r.updated_at) ?? r.at,
+            deletedAt: isoStr(r.deleted_at) ?? undefined,
             groupId: r.groupId ?? "",
             mentions: Array.isArray(r.mentions) ? r.mentions : [],
             // GĐ 94: meta Zalo
@@ -975,28 +1030,36 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
          * 3. Records tombstoned on Neon (deleted_at) are removed from local.
          */
         const attPendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'attendance').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'attendance' && !r.data._tombstone).map((r) => r.data.id),
         );
         const taskPendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'tasks').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'tasks' && !r.data._tombstone).map((r) => r.data.id),
         );
         const notePendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'notes').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'notes' && !r.data._tombstone).map((r) => r.data.id),
         );
         const proposalPendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'proposals').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'proposals' && !r.data._tombstone).map((r) => r.data.id),
         );
         const docPendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'documents').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'documents' && !r.data._tombstone).map((r) => r.data.id),
         );
         const messagePendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'messages').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'messages' && !r.data._tombstone).map((r) => r.data.id),
         );
         const checkinPendingIds = new Set(
-          getPendingSync().filter((r) => r.collection === 'checkins').map((r) => r.data.id),
+          getPendingSync().filter((r) => r.collection === 'checkins' && !r.data._tombstone).map((r) => r.data.id),
         );
         const deletedAttendanceIds = new Set((delAtt as any[]).map((r) => r.id));
         const deletedNoteIds = new Set((delNts as any[]).map((r) => r.id));
+        // GĐ 170: tombstone tasks — lỗi migration 0030 chưa chạy không chặn module khác
+        let delTks: any[] = [];
+        try {
+          delTks = await loadDeletedTaskIds();
+        } catch {
+          // Migration 0030 not applied yet — ignore
+        }
+        const deletedTaskIds = new Set((delTks as any[]).map((r) => r.id));
 
         const mergedAttendance = mergeByTs(
           get().attendance,
@@ -1010,7 +1073,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
 
         set({
           attendance: mergedAttendance,
-          tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated),
+          tasks: mergeByTs(get().tasks, neonTasks, taskPendingIds, (r) => r.updated)
+            .filter((t) => !deletedTaskIds.has(t.id)), // GĐ 170: tombstone — task đã xóa biến mất mọi thiết bị
           proposals: mergeByTs(get().proposals, neonProposals, proposalPendingIds, (r) => r.updatedAt ?? "")
             .filter((p) => !p.deletedAt), // tombstone — loại phiếu đã xóa khỏi mọi thiết bị
           documents: mergeByTs(get().documents, neonDocuments, docPendingIds, (r) => r.updatedAt ?? "")
@@ -1024,7 +1088,8 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
               if (n.deletedAt) return false;
               return !deletedNoteIds.has(n.id);
             }),
-          messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.at),
+          messages: mergeByTs(get().messages, neonMessages, messagePendingIds, (r) => r.updatedAt ?? r.at)
+            .filter((m) => !m.deletedAt), // Fix GĐ 170: LWW theo updatedAt (r.at cũ gây meta tombstone thua merge) + lọc tombstone sau merge
           chatGroups: mergeByTs(get().chatGroups, neonGroups, new Set<string>(), (r) => r.updatedAt ?? "")
             .filter((g) => !g.deletedAt),
           checkins: (() => {
@@ -1091,7 +1156,13 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       tasks: s.tasks.map((x) => (x.id === id ? { ...x, status, updated: now } : x)),
     }));
     saveLs(get());
-    _neonUpdateTaskStatus(id, status, now).catch(console.warn);
+    // GĐ 170: queue trước (offline-first — UPDATE fail khi offline không còn mất),
+    // thành công mới rút khỏi queue. Pattern clock() GĐ 17.
+    const rec = { id, updated: now, status };
+    addPendingSync({ collection: "tasks", data: { _tombstoneUpdate: true, id, update: rec } as any });
+    _neonUpdateTaskStatus(id, status, now)
+      .then(() => clearPendingSync([`${id}:update`]))
+      .catch(() => {});
   },
 
   updateTask: (id, data) => {
@@ -1102,13 +1173,23 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       ),
     }));
     saveLs(get());
-    _neonUpdateTask(id, { ...data, updated: now }).catch(console.warn);
+    // GĐ 170: queue trước như setTaskStatus.
+    const rec = { id, updated: now, ...data };
+    addPendingSync({ collection: "tasks", data: { _tombstoneUpdate: true, id, update: rec } as any });
+    _neonUpdateTask(id, { ...data, updated: now })
+      .then(() => clearPendingSync([`${id}:update`]))
+      .catch(() => {});
   },
 
   removeTask: (id) => {
+    const deletedAt = new Date().toISOString();
     set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
     saveLs(get());
-    _neonDeleteTask(id).catch(console.warn);
+    // GĐ 170: tombstone + queue — xóa lan truyền mọi thiết bị, offline vẫnretry.
+    addPendingSync({ collection: "tasks", data: { id, deletedAt, _tombstone: true } as any });
+    _neonDeleteTask(id, deletedAt)
+      .then(() => clearPendingSync([id]))
+      .catch(() => {});
   },
 
   clock: (kind, gps = "", address = "", photo = "", employeeName, employeeId, workplace) => {
@@ -1203,7 +1284,11 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       ),
     }));
     saveLs(get());
-    _neonUpdateNote(id, { ...data, updatedAt }).catch(console.warn);
+    // GĐ 170: queue trước (offline-first) — thành công mới rút khỏi queue.
+    addPendingSync({ collection: "notes", data: { _tombstoneUpdate: true, id, update: { ...data, updatedAt } } as any });
+    _neonUpdateNote(id, { ...data, updatedAt })
+      .then(() => clearPendingSync([`${id}:update`]))
+      .catch(() => {});
   },
 
   // GĐ 91: xóa ghi chú — CHỈ Admin (UI chặn); tombstone để xóa lan truyền mọi thiết bị
@@ -1254,6 +1339,7 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   },
 
   setProposalStatus: (id, status, approver) => {
+    const updatedAt = new Date().toISOString();
     set((s) => ({
       proposals: s.proposals.map((x) =>
         x.id === id
@@ -1262,13 +1348,17 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
               status,
               approver: status === "Chờ duyệt" ? "" : (approver ?? x.approver ?? ""),
               approvedAt: status === "Chờ duyệt" ? undefined : new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              updatedAt,
             }
           : x,
       ),
     }));
     saveLs(get());
-    _neonUpdateProposalStatus(id, status, approver).catch(console.warn);
+    // GĐ 170: duyệt/từ chối/mở lại cũng phải sống sót offline — queue như updateProposal.
+    addPendingSync({ collection: "proposals", data: { _tombstoneUpdate: true, id, update: { status, approver, updatedAt } } as any });
+    _neonUpdateProposalStatus(id, status, approver)
+      .then(() => clearPendingSync([`${id}:update`]))
+      .catch(() => {});
   },
 
   updateProposal: (id, data) => {
@@ -1279,7 +1369,11 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       ),
     }));
     saveLs(get());
-    _neonUpdateProposal(id, { ...data, updatedAt }).catch(console.warn);
+    // GĐ 170: queue trước (offline-first) — thành công mới rút khỏi queue.
+    addPendingSync({ collection: "proposals", data: { _tombstoneUpdate: true, id, update: { ...data, updatedAt } } as any });
+    _neonUpdateProposal(id, { ...data, updatedAt })
+      .then(() => clearPendingSync([`${id}:update`]))
+      .catch(() => {});
   },
 
   removeProposal: (id) => {
@@ -1362,9 +1456,12 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
       ),
     }));
     saveLs(get());
+    // GĐ 170: queue trước (offline-first) — reaction/ghim/⭐ offline vẫn retry.
+    addPendingSync({ collection: "messages", data: { _tombstoneMeta: true, id, meta: { id, ...meta, updatedAt } } as any });
     import("@/routes/api/data")
       .then(({ updateMessageMeta }) => updateMessageMeta({ data: { id, ...meta, updatedAt } }))
-      .catch(console.warn);
+      .then(() => clearPendingSync([`${id}:meta`]))
+      .catch(() => {});
   },
 
   /** Poll tin mới từ Neon (mỗi 5s khi mở trang Chat) — merge vào store, không ghi đè pending. */
@@ -1384,8 +1481,9 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
           channel: r.channel ?? "Chung", fromId: r.createdBy ?? "",
           directKey: r.directKey ?? "",
           attachments: Array.isArray(r.attachments) ? r.attachments : [],
-          updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : r.at,
-          deletedAt: r.deletedAt ?? undefined,
+          // Fix GĐ 170: rows DB là snake_case (updated_at/deleted_at) — camelCase undefined.
+          updatedAt: isoStr(r.updated_at) ?? r.at,
+          deletedAt: isoStr(r.deleted_at) ?? undefined,
           groupId: r.groupId ?? "",
           mentions: Array.isArray(r.mentions) ? r.mentions : [],
           // GĐ 94: meta Zalo — reaction/pin/star/delete-for-me từ thiết bị khác
@@ -1600,9 +1698,15 @@ export const useAppStore = create<PersistSlice & Actions>((set, get) => ({
   },
 
   removeCheckin: (id: string) => {
+    const deletedAt = new Date().toISOString();
     set((s) => ({ checkins: s.checkins.filter((c) => c.id !== id) }));
     saveLs(get());
-    _neonDeleteCheckin(id).catch(console.warn);
+    // GĐ 170: tombstone + queue — xóa lan truyền mọi thiết bị, offline vẫn retry
+    // (trước đây fire-and-forget — offline là mất). Pattern removeProposal GĐ 59.
+    addPendingSync({ collection: "checkins", data: { id, deletedAt, _tombstone: true } as any });
+    _neonDeleteCheckin(id)
+      .then(() => clearPendingSync([id]))
+      .catch(() => {});
   },
 
   /* ── Documents (Hồ sơ tài liệu — GĐ 66) ─────────────────────────────── */

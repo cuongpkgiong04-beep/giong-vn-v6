@@ -136,7 +136,7 @@ export const loadTasks = createServerFn({ method: "GET" })
       assigner: string;
       photo: string | null;
       location: string;
-    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`
+    }>`SELECT *, created_by as "createdBy", COALESCE(assigner, created_by) as "assigner" FROM tasks WHERE deleted_at IS NULL ORDER BY created DESC LIMIT 200`
       .catch(() => sql<{
         id: string;
         assignee: string;
@@ -152,6 +152,13 @@ export const loadTasks = createServerFn({ method: "GET" })
         photo: string | null;
         location: string;
       }>`SELECT *, created_by as "createdBy", '' as "assigner" FROM tasks ORDER BY created DESC LIMIT 200`);
+  });
+
+/** GĐ 170: danh sách task đã xóa (tombstone) — hydrate filter bỏ ở mọi thiết bị. */
+export const loadDeletedTaskIds = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const sql = await getSql();
+    return sql<{ id: string }>`SELECT id FROM tasks WHERE deleted_at IS NOT NULL`;
   });
 
 export const insertTask = createServerFn({ method: "POST" })
@@ -174,13 +181,19 @@ export const insertTask = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const sql = await getSql();
+    // GĐ 170: UPSERT LWW theo `updated` (pattern attendance GĐ 17) — thiết bị khác
+    // sửa/cập nhật trạng thái task thì thiết bị này retry queue không ghi đè ngược.
     await sql`
       INSERT INTO tasks (id, assignee, title, created, due, status, support, blocker, updated, created_by, assigner, photo, location)
       VALUES (${data.id}, ${data.assignee}, ${data.title}, ${data.created},
               ${data.due ?? ""}, ${data.status ?? "Việc cần làm"},
               ${data.support ?? ""}, ${data.blocker ?? ""}, ${data.updated},
               ${data.createdBy ?? ""}, ${data.assigner ?? data.createdBy ?? ""}, ${data.photo ?? null}, ${data.location ?? ""})
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (id) DO UPDATE SET
+        assignee = EXCLUDED.assignee, title = EXCLUDED.title, due = EXCLUDED.due,
+        status = EXCLUDED.status, support = EXCLUDED.support, blocker = EXCLUDED.blocker,
+        updated = EXCLUDED.updated, photo = EXCLUDED.photo, location = EXCLUDED.location
+      WHERE tasks.updated < EXCLUDED.updated
     `;
   });
 
@@ -220,10 +233,12 @@ export const updateTask = createServerFn({ method: "POST" })
   });
 
 export const deleteTask = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .validator((data: { id: string; deletedAt?: string }) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
-    await sql`DELETE FROM tasks WHERE id = ${data.id}`;
+    // GĐ 170: tombstone (soft delete) thay DELETE vật lý — xóa lan truyền mọi
+    // thiết bị qua hydrate LWW + retry queue. Pattern deleteAttendance GĐ 17.
+    await sql`UPDATE tasks SET deleted_at = ${data.deletedAt ? new Date(data.deletedAt) : new Date()} WHERE id = ${data.id}`;
   });
 
 export const bulkInsertTasks = createServerFn({ method: "POST" })

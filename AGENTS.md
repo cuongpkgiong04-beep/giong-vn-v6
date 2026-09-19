@@ -6552,5 +6552,40 @@ Tunnel — giải tận gốc).
 >
 > **Version:** 3.4.3 → **3.5.0** (feature — minor; checklist GĐ 138 ✓ — không thành phần nào ≥10).
 
-*Cập nhật lần cuối: 2026-09-19 (GĐ 169 — PA-1 tự cập nhật Quick Tunnel qua Gist + watchdog + fix fallback 530; version 3.5.1)*
+### GĐ 170: Đồng bộ offline-first toàn bộ module — phủ tombstone + pending queue cho UPDATE/DELETE (2026-09-19, 3.5.2)
+
+> **Yêu cầu của Đại ca (2026-09-19):** Chấm công không đồng bộ đã sửa (GĐ 17/21/84); nay kiểm tra tiếp Check-in, Nhiệm vụ, Ghi chú, Chat, Đề nghị — module nào còn hở sync thì sửa.
+>
+> **Kết quả rà soát 3 tầng (store → server → DB) cho 5 module:**
+>
+> | Module | Tạo mới | Sửa (UPDATE) | Xóa (DELETE) |
+> |---|---|---|---|
+> | Check-in | ✅ queue + UPSERT LWW | — | ❌ DELETE FROM + fire-and-forget |
+> | Nhiệm vụ | ✅ queue | ❌ fire-and-forget | ❌ xóa vật lý + fire-and-forget |
+> | Ghi chú | ✅ queue + LWW | ❌ fire-and-forget | ✅ tombstone (GĐ 91) |
+> | Chat (meta reaction/ghim/⭐) | ✅ queue + LWW | ❌ fire-and-forget | ✅ tombstone (GĐ 94) |
+> | Đề nghị | ✅ queue + LWW | ❌ duyệt/sửa fire-and-forget | ✅ tombstone (GĐ 59) |
+>
+> **2 nguyên nhân gốc:** (1) **Gói C của GĐ 84** (UPDATE/DELETE fail cũng vào queue) đã phân tích nhưng "chờ duyệt" và KHÔNG BAO GIỜ được triển khai — nợ kỹ thuật 6 tuần; (2) **DB chuyển sang GiondDB SQL Server (GĐ 164)** — bỏ PGLite nghĩa là mất lớp ghi local, mọi fire-and-forget fail khi offline là MẤT HẲN (không còn lưới nào).
+>
+> **Fix GĐ 170 (theo đúng mẫu Chấm công đã chuẩn):**
+> 1. **Migration 0030:** tasks thêm `deleted_at` (collection chính cuối cùng thiếu tombstone) + index.
+> 2. **data.ts:** `insertTask` UPSERT LWW theo `updated` (trước là DO NOTHING — sửa task offline bị ghi đè); `deleteTask` tombstone; `loadTasks` filter `deleted_at IS NULL`; +`loadDeletedTaskIds`.
+> 3. **store.ts — mọi action UPDATE/DELETE của 5 module giờ: queue TRƯỚC → gọi server → thành công mới rút khỏi queue:**
+>    - `setTaskStatus` / `updateTask` / `updateNote` / `updateProposal` / `setProposalStatus` (duyệt/từ chối/mở lại) / `updateMessageMeta` (reaction/ghim/⭐/xóa-phía-tôi) — thêm `_tombstoneUpdate`/`_tombstoneMeta` vào queue, `retryPendingSync` nhận diện và đi qua đúng server function.
+>    - `removeTask` / `removeCheckin` — tombstone + queue (trước đây removeTask xóa VẬT LÝ, không lan truyền thiết bị khác).
+> 4. **PendingRecord.key** — bản ghi update/meta dùng key `${id}:update` / `${id}:meta` để clear đúng (không đụng data.id của bản ghi thường).
+> 5. **Hydrate:** pending set loại trừ tombstone (task đã xóa không được hồi sinh từ local); +filter `deletedTaskIds` sau merge; +2 FIX BUG THẬT: map messages hydrate/poll đọc `r.updatedAt`/`r.deletedAt` camelCase (rows DB là snake_case → luôn undefined — tombstone tin nhắn KHÔNG LỌC, updatedAt sai = at); merge messages đổi LWW từ `r.at` → `updatedAt ?? r.at` + filter tombstone sau merge.
+>
+> **LESSON LEARNED — Gói đã phân tích mà không triển khai = nợ kỹ thuật vô hình (2026-09-19):** GĐ 84 ghi rõ "Gói C — CHƯA sửa (chờ Đại ca duyệt)" rồi không ai duyệt, không ai hỏi lại — nợ sống yên trong AGENTS.md 6 tuần cho đến khi user gặp sự cố thật. Việc viết "chờ duyệt" phải có hạn chót hoặc câu hỏi follow-up cụ thể.
+>
+> **LESSON LEARNED — Đổi hạ tầng DB phải rà lại mọi lưới an toàn cũ (2026-09-19):** PGLite có getWritableDatabase() ghi local nên fire-and-forget fail còn lưới; GiondDB SQL Server KHÔNG có lớp local writer → mọi action không qua pending queue mất hẳn khi offline. Checklist khi đổi backend: với MỖI action ghi dữ liệu, tự hỏi "nếu fail offline thì data đi đâu?" — không có câu trả lời là lỗ hổng.
+>
+> **LESSON LEARNED — Rà sync theo 3 chiều bảng (2026-09-19):** đi từng module × từng thao tác (INSERT/UPDATE/DELETE) × từng tầng (store action → server function → SQL schema) mới thấy đủ lỗ hổng; chỉ rà theo module thì mỗi lần chỉ bắt được 1 góc (GĐ 84 bắt INSERT, GĐ 59/91/94 bắt DELETE từng module riêng lẻ, UPDATE lọt hết).
+>
+> **LƯU Ý cho Đại ca khi test:** offline sửa/xóa nhiệm vụ + ghi chú + reaction/ghim chat + duyệt đề nghị + xóa check-in → bật lại mạng → mở thiết bị khác → dữ liệu khớp. Migration 0030 tự chạy khi Vercel build. Task xóa vật lý trước GĐ 170 (nếu có) không phục hồi được — nhưng từ giờ xóa lan truyền đúng.
+>
+> **Version:** 3.5.1 → **3.5.2** (fix sync — patch; checklist GĐ 138 ✓).
+
+*Cập nhật lần cuối: 2026-09-19 (GĐ 170 — phủ tombstone + pending queue cho UPDATE/DELETE mọi module; version 3.5.2)*
 *Người cập nhật: Trợ lý lập trình*
