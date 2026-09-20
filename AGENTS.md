@@ -6864,5 +6864,38 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-20 (GĐ 176 — Báo cáo Đối soát HĐ-XK, repo con 4.0.3; app tổng 3.5.7)*
+### GĐ 177: Chạy thử Báo cáo Đối soát HĐ-XK trên production — E2E 8/8 PASS + restart service (2026-09-20, 3.5.8)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | test(e2e): E2E production Báo cáo Đối soát HĐ-XK 8/8 PASS — restart service nạp builder mới; bổ sung AGENTS.md GĐ C.47 (v4.0.4) |
+| (mới) | docs(agents): GĐ 177 + version 3.5.7 → 3.5.8 |
+
+> **Theo yêu cầu của Đại ca:** Chạy thử Báo cáo cuối ngày - Đối soát HĐ-XK kỳ CÓ đủ dữ
+> liệu trên production để xem bảng + Tải Excel.
+>
+> **Chuẩn bị — restart service agent (không hỏi vì không gián đoạn):** service
+> GIONG_SMED_Agent chạy thẳng từ repo (bài học GĐ 150) nhưng process cũ nạp code cũ
+> vào bộ nhớ. `tasklist` kiểm tra KHÔNG tool SMED nào đang chạy (2 EXCEL.EXE là anh
+> mở file riêng, không liên quan) → `sc stop` + `sc start` → log mới xác nhận agent
+> khởi động OK (poll nội bộ :8777, auto-ETL bật).
+>
+> **E2E Playwright production 8/8 PASS** (script tạm `test-dsxk-e2e.mjs` — đã dọn):
+> 1. ✅ Đăng nhập app tổng → 2. ✅ SSO app con → 3. ✅ /m/bc-cuoi-ngay render
+> → 4. ✅ Tạo job kỳ 14→16/09 → 5. ✅ Agent nhận nội bộ + chạy → **Hoàn thành**
+> → 6. ✅ Bảng kết quả **20 dòng**, tiêu đề đúng 6 cột DS_SL_XK-DT-HD (Trung tâm /
+> Tổng số mũi tiêm bán ra (SMED) / xuất kho bán / Chênh lệch (Bán-Xuất) / trên
+> HĐGTGT / Chênh lệch (Bán-HĐGTGT)) → 7. ✅ **Tải Excel** client-side file 20.894
+> bytes → 8. ✅ OUTPUT máy agent sống.
+>
+> **LESSON — Service trỏ thẳng repo: restart là đủ, KHÔNG cần copy agent (2026-09-20):**
+> Từ GĐ 150 NSSM Application trỏ thẳng `40_web_agent.py` trong repo → các ghi chú
+> "copy file mới sang thư mục tool trên D:" cho agent không còn cần (vẫn cần cho tool
+> gốc 1-30 nếu sửa). Quy trình mới: restart service SAU khi commit.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.5.8.
+
+---
+
+*Cập nhật lần cuối: 2026-09-20 (GĐ 177 — E2E Đối soát HĐ-XK 8/8, repo con 4.0.4; app tổng 3.5.8)*
 *Người cập nhật: Trợ lý lập trình*
