@@ -7085,3 +7085,13 @@ Tunnel — giải tận gốc).
 > **App tổng chỉ bump version + ghi docs — không đổi code.**
 >
 > **Version:** 3.6.1 → 3.6.2 (patch; checklist GĐ 138 ✓).
+
+### GĐ 181c — Retry GLM khi cold-start timeout (2026-09-20, 3.6.3)
+
+> E2E lại sau maxDuration 60s (GĐ 181b): request trả HTTP 200 nhưng reply =
+> raw error "aborted due to timeout" — GLM cold-start đôi lúc >25s. Repo con
+> fix (GĐ C.51b bổ sung, v4.3.2): tách `callGlmOnce` timeout 20s + retry ĐÚNG
+> 1 lần khi timeout (lần 2 instance ấm, luôn nhanh). Lesson: API ngoài tự do
+> phải có retry cold-start — timeout ngắn + retry tốt hơn timeout dài.
+>
+> **App tổng chỉ bump version — không đổi code. 3.6.2 → 3.6.3 (patch).**
