@@ -7030,3 +7030,42 @@ Tunnel — giải tận gốc).
 > N job download + job 'Chờ tải dữ liệu' → thanh % tăng → tự chạy → "nạp lúc HH:MM"
 > đúng giờ vừa tải; bỏ tick → nhanh như cũ; version app con 4.2.0 + app tổng 3.6.1
 > (checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+### GĐ 181: Hệ sinh thái — Trợ lý AI trên header app con (repo con v4.3.0) (2026-09-20)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(ai): GĐ C.51 — Trợ lý AI (panel header + /api/ai/chat GLM-4.5-Flash miễn phí + 5 tool query GiondDB/job) (v4.3.0) |
+| (mới) | docs(agents): GĐ 181 + version app tổng 3.6.1 → 3.6.2 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (20/09):** Tạo AI Agent đặt tại thanh header app con để
+> người dùng hỏi/yêu cầu bằng tiếng Việt tự nhiên: đơn giá nhập 1 sản phẩm,
+> tồn kho hiện tại, chạy lại báo cáo của trung tâm A, xóa báo cáo... — mọi thứ
+> liên quan đến dữ liệu muốn báo cáo nhanh.
+>
+> **Đã chốt trước khi làm:** model **GLM-4.5-Flash (FREE)** · quyền **Đọc +
+> Hành động** · áp dụng cho **TẤT CẢ user app con** (hành động vẫn bị chặn
+> theo nhóm bộ phận).
+>
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.51):**
+> - Nút "Trợ lý AI" trên header app con → panel chat trượt từ phải → POST
+>   `/api/ai/chat` → GLM-4.5-Flash (Z.ai, miễn phí, OpenAI-compatible) tự gọi
+>   tool: `query_data` (5 dataset whitelist: đơn giá nhập stg_5BKN, tồn kho
+>   stg_7BCNXT, bán hàng, xuất kho, thu tiền), `create_download_job`,
+>   `run_report`, `list_jobs`, `cancel_job`.
+> - **LLM KHÔNG tự viết SQL** — server dựng SQL từ whitelist cứng + tham số
+>   $1/$2 parameterized + top(40); hành động đi qua ĐÚNG createSmedJob/
+>   cancelSmedJob → guard quyền nhóm GĐ C.21 hoạt động như form bình thường.
+> - Thiếu env `ZAI_API_KEY` → panel báo "chưa cấu hình", app không crash.
+>
+> **LESSON — SQL động từ LLM phải whitelist 2 chiều (2026-09-20):** LLM chỉ
+> chọn tham số có enum; SQL dựng từ template cứng phía server. Dặn LLM "chỉ
+> SELECT" trong prompt không đủ an toàn (prompt injection). 4 lớp bắt buộc:
+> whitelist dataset + cột hiển thị cố định + tham số hóa + top(N).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.2.
+
+---
+
+*Cập nhật lần cuối: 2026-09-20 (GĐ 181 — Trợ lý AI app con; app tổng 3.6.2 / repo con 4.3.0)*
+*Người cập nhật: Trợ lý lập trình*
