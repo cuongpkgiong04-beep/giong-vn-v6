@@ -7069,3 +7069,19 @@ Tunnel — giải tận gốc).
 
 *Cập nhật lần cuối: 2026-09-20 (GĐ 181 — Trợ lý AI app con; app tổng 3.6.2 / repo con 4.3.0)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 181b — Hotfix Trợ lý AI bị kill 10s + set ZAI_API_KEY (2026-09-20, 3.6.2)
+
+> **Bối cảnh:** Sau GĐ 181 (Trợ lý AI header app con, repo con v4.3.0), Đại ca cấp
+> ZAI_API_KEY — em set Secret lên Vercel project giong-banhang + redeploy. E2E
+> production: request `/api/ai/chat` vào function nhưng KHÔNG trả response mãi.
+>
+> **ROOT CAUSE:** Vercel Hobby cap function 10s mặc định — tool-loop AI vượt → bị
+> kill IM LẶNG (client chờ vô hạn). Fix bên repo con (GĐ C.51b, v4.3.1):
+> maxDuration 60s cho function `__server.func` (Build Output API — mọi route
+> TanStack gom 1 function, key phải tên thư mục `.func`, không phải route path)
+> + AbortSignal 25s cho fetch GLM.
+>
+> **App tổng chỉ bump version + ghi docs — không đổi code.**
+>
+> **Version:** 3.6.1 → 3.6.2 (patch; checklist GĐ 138 ✓).
