@@ -6897,5 +6897,34 @@ Tunnel — giải tận gốc).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-20 (GĐ 177 — E2E Đối soát HĐ-XK 8/8, repo con 4.0.4; app tổng 3.5.8)*
+### GĐ 178: Backfill lịch sử download 01/2025→08/2026 — 55 job tự tạo qua UI (2026-09-20, 3.5.9)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(backfill): GĐ C.48 — quét thiếu dữ liệu staging theo tháng + tạo 55 job download qua UI (v4.0.5) |
+| (mới) | docs(agents): GĐ 178 + version 3.5.8 → 3.5.9 |
+
+> **Yêu cầu của Đại ca (20/09):** Kiểm tra dữ liệu download còn thiếu 01/01/2025→
+> 31/08/2026, thiếu thì tải — TRỪ Bảng kê chung cuối ngày (BKCCN). Tự tạo lệnh
+> TRÊN ỨNG DỤNG để anh theo dõi. Xong tổng kết.
+>
+> **Quét thiếu (2 tầng — DB là nguồn quyết định, thư mục OUTPUT nhiều chỗ chỉ là
+> KHUNG rỗng tạo bằng script):** query GROUP BY tháng 12 bảng staging GiondDB qua
+> API Server nội bộ. **Thiếu thật 55 tháng-phân-hệ:** HĐĐT 2025-01→06 (6) ·
+> DT tổng hợp Chuỗi 18 tháng (chỉ có tháng-01 mẫu) · NXT Kế toán 18 tháng (cùng
+> gốc XNKT 2025-02→2026-08) · Lịch hẹn tiêm 2025-01→11 (11) · BKN 2025-12 +
+> 2026-08 (2). **Đủ:** DTTDT, BKX, BLTH, BCCK, GDTVX, DT_BLTH, Chiết khấu, Đặt
+> trước. **Trừ theo chỉ đạo:** BKCCN (đủ sẵn). **N/A:** BKCT/BKTH MISA (nguồn
+> chỉ tồn tại từ 09/2026).
+>
+> **Tạo job QUA UI (đúng yêu cầu):** Playwright login → SSO → 5 trang download →
+> điền từng tháng → bấm CTA "Lấy dữ liệu 19 trung tâm" → **55/55 OK, 0 lỗi**.
+> Agent nhận FIFO ngay — job đầu HĐĐT 01/2025 chạy lúc 08:12. Ước tính agent tự
+> chạy ~5.5 giờ (XNKT 18×6p là phần lớn).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.5.9.
+
+---
+
+*Cập nhật lần cuối: 2026-09-20 (GĐ 178 — Backfill 55 job lịch sử, repo con 4.0.5; app tổng 3.5.9)*
 *Người cập nhật: Trợ lý lập trình*
