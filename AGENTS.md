@@ -6957,3 +6957,76 @@ Tunnel — giải tận gốc).
 > patch; checklist GĐ 138 ✓: 3.5.9 patch đầy 9 → về 0 + nhớ minor = 3.6.0,
 > không thành phần nào ≥ 10).
 
+
+### GĐ 180: Hệ sinh thái — Dữ liệu mới nhất cho MỌI báo cáo app con (repo con v4.2.0) (2026-09-20)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.50 — checkbox "Tải dữ liệu mới nhất trước khi chạy" (mặc định BẬT) + mốc thời gian nạp import_log (v4.2.0) |
+| (mới) | docs(agents): GĐ 180 + version app tổng 3.6.0 → 3.6.1 (docs-only — patch) |
+
+> **Câu hỏi của Đại ca (20/09):** Chạy lại báo cáo có lấy dữ liệu mới nhất từ SMED
+> không? Có phải download lại file không? Nếu không thì dữ liệu chưa chính xác.
+>
+> **Trả lời (phân tích trước khi chốt):** KHÔNG — agent chỉ ETL file Excel hiện có
+> trong OUTPUT; SMED sửa số sau lần tải cuối → báo cáo ra số cũ IM LẶNG (cảnh báo
+> thiếu chỉ kích hoạt khi staging 0 dòng — data cũ-but-có không bị phát hiện).
+>
+> **Đã chốt qua 3 vòng hỏi:** PA-2 (checkbox + hiển thị thời gian tải — khuyến nghị
+> của em) · Áp dụng TẤT CẢ báo cáo · Mặc định BẬT (an toàn).
+>
+> **Cơ chế:** Bật checkbox → bấm chạy: (1) treo job download TẤT CẢ nguồn của báo
+> cáo trước (tải lại an toàn — xóa file cũ GĐ C.10 + nạp đè GĐ B.2.1, không nhân
+> đôi) → (2) tạo job báo cáo → (3) treo 'waitdownload' ngay → agent tải xong tự
+> chạy báo cáo (chuỗi 3 bước GĐ C.45, đổi điều kiện từ "thiếu" sang "user yêu cầu").
+> Form hiển thị mốc "nạp lúc HH:MM" từng nguồn (max import_log.imported_at JOIN
+> staging theo kỳ); kết quả có "nạp lúc HH:MM" (dataLoadedAt do agent ghi vào
+> meta/summary). Bỏ tick → chạy nhanh bằng data đã có như cũ.
+>
+> Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.50 (SQL_SOURCES_BY_QUERY +
+> loadSourceFreshness + requeueReportJob nhận sources/pending + agent dataLoadedAt).
+>
+> **⚠️ Restart GIONG_SMED_Agent sau deploy** để agent nhận phần dataLoadedAt
+> (không restart vẫn chạy — chỉ thiếu mốc giờ trên kết quả).
+>
+> **Tiêu chí kiểm chứng:** Trang báo cáo: checkbox BẬT + mốc nạp từng nguồn; chạy →
+> N job download + job 'Chờ tải dữ liệu' → thanh % tăng → tự chạy → "nạp lúc HH:MM"
+> đúng giờ vừa tải; bỏ tick → nhanh như cũ; version app con 4.2.0 + app tổng 3.6.1
+> (checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+
+### GĐ 180: Hệ sinh thái — Dữ liệu mới nhất cho MỌI báo cáo app con (repo con v4.2.0) (2026-09-20)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.50 — checkbox "Tải dữ liệu mới nhất trước khi chạy" (mặc định BẬT) + mốc thời gian nạp import_log (v4.2.0) |
+| (mới) | docs(agents): GĐ 180 + version app tổng 3.6.0 → 3.6.1 (docs-only — patch) |
+
+> **Câu hỏi của Đại ca (20/09):** Chạy lại báo cáo có lấy dữ liệu mới nhất từ SMED
+> không? Có phải download lại file không? Nếu không thì dữ liệu chưa chính xác.
+>
+> **Trả lời (phân tích trước khi chốt):** KHÔNG — agent chỉ ETL file Excel hiện có
+> trong OUTPUT; SMED sửa số sau lần tải cuối → báo cáo ra số cũ IM LẶNG (cảnh báo
+> thiếu chỉ kích hoạt khi staging 0 dòng — data cũ-but-có không bị phát hiện).
+>
+> **Đã chốt qua 3 vòng hỏi:** PA-2 (checkbox + hiển thị thời gian tải — khuyến nghị
+> của em) · Áp dụng TẤT CẢ báo cáo · Mặc định BẬT (an toàn).
+>
+> **Cơ chế:** Bật checkbox → bấm chạy: (1) treo job download TẤT CẢ nguồn của báo
+> cáo trước (tải lại an toàn — xóa file cũ GĐ C.10 + nạp đè GĐ B.2.1, không nhân
+> đôi) → (2) tạo job báo cáo → (3) treo 'waitdownload' ngay → agent tải xong tự
+> chạy báo cáo (chuỗi 3 bước GĐ C.45, đổi điều kiện từ "thiếu" sang "user yêu cầu").
+> Form hiển thị mốc "nạp lúc HH:MM" từng nguồn (max import_log.imported_at JOIN
+> staging theo kỳ); kết quả có "nạp lúc HH:MM" (dataLoadedAt do agent ghi vào
+> meta/summary). Bỏ tick → chạy nhanh bằng data đã có như cũ.
+>
+> Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.50 (SQL_SOURCES_BY_QUERY +
+> loadSourceFreshness + requeueReportJob nhận sources/pending + agent dataLoadedAt).
+>
+> **⚠️ Restart GIONG_SMED_Agent sau deploy** để agent nhận phần dataLoadedAt
+> (không restart vẫn chạy — chỉ thiếu mốc giờ trên kết quả).
+>
+> **Tiêu chí kiểm chứng:** Trang báo cáo: checkbox BẬT + mốc nạp từng nguồn; chạy →
+> N job download + job 'Chờ tải dữ liệu' → thanh % tăng → tự chạy → "nạp lúc HH:MM"
+> đúng giờ vừa tải; bỏ tick → nhanh như cũ; version app con 4.2.0 + app tổng 3.6.1
+> (checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
