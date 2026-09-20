@@ -7095,3 +7095,32 @@ Tunnel — giải tận gốc).
 > phải có retry cold-start — timeout ngắn + retry tốt hơn timeout dài.
 >
 > **App tổng chỉ bump version — không đổi code. 3.6.2 → 3.6.3 (patch).**
+
+---
+
+## 📌 VIỆC HẸN NGÀY 21/09 (mai) — test lại Trợ lý AI khi Z.ai hồi phục
+
+> **Bối cảnh (20/09 đêm):** Trợ lý AI (GĐ C.51) đã LIVE bản v4.3.3 — code hoạt động
+> (tool `query_data` từng trả dữ liệu thật từ GiondDB), NHƯNG Z.ai free tier
+> GLM-4.5-Flash đang 429 rate limit TOÀN BỘ request (kể cả câu đơn giản không
+> tools) + API đôi lúc treo không response. Chẩn đoán bằng probe trực tiếp API
+> key — KHÔNG phải lỗi code.
+>
+> **Chờ Z.ai hồi phục** ( Đại ca chọn phương án 1 — chờ, không nâng cấp, không đổi model).
+>
+> **Cách test mai (ĐÃ CHUẨN BỊ script):**
+> ```bash
+> cd giong-apps/apps/banhang
+> node scripts/test-ai-assistant.mjs                                    # câu mặc định: đơn giá nhập Abhayrab
+> node scripts/test-ai-assistant.mjs "Tồn kho Rivaxel hiện tại?"        # câu tùy ý
+> ```
+> Script: login app tổng → SSO app con → mở panel → hỏi → chờ response →
+> in kết quả + screenshot `screenshots/ai-assistant-test.png`. Exit 0 = OK.
+>
+> **Nếu Z.ai VẪN 429 sau 24h:** báo Đại ca 2 phương án còn lại — (2) nâng cấp
+> gói Z.ai (~$3/tháng) hoặc (3) đổi Gemini 2.5 Flash (em sửa ~10 dòng, cần
+> anh cấp key Google AI Studio).
+>
+> **Nếu OK:** chạy thêm 2-3 câu hợp lệ khác (tồn kho / chạy lại báo cáo / lịch
+> sử job) rồi ghi kết quả vào đây + bump version docs nếu cần. KHÔNG cần sửa
+> code — hệ thống đã hoàn chỉnh.
