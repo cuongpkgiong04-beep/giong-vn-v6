@@ -6928,3 +6928,32 @@ Tunnel — giải tận gốc).
 
 *Cập nhật lần cuối: 2026-09-20 (GĐ 178 — Backfill 55 job lịch sử, repo con 4.0.5; app tổng 3.5.9)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 179: Hệ sinh thái — Đối soát HĐ-XK hiển thị + cảnh báo thiếu 1 lần + thanh % báo cáo (repo con v4.1.0) (2026-09-20)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `7caacfd` | feat(báo cáo): GĐ C.49 — Đối soát HĐ-XK tên trung tâm đầy đủ + tiêu đề nhỏ đủ chữ + bỏ Subtotal đậm Tổng cộng + cảnh báo thiếu liệt kê tổng thể 1 lần + thanh % mọi báo cáo (v4.1.0) |
+| (mới) | docs(agents): GĐ 179 + version app tổng 3.5.9 → 3.6.0 (docs-only — patch 9 đầy → nhớ minor) |
+
+> **Yêu cầu của Đại ca (20/09 — 3 nhóm, chi tiết kỹ thuật đầy đủ ở AGENTS.md
+> repo con GĐ C.49):**
+> 1. **Báo cáo cuối ngày - Đối soát HĐ-XK** 3 điểm hiển thị: tên trung tâm ĐẦY
+>    ĐỦ ("Trung tâm TC Long Biên" — từ bảng centers GiondDB); tiêu đề cột chữ
+>    nhỏ 10px + wrap ĐỦ chữ (hết truncate mất chữ); bỏ dòng Subtotal — dòng
+>    TỔNG CỘNG ĐẬM + nền nhạt nổi bật.
+> 2. **Cảnh báo thiếu dữ liệu hỏi 1 LẦN DUY NHẤT** — ROOT CAUSE: builder raise
+>    NoSourceDataError TỪNG BƯỚC (DS: thiếu B lần 1 → C lần 2 → E lần 3) → web
+>    hỏi download 3 lần. Fix: `run_sql_report` check TẤT CẢ nguồn TRƯỚC khi chạy
+>    builder → raise 1 lần với danh sách đầy đủ → dialog liệt kê tổng thể 1 lần.
+> 3. **Thanh % hoàn thành áp MỌI báo cáo đang chạy** — waitdownload tính CẢ
+>    tiến độ download các nguồn thiếu (doneCenters realtime GĐ C.19 của job
+>    download) + trọng số giai đoạn chạy báo cáo; running = bar mờ indeterminate.
+
+> **✅ Verify repo con:** builder thật kỳ 14→16 = 20 dòng tên đầy đủ, TỔNG CỘNG
+> khớp đối chứng GĐ 177 từng đồng; py_compile OK; tsc 0 lỗi; build OK.
+
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.0 (docs-only —
+> patch; checklist GĐ 138 ✓: 3.5.9 patch đầy 9 → về 0 + nhớ minor = 3.6.0,
+> không thành phần nào ≥ 10).
+
