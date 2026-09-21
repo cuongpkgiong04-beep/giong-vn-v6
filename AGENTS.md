@@ -7412,3 +7412,28 @@ Tunnel — giải tận gốc).
 
 > **Tiêu chí kiểm chứng:** TX-DS kỳ nào cũng có cột NK từ lịch sử 01/2025;
 > job download NK của TX-DS hiện kỳ 01/01/2025 → ngày chạy trong lịch sử.
+
+### GĐ 190: Hệ sinh thái — TH_NXT lượng-tiền cuộn ngang + Autofit cột (repo con v4.6.3) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `03a44eb` | fix(báo cáo): GĐ C.60 — TH_NXT lượng-tiền cuộn ngang + Autofit cột; Hàng hóa cố định 321px (v4.6.3) |
+| (mới) | docs(agents): GĐ 190 + version app tổng 3.7.1 → 3.7.2 |
+
+> **Yêu cầu của Đại ca (21/09):** "Báo cáo TH_NXT kho theo lượng-tiền" 24 cột không dồn
+> hết 1 màn hình — cuộn ngang xem được; cột hiện hết dữ liệu kiểu Autofit; RIÊNG cột
+> "Hàng hóa" cố định 321px (độ rộng 26 Excel anh dùng), tên dài ẩn (truncate) không
+> tràn sang cột phải. CHỈ báo cáo này.
+>
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.60):** prop `autoFitColumns`
+> opt-in trong khung bảng dùng chung — table-auto + th minWidth đo canvas measureText
+> (mẫu 200 dòng đầu như Autofit Excel), container cuộn ngang+dọc trong khung 530px;
+> regex cột Hàng hóa nhận đủ "hàng hóa" (bug tự bắt khi verify: lần đầu thiếu → cột
+> đo 180px). Verify Playwright đo thật trên dev: cuộn ngang 2949/1468px ✓, Hàng hóa
+> = 321px ✓, số #,##0 + ô 0 trống + STT giữ nguyên ✓. Bài học môi trường: dev app con
+> cần APP_JWT_SECRET + API_TOKEN + TUNNEL_API_BASE_URL (URL lấy từ Gist GĐ 169); tự
+> ký bh_session thay vì SSO cho test nhanh; agent bận → job SQL xếp hàng (bỏ tick tải
+> mới), không đụng tool đang chạy.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.7.2 (docs-only — patch;
+> checklist GĐ 138 ✓).
