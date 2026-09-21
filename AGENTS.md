@@ -7459,3 +7459,24 @@ Tunnel — giải tận gốc).
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 3.7.3 (docs-only — patch;
 > checklist GĐ 138 ✓).
+
+### GĐ 192: Hệ sinh thái — PWA app con đồng bộ 100% app tổng: shortcuts icon + orientation (repo con v4.6.5) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `6d2e7de` | fix(pwa): GĐ C.62 — manifest + shortcuts (menu chuột phải icon) + orientation + cache-bust ?v=5 (v4.6.5) |
+| (mới) | docs(agents): GĐ 192 + version app tổng 3.7.3 → 3.7.4 |
+
+> **Yêu cầu của Đại ca (21/09):** Icon Gióng vào icon tab web; tải web xuống (PWA) thì
+> biểu tượng thể hiện ở các Shortcut — làm giống 100% app tổng.
+>
+> **Tóm tắt (chi tiết ở AGENTS.md repo con GĐ C.62):** So manifest 2 app — app tổng có
+> `orientation` + `shortcuts` mà app con thiếu (screenshots app tổng = mảng rỗng, bỏ
+> qua). Fix: manifest app con thêm orientation portrait-primary + 2 shortcuts ("Lấy
+> hóa đơn điện tử" /m/smed-hdd, "Báo cáo Truy xuất - Đối soát" /m/bc-truyxuat — bug tự
+> bắt: nháp đầu trỏ /m/smed-doanhthu không tồn tại → 404) + cache-bust manifest ?v=5
+> ép máy đã cài PWA tải lại. Kèm dọn 3 ký tự lạ Trung Hoa sót trong AGENTS.md repo con
+> (quy tắc GĐ 131).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.7.4 (docs-only — patch;
+> checklist GĐ 138 ✓).
