@@ -7480,3 +7480,26 @@ Tunnel — giải tận gốc).
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 3.7.4 (docs-only — patch;
 > checklist GĐ 138 ✓).
+
+### GĐ 193: TX-DS chạy lỗi production — 2 gốc rễ Unicode + hồi quy hiển thị (2026-09-21, 3.7.5)
+
+> **BUG REPORT của Đại ca (21/09):** Chạy "Báo cáo Truy xuất - Đối soát" bị lỗi. Chi tiết
+> chẩn đoán + fix đầy đủ ở AGENTS.md repo con **GĐ C.63** (v4.6.6).
+>
+> **Tóm tắt 2 lỗi độc lập:**
+> 1. **Job 17:03 lỗi thật (exit 1):** python con dưới service Windows không có env UTF-8
+>    → cp1252 → `UnicodeEncodeError` ngay dòng print "Tổng dòng" SAU KHI tổng hợp xong
+>    1287 dòng. Fix: `reconfigure(encoding="utf-8", errors="replace")` trong txds_report.py.
+> 2. **Job Hoàn thành bấm không hiện bảng (hồi quy GĐ C.43):** điều kiện chọn job theo
+>    `result` khác rỗng — job TX-DS luôn `result = {}` (bảng ở `result_full`, GĐ 158/159)
+>    → khối kết quả không bao giờ render. Fix: TX-DS chấp nhận mọi job done.
+>
+> **Verify:** 2 job sau fix Hoàn thành, result_full 2.1MB đủ; tsc 0 lỗi; build OK;
+> service agent đã restart.
+>
+> **LESSON — Điều kiện "có kết quả" phải biết collection nào giữ kết quả (2026-09-21):**
+> Khi tách payload lớn sang cột/kênh khác, grep mọi consumer lọc theo cột cũ và cập nhật
+> điều kiện cùng lúc — không thì lọc âm thầm vô hiệu với dữ liệu mới.
+>
+> **Version:** 3.7.4 → **3.7.5** (docs — patch; checklist GĐ 138 ✓).
+
