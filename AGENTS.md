@@ -7263,3 +7263,31 @@ Tunnel — giải tận gốc).
 > lượng GĐ 177); tsc 0 lỗi; build OK; version 4.5.2 / 3.6.7 khớp 2 nơi mỗi app.
 
 **App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.7.
+
+### GĐ 186: Hệ sinh thái — BÁO CÁO KHO app con: fix mất TT Thanh Thùy + 5 hiệu chỉnh hiển thị (repo con v4.5.3) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(báo cáo kho): GĐ C.56 — TT bị cộng vào TO do fallback startswith khớp sai + data staging nạp sai phải nạp lại; bỏ Mã Hàng, STT, sort VI, ẩn 0 (v4.5.3) |
+| (mới) | docs(agents): GĐ 186 + version 3.6.7 → 3.6.8 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (21/09, 6 điểm cho nhóm BÁO CÁO KHO):** (1) bỏ cột Mã Hàng
+> ở TH_NXT theo lượng; (2) điều tra mất TT Thanh Thùy (nghi cộng gộp vào TO/TĐ);
+> (3) Hàng hóa A→Z; (4) trung tâm sort tiếng Việt A→Y; (5) thêm STT; (6) ẩn số 0.
+>
+> **Kết quả điều tra — Đại ca nghi ĐÚNG:** tên SMED "THANH THUỲ" (Ỳ U+1EF3) khác
+> key "thùy" (Ừ) → fallback `startswith('tha')` khớp "thanh oai" trước → **toàn bộ
+> số TT cộng vào TO**. Kèm data cũ nạp với center sai nằm chết trong staging. Fix
+> 2 tầng: map chỉ nhận khớp CHÍNH XÁC (bỏ fallback mờ — cặp TD/TĐ chỉ khác dấu là
+> bom nổ) + xóa import_log 7BCNXT → ETL nạp lại 337 file (nạp đè theo ngày GĐ B.2.1
+> tự chữa dòng sai). Verify 16/16 PASS: TT CÓ data riêng, cột trung tâm đúng chuỗi
+> mẫu Đại ca (TT cuối), Hàng hóa A→Z, STT liên tục, 0 ô số 0. Phát hiện thêm: ĐY
+> kỳ 14-18/09 file RỖNG (không phát sinh NXT) — đúng data, không phải bug; tồn kho
+> vẫn hiện đủ 19 cột chuẩn (thêm _VALID_CENTER_CODES).
+>
+> **Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.56.**
+>
+> **Tiêu chí kiểm chứng:** 3 báo cáo BÁO CÁO KHO đúng 6 điểm; TT hiện số riêng
+> không còn cộng vào TO; version repo con 4.5.3 + app tổng 3.6.8.
+
+---
