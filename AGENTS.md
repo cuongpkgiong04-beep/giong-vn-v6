@@ -7243,3 +7243,23 @@ Tunnel — giải tận gốc).
 > tsc 0 lỗi; build OK; version app con 4.5.1 + app tổng 3.6.6 khớp 2 nơi mỗi app.
 
 **App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.6.
+
+---
+
+### GĐ 185: Hệ sinh thái — Báo cáo Đối soát HĐ-XK thêm 4 cột tiền xen kẽ (repo con v4.5.2) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(dsxk): GĐ C.55 — 4 cột tiền (DT SMED / Giá vốn / DT HĐGTGT / CL tiền) xen kẽ cột lượng + fix bug fetchall 2 lần trả rỗng (v4.5.2) |
+| (app tổng) | docs(agents): GĐ 185 + version 3.6.6 → 3.6.7 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (21/09):** 4 cột tiền đặt BÊN PHẢI cột lượng tương ứng
+> trong Báo cáo cuối ngày - Đối soát HĐ-XK: Tổng Doanh thu (SMED) · Tổng Giá
+> vốn bán hàng · Tổng Doanh thu (HĐGTGT) · Chênh lệch (DT_SMED-DT_HĐGTGT).
+> Chi tiết kỹ thuật + đối chứng số liệu + bug fetchall ở AGENTS.md repo con GĐ C.55.
+>
+> **Verify:** 5/5 assertion PASS (kỳ 14→16/09: DT SMED 114.150.000 · Giá vốn
+> 244.822.251 · DT HĐGTGT 304.819.000 · CL tiền −190.669.000 — khớp đối chứng
+> lượng GĐ 177); tsc 0 lỗi; build OK; version 4.5.2 / 3.6.7 khớp 2 nơi mỗi app.
+
+**App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.7.
