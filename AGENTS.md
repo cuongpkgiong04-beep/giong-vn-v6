@@ -7291,3 +7291,64 @@ Tunnel — giải tận gốc).
 > không còn cộng vào TO; version repo con 4.5.3 + app tổng 3.6.8.
 
 ---
+
+---
+
+### GĐ 187: Hệ sinh thái — Tổng quan app con nối DỮ LIỆU THẬT + Hôm nay/Cập nhật realtime (repo con v4.6.0) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `6b48a5c` | feat(overview): GĐ C.55 — Tổng quan data thật GiondDB + Hôm nay/Khoảng khác + banner thiếu data + Cập nhật realtime + agent ETL-sau-download (v4.6.0) |
+| (mới) | docs(agents): GĐ 187 + version app tổng 3.6.8 → 3.6.9 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (21/09):** Trang Tổng quan cập nhật dữ liệu thực tế vào các
+> biểu đồ. "Công ty CP Giong VN" = dữ liệu TỔNG các trung tâm; chọn trung tâm nào
+> → dữ liệu của trung tâm đó. Dropdown thời gian thêm "Hôm nay" + khoảng tự chọn.
+> Người dùng chọn "Hôm nay" mà dữ liệu chưa download về → khắc phục thế nào,
+> cho phép người dùng update thời gian thực.
+
+> **Kiến trúc (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.55):**
+> 1. **Server functions `-overview.ts` (mới):** loadOverviewKpi (5 hộp: doanh thu,
+>    HĐGTGT, lượt tiêm, nhập, tồn kho — hôm nay + tháng này) + loadOverviewChart
+>    (7 chart theo kỳ RIÊNG từng ô — giữ đúng thiết kế SMED GĐ 132) + freshness
+>    sources (đếm dòng từng bảng staging trong kỳ) + requestOverviewData (treo job
+>    download nguồn thiếu — chặn quyền qua canCreateJobs + canAccessReport).
+> 2. **Nguồn doanh thu — chốt sau probe:** BLTH (col7+col8=TM+CK) ƯU TIÊN, DTTDT
+>    (col14) fallback THEO TỪNG NGÀY (`NOT IN subquery`) — probe thấy DTTDT 16/09
+>    TRÙNG GẤP ĐÔI (254 = 2×127 dòng BLTH/DTTHC), nếu cộng cả 2 nguồn là sai số.
+> 3. **Tồn kho** = snapshot ngày mới nhất ≤ kỳ (KHÔNG cộng dồn — bản chất tồn kho);
+>    **HĐGTGT** map KÝ HIỆU hóa đơn (col2 BKCT) → center qua HD_SYMBOL_MAP (khớp
+>    tool 21/builder dsxk GĐ C.47), số tờ = COUNT(DISTINCT ký hiệu|số), tiền = col24.
+> 4. **UI:** mỗi ô giữ dropdown kỳ riêng + thêm 2 lựa chọn "Hôm nay" và "Khoảng
+>    khác…" (2 input date). Thiếu nguồn → **banner vàng "Chưa đủ dữ liệu thực
+>    hiện… Có muốn download?" + nút Cập nhật** → treo job download ĐÚNG nguồn
+>    thiếu → client poll loadSmedJobs 8s → job xong TỰ nạp lại toàn bộ (realtime).
+> 5. **Agent:** job download SMED xong → chạy `etl_import.py` NGAY trong cùng
+>    vòng job (trước chỉ auto-ETL 60 phút) → "Hôm nay" có data trong ~1-2 phút.
+>    Lỗi ETL chỉ log — không đổi trạng thái job (download đã thành công).
+
+> **✅ Verify 8/8 PASS (query thật qua tunnel):** doanh thu 20/09 = 538.515.000đ /
+> 693 mũi; filter trung tâm LB = 119.980.000 (nhỏ hơn tổng ✓); top vắc xin OK;
+> nhập 5 ngày; tồn kho asOf 20/09 (52 loại, top VAXIGRIP); HĐGTGT map 18/18 ký
+> hiệu; freshness shape đúng (blth=0 → fallback DTTDT chạy đúng thiết kế).
+> tsc 0 lỗi; build OK; py_compile agent OK.
+
+> **LESSON LEARNED — Nhiều nguồn cùng chỉ tiêu phải chọn 1 nguồn ưu tiên theo
+> NGÀY, không cộng dồn (2026-09-21):** DTTDT và BLTH cùng đo doanh thu — ngày có
+> cả 2 nguồn thì cộng gộp là ĐÚNG SAI (trùng gấp đôi do tải 2 lượt). Quy tắc:
+> probe SO SÁNH 2 nguồn theo từng ngày trước khi thiết kế query tổng hợp; nguồn
+> chuẩn (đối chứng đã duyệt) ưu tiên, nguồn phụ chỉ lấp ngày thiếu (NOT IN).
+
+> **LESSON LEARNED — Tồn kho là SNAPSHOT không phải dòng thời gian (2026-09-21):**
+> Chart tồn kho chọn kỳ nào cũng chỉ lấy ngày mới nhất trong kỳ — SUM tồn qua
+> nhiều ngày là nhân đôi sai bản chất. Chart số-dư (tồn, nợ) ≠ chart dòng-chảy
+> (doanh thu, nhập) — vẽ khác nhau.
+
+> **⚠️ Việc vận hành:** Service agent ĐÃ restart nạp ETL-sau-download (agent rảnh
+> khi restart). Vercel auto-deploy repo con sau push.
+
+> **Tiêu chí kiểm chứng:** Trang Tổng quan hiện số THẬT (đối chứng báo cáo đã
+> duyệt); chọn trung tâm → số riêng trung tâm; chọn "Hôm nay" thiếu data → banner
+> vàng + nút Cập nhật → job tải → tự nạp lại; "Khoảng khác…" chọn from/to từng ô;
+> version app tổng 3.6.9 + repo con 4.6.0.
+
