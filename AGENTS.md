@@ -7503,3 +7503,24 @@ Tunnel — giải tận gốc).
 >
 > **Version:** 3.7.4 → **3.7.5** (docs — patch; checklist GĐ 138 ✓).
 
+
+### GĐ 194: TX-DS — gốc rễ thứ 3: payload JSON chứa NaN, JSON.parse web từ chối (2026-09-21, 3.7.6)
+
+> **BUG REPORT (liên tiếp GĐ 193):** Job TX-DS Hoàn thành, badge "ĐANG XEM" hiện,
+> NHƯNG bảng kết quả vẫn trống. Chi tiết đầy đủ ở AGENTS.md repo con **GĐ C.63c**
+> (v4.6.7).
+>
+> **ROOT CAUSE:** payload JSON do Python json.dumps ghi chứa token **NaN** (pandas
+> ô rỗng) — JSON.parse của JS từ chối → loadTxdsResult trả "chưa có kết quả" dù
+> result_full 2.1MB đầy đủ trong DB.
+>
+> **Fix 2 đầu:** Python `_plain()` chuyển NaN/Inf → "" + `allow_nan=False`;
+> web fallback parse lại sau `.replace(/NaN/g, "null")` (chữa payload cũ).
+>
+> **LESSON — JSON chuẩn KHÔNG có NaN (2026-09-21):** payload Python trao đổi với
+> JS phải `allow_nan=False` — "parse được bằng Python" không có nghĩa "parse được
+> bằng JS". Khi payload lớn không parse được: soi RAW trong DB bằng SUBSTRING
+> thay vì tin mô tả lỗi chung.
+>
+> **Version:** 3.7.5 → **3.7.6** (docs — patch; checklist GĐ 138 ✓).
+
