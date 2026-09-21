@@ -7383,3 +7383,32 @@ Tunnel — giải tận gốc).
 
 > **Tiêu chí kiểm chứng:** Mở mọi báo cáo app con: số `#,##0` không thập phân
 > (đơn giá cũng vậy); Đơn giá/Giá không Subtotal; Tải Excel số dạng số thật.
+
+### GĐ 189: Hệ sinh thái — TX-DS nguồn NK lấy lịch sử 01/01/2025 (repo con v4.6.2) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(txds): GĐ C.59 — nguồn NK của TX-DS LUÔN từ 01/01/2025 → date_to (builder + agent check + web 2 flow treo job download) (v4.6.2) |
+| (mới) | docs(agents): GĐ 189 + version app tổng 3.7.0 → 3.7.1 |
+
+> **Yêu cầu của Đại ca (21/09):** Báo cáo Truy xuất - Đối soát — phần "Bảng kê
+> nhập kho (SMED)" LUÔN lấy từ 01/01/2025 đến thời điểm chạy báo cáo để hóa
+> đơn bán kỳ nào cũng truy xuất được lịch sử nhập của lô (lô nhập từ 01/2025
+> đến nay mới bán vẫn còn data).
+
+> **ROOT CAUSE:** builder + agent check + web treo download đều lấy NK theo
+> KỲ báo cáo — lô nhập trước date_from không có trong bảng đối soát.
+
+> **Fix 4 điểm:** builder `_load("5BKN", NK_HISTORY_FROM, date_to)` (drop_dup
+> khóa có sẵn chặn trùng nhiều lượt tải) · agent check NK từ mốc lịch sử ·
+> web flow "Có" khi thiếu + flow "Tải dữ liệu mới nhất" đều treo job NK từ
+> 01/01/2025.
+
+> **✅ Verify:** spy `_load` — NK đúng mốc, 5 nguồn khác giữ kỳ; NK lịch sử
+> staging đủ 8.255 dòng (backfill GĐ 178); check 7/7 nguồn found; py_compile
+> + tsc + build OK; service agent restart nạp bản mới.
+
+> **Version:** app tổng 3.7.0 → **3.7.1** (docs — patch; checklist GĐ 138 ✓).
+
+> **Tiêu chí kiểm chứng:** TX-DS kỳ nào cũng có cột NK từ lịch sử 01/2025;
+> job download NK của TX-DS hiện kỳ 01/01/2025 → ngày chạy trong lịch sử.
