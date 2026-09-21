@@ -7195,3 +7195,51 @@ Tunnel — giải tận gốc).
 > lệnh → "Hoàn thành chung N%"; bấm ▼ xem % từng lệnh; xong hết → thanh biến mất.
 
 **App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.5.
+
+---
+
+## 📌 NGUYÊN TẮC ĐỊNH DẠNG TOÀN APP (Đại ca chốt 21/09/2026 — hiệu lực vĩnh viễn, áp dụng CẢ app tổng + app con)
+
+> **Yêu cầu của Đại ca (21/09, GĐ C.54 repo con):** Thêm nguyên tắc định dạng áp
+> dụng toàn app vào AGENTS.md. Mọi bảng biểu / trang mới (báo cáo, module,
+> dashboard...) PHẢI tuân thủ 4 nguyên tắc. Báo cáo app con qua khung
+> `report-result-table.tsx` + `_rows` builder tự hưởng sẵn.
+
+| # | Nguyên tắc | Quy tắc kỹ thuật |
+|---|---|---|
+| 1 | **Ngày: "dd/mm/yyyy" căn TRÁI** | ISO → dd/mm/yyyy khi render (fmtCell app con / formatDate app tổng); cột ngày canh trái, không phải số |
+| 2 | **Số: "#,##0" căn PHẢI** | Không thập phân; ngăn cách nghìn `.`; text-right tabular-nums (fmtNumber) |
+| 3 | **Cột Đơn giá KHÔNG cộng Subtotal** | "Đơn giá..."/"Giá ..." (khác "Giá trị...") → dòng Subtotal TRỐNG; guard 2 lớp builder + web (isUnitPriceColumn) |
+| 4 | **Text căn TRÁI, tràn thì ẨN** | truncate whitespace-nowrap + title hover — không đè cột sau |
+
+> **Đơn giá nhận dạng:** bắt đầu "Đơn giá" hoặc "Giá " đầu tên trừ "Giá trị" —
+> "Giá" = đơn vị tiền/1 đơn vị hàng (không cộng được); "Giá trị" = tổng tiền
+> (cộng được).
+>
+> **Áp dụng app tổng:** các trang bảng hiện có (chấm công, check-in, nhiệm vụ,
+> đề nghị, ghi chú...) — ngày đã hiển thị dd/mm/yyyy qua `formatDate`, số qua
+> `formatNum`; khi tạo bảng MỚI tuân thủ đủ 4 nguyên tắc (căn lề + truncate +
+> không cộng cột đơn giá).
+
+---
+
+### GĐ 184: Hệ sinh thái — Nguyên tắc định dạng toàn app + sửa 4 builder cộng nhầm Đơn giá (repo con v4.5.1) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(định dạng): GĐ C.54 — 4 nguyên tắc vào AGENTS.md + isUnitPriceColumn guard web + bỏ Đơn giá khỏi money_cols 4 builder (v4.5.1) |
+| (app tổng) | docs(agents): GĐ 184 + bảng nguyên tắc + version 3.6.5 → 3.6.6 (docs-only — patch) |
+
+> **Nội dung:** 4 nguyên tắc định dạng Đại ca chốt (ngày dd/mm/yyyy căn trái ·
+> số #,##0 căn phải · cột Đơn giá không cộng Subtotal · text căn trái tràn thì
+> ẩn) — chi tiết kỹ thuật + verify ở AGENTS.md repo con GĐ C.54.
+>
+> **Áp dụng thật, không chỉ ghi giấy:** phát hiện + sửa 4 builder vi phạm nguyên
+> tắc 3 (nk/xk/dt/bkct cộng nhầm Đơn giá vào Subtotal); TH_NXT lượng-tiền đã đúng
+> sẵn (chỉ cộng 6 cột Giá trị). Web thêm guard `isUnitPriceColumn()` phòng thủ
+> trong `computeSubtotal` — kể cả builder quên, web vẫn không cộng đơn giá.
+>
+> **Verify:** py_compile OK; chạy thật 5 builder qua GiongDB — moneyCols đúng hết;
+> tsc 0 lỗi; build OK; version app con 4.5.1 + app tổng 3.6.6 khớp 2 nơi mỗi app.
+
+**App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.6.
