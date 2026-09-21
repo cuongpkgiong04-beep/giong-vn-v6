@@ -7352,3 +7352,34 @@ Tunnel — giải tận gốc).
 > vàng + nút Cập nhật → job tải → tự nạp lại; "Khoảng khác…" chọn from/to từng ô;
 > version app tổng 3.6.9 + repo con 4.6.0.
 
+
+### GĐ 188: Hệ sinh thái — Định dạng số THỐNG NHẤT "#,##0" mọi báo cáo app con (repo con v4.6.1) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(báo cáo): GĐ C.58 — helper `_rows()` parse số int half-up + ẩn 0 cho 7 builder kế toán/kho — hết số thô thập phân; web guard đơn giá bắt cả "Giá" trần (v4.6.1) |
+| (mới) | docs(agents): GĐ 188 + version app tổng 3.6.9 → 3.7.0 (patch 9 đầy → nhớ minor) |
+
+> **BUG REPORT của Đại ca (21/09):** Nguyên tắc định dạng 2 + 3 — BÁO CÁO KHO
+> vẫn hiện số thô có thập phân (`960336.3`), không ngăn cách nghìn. Xem lại
+> TẤT CẢ báo cáo cho thống nhất.
+
+> **ROOT CAUSE:** helper `_rows()` (khung 9 builder kế toán/kho) biến mọi giá
+> trị SQL thành CHUỖI → web chỉ format khi typeof number → hiện thô; Excel
+> tải về là ô TEXT. TH_NXT + tồn kho ổn từ GĐ C.56 (vòng riêng), 7 builder
+> còn lại chưa qua vòng nào.
+
+> **Fix:** (1) `_rows()` thêm `num_cols` — float → int half-up (bỏ thập phân
+> kể cả Đơn giá — nguyên tắc 2) + ẩn 0 (nguyên tắc 6); 7 builder khai báo.
+> (2) Web `isUnitPriceColumn()` bắt cả "Giá" trần (bán hàng đang bị cộng
+> Subtotal oan) — tự bắt thêm bug nháp đầu khớp cả "Giá trị" khi tự review.
+
+> **✅ Verify:** 9 builder chạy thật kỳ 14→20/09 — số int, 0 → trống, moneyCols
+> không Đơn giá; py_compile + tsc 0 lỗi + build OK; service agent đã restart
+> nạp builder mới (kiểm tra agent rảnh trước — GĐ 136).
+
+> **Version:** app tổng 3.6.9 → **3.7.0** (docs — patch 9 đầy → nhớ minor;
+> checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+> **Tiêu chí kiểm chứng:** Mở mọi báo cáo app con: số `#,##0` không thập phân
+> (đơn giá cũng vậy); Đơn giá/Giá không Subtotal; Tải Excel số dạng số thật.
