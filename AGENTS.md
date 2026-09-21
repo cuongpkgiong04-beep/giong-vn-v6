@@ -7160,3 +7160,38 @@ Tunnel — giải tận gốc).
 > mới chạy báo cáo được (cảnh báo thiếu data GĐ C.45 khi chưa tải NXT kỳ đó);
 > bảng đúng cột + phân trang + Subtotal + Tải Excel; version app con 4.4.0 /
 > app tổng 3.6.4.
+
+---
+
+### GĐ 183: Hệ sinh thái — Thanh trạng thái % hoàn thành tổng hợp các lệnh đang chạy trên Header app con (repo con v4.5.0) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(ui): GĐ C.53 — component HeaderJobsBar dính dưới header (sticky top-20): % tổng hợp + số lệnh đang chạy + dropdown % từng lệnh; poll 10s/60s (v4.5.0) |
+| (app tổng) | docs(agents): GĐ 183 + version 3.6.4 → 3.6.5 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (21/09):** Tạo thanh trạng thái thể hiện % tỷ lệ hoàn thành,
+> tổng hợp các lệnh đang chạy + mức độ hoàn thành của từng job — đặt chỗ nhìn rõ
+> nhất (Đại ca gợi ý trên Header vì chỉ chỗ này không bị che).
+
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.53):**
+> - Component `header-jobs-bar.tsx` mount trong AppShell ngay dưới `</header>` —
+>   `sticky top-20` (header h-20) → cuộn trang vẫn luôn nhìn thấy.
+> - Thanh 1 dòng: icon spin + "N lệnh" + bar % tổng hợp (trung bình tiến độ từng
+>   lệnh) + % riêng + ▼ mở danh sách từng lệnh (tên phân hệ/báo cáo · kỳ · nhãn
+>   tiến độ · bar riêng).
+> - Tiến độ: pending 0%; running download = doneCenters realtime (GĐ C.19);
+>   running sqlreport/txds ~95%; waitdownload = tính từ job download nguồn thiếu
+>   (mỗi nguồn 19 trung tâm + 1 bước chạy — GĐ C.45).
+> - needsData (job DỪNG chờ người dùng quyết) KHÔNG tính đang chạy; không có lệnh
+>   nào → thanh ẩn hoàn toàn, layout không đổi.
+> - Poll loadSmedJobs 10s khi có lệnh chạy / 60s khi rảnh — endpoint đã nhẹ theo
+>   quy ước GĐ 159.
+
+> **Verify:** typecheck 0 lỗi; build OK; version 4.5.0 khớp 2 nơi repo con,
+> 3.6.5 khớp 2 nơi app tổng.
+
+> **Tiêu chí kiểm chứng:** Tạo job → thanh hiện % tăng dần theo heartbeat; ≥2
+> lệnh → "Hoàn thành chung N%"; bấm ▼ xem % từng lệnh; xong hết → thanh biến mất.
+
+**App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.5.
