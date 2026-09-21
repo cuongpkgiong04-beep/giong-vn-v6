@@ -7124,3 +7124,39 @@ Tunnel — giải tận gốc).
 > **Nếu OK:** chạy thêm 2-3 câu hợp lệ khác (tồn kho / chạy lại báo cáo / lịch
 > sử job) rồi ghi kết quả vào đây + bump version docs nếu cần. KHÔNG cần sửa
 > code — hệ thống đã hoàn chỉnh.
+
+### GĐ 182: Hệ sinh thái — 3 báo cáo NXT Kho app con (TH_NXT lượng / lượng-tiền / Tồn kho theo lượng) (repo con v4.4.0) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.52 — 3 báo cáo NXT Kho từ tool 12_KHO_KT_TH_NXT + phân trang ReportResultTable (v4.4.0) |
+| (mới) | docs(agents): GĐ 182 + version app tổng 3.6.3 → 3.6.4 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (21/09 — giao tự chủ, không hỏi lại, làm xong tự ghi +
+> bump + push, mai xem):** Đọc tool `12_KHO_KT_TH_NXT.py` anh tải vào agent/ →
+> làm trong nhóm **BÁO CÁO KHO** app con: (1) "Báo cáo TH_NXT kho theo lượng"
+> giống Sheet TH_NXT_KT nhưng bỏ cột tiền H,I,K,L,N,O,Q,R,S,T,U,W,X; (2) "Báo
+> cáo TH_NXT kho theo lượng-tiền" = Sheet TH_NXT_KT đầy đủ; (3) "Báo cáo tồn
+> kho theo lượng" (số 5) lấy code sheet MT_TONKHO.
+
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.52):**
+> - Rà lại phiên dở chưa commit — bắt 3 sai sót: sai thứ tự cột tiền (phải xen
+>   kẽ SL → Giá → Giá trị như Excel), sót cột Mã Hàng (C), nhầm giữ cụm SL
+>   Kiểm kho bên lượng-tiền. Builder giờ khớp 100% tool 12: lượng 11 cột,
+>   lượng-tiền 24 cột, số nguyên round half-up (tool 12 round(0) cả đơn giá).
+> - Verify thật GiongDB kỳ 14→18/09: lượng 4.662 dòng; lượng-tiền 4.662 dòng ×
+>   24 cột; tồn kho 54 hàng hóa × 19 trung tâm (TỔNG CỘNG 117.420). Keys đối
+>   chiếu 12/12 khớp.
+> - **Phân trang client-side** ReportResultTable (200/trang, 100-1000) — báo cáo
+>   nặng 4.662×24 ô không còn render toàn bộ; SUBTOTAL vẫn tính trên toàn bộ
+>   dữ liệu lọc; reset trang chỉ theo filters (poll 10s không đá về trang 1).
+> - Quyền: 3 báo cáo nguồn xnkt → nhóm banhang-kho. Service agent đã restart
+>   nạp builder mới (verify rảnh trước khi restart).
+
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.6.4 (checklist GĐ
+> 138 ✓ — không thành phần nào ≥ 10).
+
+> **Tiêu chí kiểm chứng (Đại ca test mai):** Sidebar BÁO CÁO KHO 5 mục; 3 trang
+> mới chạy báo cáo được (cảnh báo thiếu data GĐ C.45 khi chưa tải NXT kỳ đó);
+> bảng đúng cột + phân trang + Subtotal + Tải Excel; version app con 4.4.0 /
+> app tổng 3.6.4.
