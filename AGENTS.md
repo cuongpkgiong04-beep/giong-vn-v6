@@ -7437,3 +7437,25 @@ Tunnel — giải tận gốc).
 >
 > **App tổng không đổi code** — chỉ ghi lịch sử + version 3.7.2 (docs-only — patch;
 > checklist GĐ 138 ✓).
+
+### GĐ 191: Hệ sinh thái — FIX favicon tab app con: icon sai thẻ HTML từ trước tới nay (repo con v4.6.4) (2026-09-21)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `13f85cf` | fix(pwa): GĐ C.61 — icon/manifest chuyển sang links (trước render `<meta rel>` sai thẻ) + favicon.ico fallback (v4.6.4) |
+| (mới) | docs(agents): GĐ 191 + version app tổng 3.7.2 → 3.7.3 |
+
+> **Yêu cầu của Đại ca (21/09):** Cho biểu tượng Gióng vào icon tab trình duyệt + icon
+> cài/tải web (PWA) — app con.
+>
+> **Tóm tắt (chi tiết ở AGENTS.md repo con GĐ C.61):** File icon + manifest ĐÚNG từ
+> GĐ C.29/C.46 nhưng tab vẫn trắng — curl production soi thẻ head phát hiện app con
+> render `<meta rel="icon">` (SAI THẺ) vì 3 entry icon/manifest bị đặt trong mảng
+> `meta` của `__root.tsx`; trình duyệt chỉ đọc favicon từ `<link>`. App tổng đặt đúng
+> trong `links` từ GĐ 153. Fix: chuyển 3 entry sang `links` (2 meta apple-* ở lại
+> `meta`) + thêm `public/favicon.ico` fallback (trước 404). Verify dev curl: thẻ
+> `<link>` đúng + /favicon.ico 200. **Icon tab app con CHƯA TỪNG hoạt động dù qua 4
+> lần fix icon trước — mọi lần chỉ đụng FILE, không ai soi THẺ render.**
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 3.7.3 (docs-only — patch;
+> checklist GĐ 138 ✓).
