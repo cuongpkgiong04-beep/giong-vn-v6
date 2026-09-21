@@ -7524,3 +7524,71 @@ Tunnel — giải tận gốc).
 >
 > **Version:** 3.7.5 → **3.7.6** (docs — patch; checklist GĐ 138 ✓).
 
+
+### GĐ 195: Mobile ẩn khối chào header (cả 2 app) + rail app con hiện icon nhóm (2026-09-21, 3.7.7)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | fix(header): mobile <640px ẨN khối chào header — div trong thành `hidden sm:flex` (spacer flex-1 giữ nguyên, nút phải không xô) |
+| (repo con) | fix(header+ui): GĐ C.64 — mobile ẩn khối chào (`hidden sm:block`) + rail thu hẹp HIỆN icon nhóm (bậc 1/2) bấm được, ẩn nhãn+chevron; v4.6.8 |
+
+> **Yêu cầu của Đại ca (21/09, 2 điểm):**
+> 1. **CẢ 2 app:** Bỏ phần lời chào trên Header bên trái khi mobile — khoảng trống
+>    điện thoại không đủ, chữ chèn đè nhau.
+> 2. **App con:** Sidebar khi ẩn cho rộng ra một chút để nhìn thấy biểu tượng —
+>    hiện tại icon bị che.
+
+> **Điểm 1 — khối chào mobile (2 file, 1 dòng class mỗi file):**
+> Khối chào GĐ 135 (app tổng) + GĐ C.15b (app con) render MỌI trang kể cả mobile —
+> header 390px sau các nút chỉ còn ~200px → eyebrow + h1 chèn nhau. Fix: div trong
+> khối chào thành `hidden … sm:flex` (app tổng) / `hidden … sm:block` (app con) —
+> chỉ ẩn <640px; div cha giữ `min-w-0 flex-1` làm spacer → nút phải vẫn canh phải.
+> Desktop ≥640px giữ nguyên 100%.
+
+> **Điểm 2 — rail app con: root cause KHÁC suy đoán ban đầu (bắt nhờ đo Playwright):**
+> Rail đã 48px từ GĐ C.46 mà Đại ca vẫn thấy icon bị che. Đo layout + mở nhóm 2 bậc:
+> **icon nhóm (DOWNLOAD DỮ LIỆU / BÁO CÁO / UPLOAD / MISA…) bị ẨN HOÀN TOÀN khi thu
+> hẹp** — nút nhóm mang `hidden group-hover:flex` từ khi dựng cây 4 bậc (GĐ C.26).
+> Rail thu hẹp chỉ hiện icon Tổng quan + lá nhóm ĐANG MỞ → phần lớn rail TRỐNG,
+> nhìn như "icon bị che/đẩy ra ngoài". Tăng độ rộng rail không giải quyết được vì
+> icon `display:none`.
+>
+> **Fix (chốt qua hỏi Đại ca — chọn "Hiện icon nhóm"):** `SidebarNhom` — nút nhóm
+> LUÔN HIỆN khi rail thu hẹp (icon bấm được để mở/đóng nhóm con), chỉ ẨN nhãn
+> (`hidden group-hover:inline`) + chevron (`hidden group-hover:block`); nhánh class
+> RIÊNG loại trừ cho collapsed (`h-9 justify-center px-0 group-hover:…`) — bậc 1
+> giữ nền accent, bậc 2 không. Kèm 3 điểm phụ từ đo đạc: (a) container con nhóm mở
+> bỏ indent khi thu hẹp (pl-2/pl-3 + ml-2.5 dồn icon lá lệch trái) → `pl-0`, hover
+> mở indent như cũ; (b) chevron không render khi collapsed (trước dính icon nhóm
+> trong 48px); (c) logo căn giữa rail khi thu hẹp (px-1 lệch trái → justify-center).
+> Rail GIỮ 48px (không tăng 56 — Đại ca chọn chỉ hiện icon nhóm).
+
+> **LESSON — "icon bị che" phải đo xem icon nào đang HIỆN, đừng chỉ đo rail rộng
+> (2026-09-21):** GĐ C.46 tăng rail 40→48px theo yêu cầu "rộng ra để thấy icon" nhưng
+> root cause là icon nhóm bị display:none — rộng bao nhiêu cũng trống. Đo layout bằng
+> Playwright (boundingBox từng svg) đã lộ ngay: chỉ 3 icon khả kiến trong rail dù cây
+> có hàng chục. Khi vấn đề "không thấy X": đếm + liệt kê những gì ĐANG hiển thị
+> trước khi nghĩ tới kích thước.
+
+> **LESSON — 2 trạng thái cho 1 nút phải tách nhánh loại trừ, không chồng class
+> (tái diễn GĐ 125):** Đặt `px-2` (nhánh thường) + `px-0` (collapsed) trên cùng
+> element → Tailwind phân giải theo THỨ TỰ STYLESHEET, không theo thứ tự class →
+> px-2 thắng, icon không căn giữa. Fix: ternary `collapsed ? nhánh_collapsed :
+> nhánh_thường` (pattern NavLink đã chạy đúng production). Bẫy này lần thứ 2 —
+> quy tắc: class mâu thuẫn trên cùng property PHẢI nằm 2 nhánh ternary, không
+> dùng `cn()` gộp kèm ghi đè.
+
+> **✅ Verify (Playwright đo thật, dev server 2 app — script tạm đã dọn):**
+> Mobile 390px: h1 khối chào ẨN cả 2 app, eyebrow ẩn theo, nút menu hiện;
+> desktop: khối chào giữ nguyên. Rail app con: 48px; mở nhóm 2 bậc → thu hẹp →
+> **10 icon khả kiến** (trước: 3) nằm TRỌN trong rail, căn giữa trục 24px (±3px);
+> hover mở 320px — chevron/nhãn hiện lại, content đẩy 320px mép dính mép (GĐ 141
+> không vỡ). Typecheck: app tổng 0 lỗi (typecheck.mjs) + app con 0 lỗi (tsc).
+
+> **Tiêu chí kiểm chứng:** Điện thoại mở app tổng + app con: header chỉ còn nút
+> trái/phải, không còn chữ chèn đè; desktop không đổi. Desktop app con thu hẹp
+> sidebar: thấy ĐỦ icon (Tổng quan + 4 nhóm bậc 1 + lá nhóm đang mở), bấm icon
+> nhóm được; hover mở đủ nhãn; nội dung không bị che khi hover (GĐ 141).
+
+**Version:** 3.7.6 → **3.7.7** (app tổng — patch) · **4.6.7 → 4.6.8** (repo con —
+patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
