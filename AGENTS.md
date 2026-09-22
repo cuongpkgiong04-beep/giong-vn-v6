@@ -7612,6 +7612,13 @@ patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
 > (backfill GĐ 178) → báo cáo chỉ cần LỌC `col3 LIKE 'PH-%'` trên cùng nguồn
 > `xuatkho` — không cần tool/download mới.
 >
+> **Bổ sung nghiên cứu cùng ngày — prefix thứ 3 `PXK-` (Xuất khác):** quét toàn
+> bộ lịch sử stg_6BKX thấy 3 prefix: PX-SD- (bán) · PH- (hủy) · **PXK- (xuất
+> khác — thu hồi NCC/điều chuyển/gắn hóa đơn, 63 dòng, 13 TT, 02/2025→06/2026,
+> 2026 về sau không phát sinh; cột LỆCH: col1=STT, col2=datetime)**. **Đại ca
+> chốt: báo cáo xuất hủy GIỮ CHỈ PH-**, PXK là nghiệp vụ riêng không gộp (chi
+> tiết + lưu ý builder riêng nếu làm sau ở GĐ C.65 repo con).
+>
 > **Đã chốt với Đại ca (2 câu hỏi):** hiển thị CẢ HAI (chi tiết từng dòng + bảng
 > phụ tổng hợp theo trung tâm) · đặt nhóm BÁO CÁO KHO, tên "Báo cáo xuất hủy".
 >
@@ -7635,6 +7642,6 @@ patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
 **Version:** 3.7.7 → **3.7.8** (docs-only — patch; checklist GĐ 138 ✓ —
 không thành phần nào ≥ 10).
 
-*Cập nhật lần cuối: 2026-09-22 (GĐ 196 — Báo cáo xuất hủy app con; app tổng
+*Cập nhật lần cuối: 2026-09-22 (GĐ 196 — Báo cáo xuất hủy app con + nghiên cứu 3 prefix số phiếu BKX; app tổng
 3.7.8 / repo con 4.7.0)*
 *Người cập nhật: Trợ lý lập trình*
