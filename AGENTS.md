@@ -7642,6 +7642,36 @@ patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
 **Version:** 3.7.7 → **3.7.8** (docs-only — patch; checklist GĐ 138 ✓ —
 không thành phần nào ≥ 10).
 
-*Cập nhật lần cuối: 2026-09-22 (GĐ 196 — Báo cáo xuất hủy app con + nghiên cứu 3 prefix số phiếu BKX; app tổng
-3.7.8 / repo con 4.7.0)*
+### GĐ 197: Hệ sinh thái — Lịch sử job app con LỌC THEO USER (repo con v4.7.2) (2026-09-22)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(permissions): GĐ C.66 — loadSmedJobs where ($1=1 or created_by=$2) — user chỉ thấy job mình tạo, Admin thấy tất cả; AI list_jobs tự hưởng (v4.7.2) |
+| (app tổng) | docs(agents): GĐ 197 + version 3.7.9 → 3.8.0 (patch 9 đầy → nhớ minor) |
+
+> **Câu hỏi của Đại ca (22/09):** Trong phân quyền, dữ liệu do user nào tạo ra thì
+> user đó thấy, user khác không nhìn thấy, Admin xem tất cả — như app tổng. Kèm
+> yêu cầu hướng dẫn phân quyền Bán hàng từ app tổng đến app con.
+>
+> **Trả lời hiện trạng:** app con đã đúng 2/3 (xóa job = người tạo/Admin · sidebar
+> = lọc nhóm bộ phận GĐ 143) — chỗ hở duy nhất là **lịch sử job** hiện cho mọi
+> người. **Đã hỏi chốt:** Đại ca chọn LỌC THEO USER LUÔN (không giữ chung nhóm).
+>
+> **Fix:** `loadSmedJobs` thêm `where ($1 = 1 or created_by = $2)` — Admin
+> (`$1=1`) thấy tất cả, user thường chỉ thấy job `created_by` = tên mình (khớp
+> cách tạo job ghi `created_by = user.name`). Trợ lý AI `list_jobs` gọi thẳng
+> `loadSmedJobs` → tự hưởng lọc (session user đang chat còn trong context).
+>
+> **Hướng dẫn phân quyền Bán hàng (đã trình bày Đại ca, tóm tắt):** App tổng →
+> Phân quyền → chọn nhân sự → bật "Bán hàng (Dự án)" → 4 toggle con xổ ra (MISA /
+> SMED Bán hàng / SMED Kho / SMED Marketing) — bật nhóm nào user đó thấy nhóm đó
+> trong sidebar app con (SSO qua nút Bán hàng nhóm DỰ ÁN); chặn 2 lớp UI + API.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+**Version:** 3.7.9 → **3.8.0** (docs-only — patch 9 đầy → nhớ minor; checklist
+GĐ 138 ✓).
+
+*Cập nhật lần cuối: 2026-09-22 (GĐ 197 — lịch sử job app con lọc theo user; app tổng
+3.8.0 / repo con 4.7.2)*
 *Người cập nhật: Trợ lý lập trình*
