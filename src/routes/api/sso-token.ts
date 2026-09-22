@@ -60,22 +60,26 @@ export const createSsoToken = createServerFn({ method: "GET" })
       // module_access DB dùng chung — đọc TRỰC TIẾP tại đây (KHÔNG dùng
       // getEmployeeById/getBanhangGroups — hàm đó đọc store phía client, luôn
       // rỗng trong server function).
-      const GROUP_KEYS = ["banhang-misa", "banhang-banhang", "banhang-kho", "banhang-marketing"] as const;
+      // GĐ 199 — mở rộng CHI TIẾT: 8 nhóm + TỪNG LÁ ("bh-leaf-<route>") từ
+      // BH_GROUPS (banhang-catalog.ts) — nguồn cây duy nhất, nhóm/báo cáo mới
+      // thêm vào catalog tự đi kèm JWT. JWT chỉ là FALLBACK — app con đọc LIVE
+      // từ module_access chính là nguồn này (getBanhangDetailAccess cùng logic).
+      const { BH_GROUPS, getBanhangDetailAccess } = await import("@/lib/banhang-catalog");
+      const GROUP_KEYS = BH_GROUPS.map((g) => g.key);
       let mods: string[] = [];
       const isAdminRole = emp.role === "SuperAdmin" || emp.role === "Admin";
       if (isAdminRole) {
         mods = [...GROUP_KEYS];
+        for (const g of BH_GROUPS) for (const l of g.leaves) mods.push(`bh-leaf-${l.to}`);
       } else {
         const accessRows = await sql<{ modules: Record<string, boolean> | null }>`
           SELECT modules FROM module_access WHERE employee_id = ${emp.id} LIMIT 1
         `;
         const modules = (accessRows[0]?.modules ?? {}) as Record<string, unknown>;
         if (modules.banhang === true) {
-          const anyConfigured = GROUP_KEYS.some((k) => k in modules);
-          // Đã bật "banhang" mà chưa cấu hình nhóm nào → đủ 4 (backward-compat)
-          mods = anyConfigured
-            ? GROUP_KEYS.filter((k) => modules[k] === true)
-            : [...GROUP_KEYS];
+          const detail = getBanhangDetailAccess(emp.role, modules);
+          mods = Object.entries(detail.groups).filter(([, ok]) => ok).map(([k]) => k);
+          mods.push(...Object.entries(detail.leaves).filter(([, ok]) => ok).map(([k]) => k));
         }
       }
 

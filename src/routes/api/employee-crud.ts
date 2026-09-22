@@ -252,9 +252,27 @@ export const syncApprovedToEmployees = createServerFn({ method: "POST" })
 export const loadAllModuleAccess = createServerFn({ method: "GET" }).handler(
   async () => {
     const sql = await getSql();
-    return sql<{ employee_id: string; modules: Record<string, boolean> }>`
+    const rows = await sql<{ employee_id: string; modules: unknown }>`
       SELECT employee_id, modules FROM module_access
     `;
+    // GĐ 197: sau GĐ 164 (GiondDB SQL Server), cột modules là NVARCHAR → trả về
+    // CHUỖI (Neon/pg trước đây tự parse jsonb). Chuỗi đưa về client bị spread
+    // thành key "0","1"... → ghi rác ngược DB. Chuẩn hóa ngay tại server.
+    const parseModules = (raw: unknown): Record<string, boolean> => {
+      let cur: unknown = raw;
+      for (let i = 0; i < 3; i++) {
+        if (typeof cur !== "string") break;
+        try {
+          cur = JSON.parse(cur);
+        } catch {
+          return {};
+        }
+      }
+      return cur && typeof cur === "object" && !Array.isArray(cur)
+        ? (cur as Record<string, boolean>)
+        : {};
+    };
+    return rows.map((r) => ({ employee_id: r.employee_id, modules: parseModules(r.modules) }));
   },
 );
 
@@ -263,9 +281,14 @@ export const saveModuleAccess = createServerFn({ method: "POST" })
   .validator((data: { employeeId: string; modules: Record<string, boolean> }) => data)
   .handler(async ({ data }) => {
     const sql = await getSql();
+    // GĐ 197: dọn rác key số ("0","1"...) sinh từ spread chuỗi — chỉ giữ boolean thật.
+    const clean: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(data.modules)) {
+      if (!/^\d+$/.test(k) && typeof v === "boolean") clean[k] = v;
+    }
     await sql`
       INSERT INTO module_access (employee_id, modules, updated_at)
-      VALUES (${data.employeeId}, ${JSON.stringify(data.modules)}::jsonb, now())
+      VALUES (${data.employeeId}, ${JSON.stringify(clean)}::jsonb, now())
       ON CONFLICT (employee_id) DO UPDATE SET
         modules = EXCLUDED.modules,
         updated_at = now()

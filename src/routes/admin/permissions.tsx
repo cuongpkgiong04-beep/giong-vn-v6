@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/lib/store";
 import { isAdminRole } from "@/lib/catalog";
-import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess, BANHANG_GROUP_KEYS, BANHANG_GROUP_LABELS, getBanhangGroups, type BanhangGroupKey } from "@/lib/permissions";
+import { getDefaultModuleAccess, getUserModuleAccess, ModuleKey, MODULE_DEFINITIONS, setUserModuleAccess, resetUserModuleAccess, getBanhangGroups, getBanhangCatalog, getBanhangDetailForEmployee } from "@/lib/permissions";
 import { saveModuleAccess, clearModuleAccess } from "@/routes/api/employee-crud";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -22,11 +22,14 @@ type ModulePermissionRow = {
   userEnabled: boolean;
 };
 
-/** GĐ 142 — 4 toggle con của quyền "Bán hàng (Dự án)" (nhóm bộ phận app con) */
+/** GĐ 142 — 4 toggle con của quyền "Bán hàng (Dự án)" (nhóm bộ phận app con)
+ *  GĐ 199 — mở rộng thành 8 NHÓM (catalog) + TỪNG LÁ (chip trong nhóm) */
 type BanhangGroupRow = {
-  key: BanhangGroupKey;
+  key: string; // BanhangGroupKey cũ + 4 key mới "bh-*" — nguồn: BH_GROUPS catalog
   label: string;
   enabled: boolean;
+  /** Lá trong nhóm (route + nhãn) — chip toggle chi tiết đến bậc cuối */
+  leaves: Array<{ to: string; label: string; enabled: boolean }>;
 };
 
 function AdminPermissionsPage() {
@@ -79,11 +82,18 @@ function AdminPermissionsPage() {
 
     // GĐ 142 — quyền nhóm Bán hàng của user được chọn (Admin = đủ 4; user thường
     // theo override; đã bật "banhang" mà chưa cấu hình nhóm nào → đủ 4)
-    const groups = getBanhangGroups(selected);
-    setBanhangRows(BANHANG_GROUP_KEYS.map((key) => ({
-      key,
-      label: BANHANG_GROUP_LABELS[key],
-      enabled: groups[key],
+    // GĐ 199 — nguồn cây = BH_GROUPS catalog: 8 nhóm (4 DOWNLOAD cũ + BÁO CÁO
+    // KẾ TOÁN/KHO/MARKETING + UPLOAD - MISA AMIS) + TỪNG LÁ (chip chi tiết).
+    const detail = getBanhangDetailForEmployee(selected);
+    setBanhangRows(getBanhangCatalog().map((g) => ({
+      key: g.key,
+      label: g.label,
+      enabled: detail.groups[g.key] === true,
+      leaves: g.leaves.map((l) => ({
+        to: l.to,
+        label: l.label,
+        enabled: detail.leaves[`bh-leaf-${l.to}`] === true,
+      })),
     })));
   }, [selectedEmployeeId, employees, filteredEmployees]);
 
@@ -101,6 +111,13 @@ function AdminPermissionsPage() {
   }
 
   const selectedEmployee = employees.find((person) => person.id === selectedEmployeeId) ?? filteredEmployees[0];
+  // GĐ 198 fix BUG GĐ 143 — khung 4 nhóm con của app Bán hàng chỉ hiện khi USER
+  // ĐANG ĐƯỢC CHỌN là user thường (Admin/SuperAdmin luôn đủ 4 nhóm, không cần
+  // cấu hình). Trước đây check !isAdmin (vai trò NGƯỜI ĐĂNG NHẬP) — trang này
+  // chỉ Admin vào được → điều kiện luôn false → khung KHÔNG BAO GIỜ hiện →
+  // Admin chưa bao giờ cấp được nhóm bộ phận qua UI (mọi user cấp "Bán hàng"
+  // đều rơi nhánh đủ 4 nhóm). Test E2E user thường 22/09 bắt được.
+  const selectedIsAdmin = selectedEmployee ? isAdminRole(selectedEmployee.role) : false;
 
   const updateModule = (moduleKey: ModuleKey, enabled: boolean) => {
     if (!selectedEmployee) return;
@@ -122,18 +139,60 @@ function AdminPermissionsPage() {
       );
   };
 
-  const updateBanhangGroup = (groupKey: BanhangGroupKey, enabled: boolean) => {
+  // GĐ 199 — cập nhật NHÓM: bật nhóm = bật cả nhóm + XÓA mọi config lá của nhóm
+  // (lá về "theo nhóm"); tắt nhóm = tắt nhóm + mọi lá theo nhóm (giữ config lá
+  // trong DB để bật lại không mất). Bật nhóm con tự bật "banhang" (cửa vào app con).
+  const updateBanhangGroup = (groupKey: string, enabled: boolean) => {
     if (!selectedEmployee) return;
-    if (isAdmin) return; // Admin luôn đủ 4 nhóm — toggle chỉ dành cho user thường
-    // Bật 1 nhóm con → tự bật "banhang" (cửa vào app con) nếu chưa; tắt nhóm cuối
-    // vẫn giữ banhang (user chỉ không thấy nhóm đó).
+    if (selectedIsAdmin) return; // user đang chọn là Admin/SuperAdmin → luôn đủ mọi nhóm, toggle vô nghĩa
     setUserModuleAccess(selectedEmployee.id, groupKey, enabled);
-    setBanhangRows((rows) => rows.map((r) => (r.key === groupKey ? { ...r, enabled } : r)));
-    const next = { ...getUserModuleAccess(selectedEmployee.id), [groupKey]: enabled, banhang: true };
+    setBanhangRows((rows) =>
+      rows.map((r) =>
+        r.key === groupKey
+          ? { ...r, enabled, leaves: r.leaves.map((l) => ({ ...l, enabled })) }
+          : r,
+      ),
+    );
+    const current = { ...getUserModuleAccess(selectedEmployee.id) } as Record<string, boolean>;
+    const group = getBanhangCatalog().find((g) => g.key === groupKey);
+    const next: Record<string, boolean> = { ...current, [groupKey]: enabled, banhang: true };
+    if (group) {
+      for (const l of group.leaves) delete next[`bh-leaf-${l.to}`]; // lá về theo nhóm
+    }
     saveModuleAccess(
       { data: { employeeId: selectedEmployee.id, modules: next as Record<string, boolean> } },
     )
-      .then(() => toast.success(`${selectedEmployee.name}: ${enabled ? "đã bật" : "đã tắt"} ${BANHANG_GROUP_LABELS[groupKey]}`))
+      .then(() => toast.success(`${selectedEmployee.name}: ${enabled ? "đã bật" : "đã tắt"} nhóm ${group?.label ?? groupKey} (bao gồm ${group?.leaves.length ?? 0} module)`))
+      .catch(() => toast.error("Lưu phân quyền thất bại — kiểm tra mạng và thử lại"));
+  };
+
+  // GĐ 199 — cập nhật TỪNG LÁ: bật 1 lá tự bật nhóm chứa nó (nhóm tắt → lá bật
+  // không có tác dụng); tắt lá KHÔNG tắt nhóm (các lá khác trong nhóm vẫn bật).
+  const updateBanhangLeaf = (groupKey: string, leafTo: string, enabled: boolean) => {
+    if (!selectedEmployee) return;
+    if (selectedIsAdmin) return;
+    const leafKey = `bh-leaf-${leafTo}`;
+    setUserModuleAccess(selectedEmployee.id, leafKey, enabled);
+    setBanhangRows((rows) =>
+      rows.map((r) => {
+        if (r.key !== groupKey) return r;
+        const leaves = r.leaves.map((l) => (l.to === leafTo ? { ...l, enabled } : l));
+        // Bật lá khi nhóm đang tắt → nhóm tự bật (consistency)
+        const groupOn = enabled ? true : r.enabled;
+        return { ...r, enabled: groupOn, leaves };
+      }),
+    );
+    const current = { ...getUserModuleAccess(selectedEmployee.id) } as Record<string, boolean>;
+    const next: Record<string, boolean> = { ...current, [leafKey]: enabled, banhang: true };
+    if (enabled) next[groupKey] = true; // bật lá → nhóm chứa nó phải bật
+    saveModuleAccess(
+      { data: { employeeId: selectedEmployee.id, modules: next as Record<string, boolean> } },
+    )
+      .then(() => {
+        const group = getBanhangCatalog().find((g) => g.key === groupKey);
+        const leafLabel = group?.leaves.find((l) => l.to === leafTo)?.label ?? leafTo;
+        toast.success(`${selectedEmployee.name}: ${enabled ? "đã bật" : "đã tắt"} ${leafLabel}`);
+      })
       .catch(() => toast.error("Lưu phân quyền thất bại — kiểm tra mạng và thử lại"));
   };
 
@@ -149,7 +208,18 @@ function AdminPermissionsPage() {
     );
     // GĐ 142: reset cả quyền nhóm Bán hàng (đi theo default của getBanhangGroups)
     const resetGroups = getBanhangGroups(selectedEmployee);
-    setBanhangRows((rows) => rows.map((r) => ({ ...r, enabled: resetGroups[r.key] })));
+    // GĐ 199: reset cả quyền chi tiết 8 nhóm + lá (theo getBanhangDetailForEmployee)
+    const resetDetail = getBanhangDetailForEmployee(selectedEmployee);
+    setBanhangRows(getBanhangCatalog().map((g) => ({
+      key: g.key,
+      label: g.label,
+      enabled: resetDetail.groups[g.key] === true,
+      leaves: g.leaves.map((l) => ({
+        to: l.to,
+        label: l.label,
+        enabled: resetDetail.leaves[`bh-leaf-${l.to}`] === true,
+      })),
+    })));
     clearModuleAccess({ data: { employeeId: selectedEmployee.id } })
       .then(() =>
         toast.success(`Đã reset quyền mặc định cho ${selectedEmployee.name}`),
@@ -249,33 +319,54 @@ function AdminPermissionsPage() {
                   </button>
                 </div>
                 {/* GĐ 142 — 4 nhóm bộ phận của app Bán hàng (chỉ hiện khi "Bán hàng" bật
-                    và user KHÔNG phải Admin — Admin luôn đủ 4 nhóm). Bật nhóm con tự
+                    và user KHÔNG phải Admin — Admin luôn đủ mọi nhóm). Bật nhóm con tự
                     bật "banhang" (cửa vào app con). */}
-                {row.key === "banhang" && row.userEnabled && !isAdmin ? (
-                  <div className="mt-1.5 space-y-1 rounded-xl border border-dashed border-accent/30 bg-accent-soft/40 p-2">
+                {/* GĐ 199 — mở rộng thành 8 NHÓM từ BH_GROUPS catalog + TỪNG LÁ
+                    (chip chi tiết đến bậc cuối): nhóm bật → mọi lá trong nhóm bật;
+                    bật/tắt lá riêng để thu hẹp trong nhóm; nhóm/báo cáo MỚI thêm vào
+                    catalog tự xuất hiện ở đây. */}
+                {row.key === "banhang" && row.userEnabled && !selectedIsAdmin ? (
+                  <div className="mt-1.5 space-y-2 rounded-xl border border-dashed border-accent/30 bg-accent-soft/40 p-2">
                     <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
-                      Nhóm bộ phận trong app Bán hàng
+                      Nhóm bộ phận trong app Bán hàng — bật nhóm = bật cả nhóm; bật/tắt từng module bên trong
                     </p>
                     {banhangRows.map((bh) => (
-                      <div
-                        key={bh.key}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2"
-                      >
-                        <span className="text-sm text-ink">{bh.label}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateBanhangGroup(bh.key, !bh.enabled)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                            bh.enabled ? "bg-accent" : "bg-slate-300"
-                          }`}
-                          aria-label={`Bật/tắt ${bh.label}`}
-                        >
-                          <span
-                            className={`inline-block size-4 rounded-full bg-white shadow transition ${
-                              bh.enabled ? "translate-x-6" : "translate-x-1"
+                      <div key={bh.key} className="rounded-lg bg-surface px-3 py-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-medium text-ink">{bh.label}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateBanhangGroup(bh.key, !bh.enabled)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                              bh.enabled ? "bg-accent" : "bg-slate-300"
                             }`}
-                          />
-                        </button>
+                            aria-label={`Bật/tắt nhóm ${bh.label}`}
+                          >
+                            <span
+                              className={`inline-block size-4 rounded-full bg-white shadow transition ${
+                                bh.enabled ? "translate-x-6" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        {/* Chip TỪNG LÁ — chi tiết đến bậc cuối (GĐ 199) */}
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {bh.leaves.map((leaf) => (
+                            <button
+                              key={leaf.to}
+                              type="button"
+                              onClick={() => updateBanhangLeaf(bh.key, leaf.to, !leaf.enabled)}
+                              className={`rounded-full border px-2 py-0.5 text-[11px] transition ${
+                                leaf.enabled
+                                  ? "border-accent/40 bg-accent/10 text-ink"
+                                  : "border-line bg-surface-2 text-muted line-through decoration-slate-400/50"
+                              }`}
+                              title={`${leaf.enabled ? "Bấm để TẮT" : "Bấm để BẬT"}: ${leaf.label}`}
+                            >
+                              {leaf.enabled ? "✓ " : "✕ "}{leaf.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>

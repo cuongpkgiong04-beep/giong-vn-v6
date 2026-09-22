@@ -8,6 +8,7 @@
  */
 import type { Employee } from "./types";
 import { isAdminRole, getEmployeeById } from "./catalog";
+import { BH_GROUPS, BH_GROUP_KEYS, getBanhangDetailAccess } from "./banhang-catalog";
 
 export type Permission =
   | "dashboard:view"
@@ -67,6 +68,11 @@ export type ModuleKey =
   | "banhang-banhang" // nhóm SMED - BÁN HÀNG (HĐĐT, DT đối tượng, DT chuỗi, BKCCN, BLTH)
   | "banhang-kho" // nhóm SMED - KHO (nhập kho, xuất kho, NXT kế toán)
   | "banhang-marketing"; // nhóm SMED - MARKETING (chiết khấu, lịch hẹn tiêm, gói tiêm đặt trước)
+  // GĐ 199 (22/09/2026) — mở rộng phân quyền ĐẾN TỪNG LÁ (yêu cầu Đại ca: phân
+  // quyền cho nhóm BÁO CÁO + UPLOAD - MISA AMIS, chi tiết đến bậc cuối; nhóm mới
+  // thêm sau tự áp dụng qua BH_GROUPS trong banhang-catalog.ts). 4 nhóm mới dùng
+  // prefix "bh-" (4 key cũ giữ nguyên — không vỡ quyền đang chạy). Quyền lá =
+  // "bh-leaf-<route>" (key động, không khai báo ở union này).
 
 export const MODULE_DEFINITIONS = [
   { key: "dashboard", label: "Tổng quan", paths: ["/"], group: "Điều hành" },
@@ -207,12 +213,13 @@ export function getUserModuleAccess(employeeId: string): ModuleAccessMap {
   return dbModuleAccess[employeeId] ?? {};
 }
 
-/** Optimistic update tại máy — trang Phân quyền tự lưu DB qua `saveModuleAccess`. */
-export function setUserModuleAccess(employeeId: string, moduleKey: ModuleKey | BanhangGroupKey, enabled: boolean) {
+/** Optimistic update tại máy — trang Phân quyền tự lưu DB qua `saveModuleAccess`.
+ *  GĐ 199: nhận thêm key lá "bh-leaf-*" (string) — key động sinh từ BH_GROUPS. */
+export function setUserModuleAccess(employeeId: string, moduleKey: ModuleKey | BanhangGroupKey | string, enabled: boolean) {
   if (!employeeId) return;
   ensureSeeded();
   const current = dbModuleAccess[employeeId] ?? {};
-  dbModuleAccess[employeeId] = { ...current, [moduleKey]: enabled };
+  dbModuleAccess[employeeId] = { ...current, [moduleKey]: enabled } as ModuleAccessMap;
   writeMirror(dbModuleAccess);
 }
 
@@ -457,4 +464,34 @@ export function getPermissionLabel(permission: Permission): string {
     "checkin:create": "Tạo check-in",
   };
   return labels[permission] ?? permission;
+}
+
+// ============================================================
+// GĐ 199 (2026-09-22) — QUYỀN CHI TIẾT app con: NHÓM + TỪNG LÁ
+// Nguồn cây = BH_GROUPS (banhang-catalog.ts). Dùng ở app tổng:
+// (1) trang Phân quyền render toggle 8 nhóm + chip từng lá;
+// (2) sso-token ký thêm leafs vào JWT. App con đọc cùng bảng module_access.
+// ============================================================
+
+export type BanhangDetailAccess = ReturnType<typeof getBanhangDetailAccess>;
+
+/** Quyền CHI TIẾT app con của employee (nhóm + lá) — phía app tổng (client).
+ *  Logic backward-compat nằm trong getBanhangDetailAccess (catalog). */
+export function getBanhangDetailForEmployee(employee: Employee | null): BanhangDetailAccess {
+  if (!employee) return { groups: {}, leaves: {} };
+  // getUserModuleAccess trả ModuleAccessMap (type chặt) — cast sang Record<string,
+  // unknown> vì map trong DB chứa cả key lá "bh-leaf-*" không nằm trong ModuleKey.
+  const modules = getUserModuleAccess(employee.id) as Record<string, unknown>;
+  return getBanhangDetailAccess(employee.role, modules);
+}
+
+/** Danh sách nhóm + lá để render trang Phân quyền (nguồn = BH_GROUPS catalog).
+ *  Nhóm/báo cáo MỚI thêm vào BH_GROUPS → tự xuất hiện trong trang Phân quyền. */
+export function getBanhangCatalog() {
+  return BH_GROUPS;
+}
+
+/** Mọi key nhóm (8) — dùng khi ký JWT SSO + đếm cấu hình. */
+export function getBanhangAllGroupKeys(): string[] {
+  return [...BH_GROUP_KEYS];
 }

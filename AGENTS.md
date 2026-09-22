@@ -7735,6 +7735,83 @@ GĐ 138 ✓).
 **Version:** 3.8.0 → **3.8.1** (docs-only — patch; checklist GĐ 138 ✓ —
 không thành phần nào ≥ 10).
 
-*Cập nhật lần cuối: 2026-09-22 (GĐ 198 — quy trình xử lý nhiệm vụ 5 bước; app tổng
-3.8.1 / repo con 4.7.2)*
+---
+
+### GĐ 200: Phân quyền app con CHI TIẾT ĐẾN TỪNG LÁ — 8 nhóm + chip từng báo cáo (2026-09-22, 3.9.0 + repo con 4.8.0)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | feat(permissions): GĐ 199 — catalog BH_GROUPS 8 nhóm + lá; trang Phân quyền toggle nhóm + chip từng lá; sso-token ký leafs vào JWT (3.9.0) |
+| (repo con) | feat(permissions): GĐ C.67 — smed-auth quyền lá live DB + me trả leafs + sidebar lọc từng lá + API gate 3 lớp (4.8.0) |
+
+> **Yêu cầu của Đại ca (22/09):** (1) hướng dẫn phân quyền Bán hàng app tổng → app con;
+> (2) phần phân quyền mới chỉ có 4 nhóm DOWNLOAD — cần thêm nhóm BÁO CÁO + UPLOAD
+> - MISA AMIS; (3) phân quyền TỪNG loại báo cáo trong các Nhóm chi tiết đến bậc cuối;
+> (4) nhóm/chi tiết MỚI thêm sau tự áp dụng hình thức phân quyền này.
+>
+> **Đã chạy đúng quy trình GĐ 198 (phiên 2):** phân tích (đọc code 2 app) → trình
+> 3 lựa chọn kèm dự đoán → anh chốt: ① mô hình NHÓM + TỪNG LÁ; ② nguồn cây = FILE
+> CATALOG trong app tổng (đồng bộ 2 nơi có chú thích); ③ GIỮ NGUYÊN quyền hiện có
+> (backward-compat). "Tổng quan" = Bậc 0 (cửa vào app con) — không lọc riêng, chặn
+> bằng tắt quyền "Bán hàng".
+>
+> **Kiến trúc (3 tầng, không migration mới — cùng ô module_access JSONB):**
+> 1. **Catalog (app tổng `src/lib/banhang-catalog.ts` — MỚI):** BH_GROUPS = 8 nhóm
+>    × lá (4 key cũ `banhang-*` giữ nguyên + 4 key mới `bh-bao-cao-ke-toan` /
+>    `bh-bao-cao-kho` / `bh-bao-cao-marketing` / `bh-upload-misa-amis`); key lá
+>    `bh-leaf-<route>` (VD `bh-leaf-/m/bc-xuat-huy`). Hàm getBanhangDetailAccess —
+>    logic backward-compat tập trung 1 nơi. CHECKLIST 4 bước khi thêm nhóm/báo cáo
+>    MỚI ghi sẵn cuối file (sửa catalog + nav.ts app con + map report→nhóm/lá —
+>    UI toggle + guard TỰ SINH theo catalog, KHÔNG sửa hệ thống phân quyền).
+> 2. **App tổng:** permissions.ts mở rộng (getBanhangDetailForEmployee /
+>    getBanhangCatalog / getBanhangAllGroupKeys; setUserModuleAccess nhận key lá
+>    string); sso-token ký 8 nhóm + leafs vào JWT mods (fallback); trang Phân quyền
+>    — khung 4 toggle cũ thay bằng 8 nhóm, mỗi nhóm xổ CHIP TỪNG LÁ (✓/✕, gạch ngang
+>    khi tắt): bật nhóm = bật cả nhóm + xóa config lá (lá về theo nhóm); bật lá tự
+>    bật nhóm; tắt lá không tắt nhóm; reset về default qua getBanhangDetail.
+> 3. **App con:** smed-auth — BH_ALL_GROUP_KEYS (8) + ROUTE_TO_GROUP (33 lá → nhóm)
+>    + getBanhangDetail/canAccessRoute (đọc LIVE module_access, fallback JWT mods,
+>    normalize NVARCHAR/spread bug tái dùng GĐ 198); me.ts nối leafs vào mods;
+>    app-shell filterTreeByMods lọc ĐẾN TỪNG LÁ (nhóm hết lá có quyền → ẩn cả nhóm);
+>    -smed.ts chặn tạo job 3 LỚP: nhóm (C.21) → queryKey (C.47) → LÁ MỚI
+>    (LEAF_ROUTE_BY_REPORT 13 phân hệ + SQL_QUERY_LEAF 13 queryKey — chip tắt là
+>    chặn cả API tay).
+>
+> **LESSON LEARNED — Quyền "chi tiết đến bậc cuối" cần 3 điểm tiêu thụ cùng nguồn
+> (tái diễn GĐ 99/143 lần 3):** sidebar (mods leafs) + canAccessRoute (API lá) +
+> trang Phân quyền (catalog) — cả 3 đều sinh từ BH_GROUPS/ROUTE_TO_GROUP. Khác
+> biệt duy nhất: app tổng dùng catalog file, app con map ROUTE_TO_GROUP riêng do
+> 2 repo độc lập — checklist sync 2 nơi là chấp nhận có chủ đích (phương án API
+> trả cây bị loại vì phụ thuộc tunnel sống).
+>
+> **LESSON LEARNED — key quyền lá dùng ROUTE (ổn định) không dùng tên hiển thị:**
+> `bh-leaf-/m/bc-xuat-huy` — route không đổi khi đổi nhãn; thêm báo cáo mới = thêm
+> route mới, key không va chạm; lọc sidebar tra route đang active trực tiếp.
+>
+> **LESSON LEARNED — str_replace replacement dài dễ dính lỗi escape (lặp lại):
+> 3 lần trong phiên này replacement bị chèn `\r  ` thay `\r\n` hoặc dính dòng —
+> đều bắt ngay bằng read_files sau mỗi lần sửa. Quy tắc: sửa file có CRLF, sau
+> MỖI replacement khối lớn đọc lại vùng đó xác nhận trước khi chuyển bước.
+>
+> **HƯỚNG DẪN PHÂN QUYỀN BÁN HÀNG ĐẦY ĐỦ (tóm tắt cho Đại ca — chi tiết ở mục
+> tổng kết phiên):** App tổng → Phân quyền → chọn nhân sự → bật "Bán hàng (Dự án)"
+> → 8 nhóm xổ ra (4 DOWNLOAD + 3 BÁO CÁO + UPLOAD) → bật nhóm = cả nhóm, bấm chip
+> ✓/✕ từng báo cáo để tinh chỉnh đến bậc cuối → lưu tự lên Neon. User mở lại app
+> con là thấy đúng phạm vi (sidebar ẩn module không có quyền + API chặn tạo job).
+>
+> **⚠️ VIỆC CẦN LÀM sau deploy:** user ĐANG dùng app con giữ nguyên quyền nhóm cũ
+> (tự có đủ lá trong nhóm đó). Muốn thu hẹp từng báo cáo: vào lại Phân quyền, bấm
+> chip lá sang ✕. Trang UPLOAD các trang hiện là khung placeholder — quyền chặn
+> ĐÚNG route nhưng nội dung trang còn chờ phát triển (GĐ sau).
+>
+> **Tiêu chí kiểm chứng:** Trang Phân quyền hiện 8 nhóm + 33 chip lá; tắt chip 1
+> báo cáo → user đó mất module ở sidebar app con + tạo job bị chặn API; bật lại
+> chip → thấy ngay khi tải lại; Admin app tổng/app con luôn đủ hết; typecheck 0
+> lỗi cả 2 app; build OK cả 2.
+
+**Version:** app tổng 3.8.1 → **3.9.0** (feature mới — minor) · repo con
+4.7.2 → **4.8.0** (feature mới — minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+*Cập nhật lần cuối: 2026-09-22 (GĐ 200 — phân quyền app con chi tiết đến từng lá;
+app tổng 3.9.0 / repo con 4.8.0)*
 *Người cập nhật: Trợ lý lập trình*
