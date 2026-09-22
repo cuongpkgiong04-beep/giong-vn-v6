@@ -91,12 +91,17 @@ export const BH_GROUPS: BhGroup[] = [
     key: "bh-bao-cao-kho",
     label: "BÁO CÁO KHO",
     leaves: [
-      { to: "/m/bc-nxt-luong", label: "Báo cáo TH_NXT kho theo lượng" },
+      // GĐ C.68 (23/09/2026 — yêu cầu Đại ca): thứ tự 1→7 mới + 3 module mới
+      // (ma trận nhập/xuất + kiểm kê cuối tháng) — ĐỒNG BỘ nav.ts repo con.
       { to: "/m/bc-nhap-kho", label: "Báo cáo nhập kho" },
       { to: "/m/bc-xuat-kho", label: "Báo cáo xuất kho" },
-      { to: "/m/bc-nxt-luong-tien", label: "Báo cáo TH_NXT kho theo lượng-tiền" },
-      { to: "/m/bc-tonkho-luong", label: "Báo cáo tồn kho theo lượng" },
       { to: "/m/bc-xuat-huy", label: "Báo cáo xuất hủy" },
+      { to: "/m/bc-tonkho-luong", label: "Báo cáo tồn kho theo lượng" },
+      { to: "/m/bc-nxt-luong", label: "Báo cáo TH_NXT kho theo lượng" },
+      { to: "/m/bc-nxt-luong-tien", label: "Báo cáo TH_NXT kho theo lượng-tiền" },
+      { to: "/m/bc-kiem-ke", label: "Báo cáo kiểm kê cuối tháng" },
+      { to: "/m/bc-matrix-nhap", label: "Báo cáo nhập kho — ma trận theo trung tâm" },
+      { to: "/m/bc-matrix-xuat", label: "Báo cáo xuất kho — ma trận theo trung tâm" },
     ],
   },
   {

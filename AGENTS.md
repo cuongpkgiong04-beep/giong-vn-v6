@@ -7855,3 +7855,56 @@ app tổng 3.9.0 / repo con 4.8.0)*
 > kỳ mở dialog chi tiết; Cập nhật → nút ẩn + thanh % chạy tới 100% + HeaderJobsBar
 > hiện lệnh đang chạy; thiếu data Hôm qua → banner vàng hỏi tải như cũ.
 
+
+---
+
+### GĐ 202: Hệ sinh thái — BÁO CÁO KHO: 2 ma trận nhập/xuất + kiểm kê cuối tháng + 3 điểm hiển thị (repo con v5.0.0) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo kho): GĐ C.69 — ma trận nhập (MT_NHAPKHO) + ma trận xuất (MT_XUATKHO) + kiểm kê cuối kỳ (BBKK + bảng phụ theo TT); sắp lại thứ tự 1→7; sửa TH_NXT 2 biến thể + tồn kho theo yêu cầu (v5.0.0) |
+| (app tổng) | docs(agents) + catalog BÁO CÁO KHO 9 lá + version 3.9.1 → 3.9.2 |
+
+> **Yêu cầu của Đại ca (23/09 — 4 cụm, chi tiết đầy đủ ở AGENTS.md repo con GĐ C.69):**
+> (1) **Ma trận nhập kho** (sheet MT_NHAPKHO tool 12): pivot Hàng hóa × 19 TT,
+> value = SL Nhập (5BKN col9); (2) **Ma trận xuất kho** (MT_XUATKHO): value =
+> SL Xuất + SL Tiêm (7BCNXT col10+col12); cả 2 CHỈ hiện dòng CÓ phát sinh,
+> ô 0 → ẨN; (3) **Sắp lại thứ tự BÁO CÁO KHO 1→7 + thêm Báo cáo kiểm kê cuối
+> tháng** (sheet BBKK tool 12 — từng lô còn tồn + BẢO CÁO PHỤ tổng hợp theo
+> trung tâm); (4) **Sửa hiển thị**: TH_NXT lượng-tiền dòng Cộng thiếu cột SL
+> Nhập/Giá trị nhập/SL Xuất/Giá trị xuất/SL Kiểm kho/Giá trị kiểm kho; tồn
+> kho theo lượng bôi đậm TỔNG CỘNG (boldTotalRow có sẵn) + Hàng hóa dãn +30%
+> (321→417px); TH_NXT lượng dòng Cộng thiếu SL Nhập/SL Xuất + số căn phải +
+> STT autofit + ô SUBTOTAL chuyển từ cột STT sang cột Hàng hóa.
+
+> **Kiểm kê BBKK (đã chốt cách tính):** từng LÔ (TT × hàng hóa × lô × HSD)
+> lấy dòng report_date MỚI NHẤT trong kỳ làm snapshot (tồn là SNAPSHOT —
+> lesson GĐ C.55, không cộng dồn nhiều ngày 1 lô); chỉ hiện lô SL Tồn cuối
+> > 0; bảng phụ = TỔNG HỢP THEO TRUNG TÂM (Đầu kỳ/Nhập/Xuất/Cuối kỳ/Giá trị +
+> dòng Total) qua render-prop children (pattern bc-xuat-huy GĐ C.65).
+
+> **Quyền + catalog:** 3 query mới (nk-matrix/xk-matrix/kiem-ke) → nhóm
+> banhang-kho (SQL_QUERY_GROUP + SQL_SOURCES_BY_QUERY + REPORT_SOURCE_TABLES +
+> QUERY_KEYS + EMPTY_OK_KEYS); catalog app tổng BÁO CÁO KHO lên 9 lá — đồng bộ
+> nav.ts repo con (module mới tự xuất hiện trong trang Phân quyền — GĐ 200).
+
+> **✅ Verify (chạy thật GiongDB kỳ 14→22/09):** nk-matrix 23 hàng có nhập
+> (Avaxim 80U = 120 khớp probe; TỔNG 4500); xk-matrix 49 hàng (Abhayrab = 26;
+> TỔNG 2179); kiem-ke 1145 lô còn tồn (BH: Đầu 1324/Nhập 40/Xuất 19/Cuối 1345/
+> Giá trị 491.983.676; Total Giá trị 11.789.137.421); TH_NXT TỔNG CỘNG đủ cột
+> (lượng: SL Nhập 3150/SL Xuất 216; tiền: Giá trị nhập 824.558.502); ô=0 lọt
+> = 0 cả 3 builder (fix dòng TỔNG CỘNG cột TT=0 → rỗng); py_compile + tsc 0
+> lỗi cả 2 app; build OK; routeTree sinh lại 3 route.
+
+> **UI (report-result-table):** ô SUBTOTAL nhãn chuyển cột STT → cột Hàng hóa
+> (idx 0 trả rỗng); cột STT autofit hẹp (44-64px khi autoFitColumns); cột
+> Hàng hóa 321→417px (+30% yêu cầu Đại ca). hasSubtotal đổi điều kiện i>1.
+
+> **Version:** repo con 4.9.0 → **5.0.0** (feature — minor 9 đầy → nhớ major,
+> checklist GĐ 138 ✓); app tổng 3.9.1 → **3.9.2** (docs+catalog — patch).
+
+> **Tiêu chí kiểm chứng:** Sidebar BÁO CÁO KHO đúng thứ tự 1→7; 3 trang mới
+> chạy báo cáo được (chỉ dòng có phát sinh, ô 0 trống, TỔNG CỘNG cuối); kiểm
+> kê có bảng phụ theo trung tâm + dòng Total; TH_NXT 2 biến thể dòng Cộng
+> đủ cột; tồn kho TỔNG CỘNG đậm + Hàng hóa rộng hơn; version 5.0.0/3.9.2.
+
