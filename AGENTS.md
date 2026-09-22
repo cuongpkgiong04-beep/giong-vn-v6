@@ -7815,3 +7815,43 @@ không thành phần nào ≥ 10).
 *Cập nhật lần cuối: 2026-09-22 (GĐ 200 — phân quyền app con chi tiết đến từng lá;
 app tổng 3.9.0 / repo con 4.8.0)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### GĐ 201: Hệ sinh thái — Tổng quan app con nâng cấp lớn: kỳ chung Hôm qua + 7 hộp KPI (repo con v4.9.0) (2026-09-22)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(overview): GĐ C.67 — bỏ trùng Công ty + dropdown kỳ chung (mặc định Hôm qua) + hộp XUẤT VẮC XIN + hộp CẬN HẠN SỬ DỤNG + dialog chi tiết 7 hộp + progress Cập nhật (v4.9.0) |
+| (app tổng) | docs(agents): GĐ 201 + version 3.9.0 → 3.9.1 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (22/09 — 6 hạng mục, chi tiết đầy đủ ở AGENTS.md repo con GĐ C.67):**
+> (1) bỏ 1 "Công ty CP Giong VN" trùng trong dropdown; (2) ô lọc thời gian CHUNG
+> cạnh trái dropdown đơn vị (Hôm nay/Hôm qua/Tháng này/Tháng trước/Năm nay/Năm
+> trước/Khoảng khác — mặc định **Hôm qua**), chọn → áp cả 7 biểu đồ + 7 hộp, kỳ
+> riêng từng ô vẫn đổi tiếp được; (3) hộp vàng **XUẤT VẮC XIN** (PX-SD tiêm /
+> PH hủy / PXK khác / XT trả NCC — Hôm nay + Tháng này); (4) hộp xanh đậm
+> **CẬN HẠN SỬ DỤNG** (HSD ≥6 tháng / <6 / <3 — snapshot tồn kho); (5) bấm hộp
+> → dialog báo cáo chi tiết; (6) Cập nhật → nút ẩn + thanh % cho tới 100%
+> (HeaderJobsBar GĐ C.53 tự tổng hợp).
+
+> **Đã chốt với Đại ca qua 3 câu hỏi:** dialog NGAY trong Tổng quan (không điều
+> hướng); kỳ chung áp CẢ 7 biểu đồ + 7 hộp; HSD theo SNAPSHOT tồn mới nhất.
+
+> **Nguồn dữ liệu đã probe thật:** XUẤT VẮC XIN = stg_6BKX (PX-SD 228.796 ·
+> PH 4.258 · PXK 63 · XT 0 — ngày cột 2, SL cột 7, tiền cột 8); HSD = stg_7BCNXT
+> cột 5 (ISO) + tồn cuối cột 16, group ≥6/3-6/<3 tháng theo asOf mới nhất.
+
+> **Verify:** E2E Playwright production **10/10 PASS** (login → SSO → kỳ chung
+> mặc định yesterday → 7 hộp bấm được → Công ty count=1 → biểu đồ đổi theo kỳ
+> chung → kỳ riêng đổi được → dialog chi tiết + dialog HSD mở); tsc 0 lỗi;
+> build OK; screenshots lưuTemp.
+
+> **Version:** repo con 4.8.0 → **4.9.0** (feature — minor); app tổng 3.9.0 →
+> **3.9.1** (docs — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+> **Tiêu chí kiểm chứng:** Mở Tổng quan: dropdown Công ty 20 mục không trùng;
+> kỳ chung mặc định Hôm quay về đúng 7 ô; 2 hộp mới hiện số thật; bấm hộp bất
+> kỳ mở dialog chi tiết; Cập nhật → nút ẩn + thanh % chạy tới 100% + HeaderJobsBar
+> hiện lệnh đang chạy; thiếu data Hôm qua → banner vàng hỏi tải như cũ.
+
