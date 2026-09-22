@@ -87,6 +87,29 @@
 6. Đại ca kiểm tra trên Vercel (không cần local)
 ```
 
+### 🔁 QUY TRÌNH XỬ LÝ NHIỆM VỤ (hiệu lực từ 2026-09-22 — áp dụng cho MỌI nhiệm vụ):
+
+> Khi Đại ca yêu cầu một nhiệm vụ gì, em PHẢI làm theo đúng 5 bước sau:
+>
+> **Bước 1 — Phân tích suy nghĩ bằng TIẾNG VIỆT NAM:** Phân tích yêu cầu, đối chiếu với
+> code hiện tại và quy tắc trong AGENTS.md, tìm ra giải pháp — toàn bộ suy nghĩ bằng tiếng Việt.
+>
+> **Bước 2 — Hỏi lại xác nhận Ý TƯỞNG:** Sau khi phân tích xong, trình bày ngắn gọn giải pháp
+> và HỎI Đại ca xem đúng ý tưởng của anh chưa. CHƯA xác nhận → KHÔNG đụng code.
+>
+> **Bước 3 — Đưa ít nhất 3 TIÊU CHÍ lựa chọn + DỰ ĐOÁN kết quả:** Trình tối thiểu 3 phương án/
+> tiêu chí để anh lựa chọn tốt nhất, kèm dự đoán trước kết quả của từng lựa chọn (làm gì được,
+> rủi ro gì, ảnh hưởng chỗ nào). Anh quyết — em KHÔNG tự chọn thay.
+>
+> **Bước 4 — Anh ĐỒNG Ý mới viết code:** Chỉ bắt tay viết code sau khi anh đã chọn phương án.
+> Viết xong nếu cần thì chạy thử (typecheck/test/E2E) để verify trước khi báo xong.
+>
+> **Bước 5 — Tổng kết + hướng dẫn + gợi ý tiếp theo:** Tổng kết lại nhiệm vụ đã làm (đã sửa gì,
+> verify thế nào), hướng dẫn anh cách chạy/test lần sau, và gợi ý các bước tiếp theo có thể làm.
+>
+> **Lưu ý:** Bước 2 + 3 có thể gộp thành MỘT vòng hỏi-đáp khi giải pháp đơn giản (trình giải pháp
+> + 3 tiêu chí + dự đoán cùng lúc). Bước 4 + 5 không bỏ qua — kể cả việc nhỏ cũng phải tổng kết.
+
 ### Quy tắc code (tuân thủ CLAUDE.md):
 - **KHÔNG** tự ý sáng tạo, refactor, thêm tính năng
 - **CHỈ** làm đúng yêu cầu được giao
@@ -7672,6 +7695,46 @@ không thành phần nào ≥ 10).
 **Version:** 3.7.9 → **3.8.0** (docs-only — patch 9 đầy → nhớ minor; checklist
 GĐ 138 ✓).
 
-*Cập nhật lần cuối: 2026-09-22 (GĐ 197 — lịch sử job app con lọc theo user; app tổng
-3.8.0 / repo con 4.7.2)*
+---
+
+### GĐ 198: Quy trình xử lý nhiệm vụ 5 bước — CHUẨN THÁI ĐỘ mới khi nhận MỌI nhiệm vụ (2026-09-22, 3.8.1)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | docs(agents): GĐ 198 — thêm quy trình 5 bước (phân tích tiếng Việt → hỏi ý tưởng → 3 tiêu chí + dự đoán → đồng ý mới code → tổng kết/hướng dẫn/gợi ý) vào mục 4 Workflow |
+| (mới) | chore: tăng version 3.8.0 → 3.8.1 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (2026-09-22):** Khi anh yêu cầu một nhiệm vụ gì, em làm theo
+> 5 bước: (1) phân tích suy nghĩ bằng tiếng Việt; (2) phân tích xong hỏi lại anh
+> xem đúng ý tưởng chưa; (3) đưa ít nhất 3 tiêu chí để anh lựa chọn tốt nhất +
+> đoán trước kết quả nếu lựa chọn; (4) anh đồng ý mới viết code — viết xong nếu
+> cần chạy thử, tổng kết nhiệm vụ, hướng dẫn anh chạy lần sau, gợi ý bước tiếp theo.
+>
+> **Đã hỏi chốt 3 điểm qua vòng hỏi đầu tiên áp dụng quy trình (anh chọn):**
+> (1) phạm vi áp MỌI nhiệm vụ (kể cả việc nhỏ) — chấp nhận chậm hơn để chắc đúng ý;
+> (2) đặt ở mục 4 Workflow làm việc (chỗ AI đọc đầu tiên khi nhận nhiệm vụ);
+> (3) kết thúc phiên theo nguyên tắc Push — anh chọn phương án 1 (commit + ghi
+> lịch sử + version, CHƯA push).
+>
+> **Kiến trúc ghi trong AGENTS.md:** mục "🔁 QUY TRÌNH XỬ LÝ NHIỆM VỤ" đặt ngay
+> sau sơ đồ workflow, TRƯỚC "Quy tắc code" — đi cặp với 2 nguyên tắc "Chỉ sửa
+> phần được chỉ định" + "Không tự đoán ý định": biến 2 nguyên tắc thụ động thành
+> QUY TRÌNH 5 bước chủ động có CỔNG KIỂM (bài học GĐ 138 — quy tắc phải gắn vào
+> thao tác). Ghi chú cho phép gộp bước 2+3 thành MỘT vòng hỏi khi việc đơn giản;
+> bước 4+5 KHÔNG bỏ qua kể cả việc nhỏ.
+>
+> **LESSON LEARNED — Phiên này chính là lần chạy đầu của quy trình:** nhiệm vụ
+> thêm quy tắc được xử lý đúng 5 bước (phân tích → vòng hỏi 3 tiêu chí → anh
+> chọn → sửa file + verify → tổng kết + hỏi push). Quy trình đã chứng minh chạy
+> được ngay khi áp dụng, không cần đợi nhiệm vụ sau mới thử.
+>
+> **Tiêu chí kiểm chứng:** Nhiệm vụ KẾ TIẾP bất kỳ: em mở đầu bằng phân tích +
+> vòng hỏi lựa chọn (KHÔNG đụng code trước khi anh chọn); cuối phiên có mục
+> "Tổng kết + hướng dẫn + gợi ý tiếp theo". Sidebar hiện VERSION 3.8.1 sau deploy.
+
+**Version:** 3.8.0 → **3.8.1** (docs-only — patch; checklist GĐ 138 ✓ —
+không thành phần nào ≥ 10).
+
+*Cập nhật lần cuối: 2026-09-22 (GĐ 198 — quy trình xử lý nhiệm vụ 5 bước; app tổng
+3.8.1 / repo con 4.7.2)*
 *Người cập nhật: Trợ lý lập trình*
