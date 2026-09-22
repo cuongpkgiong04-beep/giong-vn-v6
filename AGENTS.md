@@ -7592,3 +7592,49 @@ Tunnel — giải tận gốc).
 
 **Version:** 3.7.6 → **3.7.7** (app tổng — patch) · **4.6.7 → 4.6.8** (repo con —
 patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---
+
+### GĐ 196: Hệ sinh thái — BÁO CÁO XUẤT HỦY app con: phiếu PH- trong nguồn xuất kho (repo con v4.7.0) (2026-09-22)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.65 — Báo cáo xuất hủy (phiếu PH-) — builder + meta.byCenter + trang /m/bc-xuat-huy + render-prop children + prop moneyCols (v4.7.0) |
+| (app tổng) | docs(agents): GĐ 196 + version 3.7.7 → 3.7.8 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (22/09):** Nghiên cứu báo cáo xuất hủy từ báo cáo xuất kho
+> hàng với các ký tự đầu tiên của số phiếu. Chi tiết đầy đủ ở **AGENTS.md repo
+> con GĐ C.65**.
+>
+> **Kết quả nghiên cứu:** "Xuất hủy" = phiếu **PH-<yyyymmddhhmmss>** (Loại phiếu:
+> Phiếu huỷ) nằm sẵn trong Bảng kê xuất kho SMED (tool 5 → stg_6BKX col3), phân
+> biệt phiếu xuất bán **PX-SD-**. stg_6BKX đã có 4.243 dòng PH- từ 01/2025 → nay
+> (backfill GĐ 178) → báo cáo chỉ cần LỌC `col3 LIKE 'PH-%'` trên cùng nguồn
+> `xuatkho` — không cần tool/download mới.
+>
+> **Đã chốt với Đại ca (2 câu hỏi):** hiển thị CẢ HAI (chi tiết từng dòng + bảng
+> phụ tổng hợp theo trung tâm) · đặt nhóm BÁO CÁO KHO, tên "Báo cáo xuất hủy".
+>
+> **Triển khai repo con:** builder `xuat_huy` (11 cột chi tiết + meta.byCenter:
+> số phiếu DISTINCT/tổng lượng/tổng tiền từng TT; Hạn SD Excel serial →
+> dd/mm/yyyy; Giờ HH:MM:SS) + `EMPTY_OK_KEYS` (nguồn có data mà 0 dòng PH- = rỗng
+> hợp lệ — không hỏi download) + quyền nhóm Kho + trang `/m/bc-xuat-huy` (khung
+> chuẩn GĐ C.44 + bảng phụ qua **render-prop `children`** mới của SqlDataModule +
+> **prop `moneyCols`** mới của ReportResultTable — cả 2 opt-in, bảng khác không
+> đổi). Verify: builder KHỚP từng đồng SQL thẳng (14 dòng, SL 124, tiền
+> 2.285.064 kỳ 20→21/09); E2E agent thật PASS (~45s); tsc 0 lỗi; build OK;
+> service agent restart nạp builder mới.
+>
+> **LESSON (repo con đã ghi đủ):** (1) báo cáo lọc-theo-loại phải phân biệt
+> "nguồn thiếu" (hỏi download) và "kết quả rỗng hợp lệ" (trả bảng trống);
+> (2) staging generic NVARCHAR — cột datetime về dạng string, isinstance datetime
+> vô dụng, handle cả 2 dạng ngay từ đầu.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version.
+
+**Version:** 3.7.7 → **3.7.8** (docs-only — patch; checklist GĐ 138 ✓ —
+không thành phần nào ≥ 10).
+
+*Cập nhật lần cuối: 2026-09-22 (GĐ 196 — Báo cáo xuất hủy app con; app tổng
+3.7.8 / repo con 4.7.0)*
+*Người cập nhật: Trợ lý lập trình*
