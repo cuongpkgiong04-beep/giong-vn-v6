@@ -8234,5 +8234,35 @@ không thành phần nào ≥ 10).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-23 (GĐ 212 — thu tiền đủ 21 cột + mọi báo cáo cuộn ngang; app tổng 4.0.0 / repo con 5.0.9)*
+### GĐ 213: Hệ sinh thái — Báo cáo bán hàng ĐỦ 21 cột sheet DT + Subtotal theo yêu cầu 2 báo cáo + KPI Lượt tiêm đếm Giờ tiêm (repo con v5.1.0) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.76 — bán hàng đủ 22 cột (Ngày + 21 sheet DT) + 3 prop Subtotal opt-in (nhãn cột khác / exclude / cột đếm) + KPI Lượt tiêm = đếm dòng có Giờ tiêm (v5.1.0) |
+| (app tổng) | docs(agents): GĐ 213 + version 4.0.0 → 4.0.1 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09 — 3 cụm, kèm 2 ảnh khoanh đỏ, chi tiết đầy đủ ở
+> AGENTS.md repo con GĐ C.76):** (1) thu tiền: nhãn SUBTOTAL → cột MÃ PHIẾU +
+> xóa số cộng oan 3.149 tỷ ở cột MÃ TIÊM CHỦNG; (2) bán hàng: đủ 21 cột sheet
+> DT + nhãn Subtotal → MÃ TIÊM CHỦNG + xóa tổng cột MŨI TIÊM + CÔNG THỨC ĐẾM
+> ở cột GIỜ TIÊM cuối dòng Subtotal; (3) KPI LƯỢT TIÊM Tổng quan lấy đúng
+> công thức đếm đó — có giờ vào tiêm = chắc chắn đã tiêm.
+>
+> **Đã chốt qua vòng hỏi:** PA-1 đếm dòng có Giờ tiêm, KPI + biểu đồ + dialog
+> cùng nguồn (anh chọn khuyến nghị).
+>
+> **Tóm tắt kỹ thuật:** khung bảng thêm 3 prop opt-in (báo cáo khác giữ nguyên
+> 100%); builder dt_by_date đủ 22 cột đúng thứ tự sheet DT (bổ sung 12 cột,
+> bỏ điều kiện col10 <> ''); -overview.ts đổi nguồn lượt tiêm COUNT dòng col11
+> <> '' thay cộng SL BLTH/DTTDT. Verify thật: bán hàng 22 cột + data thật;
+> Lượt tiêm 22/09 = **222** (cách cũ 225); thu tiền 158.135.000 khớp đối chứng;
+> py_compile + tsc + build OK. **Lesson:** cột MÃ/định danh chuỗi số dài bị dò
+> tự động cộng oan Subtotal — cần exclude tường minh.
+>
+> **Version:** repo con 5.0.9 → **5.1.0** (feature — minor); app tổng 4.0.0 →
+> **4.0.1** (docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---
+
+*Cập nhật lần cuối: 2026-09-23 (GĐ 213 — bán hàng đủ 21 cột + Subtotal theo yêu cầu + KPI Lượt tiêm đếm Giờ tiêm; app tổng 4.0.1 / repo con 5.1.0)*
 *Người cập nhật: Trợ lý lập trình*
