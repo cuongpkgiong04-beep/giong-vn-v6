@@ -8200,5 +8200,39 @@ không thành phần nào ≥ 10).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-23 (GĐ 211 — Dòng lọc đầu Tổng quan gọn; app tổng 3.9.9 / repo con 5.0.8)*
+### GĐ 212: Hệ sinh thái — Báo cáo thu tiền ĐỦ 21 cột sheet TT + MỌI báo cáo cuộn ngang Autofit (repo con v5.0.9) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.75 — builder tt_by_date đủ 21 cột sheet TT + autoFitColumns mặc định true mọi báo cáo (cuộn ngang Desktop + Mobile) (v5.0.9) |
+| (app tổng) | docs(agents): GĐ 212 + version 3.9.9 → 4.0.0 (docs-only — patch 9 đầy → nhớ minor) |
+
+> **Yêu cầu của Đại ca (23/09 — 2 cụm, kèm ảnh):** (1) Sheet "TT" tool 6 có 21
+> cột nhưng app thiếu — bổ sung đủ; (2) TẤT CẢ báo cáo không nhất thiết dồn
+> đủ cột vào 1 màn hình — có thanh cuộn ngang cả Desktop + Mobile.
+>
+> **Probe:** file tool 2 có 20 cột data + tool 6 thêm "Trung tâm" = 21 cột;
+> staging stg_2DTTDT lưu đủ (NCOLS=30) nhưng builder chỉ SELECT 11 cột →
+> thiếu 10 (Mã KH, Ngày sinh, Địa chỉ, Điện thoại, CCCD, Giờ thu tiền,
+> Giờ tiêm, Giờ về, Trạng thái, Ghi chú).
+>
+> **Fix 1 — builder tt_by_date (repo con):** SELECT đủ 21 cột đúng thứ tự
+> TT_HEADERS tool 6. Verify thật kỳ 22/09: 225 dòng, Tổng tiền 158.135.000
+> + SL 225 khớp từng đồng đối chứng GĐ 210; cột mới có data thật.
+>
+> **Fix 2 — khung bảng dùng chung (repo con):** `autoFitColumns` MẶC ĐỊNH
+> TRUE (trước false) — mọi báo cáo cuộn ngang Autofit (min-width cột đo
+> canvas, khung overflow-auto ngang+dọc, thead sticky), hết dồn 100% + ẩn
+> chữ; bảng ít cột vẫn vừa khung không cuộn thừa; muốn dồn cột truyền
+> `autoFitColumns={false}`. TX-DS (110 cột, khung riêng): `w-full min-w-max`.
+>
+> **Verify:** py_compile OK; tsc 0 lỗi; build OK; builder thật PASS.
+>
+> **Version:** repo con 5.0.8 → **5.0.9** (patch); app tổng 3.9.9 → **4.0.0**
+> (docs-only — patch 9 đầy → nhớ minor; checklist GĐ 138 ✓ — không thành
+> phần nào ≥ 10).
+
+---
+
+*Cập nhật lần cuối: 2026-09-23 (GĐ 212 — thu tiền đủ 21 cột + mọi báo cáo cuộn ngang; app tổng 4.0.0 / repo con 5.0.9)*
 *Người cập nhật: Trợ lý lập trình*
