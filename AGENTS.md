@@ -8098,3 +8098,79 @@ không thành phần nào ≥ 10).
 
 **Version:** repo con 5.0.5 → **5.0.6** (fix — patch); app tổng 3.9.6 → **3.9.7**
 (docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+### GĐ 210: Hệ sinh thái — Tổng quan app con: fix banner sai chọn trung tâm + KPI theo kỳ chung + KPI THU TIỀN nguồn DTTDT (repo con v5.0.7) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(overview): GĐ C.73 — countSources đủ 6 nguồn + KPI nhận from/to kỳ chung + THU TIỀN = SUM(col14) DTTDT đủ dòng + builder tt_by_date bỏ lọc col2 (v5.0.7) |
+| (app tổng) | docs(agents): GĐ 210 + version 3.9.7 → 3.9.8 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09 — 3 cụm):**
+> **(1) Cảnh báo tổng thể:** có dữ liệu rồi mà vẫn bị cảnh báo khi chọn 1 trung
+> tâm (chọn "Công ty CP Giong VN" thì không bị).
+> **(2) Kỳ chung:** để "Ngày hôm qua" mở chữ xác định mặc định khi mở lên; vẫn
+> chọn được Hôm nay/Tháng này/Tháng trước/Năm nay/Năm trước/Khoảng khác; khi
+> lựa chọn kỳ thì ngoài biểu đồ, các nút KPI cũng phải thay đổi theo — không
+> thể cố định "Ngày hôm qua" + "Tháng này".
+> **(3) Cách lấy số liệu:** KPI "DOANH THU" đổi tên "THU TIỀN", lấy từ Báo cáo
+> thu tiền — lấy ĐẦY ĐỦ các dòng như file code `2_smed_TKDTTDT.py` (thư mục
+> Agent), số liệu cộng cột Tổng tiền.
+>
+> **Đã hỏi chốt qua vòng hỏi (anh chọn):** KPI hiển thị 2 dòng (kỳ chung +
+> Tháng này tham chiếu phụ) · nguồn Thu tiền áp TOÀN BỘ KPI + biểu đồ + dialog
+> · nhãn đậm bên cạnh dropdown.
+>
+> **1. Banner sai — root cause GĐ 208 sót 2 nguồn (đúng dự đoán khi phân tích):**
+> GĐ 208 sáng nay áp quy tắc "không phát sinh ≠ chưa tải" cho 4 nguồn
+> (blth/dtdt/bkn/bkx) nhưng SÓT invoice (BKCT MISA) + nxt (snapshot NXT).
+> Trung tâm không phát sinh HĐGTGT trong kỳ / không có dòng NXT → đếm 0 →
+> banner oan dù nguồn đã tải. Fix: countSources trả giá trị theo phạm vi
+> COMPANY khi đơn vị = 0 cho CẢ 2 nguồn sót — banner chỉ đúng nghĩa "CHƯA TẢI"
+> khi company = 0.
+>
+> **2. KPI theo kỳ chung:** `loadOverviewKpi` nhận `from/to` (validator mở
+> rộng, fallback Hôm qua khi chưa gửi); client gửi periodRange của kỳ chung →
+> đổi kỳ là KPI + banner + dialog chi tiết đổi theo. Dòng 1 = tên kỳ chung
+> (periodLineLabel tự đổi), dòng 2 = "Tháng này". Tồn kho + HSD là SNAPSHOT
+> số dư — không cộng theo kỳ được (lesson GĐ 187), giữ nguyên + ghi chú.
+> ROOT CAUSE phụ tìm thêm: `applyGlobal` trước đây chỉ đồng bộ 7 ô biểu đồ,
+> KHÔNG set `globalPeriod` → KPI/banner không đổi. Nay gộp setGlobalPeriod vào
+> applyGlobal — một đường thay đổi kỳ duy nhất.
+> Nhãn đậm: `<span bg-accent/10 font-bold>Ngày hôm qua · 22/09/2026</span>`
+> cạnh dropdown — mở trang thấy ngay mặc định + khoảng ngày cụ thể.
+>
+> **3. THU TIỀN nguồn DTTDT (file tool 2):** tách `thuTienAndShots` khỏi
+> `revenueAndShots` cũ:
+> - TIỀN = SUM(col14) stg_2DTTDT **ĐẦY ĐỦ dòng** (không lọc Giờ ĐK — đúng
+>   yêu cầu "lấy đầy đủ các dòng như tool 2").
+> - LƯỢT TIÊM = BLTH col6 ưu tiên + DTTDT col13 fallback THEO NGÀY (giữ GĐ 187
+>   — DTTDT 16/09 từng trùng gấp đôi; không cộng dồn 2 nguồn cùng ngày).
+> - Áp KPI + biểu đồ "Thu tiền" + dialog chi tiết (cột "Thu tiền (đ)") + tên
+>   hộp KPI "Thu tiền" (tone xanh giữ nguyên).
+> - Builder `tt_by_date` (sql_reports.py) bỏ `col2 <> ''` + REPORT_SOURCE
+>   checkCol col2 → col1 (cảnh báo thiếu khớp chuẩn WHERE mới).
+>
+> **Verify (đo thật):** tsc 0 lỗi; build OK; py_compile OK; SQL thật qua tunnel
+> (URL Gist `accessible-scoring-…`): DTTDT 21/09 = 151 dòng/147.634.900đ,
+> 22/09 = 228 dòng/158.135.000đ (SUM col14 đủ dòng; 3 dòng Giờ ĐK trống trước
+> đây bị bỏ). ⚠️ Service GIONG_SMED_Agent cần restart sau deploy để trang
+> Báo cáo thu tiền nhận builder mới (KPI/biểu đồ Tổng quan KHÔNG cần restart
+> — chạy thẳng SQL qua tunnel).
+>
+> **Version:** repo con 5.0.6 → **5.0.7** (fix + nguồn — patch; checklist
+> GĐ 138 ✓); app tổng 3.9.7 → **3.9.8** (docs-only — patch).
+>
+> **Tiêu chí kiểm chứng:** Chọn 1 trung tâm không phát sinh HĐ/NXT → hết banner;
+> đổi Kỳ chung → 7 hộp KPI + nhãn dòng 1 đổi theo ngay; nhãn đậm hiện "Ngày hôm
+> qua · 22/09/2026" khi mở trang; hộp THU TIỀN số khớp Báo cáo thu tiền (trang
+> /m/bc-thu-tien); version 5.0.7/3.9.8 khớp 2 nơi mỗi app.
+>
+> **Verify sau deploy (bổ sung):** service agent đã restart nạp builder tt_by_date
+> mới (kiểm tra agent rảnh trước khi restart — GĐ 136); ghim domain app tổng
+> bản 3.9.8; app con auto-alias nắm domain (GĐ 165).
+
+---
+
+*Cập nhật lần cuối: 2026-09-23 (GĐ 210 — Tổng quan app con: fix banner + KPI kỳ chung + THU TIỀN; app tổng 3.9.8 / repo con 5.0.7)*
+*Người cập nhật: Trợ lý lập trình*
