@@ -8002,3 +8002,28 @@ app tổng 3.9.0 / repo con 4.8.0)*
 > **Tiêu chí kiểm chứng:** Sau deploy, user được cấp đủ quyền tải lại app con
 > → sidebar đủ DOWNLOAD · BÁO CÁO (3 nhánh) · UPLOAD; tắt chip lá ở app tổng →
 > tải lại → lá biến mất ngay (quyền live); typecheck 0 lỗi repo con.
+
+---
+
+### GĐ 205: Sidebar app con — cỡ chữ bậc 1 TO HƠN bậc 2 (2026-09-23, 3.9.5)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `610fbe4` | feat(ui): GĐ 204b — bậc 1 12→13px (cả nhánh rail thu hẹp lẫn rail mở), bậc 2 giữ 11.5px — chênh 1.5px phân cấp rõ (v5.0.3) |
+| (app tổng) | docs(agents): GĐ 205 + version 3.9.4 → 3.9.5 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09, kèm ảnh khoanh đỏ):** Bậc 1 "DOWNLOAD DỮ LIỆU"
+> phải có cỡ chữ TO hơn bậc 2 "DỮ LIỆU TỪ MISAmeInvoice" — hiện 2 bậc nhìn
+> như bằng nhau.
+>
+> **Đo từ code:** bậc 1 = 12px, bậc 2 = 11.5px — chênh 0.5px không phân biệt
+> được bằng mắt. **Đã chốt qua vòng hỏi:** PA-1 bậc 1 tăng 13px, bậc 2 giữ.
+>
+> **Fix:** 2 nhánh class trong `SidebarNhom` (app-shell.tsx repo con) —
+> collapsed + thường đều `text-[12px]` → `text-[13px]`. Bậc 0 + lá không đụng.
+>
+> **Version:** repo con 5.0.2 → **5.0.3** (patch); app tổng 3.9.4 → **3.9.5**
+> (docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+>
+> **Tiêu chí kiểm chứng:** Sidebar app con: chữ bậc 1 TO RÕ hơn bậc 2 (cả
+> rail thu hẹp, rail mở, mobile drawer); không đổi gì khác.
