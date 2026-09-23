@@ -8172,5 +8172,33 @@ không thành phần nào ≥ 10).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-23 (GĐ 210 — Tổng quan app con: fix banner + KPI kỳ chung + THU TIỀN; app tổng 3.9.8 / repo con 5.0.7)*
+### GĐ 211: Hệ sinh thái — Dòng lọc đầu Tổng quan app con gọn lại (repo con v5.0.8) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(overview): GĐ C.74 — bỏ chữ "Kỳ chung" + nhãn đậm, thứ tự Dropdown đơn vị → Dropdown thời gian → ngày tháng sau dropdown (v5.0.8) |
+| (app tổng) | docs(agents): GĐ 211 + version 3.9.8 → 3.9.9 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09, kèm ảnh khoanh đỏ):** Dòng lọc đầu trang Tổng
+> quan bỏ chữ "Kỳ chung" và "Hôm nay" (nhãn đậm); Dropdown chọn ngày lên
+> TRƯỚC, ngày tháng ra phía SAU bên phải. Thứ tự: Dropdown Công ty và các
+> trung tâm → Dropdown Chọn thời gian → Thời gian ngày tháng.
+>
+> **Đã chốt PA-1 (anh chọn):** mục 3 = text ngày kỳ đang áp (VD `23/09/2026`;
+> khoảng thì `01/09/2026 → 23/09/2026`); khi chọn "Khoảng khác" → 2 ô date
+> input nằm đúng vị trí đó (giữ chọn khoảng tùy ý GĐ 201).
+>
+> **Fix (1 file `overview-dashboard.tsx` repo con — surgical):** xóa span
+> "KỲ CHUNG" + nhãn đậm accent; select thời gian lên trước; thêm nhánh else
+> text ngày tháng dd/mm/yyyy (tabular-nums nowrap). `periodLineLabel` giữ
+> nguyên — vẫn dùng cho dòng 1 của 7 hộp KPI.
+>
+> **Verify:** tsc 0 lỗi; build OK.
+>
+> **Version:** repo con 5.0.7 → **5.0.8** (UI nhỏ — patch); app tổng 3.9.8 →
+> **3.9.9** (docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---
+
+*Cập nhật lần cuối: 2026-09-23 (GĐ 211 — Dòng lọc đầu Tổng quan gọn; app tổng 3.9.9 / repo con 5.0.8)*
 *Người cập nhật: Trợ lý lập trình*
