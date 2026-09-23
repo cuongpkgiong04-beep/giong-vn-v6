@@ -7908,3 +7908,48 @@ app tổng 3.9.0 / repo con 4.8.0)*
 > kê có bảng phụ theo trung tâm + dòng Total; TH_NXT 2 biến thể dòng Cộng
 > đủ cột; tồn kho TỔNG CỘNG đậm + Hàng hóa rộng hơn; version 5.0.0/3.9.2.
 
+---
+
+### GĐ 203: Hệ sinh thái — Tổng quan app con: bỏ chữ "Tồn kho ngày" + KPI/biểu đồ "Hôm qua" hết lệch 1 ngày (repo con v5.0.1) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `206b4f4` | fix(overview): GĐ C.70 — iso() giờ địa phương + KPI dòng đầu tính Ngày hôm qua + bỏ chữ Tồn kho ngày (v5.0.1) |
+| (app tổng) | docs(agents) + version 3.9.2 → 3.9.3 (docs-only — patch) |
+
+> **BUG REPORT của Đại ca (kèm ảnh, 23/09):** Trang Tổng quan app con 3 lỗi:
+> (1) chữ "Tồn kho ngày 22/09/2026" chiếm chỗ cạnh dropdown Công ty;
+> (2) 5 hộp KPI dòng đầu "Hôm nay: 0" — kỳ mặc định đã chốt Hôm qua (GĐ 201)
+> nên nhãn + số liệu phải là NGÀY HÔM QUA; (3) biểu đồ dropdown "Hôm qua" hiện
+> ngày 21/09 dù hôm nay 23/09 — lệch 1 ngày.
+>
+> **ROOT CAUSE — TIMEZONE:** `iso()` cả client (`dashboard-data.ts`) lẫn server
+> (`-overview.ts`) dùng `d.toISOString().slice(0, 10)` — trả ngày UTC. Hôm qua
+> 22/09 00:00 giờ VN = 21/09 17:00 UTC → cắt ISO thành "2026-09-21" → MỌI kỳ
+> (Hôm qua/Hôm nay/Tháng này…) lệch 1 ngày về sau 19:00 giờ VN. Fix local-time
+> format 2 chỗ → KPI + 7 biểu đồ + dialog + banner tự hết lệch cùng lúc.
+>
+> **Sửa repo con (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.70):** iso() local
+> ×2 file; KPI dòng đầu truyền `yesterday` thay `today` (revenue/invoice/
+> import/xuatVax); đổi tên field `*Today` → `*Yesterday` đúng nghĩa; nhãn 5 hộp
+> KPI "Hôm nay" → "Ngày hôm qua"; xóa khối chữ "Tồn kho ngày…" khỏi hàng
+> dropdown. "Tháng này" giữ nguyên; dropdown vẫn còn lựa chọn "Hôm nay".
+>
+> **LESSON LEARNED — toISOString().slice(0,10) là bẫy timezone kinh điển
+> (2026-09-23):** App VN (UTC+7) muốn ISO theo ngày người dùng phải format
+> local (getFullYear/getMonth/getDate). Dấu hiệu nhận biết: kỳ mặc định sai
+> đúng 1 ngày, lặp lại sau 19:00 VN, mọi kỳ dùng cùng hàm sai cùng kiểu —
+> khi thấy lệch ngày đúng bằng chênh múi giờ → grep toISOString trước khi
+> debug logic.
+>
+> **LESSON LEARNED — field đặt tên theo KỲ TÍNH, không theo nhãn UI:** Đổi kỳ
+> tính mà giữ tên `revenueToday` = bom nổ sau này. Đổi luôn tên field khi đổi
+> ý nghĩa (grep toàn consumer trước khi đổi).
+>
+> **Version:** repo con 5.0.0 → **5.0.1** (fix — patch); app tổng 3.9.2 →
+> **3.9.3** (docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+>
+> **Tiêu chí kiểm chứng:** Trang Tổng quan không còn chữ "Tồn kho ngày…"; 5
+> hộp KPI dòng đầu "Ngày hôm qua" + số 22/09 (không còn 0); biểu đồ kỳ Hôm
+> qua đúng 22/09; version 5.0.1/3.9.3.
+
