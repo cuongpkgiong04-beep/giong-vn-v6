@@ -8303,3 +8303,28 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-24 (GĐ 214 — 2 bảng kê MISA trang báo cáo riêng đủ cột; app tổng 4.0.2 / repo con 5.1.1)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### GĐ 215: Tổng quan — 4 hộp KPI định dạng mới + dòng TỔNG CỘNG (repo con v5.2.0) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(overview): GĐ C.78 — 4 hộp KPI format mới + dialog TỔNG CỘNG + fix tiền xuất col8→col9 (v5.2.0) |
+| (app tổng) | docs(agents): GĐ 215 + version 4.0.2 → 4.0.3 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (24/09 — 4 hộp KPI Tổng quan app con):** Nhập VX dạng
+> 'tiền~SL liều' · Xuất VX 'tiền~SL tiêm|SL hủy liều' · Tồn kho theo thời điểm cuối
+> kỳ anh chọn ('#,##0') · HSD '≥6T / 3–6T|<3T' SUM liều ('#,##0') + bảng chi tiết
+> TỪNG LÔ (Tên|Lô|HSD|SL|Ghi chú) sort cận hạn → xa hạn. PA-A anh chốt: tiền xuất
+> cả 4 loại phiếu · Ghi chú = nhóm HSD · bảng trả hết lô. Dialog 4 hộp thêm dòng
+> TỔNG CỘNG đậm.
+>
+> **Chi tiết đầy đủ ở AGENTS.md repo con GĐ C.78.** Điểm nhấn kỹ thuật: fix BUG cũ
+> từ GĐ 187 — tiền xuất stg_6BKX dùng col8 (ĐƠN GIÁ) thay vì col9 (Số tiền), bắt
+> được nhờ đối chứng số với con số anh ghi (125.398.907 ≠ 127.050.663). Verify số
+> thật kỳ 22/09 khớp ví dụ anh: Nhập 264.933.444~280 · Xuất 222|139 · Tồn 29.238 ·
+> HSD 24.523/5.180/13.
+>
+> **Version:** app tổng 4.0.2 → **4.0.3** (docs-only — patch; repo con 5.1.1 →
+> **5.2.0** — feature minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
