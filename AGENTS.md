@@ -7953,3 +7953,52 @@ app tổng 3.9.0 / repo con 4.8.0)*
 > hộp KPI dòng đầu "Ngày hôm qua" + số 22/09 (không còn 0); biểu đồ kỳ Hôm
 > qua đúng 22/09; version 5.0.1/3.9.3.
 
+---
+
+### GĐ 204: FIX phân quyền app con thiếu nhóm BÁO CÁO — /me trả mods thiếu 4 nhóm mới (2026-09-23, 3.9.4)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(permissions): me.ts dựng liveMods từ detail.groups (8 nhóm) thay getBanhangGroups (4 nhóm cũ) — hết mất nhánh BÁO CÁO sidebar (GĐ 203b, v5.0.2) |
+| (app tổng) | docs(agents): GĐ 204 + version 3.9.3 → 3.9.4 (docs-only — patch) |
+
+> **BUG REPORT của Đại ca (23/09, kèm 2 ảnh):** Phân quyền user `Phạm Kiên Cường_01`
+> ở trang Phân quyền app tổng đã bật ĐỦ 8 nhóm + các lá (ảnh chụp), NHƯNG sidebar
+> app con chỉ hiện DOWNLOAD DỮ LIỆU + UPLOAD — mất cả 3 nhánh BÁO CÁO.
+>
+> **Chẩn đoán 3 tầng (probe DB GiondDB thật bằng pyodbc — đọc, được phép):**
+> 1. **Data `module_access` — ĐÚNG:** dòng user `fd4aa435-…` đủ 9 key `true`.
+>     Lỗi KHÔNG nằm ở app tổng lưu quyền.
+> 2. **`getBanhangDetail` app con — ĐÚNG:** trả đủ 8 nhóm + 33 lá.
+> 3. **`/api/auth/me` — ROOT CAUSE:** dựng `liveMods` từ `getBanhangGroups()`
+>     (hàm đời GĐ C.21 chỉ trả 4 nhóm DOWNLOAD cũ) rồi chỉ nối thêm
+>     `detail.leaves` — QUÊN nối `detail.groups` → mods trả cho sidebar
+>     THIẾU 4 key nhóm mới `bh-bao-cao-*` + `bh-upload-*` (GĐ 199/200).
+>
+> **Vì sao khớp triệu chứng:** `filterTreeByMods` lọc nhóm theo
+> `mods.includes(mod)` — 4 nhóm DOWNLOAD cũ có → hiện; 3 nhóm BÁO CÁO thiếu
+> key → ẩn cả nhánh; UPLOAD thiếu key nhóm NHƯNG các trang upload có lá
+> `bh-leaf-/m/up-*` trong mods (lọc theo lá) → nhánh vẫn hiện. Đúng 100%
+> ảnh Đại ca gửi.
+>
+> **Fix (surgical — 1 file `me.ts` app con):** `liveMods` dựng từ
+> `detail.groups` của `getBanhangDetail` (8 nhóm — bao trùm 4 nhóm cũ);
+> bỏ import `getBanhangGroups` + type `BanhangGroupKey` thừa. `/me` đọc LIVE
+> `module_access` mỗi lần gọi → sau deploy user TẢI LẠI TRANG app con là đủ
+> (không cần SSO lại — cookie phiên 7 ngày vẫn dùng được).
+>
+> **LESSON LEARNED — Hàm quyền trả SUBSET phải bị loại khỏi consumer khi mở
+> rộng schema (2026-09-23):** Khi GĐ 199 mở rộng 4 → 8 nhóm, `me.ts` gọi CẢ
+> 2 hàm (getBanhangGroups subset-4 + getBanhangDetail full-8) rồi ghép kết quả
+> — ghép thiếu nhánh groups của detail. Hàm subset + hàm full song song tồn
+> tại chính là mảnh đất lỗi "hai đầu không khớp" (dòng lịch sử: GĐ 69 chat
+> channel, GĐ 96 SQL column, GĐ 109 handoff URL). Checklist khi thêm nhóm/lá
+> quyền mới: grep TẤT CẢ consumer hàm quyền (getBanhangGroups/getBanhangDetail/
+> canAccess*) — hàm subset còn chỗ nào gọi là còn nguy cơ lệch.
+>
+> **Version:** repo con 5.0.1 → **5.0.2** (fix — patch); app tổng 3.9.3 →
+> **3.9.4** (docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+>
+> **Tiêu chí kiểm chứng:** Sau deploy, user được cấp đủ quyền tải lại app con
+> → sidebar đủ DOWNLOAD · BÁO CÁO (3 nhánh) · UPLOAD; tắt chip lá ở app tổng →
+> tải lại → lá biến mất ngay (quyền live); typecheck 0 lỗi repo con.
