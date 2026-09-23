@@ -8027,3 +8027,37 @@ app tổng 3.9.0 / repo con 4.8.0)*
 >
 > **Tiêu chí kiểm chứng:** Sidebar app con: chữ bậc 1 TO RÕ hơn bậc 2 (cả
 > rail thu hẹp, rail mở, mobile drawer); không đổi gì khác.
+
+---
+
+### GĐ 207: Hệ sinh thái — Nút Hủy tất cả lệnh trên thanh trạng thái % tổng hợp app con (repo con v5.0.5) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `7f7b7fc` | feat(jobs): GĐ C.71 — nút Hủy đỏ trên thanh % tổng hợp + cancelAllSmedJobs nguyên tử + cancelSmedJob nhận waitdownload (v5.0.5) |
+| (app tổng) | docs(agents): GĐ 207 + version 3.9.5 → 3.9.6 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09, kèm ảnh):** Thanh trạng thái % hoàn thành tổng hợp (GĐ C.53)
+> thêm nút "Hủy" — người dùng không muốn chạy báo cáo nữa thì bấm để dừng TẤT CẢ lệnh
+> đang làm: mọi job đang thực hiện bị hủy, kể cả job đang download từ MISA và SMED.
+>
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.71):**
+> 1. **Server app con:** function mới `cancelAllSmedJobs` — 1 câu UPDATE NGUYÊN TỬ:
+>    mọi job `pending/running/waitdownload` → `cancel` + "Đã hủy bởi người dùng";
+>    phạm vi quyền khớp lịch sử job (GĐ C.66 — Admin tất cả, user thường chỉ job mình);
+>    `cancelSmedJob` nhận thêm `waitdownload` (job chờ tải nguồn trước đây không hủy được).
+> 2. **UI:** nút Hủy đỏ (XCircle) góc phải thanh % + inline confirm "Hủy N lệnh đang
+>    chạy?" → thực thi → thanh tự ẩn. Job running bị agent kill qua heartbeat
+>    `cancelRequested` có sẵn (GĐ C.18) trong ≤30s — không cần sửa agent.
+>
+> **LESSON LEARNED — Hủy-hàng-loạt phải NGUYÊN TỬ + đúng phạm vi quyền (2026-09-23):**
+> Loop hủy từng job từ client chậm + job mới vào giữa vòng bị lọt + N request. Function
+> server 1 câu UPDATE với WHERE status IN (...) + WHERE quyền cùng lúc là sạch cả 3.
+>
+> **Tiêu chí kiểm chứng:** Thanh % đang hiện → nút Hủy đỏ bên phải → bấm → xác nhận →
+> mọi lệnh (SMED + MISA + báo cáo SQL/TX-DS + waitdownload) về "Đã hủy bởi người dùng"
+> → thanh biến mất; user thường chỉ hủy job của mình; Admin hủy tất cả.
+
+**Version:** repo con 5.0.4 → **5.0.5** (feature — minor... patch theo bố cục tính năng
+hoàn chỉnh); app tổng 3.9.5 → **3.9.6** (docs-only — patch; checklist GĐ 138 ✓ —
+không thành phần nào ≥ 10).
