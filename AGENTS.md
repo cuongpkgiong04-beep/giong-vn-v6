@@ -8061,3 +8061,40 @@ app tổng 3.9.0 / repo con 4.8.0)*
 **Version:** repo con 5.0.4 → **5.0.5** (feature — minor... patch theo bố cục tính năng
 hoàn chỉnh); app tổng 3.9.5 → **3.9.6** (docs-only — patch; checklist GĐ 138 ✓ —
 không thành phần nào ≥ 10).
+
+---
+
+### GĐ 208: Hệ sinh thái — Fix banner cảnh báo sai khi chọn trung tâm trong Tổng quan app con (repo con v5.0.6) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `06aeb00` | fix(overview): GĐ C.72 — countSources map ký hiệu MISA + snapshot tồn kho + phân biệt không-phát-sinh/chưa-tải + kpiMissing khớp kỳ (v5.0.6) |
+| (app tổng) | docs(agents): GĐ 208 + version 3.9.6 → 3.9.7 (docs-only — patch) |
+
+> **BUG REPORT của Đại ca (23/09):** Tổng quan CÓ dữ liệu rồi mà vẫn hiện banner
+> "Chưa đủ dữ liệu thực hiện" — chọn 1 TRUNG TÂM thì bị, chọn "Công ty CP Giong VN"
+> thì không.
+>
+> **4 gốc rễ (probe data thật GiondDB 22/09 per trung tâm — chi tiết ở AGENTS.md
+> repo con GĐ C.72):** (1) invoice BKCT MISA là data toàn công ty — hàm đếm điều
+> kiện `= company` → chọn trung tâm LUÔN 0 → banner sai 100% (phải MAP ký hiệu
+> hóa đơn 1C26MAA→LB trước khi đếm); (2) nhập/xuất kho không phát sinh hàng ngày
+> — 11/19 trung tâm 0 dòng nhập 22/09 nhưng company có data → "không phát sinh"
+> bị coi là "chưa tải"; (3) tồn kho là SNAPSHOT nhưng đếm trong kỳ; (4) client
+> kỳ Tháng này/Năm nay/Khoảng khác vẫn so freshnessYesterday (sai kỳ).
+>
+> **Fix:** countSources — invoice CASE col2 map ký hiệu trong SQL rồi đếm phạm vi;
+> nxt đếm snapshot ngày MAX ≤ to; nguồn dòng-thời gian khi đơn vị 0 + company
+> có data → trả 1 (không banner); client kpiMissing chọn freshness khớp kỳ chung.
+>
+> **LESSON LEARNED — "= 0" có 2 nghĩa phải phân biệt theo NGUỒN THAM CHIẾU
+> (2026-09-23):** Nguồn dòng-thời gian: trung tâm 0 + company > 0 = KHÔNG PHÁT
+> SINH (bình thường); company = 0 mới là CHƯA TẢI. Nguồn toàn-công-ty phải MAP
+> khóa phụ trước khi đếm phạm vi. Nguồn snapshot phải đếm theo mốc snapshot.
+> Banner cảnh báo đúng = phân loại đúng NGHĨA của con số 0 theo bản chất nguồn.
+>
+> **Verify:** invoice ĐX 22/09 = 10 (trước 0 sai); company = 222 khớp tổng; tsc
+> 0 lỗi; version 5.0.6 khớp 2 nơi repo con.
+
+**Version:** repo con 5.0.5 → **5.0.6** (fix — patch); app tổng 3.9.6 → **3.9.7**
+(docs-only — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
