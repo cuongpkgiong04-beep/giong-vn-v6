@@ -85,6 +85,10 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-banhang", label: "Báo cáo bán hàng" },
       { to: "/m/bc-thu-tien", label: "Báo cáo thu tiền" },
       { to: "/m/bc-sd-hddt", label: "Báo cáo tình hình SD-HĐĐT" },
+      // GĐ C.77 (24/09/2026 — yêu cầu Đại ca): 2 bảng kê MISA — báo cáo số 6 + 7
+      // BÁO CÁO KẾ TOÁN — ĐỒNG BỘ nav.ts repo con.
+      { to: "/m/bc-bkct", label: "Bảng kê chi tiết hóa đơn đã sử dụng" },
+      { to: "/m/bc-bkth", label: "Bảng kê hóa đơn đã sử dụng" },
     ],
   },
   {

@@ -8264,5 +8264,42 @@ không thành phần nào ≥ 10).
 
 ---
 
-*Cập nhật lần cuối: 2026-09-23 (GĐ 213 — bán hàng đủ 21 cột + Subtotal theo yêu cầu + KPI Lượt tiêm đếm Giờ tiêm; app tổng 4.0.1 / repo con 5.1.0)*
+### GĐ 214: Hệ sinh thái — 2 bảng kê MISA: trang BÁO CÁO RIÊNG số 6 + 7 BÁO CÁO KẾ TOÁN (repo con v5.1.1) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.77 — trang /m/bc-bkct + /m/bc-bkth + builder hddt_bkct/hddt_bkth MỞ ĐỦ cột MISA theo probe DB + phân quyền 3 điểm (v5.1.1) |
+| (app tổng) | docs(agents): GĐ 214 + catalog BH_GROUPS 2 lá mới + version 4.0.1 → 4.0.2 |
+
+> **Yêu cầu của Đại ca (24/09):** Thêm 2 báo cáo vào nhóm BÁO CÁO KẾ TOÁN: (6) Bảng kê
+> chi tiết hóa đơn đã sử dụng — tổng hợp đúng dữ liệu đã download của file cùng tên;
+> (7) Bảng kê hóa đơn đã sử dụng — đúng dữ liệu file cùng tên. Đại ca chọn PA-2: MỞ
+> ĐỦ cột MISA (không giữ builder 10/7 cột cũ).
+>
+> **Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.77.** Tóm tắt: builder probe
+> DB thật trước khi viết (2 file MISA lệch cấu trúc cột — BKCT loại 11 cột rỗng 100%
+> còn 18 cột, BKTH giữ đủ 29 cột); 2 trang mới dùng SqlDataModule hưởng chuẩn khung
+> (lọc ngày + cảnh báo thiếu + phân trang + Tải Excel + cuộn ngang Autofit);
+> phân quyền 3 điểm khớp nguồn: ROUTE_TO_GROUP + SQL_QUERY_LEAF (hddt-bkth/bkct
+> trỏ trang BÁO CÁO MỚI thay trang download) + catalog BH_GROUPS app tổng (module
+> mới tự hiện trang Phân quyền theo GĐ 200).
+>
+> **✅ Verify:** BKCT 18 cột × 3.181 dòng / BKTH 29 cột × 4.398 dòng (data thật
+> kỳ 01→23/09 — Người mua, Tên hàng, Mã CQT, Hình thức TT đầy đủ); py_compile +
+> tsc 0 lỗi + build OK; routeTree sinh lại 2 route.
+>
+> **LESSON — cùng nguồn 2 biến thể phải probe TỪNG file riêng (2026-09-24):**
+> 2 file MISA cùng nguồn nhưng lệch cấu trúc cột (Người mua nằm col10 BKCT nhưng
+> col11 BKTH; Tên KH có data ở BKTH mà rỗng ở BKCT) — bắt vị trí cột qua probe
+> thật từng file, không copy map giữa 2 biến thể.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent sau deploy để builder đủ cột có
+> hiệu lực qua agent (không restart → trang mới vẫn chạy NHƯNG còn cột cũ).
+>
+> **Version:** app tổng 4.0.1 → **4.0.2** (docs+catalog — patch; repo con
+> 5.1.0 → **5.1.1**; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---
+
+*Cập nhật lần cuối: 2026-09-24 (GĐ 214 — 2 bảng kê MISA trang báo cáo riêng đủ cột; app tổng 4.0.2 / repo con 5.1.1)*
 *Người cập nhật: Trợ lý lập trình*
