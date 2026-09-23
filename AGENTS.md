@@ -8328,3 +8328,33 @@ không thành phần nào ≥ 10).
 >
 > **Version:** app tổng 4.0.2 → **4.0.3** (docs-only — patch; repo con 5.1.1 →
 > **5.2.0** — feature minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+### GĐ 216: Hệ sinh thái — 4 báo cáo kho: bỏ TỔNG CỘNG double + Subtotal cột Hàng hóa + Đối soát hiển thị (repo con v5.2.1) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo kho): GĐ C.74 — bỏ TỔNG CỘNG 3 builder + 4 props hiển thị (nameColWidth/fitDataColumns/headerWrapCenter/fullHeight) (v5.2.1) |
+| (mới) | docs(agents): GĐ 216 + version 4.0.3 → 4.0.4 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09 — 4 cụm, chi tiết đầy đủ ở AGENTS.md repo con GĐ C.74):**
+> (1) Báo cáo tồn kho theo lượng: Hàng hóa thu 50% (417→209px) + bỏ TỔNG CỘNG
+> thay bằng Subtotal kết cấu giống Báo cáo nhập kho; (2) TH_NXT theo lượng:
+> Subtotal cộng SL Nhập + SL Xuất, bỏ TỔNG CỘNG (double), chữ SUBTOTAL chuyển
+> từ cột Trung tâm sang cột Hàng hóa; (3) TH_NXT lượng-tiền: như (2) + cộng
+> Giá trị nhập/xuất + SL/Giá trị kiểm kho; (4) Đối soát HĐ-XK: tiêu đề +2px
+> (10→12px) + wrap + căn giữa ô, Autofit theo DỮ LIỆU (tiêu đề không làm cột
+> phình), bỏ thanh cuộn dọc — dữ liệu tràn xuống trang.
+>
+> **Cơ chế:** builder bỏ dòng TỔNG CỘNG 3 builder (subTotal web tự tính theo
+> lọc — giữ cả hai = cộng 2 lần đúng như anh nhận định); khung bảng 4 props
+> opt-in mới qua SqlDataModule — báo cáo khác KHÔNG truyền = giữ nguyên 100%.
+> Ma trận nhập/xuất + Đối soát GIỮ dòng TỔNG CỘNG (ngoài phạm vi yêu cầu).
+>
+> **Verify:** py_compile OK · tsc 0 lỗi · build OK · builder thật GiongDB kỳ
+> 14→22/09: tonkho 53 dòng, thnxt-luong/tien 7851 dòng, 0 TỔNG CỘNG sót.
+>
+> **Version:** app tổng 4.0.3 → **4.0.4** (docs-only — patch; repo con
+> 5.2.0 → **5.2.1** — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+*Cập nhật lần cuối: 2026-09-23 (GĐ 216 — 4 báo cáo kho Subtotal thay TỔNG CỘNG; app tổng 4.0.4 / repo con 5.2.1)*
+*Người cập nhật: Trợ lý lập trình*
