@@ -8480,3 +8480,28 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-24 (GĐ 220 — cache thiết bị báo cáo; app tổng 4.0.7 / repo con 5.4.0)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### GĐ 221: Hệ sinh thái — Cache báo cáo IndexedDB + TX-DS áp cùng pattern (repo con v5.4.1) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(cache): GĐ C.79 — report-cache.ts IndexedDB + migrate localStorage + TX-DS dùng chung (v5.4.1) |
+| (app tổng) | docs(agents): GĐ 221 + version 4.0.7 → 4.0.8 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (24/09):** (1) localStorage dễ đầy → chuyển LUÔN sang IndexedDB
+> (dung lượng lớn hơn nhiều); (2) TX-DS (bảng 110 cột ~2MB) chưa qua cache — áp cùng
+> pattern đồng bộ.
+>
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.79):** module `report-cache.ts`
+> (IndexedDB `giong-report-cache`, key `giong-rpt-<jobId>`, migrate tự động từ
+> localStorage lần đầu app mở); `sql-data-module.tsx` + `txds-result.tsx` ghi/đọc
+> cache IndexedDB — mở lại báo cáo đã xem hiện ngay (kể cả offline).
+>
+> **✅ Verify E2E (dev):** lần 1 mở NXT lượng-tiền 5.4s (fetch qua tunnel) → F5 với
+> loadReportResult bị chặn (route.abort) bảng VẪN hiện 200 dòng sau 2.4s hoàn toàn
+> từ IndexedDB — bằng chứng tuyệt đối cache là nguồn hiển thị. tsc 0 lỗi.
+>
+> **Version:** app tổng 4.0.7 → **4.0.8** (docs-only — patch; checklist GĐ 138 ✓ —
+> không thành phần nào ≥ 10).
