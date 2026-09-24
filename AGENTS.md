@@ -8358,3 +8358,29 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-23 (GĐ 216 — 4 báo cáo kho Subtotal thay TỔNG CỘNG; app tổng 4.0.4 / repo con 5.2.1)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 218: Hệ sinh thái — 3 biểu đồ Tổng quan: Top 10 nguồn Báo cáo bán hàng + ÍT NHẤT PA-1 + Tồn kho tất cả (repo con v5.3.0) (2026-09-23)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(overview): GĐ C.75 — Top nhiều nhất đếm dòng BKCCN (Dịch vụ + Số lô đủ), ÍT NHẤT PA-1 (có sẵn NXT vs bán, 0 lên đầu) + tooltip có sẵn, stock tất cả 52 loại, nhãn #,##0 (v5.3.0) |
+| (mới) | docs(agents): GĐ 218 + version 4.0.4 → 4.0.5 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (23/09 — đã chốt PA-1):** (1) Top 10 VX tiêm NHIỀU NHẤT
+> lấy Báo cáo bán hàng — dòng có ĐỦ Dịch vụ sử dụng + Số lô = 1 lần bán thành
+> công, đếm dòng tìm 10 loại nhiều nhất; (2) Top 10 ÍT NHẤT căn cứ số lượng +
+> thời gian nhập kết hợp số lượng bán → PA-1: chỉ xét VX có hàng sẵn (tồn đầu +
+> nhập kỳ qua snapshot NXT), sort tăng dần theo số lần bán — chưa bán (0) lên
+> đầu; (3) Thống kê VX tồn kho hiện TẤT CẢ loại đang tồn; (4) nhãn số trên cột
+> các biểu đồ định dạng #,##0. Chi tiết đầy đủ ở AGENTS.md repo con GĐ C.75.
+>
+> **Verify:** GiongDB thật kỳ 14→22/09 — Top nhiều nhất VAXIGRIP 156/Gardasil 9
+> 42/Morcvax 42...; ÍT NHẤT Adacel 0 (có sẵn 290) · ABRYSVO 0 · MENACTRA 0 ·
+> Rotavin 0 · Gardasil 0 → bán 1-2 lần; Stock 52 loại hết top 15; tsc 0 lỗi ·
+> build OK; banner thiếu data bkccn/xnkt qua chuỗi 3 bước GĐ C.45.
+>
+> **Version:** app tổng 4.0.4 → **4.0.5** (docs-only — patch; repo con 5.2.1 →
+> **5.3.0** — feature minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+*Cập nhật lần cuối: 2026-09-23 (GĐ 218 — 3 biểu đồ Tổng quan nguồn Báo cáo bán hàng; app tổng 4.0.5 / repo con 5.3.0)*
+*Người cập nhật: Trợ lý lập trình*
