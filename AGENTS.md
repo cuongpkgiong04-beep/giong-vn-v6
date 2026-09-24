@@ -8505,3 +8505,32 @@ không thành phần nào ≥ 10).
 >
 > **Version:** app tổng 4.0.7 → **4.0.8** (docs-only — patch; checklist GĐ 138 ✓ —
 > không thành phần nào ≥ 10).
+
+---
+
+### GĐ 222: Hệ sinh thái — Dialog KPI HÓA ĐƠN GTGT sai tên trung tâm (repo con v5.4.2) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(overview): GĐ C.80 — dialog HĐGTGT query LIVE bảng dbo.centers thay hardcoded (v5.4.2) |
+| (app tổng) | docs(agents): GĐ 222 + version 4.0.8 → 4.0.9 (docs-only — patch) |
+
+> **BUG REPORT của Đại ca (24/09 — nghiêm khắc):** Chi tiết KPI HÓA ĐƠN GTGT sai
+> thông tin Trung Tâm — "Anh thực sự có 19 trung tâm theo mã của Báo cáo cuối ngày -
+> Đối soát HĐ-XK. Em không đoán bừa lung tung thế được."
+>
+> **ROOT CAUSE:** dialog hardcode `CENTER_NAMES` tự suy diễn — 13/19 tên SAI (BH=
+> "Bách Hóa"→"Bích Hòa", TD="Từ Sơn"→"Tiên Du", TO="Thụy Ứng"→"Thanh Oai"...).
+> Map ký hiệu hóa đơn vẫn đúng, chỉ tên hiển thị sai.
+>
+> **Fix (PA-1 anh chốt):** BỎ hardcoded — query LIVE `dbo.centers` GiondDB, format
+> "Trung tâm TC {short_name}" khớp 100% Báo cáo Đối soát HĐ-XK (GĐ C.49); lỗi query
+> → fallback giữ mã 2 chữ. Verify E2E: 18/19 trung tâm kỳ 23/09 tên ĐÚNG hết.
+>
+> **⚠️ LESSON LEARNED — KHÔNG hardcode danh sách nghiệp vụ khi đã có bảng nguồn sự
+> thật (2026-09-24):** Tên trung tâm là dữ liệu nghiệp vụ nằm trong bảng `centers`.
+> Viết cứng = tự tạo bản sao lệch (13/19 sai) không ai phát hiện cho tới khi anh đối
+> chiếu. Quy tắc: cần tên/cấu hình nghiệp vụ → QUERY BẢNG GỐC lúc runtime, không
+> "nhớ giùm DB" trong code.
+>
+> **Version:** app tổng 4.0.8 → **4.0.9** (docs-only — patch; checklist GĐ 138 ✓).
