@@ -8440,3 +8440,43 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-24 (GĐ 219 — fix chart Top 10 + dialog HSD; app tổng 4.0.6 / repo con 5.3.1)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### GĐ 220: Hệ sinh thái — Báo cáo app con mở lại LOAD NHANH: gọt payload + cache thiết bị (repo con v5.4.0) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(perf): GĐ C.78 — loadSmedJobs gọt result (12MB→~100KB) + loadReportResult(jobId) tải riêng + cache localStorage thiết bị — báo cáo đã xem hiện TỨC THÌ (v5.4.0) |
+| (app tổng) | docs(agents): GĐ 220 + version 4.0.6 → 4.0.7 (docs-only — patch) |
+
+> **Câu hỏi của Đại ca (24/09):** Báo cáo đã khởi tạo mở lại load chậm — xem lại
+> luồng. Nếu báo cáo lưu tại server rồi thì không phải khởi tạo lại (nhưng load
+> trên web vẫn mất thời gian); còn cache máy tính/điện thoại thì có nhanh hơn không?
+
+> **Kết quả nghiên cứu (đo từng khâu qua tunnel — chi tiết GĐ C.78):**
+> Báo cáo ĐÃ LƯU GiondDB đúng như anh hiểu (mở lại không chạy lại SQL); chậm
+> thật vì `loadSmedJobs` kéo cột result của TẤT CẢ 234 job (~12MB/lần mở trang)
+> — dạng GĐ 159 tái diễn trên SQL Server. PA-1 anh chốt: gọt payload + cache.
+
+> **Triển khai (repo con):** SELECT list thay `result` bằng `result_meta`
+> (chỉ needsData/waitdownload giữ — cần missing cho banner/tiến độ);
+> `mapJob(r, resultPayload?)` — claim agent truyền ĐẦY ĐỦ (env channel);
+> server function mới `loadReportResult(jobId)` (quyền khớp list; NaN sanitize);
+> client cache `localStorage['giong-rpt-<jobId>']` — hiện tức thì bản cache +
+> tải nền bản mới tự thay. Verify: tsc 0 lỗi; SQL mới qua /query OK (50 rows
+> 53KB thay ~12MB).
+
+> **Dự đoán:** mở lại báo cáo đã xem = 0ms (cache máy); lần đầu = 0.3-1s;
+> mọi trang có lịch sử job nhẹ hơn ~10-100 lần. Cache THEO JOB ID — chạy lại
+> cùng kỳ ra job mới → lần đầu vẫn tải.
+
+> **Tiêu chí kiểm chứng:** Mở trang báo cáo (VD NXT lượng-tiền) lần đầu → bảng
+> hiện sau ~1s; F5/đóng mở lại → bảng hiện TỨC THÌ từ cache; chạy báo cáo mới
+> cùng kỳ → tự hiện bản mới (job mới); user thường vẫn chỉ thấy báo cáo của mình.
+
+**Version:** app tổng 4.0.6 → **4.0.7** (docs-only — patch; checklist GĐ 138 ✓
+— không thành phần nào ≥ 10) · repo con 5.3.1 → **5.4.0** (feature — minor).
+
+*Cập nhật lần cuối: 2026-09-24 (GĐ 220 — cache thiết bị báo cáo; app tổng 4.0.7 / repo con 5.4.0)*
+*Người cập nhật: Trợ lý lập trình*
