@@ -8556,3 +8556,28 @@ không thành phần nào ≥ 10).
 > 8 route render; tsc 0 lỗi cả 2 app.
 >
 > **Version:** app tổng 4.0.9 → **4.1.0** (feature — minor; checklist GĐ 138 ✓).
+
+---
+
+### GĐ 224: Hệ sinh thái — Nhiệm vụ định kỳ app con: Task_01 backfill + Task_02 daily 17:40 + trang NHIỆM VỤ (repo con v5.5.0) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(tasks): GĐ C.82 — scheduled_tasks + /task/* API + task_runner + trang /m/tasks (v5.5.0) |
+| (mới) | docs(agents): GĐ 224 + version 4.1.0 → 4.1.1 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (24/09):** Nhiệm vụ định kỳ app con — Task_01 (backfill):
+> download TẤT CẢ phân hệ 01/01/2025→31/08/2026 (BKCCN chia tháng), lỗi tự lấy lại
+> ≤3 lần, chạy TẤT CẢ báo cáo + list kết quả; Task_02 (daily 17:40): download hôm
+> nay + chạy báo cáo → Tổng quan tự cập nhật. Đã chốt: nút Chạy ngay; trang riêng
+> NHIỆM VỤ; TẤT CẢ trang báo cáo; retry tối đa 3.
+>
+> **Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.82** (bảng scheduled_tasks
+> 15 cột; api_server /task/claim|progress|create-job|job-status; task_runner.py
+> 48 bước Task_01 / 29 bước Task_02, spawn 17:40 NOT EXISTS theo ngày; trang
+> /m/tasks badge 6 trạng thái + progress + dialog kết quả; quyền: thao tác task
+> = Admin, xem = mọi user có quyền Bán hàng). E2E thật PASS: claim → job hddt →
+> done + results OK + progress 4% → cancel dừng đúng bước kế.
+>
+> **Version:** app tổng 4.1.0 → **4.1.1** (docs-only — patch; checklist GĐ 138 ✓ —
+> không thành phần nào ≥ 10).
