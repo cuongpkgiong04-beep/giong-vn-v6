@@ -8384,3 +8384,59 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-23 (GĐ 218 — 3 biểu đồ Tổng quan nguồn Báo cáo bán hàng; app tổng 4.0.5 / repo con 5.3.0)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### GĐ 219: Hệ sinh thái — Tổng quan app con: fix 2 chart Top 10 mất tên + dialog CẬN HẠN SỬ DỤNG + Tồn kho cuộn ngang (repo con v5.3.1) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(overview): GĐ C.77 — alias vx→vax (chart Top 10 nhiều/ít nhất hết mất tên) + dialog HSD dời cột Số lượng sau Tên Vắc xin + dialog KPI 768→1024px + Tồn kho cuộn ngang (v5.3.1) |
+| (app tổng) | docs(agents): GĐ 219 + version 4.0.5 → 4.0.6 (docs-only — patch) |
+
+> **BUG REPORT của Đại ca (24/09, kèm ảnh — 3 nhóm):**
+> 1. Dialog CẬN HẠN SỬ DỤNG: (a) thêm cột Số lượng Vắc Xin bên PHẢI "Tên Vắc
+>    xin" / bên TRÁI "Lô"; (b) co nhỏ màn hình dữ liệu — cột HSD tràn ra ngoài
+>    cửa sổ không nhìn đủ.
+> 2. Biểu đồ "Top 10 vắc xin tiêm nhiều nhất": KHÔNG có tên vắc xin.
+> 3. Biểu đồ "Top 10 vắc xin tiêm ít nhất": KHÔNG có dữ liệu (cả tên + số lượng).
+> 4. Biểu đồ "Thống kê Vắc xin tồn kho": thêm thanh cuộn ngang để cột cách xa,
+>    hết dính chữ.
+
+> **ROOT CAUSE 2+3 — alias SQL vs field TS (bắt qua probe /query qua tunnel —
+> không đoán):** SQL chart trả cột `AS vx` nhưng code map đọc `r.vax` →
+> String(undefined) = "undefined" — 10 hàng cùng tên rỗng nghĩa. Top ÍT tệ
+> hơn: 10 VX đầu đều qty=0 (chưa bán — đúng thiết kế PA-1 GĐ 217) + tên
+> "undefined" → nhìn như trống hoàn toàn. SQL bản thân KHÔNG lỗi — chạy lại
+> qua /query: top 39 loại (BCG-TCDV 27...), bottom 52 loại đầy đủ tên + avail.
+> **Dạng lỗi "hai đầu không khớp" lần N (GĐ 69 chat / 96 SQL column / 109
+> handoff URL / 204 mods): alias SQL vs field TypeScript.**
+
+> **Fix (2 file repo con — chi tiết đầy đủ GĐ C.77):**
+> 1. `-overview.ts`: alias `vx` → `vax` 2 chỗ (top + `SELECT s.vx AS vax`
+>    cuối CTE bottom); dialog HSD dời cột "Số lượng tồn" lên NGAY SAU "Tên
+>    Vắc xin" — thứ tự mới: Tên Vắc xin | Số lượng tồn | Lô | HSD | Ghi chú
+>    (dòng TỔNG CỘNG dời theo).
+> 2. `overview-dashboard.tsx`: dialog chi tiết KPI `max-w-3xl` → `max-w-4xl`
+>    (768→1024px — anh chốt áp MỌI hộp KPI, không riêng HSD) → hết tràn ngang,
+>    đủ 5 cột; chart Tồn kho bọc `overflow-x-auto` + inner width =
+>    max(số loại × 60px, 400px) — 52 loại = 3.120px kéo ngang, nhãn thoáng;
+>    chú thích thêm "· N loại (kéo ngang xem hết)". Bẫy JSX: comment `{/* */}`
+>    đặt giữa `<div` và `className=` gây TS1005 — phải đặt TRƯỚC thẻ mở.
+
+> **Verify:** tsc 0 lỗi repo con; SQL mới qua /query — TOP alias vax OK
+> (BCG-TCDV 27 / VAXIGRIP 0.5ml 26 / Hexaxim 12), BOTTOM alias vax OK
+> (Gene-HBvax 0/356 · Heberbiovac 0/340 · Adacel 0/290); version 5.3.1 khớp
+> 2 nơi repo con + 4.0.6 khớp 2 nơi app tổng.
+
+> **Tiêu chí kiểm chứng (Đại ca test trên production sau deploy):** Hộp CẬN
+> HẠN SỬ DỤNG → dialog 1024px, bảng đủ 5 cột theo thứ tự mới, cột HSD nhìn
+> đủ không tràn; Top 10 nhiều nhất hiện tên vắc xin thật + số; Top 10 ít nhất
+> hiện 10 VX có hàng sẵn (qty=0 lên đầu + "có sẵn" trong tooltip); Tồn kho
+> kéo ngang xem hết 52 loại, nhãn không dính.
+
+**Version:** app tổng 4.0.5 → **4.0.6** (docs-only — patch; checklist GĐ 138 ✓
+— không thành phần nào ≥ 10) · repo con 5.3.0 → **5.3.1** (fix — patch).
+
+*Cập nhật lần cuối: 2026-09-24 (GĐ 219 — fix chart Top 10 + dialog HSD; app tổng 4.0.6 / repo con 5.3.1)*
+*Người cập nhật: Trợ lý lập trình*
