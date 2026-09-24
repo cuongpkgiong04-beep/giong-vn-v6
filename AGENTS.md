@@ -8534,3 +8534,25 @@ không thành phần nào ≥ 10).
 > "nhớ giùm DB" trong code.
 >
 > **Version:** app tổng 4.0.8 → **4.0.9** (docs-only — patch; checklist GĐ 138 ✓).
+
+---
+
+### GĐ 223: Hệ sinh thái — Sidebar app con nhánh MIA TOOL + NHẬP DỮ LIỆU (repo con v5.4.3) (2026-09-24)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(nav): GĐ C.81 — nhánh MIA TOOL 4 tầng + BC kế toán 8-9 + NHẬP DỮ LIỆU (v5.4.3) |
+| (app tổng) | feat(catalog): +8 lá Phân quyền + docs GĐ 223 + version 4.0.9 → 4.1.0 |
+
+> **Yêu cầu của Đại ca (24/09):** (A) DOWNLOAD thêm bậc 2 "DỮ LIỆU TỪ MIA TOOL" →
+> bậc 3 "BẢNG KÊ HĐ GTGT MUA VÀO"/"BÁN RA" → bậc 4 lá Tổng quan/Chi tiết; (B) BÁO
+> CÁO KẾ TOÁN thêm số 8+9 Bảng kê HĐ GTGT mua vào (MiaTool); (C) nhóm bậc 1 MỚI
+> "NHẬP DỮ LIỆU" (KHO HÀNG → Điều chuyển nội bộ Vắc Xin; MUA HÀNG → Chương trình
+> LOYTY) trước DOWNLOAD, dưới Tổng quan. Nội dung chi tiết để sau → 8 trang placeholder.
+>
+> **Chi tiết kỹ thuật ở AGENTS.md repo con GĐ C.81** (SidebarNhom + lọc quyền +
+> path active ĐỆ QUY cho cây 4 tầng; catalog app tổng +8 lá — Phân quyền tự sinh
+> chip). E2E verify: sidebar đúng cây, nhánh tổ tiên tự mở khi vào trang sâu,
+> 8 route render; tsc 0 lỗi cả 2 app.
+>
+> **Version:** app tổng 4.0.9 → **4.1.0** (feature — minor; checklist GĐ 138 ✓).

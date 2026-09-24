@@ -45,6 +45,16 @@ export const BH_GROUPS: BhGroup[] = [
     leaves: [
       { to: "/m/misa-hoadon", label: "Bảng kê chi tiết hóa đơn đã sử dụng" },
       { to: "/m/misa-bkth", label: "Bảng kê hóa đơn đã sử dụng" },
+      // GĐ 223 (24/09 — yêu cầu Đại ca): nhánh MIA TOOL lồng trong nhóm MISA
+      // (quyền nhóm "banhang-misa" điều khiển cả nhánh; 4 lá mới chip riêng).
+      { to: "/m/mia-muavao-tongquan", label: "Mua vào - Tổng quan (MiaTool)" },
+      { to: "/m/mia-muavao-chitiet", label: "Mua vào - Chi tiết (MiaTool)" },
+      { to: "/m/mia-banra-tongquan", label: "Bán ra - Tổng quan (MiaTool)" },
+      { to: "/m/mia-banra-chitiet", label: "Bán ra - Chi tiết (MiaTool)" },
+      // GĐ 223: nhóm NHẬP DỮ LIỆU (bậc 1 mới) — gán quyền nhóm MISA để backward
+      // compat (user có quyền MISA thấy luôn; tinh chỉnh lá sau khi có nội dung).
+      { to: "/m/nhap-dieu-chuyen", label: "Điều chuyển nội bộ Vắc Xin (NHẬP DỮ LIỆU)" },
+      { to: "/m/nhap-loyty", label: "Chương trình LOYTY (NHẬP DỮ LIỆU)" },
     ],
   },
   {
@@ -89,6 +99,9 @@ export const BH_GROUPS: BhGroup[] = [
       // BÁO CÁO KẾ TOÁN — ĐỒNG BỘ nav.ts repo con.
       { to: "/m/bc-bkct", label: "Bảng kê chi tiết hóa đơn đã sử dụng" },
       { to: "/m/bc-bkth", label: "Bảng kê hóa đơn đã sử dụng" },
+      // GĐ 223: 2 báo cáo MiaTool — số 8 + 9 nhóm BÁO CÁO KẾ TOÁN (thứ tự khớp nav.ts).
+      { to: "/m/bc-mia-muavao-tongquan", label: "Bảng kê HĐ GTGT mua vào - Tổng quan (MiaTool)" },
+      { to: "/m/bc-mia-muavao-chitiet", label: "Bảng kê HĐ GTGT mua vào - Chi tiết (MiaTool)" },
     ],
   },
   {
