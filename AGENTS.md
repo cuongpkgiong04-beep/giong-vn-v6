@@ -8712,3 +8712,63 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-25 (GĐ 227 — Danh mục DB nguồn sự thật; app tổng 4.1.4 / repo con 5.7.1)*
 *Người cập nhật: Trợ lý lập trình*
+---
+
+### GĐ 228: Quy tắc làm việc MỚI — Làm xong KHÔNG push, test local trước (2026-09-25)
+
+> **Chỉ thị của Đại ca (25/09):** Bắt đầu từ bây giờ, sau khi thực hiện xong nhiệm
+> vụ em làm TẤT CẢ các việc nhưng KHÔNG Push lên GitHub. Anh chạy LOCAL để test
+> — ổn định mới Push để Vercel tiếp nhận, mọi người có bản hoàn chỉnh nhất.
+>
+> **Đã chốt qua vòng hỏi:** (1) áp dụng CẢ 2 repo; (2) GIỮ câu hỏi 3 lựa chọn
+> sau mỗi nhiệm vụ nhưng đổi MẶC ĐỊNH sang "làm đủ tại máy + chưa push"; (3)
+> hướng dẫn local = AGENTS.md + script .bat + em verify dev server trước khi đưa.
+>
+> **QUY TRÌNH MỚI (hiệu lực từ GĐ này):**
+> 1. Làm nhiệm vụ (code + verify typecheck/build/E2E local) + ghi AGENTS.md +
+>    bump version — TẤT CẢ TẠI MÁY.
+> 2. **KHÔNG commit/push** — hỏi Đại ca 3 lựa chọn như cũ nhưng mục 1 mặc định:
+>    "Commit tại máy, CHƯA push — anh test local trước".
+> 3. Anh test local (start-local.bat → localhost:3000 + 3100) → ổn định →
+>    anh bảo "push" → em push + ghim domain app tổng (quy tắc GĐ 124).
+> 4. Vercel auto-deploy — mọi người dùng bản hoàn chỉnh.
+>
+> ### 🖥️ CHẠY LOCAL ĐỂ TEST (cho Đại ca):
+>
+> | File (thư mục gốc giong-vn-v6) | Tác dụng |
+> |---|---|
+> | **start-local.bat** | Bấm đúp: mở 2 dev server — app tổng http://localhost:3000 + app con http://localhost:3100 (tự mở trình duyệt sau 20s) |
+> | **update-tunnel-local.bat** | Bấm đúp khi app báo lỗi dữ liệu: lấy URL tunnel mới nhất từ Gist ghi vào .env.local 2 app → đóng 2 cửa sổ app → chạy lại start-local.bat |
+>
+> **Yêu cầu máy:** Node >= 18 + npm install đã chạy (2 thư mục: gốc + giong-apps/apps/banhang).
+> Dữ liệu đọc SQL Server công ty qua Cloudflare Tunnel — cần internet.
+>
+> **Verify dev server (25/09 — em đã đo thật):** cả 2 port HTTP 200; /api/units
+> app con trả 19 trung tâm data thật; SSR app tổng render "Điều hành chuỗi".
+>
+> **Version:** 4.1.4 → **4.1.5** (docs + tooling — patch; checklist GĐ 138 ✓).
+
+*Cập nhật lần cuối: 2026-09-25 (GĐ 228 — quy tắc test-local-trước-khi-push; app tổng 4.1.5 / repo con 5.7.2)*
+*Người cập nhật: Trợ lý lập trình*
+---
+
+### GĐ C.85d: Quy tắc làm việc MỚI — test local trước khi push + script .bat (2026-09-25)
+
+> **Chỉ thị của Đại ca (25/09):** Từ giờ làm xong nhiệm vụ KHÔNG push — anh test
+> local ổn định mới push (chi tiết quy trình ở AGENTS.md app tổng GĐ 228).
+> Áp dụng CẢ 2 repo.
+>
+> **Tooling cho Đại ca (thư mục gốc giong-vn-v6):**
+> - start-local.bat — bấm đúp mở 2 dev server (app tổng :3000 + app con :3100)
+> - update-tunnel-local.bat — cập nhật TUNNEL_API_BASE_URL từ Gist vào .env.local
+>   2 app khi tunnel đổi URL (app báo lỗi dữ liệu thì chạy cái này)
+>
+> **Env local đã chuẩn (25/09):** .env.local app con + app tổng đều có tunnel URL
+> mới (poet-east-lens-one — lấy từ Gist, env cũ accessible-scoring đã chết);
+> .env.local gitignore — không commit. Verify dev server thật: 2 port 200 +
+> /api/units data thật + SSR app tổng OK.
+>
+> **Version repo con giữ 5.7.2 (không đổi code — docs GĐ 228 app tổng).**
+
+*Cập nhật lần cuối: 2026-09-25 (GĐ C.85d — quy tắc test-local; repo con 5.7.2 / app tổng 4.1.5)*
+*Người cập nhật: Trợ lý lập trình*
