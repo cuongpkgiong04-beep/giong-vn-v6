@@ -8666,3 +8666,49 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-25 (GĐ 226 — Báo cáo công nợ đặt trước; app tổng 4.1.3 / repo con 5.7.0)*
 *Người cập nhật: Trợ lý lập trình*
+---
+
+### GĐ 227: Cập nhật danh mục từ file Danh muc.xlsx — DB làm nguồn sự thật (2026-09-25, 4.1.4)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | feat(danh-mục): sync Danh muc.xlsx vào GiongDB — centers +2 cột (name_short2/hd_symbol) UPDATE 19 TT + bảng dbo.vaccines 52 dòng; sửa lỗi file dòng ĐY; HD_SYMBOL_MAP gắn comment nguồn (GĐ C.85 repo con v5.7.1) |
+
+> **Yêu cầu của Đại ca (25/09, kèm 2 ảnh file):** Căn cứ file public/Danh muc.xlsx
+> (2 sheet) thống nhất toàn bộ App tổng + App con — chỗ nào hiển thị viết tắt /
+> viết đầy đủ thì theo file.
+>
+> **Đã chạy đúng quy trình GĐ 198 (phiên 3):** đọc file + query DB + inventory code
+> → trình 4 câu hỏi → Đại ca chốt: (1) ĐÚNG — DB làm nguồn sự thật (GĐ 222);
+> (2) sửa file dòng ĐY + DB dùng "Đông Yên"; (3) VX chỉ tạo bảng chuẩn + đối chiếu
+> (không đổi UI biểu đồ); (4) chỉ sync DB.
+>
+> **Kết quả (script scripts/sync_danh_muc.py repo con — idempotent):**
+> 1. **File sửa lỗi:** dòng STT 4 (ĐY — Đông Yên) cột VT2/VT3 ghi "Đồng Xuân"
+>    (copy-paste quên sửa) → sửa thành "Đông Yên" / "Trung tâm TC Đông Yên", verify đọc lại.
+> 2. **dbo.centers +2 cột:** name_short2 NVARCHAR(100) + hd_symbol NVARCHAR(20);
+>    UPDATE 19 trung tâm: name = Tên đầy đủ, short_name = name_short2 = Tên ngắn gọn_2
+>    (Bích Hòa…), hd_symbol = mã HĐGTGT. VP giữ nguyên (Công ty STT 0 ngoài sheet trung tâm).
+>    Verify 19/19 OK (short_name == name_short2 + hd_symbol đủ).
+> 3. **dbo.vaccines mới:** ma_smed PK + ten_hang + dvt — 52 dòng từ sheet Vắc Xin.
+> 4. **HD_SYMBOL_MAP khớp file 19/19** — không cần sửa map; gắn comment nguồn
+>    (Danh muc.xlsx → dbo.centers.hd_symbol) ở sql_reports.py + -overview.ts.
+> 5. **Đối chiếu data SMED (57 tên col6 stg_5BKN):** 52 khớp danh mục (6 khác chữ
+>    hoa-thường: Barycela inj/BARYCELA inj, Influvac Tetra/INFLUVAC Tetra…);
+>    **5 mã data chưa có trong danh mục** — Beyfortus 1ml, INFLUVAC, IVACFLU-S,
+>    VAXIGRIP 0.5ml, "Vắc xin uốn ván hấp thụ (TT) (Lọ 1 liều)" — báo Đại ca xem bổ sung.
+>
+> **LESSON LEARNED — Danh mục nghiệp vụ phải có BẢNG nguồn sự thật, không còn dạng
+> hằng số rải rác (2026-09-25):** Trước ngày này mã HĐGTGT chỉ sống trong 2 map
+> hardcode (sql_reports.py + -overview.ts), tên ngắn 3 chỉ sinh runtime từ
+> short_name. Nay cột hd_symbol/name_short2 nằm cạnh bản ghi trung tâm — sửa 1
+> nơi, mọi consumer (map ký hiệu, label /api/units, dropdown…) tra được. Khi
+> mã map nào khớp 100% với cột trong DB, comment nguồn ngay tại chỗ để lần sau
+> không "sửa map quên DB" hoặc ngược lại.
+>
+> **Tiêu chí kiểm chứng:** File ĐY đúng "Đông Yên"; dbo.centers 19/19 hd_symbol
+> đủ; dbo.vaccines 52 dòng; py_compile + tsc repo con 0 lỗi; typecheck app tổng 0
+> lỗi; version 4.1.4 / 5.7.1 khớp 2 nơi mỗi app.
+
+*Cập nhật lần cuối: 2026-09-25 (GĐ 227 — Danh mục DB nguồn sự thật; app tổng 4.1.4 / repo con 5.7.1)*
+*Người cập nhật: Trợ lý lập trình*
