@@ -8581,3 +8581,55 @@ không thành phần nào ≥ 10).
 >
 > **Version:** app tổng 4.1.0 → **4.1.1** (docs-only — patch; checklist GĐ 138 ✓ —
 > không thành phần nào ≥ 10).
+
+---
+
+### GĐ 225: Hệ sinh thái — Retry từng phần job download: thiếu file nào chạy lại đúng file đó (repo con v5.6.0) (2026-09-25)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `a01edef` | feat(jobs): GĐ C.83 — retry từng phần (migration 0010 expected_files + agent scan parser per-report + env SMED_ONLY_CENTERS + 10 tool lọc + web badge/nút retry) (v5.6.0) |
+| (mới) | docs(agents): GĐ 225 + version 4.1.1 → 4.1.2 (docs-only — patch) |
+
+> **BUG REPORT của Đại ca (25/09, kèm ảnh):** Job GDTVX 01/09→25/09 "Hoàn thành"
+> nhưng thiếu 1/76 file (TD) — badge vàng "Chưa hoàn thành — thiếu file" + nút
+> "Chạy lại tác vụ này" hiện ĐÚNG, NHƯNG bấm bị chặn oan: toast "Chỉ job Lỗi hoặc
+> Chưa hoàn thành mới chạy lại được" — nút hiện mà không bấm được.
+>
+> **ROOT CAUSE (3 lớp — chi tiết đầy đủ ở AGENTS.md repo con GĐ C.83):**
+> 1. **Hai đầu so số LỆCH NGUỒN:** UI đếm thiếu theo expectedFiles (76), server
+>    retrySmedJob so với total_centers (19) → job done+75 file bị coi "không phải
+>    thiếu". Fix: 2 đầu cùng dùng `expected_files` (server chấp nhận done+thiếu,
+>    đặt retry_partial=1, giữ files cũ).
+> 2. **Job done không biết thiếu file nào:** migration 0010 thêm `expected_files`
+>    (backfill dattruoc=76, dtthc=2, bkct/bkth=1) + `retry_partial`; agent tính
+>    expected theo thư mục; migration chạy TAY qua tunnel (GiondDB không tự chạy
+>    migration từ GĐ 164 — lesson GĐ 170).
+> 3. **Chạy lại = xóa toàn bộ + tải đủ 19 TT** lãng phí ~14 phút. PA-1 Đại ca chốt:
+>    **retry từng phần** — chỉ chạy lại trung tâm thiếu; TT có 4 file thiếu 1 →
+>    xóa 3 file cũ + tải đủ 4 (không lẫn file cũ lệch dữ liệu).
+>
+> **Điểm nhấn kỹ thuật — parser nhận diện TT theo TÊN FILE (probe thật, KHÔNG
+> mtime-position):** mô phỏng chứng minh mtime-position SAI khi file retry nối đuôi
+> thư mục (thiếu TD báo thiếu TT khác). dattruoc/blth = prefix mã 2 ký tự;
+> hentiem = tail-name (map cả 'THANH THUỲ' U+1EF3); nhapkho/xnkt/chietkhau =
+> center_from_name; HDDT/DTTDT/BKCCN/BKX-cắt-cụm/MISA/DTTHC KHÔNG nhận diện chính
+> xác → fallback chạy đủ 19 (an toàn, không đoán mờ — nguyên tắc GĐ C.56).
+> Env SMED_ONLY_CENTERS gửi ĐỦ biến thể chính tả (THUỲ/THÙY — thừa vô hại, thiếu
+> là mất TT im lặng); 10 tool đã thêm lọc exact.
+>
+> **✅ Verify (production thật, 3 kịch bản E2E):** đủ 76 → early return không chạy
+> tool; thiếu trọn TD → env 1 TT → tool chạy ~48s → đủ 76; thiếu 1/4 TD → xóa 3
+> file cũ → tải đủ 4 → thư mục 76 file chuẩn. py_compile + tsc 0 lỗi.
+>
+> **LESSON LEARNED — Hai đầu cùng một tiêu chí phải dùng CÙNG nguồn số (2026-09-25):**
+> Nút hiện mà bấm không được = logic lệch chuẩn 2 đầu — dạng "hai đầu không khớp"
+> lần N (GĐ 69 chat / 96 SQL / 109 handoff URL / 204 mods). Khi thêm thuộc tính mới
+> (expected_files), grep consumer cũ cùng so-sánh số file và chuyển hết sang nguồn mới.
+>
+> **⚠️ Lưu ý vận hành:** restart GIONG_SMED_Agent sau deploy để agent nhận scan
+> retry từng phần. Job cũ (trước 0010) expected_files default 19 — badge thiếu file
+> của dattruoc job cũ có thể sai chuẩn, chạy lại 1 lần là tự đúng.
+>
+> **Version:** app tổng 4.1.1 → **4.1.2** (docs-only — patch; repo con 5.5.0 →
+> **5.6.0** — feature minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
