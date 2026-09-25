@@ -8746,6 +8746,16 @@ không thành phần nào ≥ 10).
 > **Verify dev server (25/09 — em đã đo thật):** cả 2 port HTTP 200; /api/units
 > app con trả 19 trung tâm data thật; SSR app tổng render "Điều hành chuỗi".
 >
+> **⚠️ BẮT BUỘC — .env.local app tổng phải đủ 2 dòng (bắt qua test thật GĐ 228):**
+>  +  (thiếu API_TOKEN → mọi query tunnel 401
+> "sai x-api-token" → hydrate rỗng + login báo "Sai email hoặc mật khẩu" DÙ mật
+> khẩu đúng — Better Auth qua tunnel-dialect, backend chết tại /query chứ không
+> phải sai hash). Script update-tunnel-local.bat đã ghi 2 dòng này cho cả 2 app;
+> .env.local gitignore — KHÔNG commit.
+>
+> **Verify login local sau fix (Playwright):** login OK HTTP 200 + redirect trang
+> chủ + 0 lỗi 401/fail trong console.
+>
 > **Version:** 4.1.4 → **4.1.5** (docs + tooling — patch; checklist GĐ 138 ✓).
 
 *Cập nhật lần cuối: 2026-09-25 (GĐ 228 — quy tắc test-local-trước-khi-push; app tổng 4.1.5 / repo con 5.7.2)*
