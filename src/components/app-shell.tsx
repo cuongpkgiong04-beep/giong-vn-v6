@@ -41,7 +41,7 @@ import { Toaster } from "sonner";
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; group?: string };
 
 const VERSION_STORAGE_KEY = "giong-vina-version";
-const DEFAULT_VERSION = "4.1.5";
+const DEFAULT_VERSION = "4.1.6";
 
 /** Get app version from Vite env (injected from package.json version during build).
  * Falls back to localStorage-saved version if VITE_APP_VERSION is not set (old builds).
@@ -86,7 +86,19 @@ const NAV: NavItem[] = [
   { to: "/ho-so", label: "Hồ sơ", icon: FolderOpen, group: "Danh mục" },
   // GĐ B hệ sinh thái (2026-09-14): app con Bán hàng — link NGOÀI mở tab mới;
   // CHỈ Admin thấy (visibleNav lọc isAdmin), phân quyền chi tiết cho user thường làm sau khi app con hoàn thành
-  { to: "https://giong-banhang.vercel.app", label: "Bán hàng", icon: ShoppingCart, group: "DỰ ÁN" },
+  // GĐ 228a: URL theo env — local .env.local ghi APP_CON_URL=http://localhost:3100;
+  // production Vercel ghi URL production (rỗng → fallback như cũ).
+  // Dùng VITE_APP_CON_URL: client bundle CHỈ thấy biến VITE_* (process.env.APP_CON_URL
+  // là undefined trong browser → NAV fallback production dù SSR đúng — bắt qua E2E).
+  {
+    to:
+      (import.meta.env &&
+        (import.meta.env as Record<string, string | undefined>).VITE_APP_CON_URL) ||
+      "https://giong-banhang.vercel.app",
+    label: "Bán hàng",
+    icon: ShoppingCart,
+    group: "DỰ ÁN",
+  },
   { to: "/admin/approvals", label: "Duyệt đăng ký", icon: ShieldCheck, group: "Quản trị" },
   { to: "/admin/permissions", label: "Phân quyền", icon: ShieldCheck, group: "Quản trị" },
   { to: "/bao-cao", label: "Báo cáo", icon: BarChart3, group: "Hệ thống" },

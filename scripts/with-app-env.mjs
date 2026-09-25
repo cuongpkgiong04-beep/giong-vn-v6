@@ -60,6 +60,42 @@ export function readAppEnv(root) {
   }
 }
 
+/**
+ * Parse a `.env`-style document (`KEY=VALUE` per line, `#` comments, optional
+ * quotes). Non-string/empty lines are skipped — same lenient behavior as the
+ * app-env parser.
+ */
+export function parseDotEnv(text) {
+  const env = {};
+  for (const rawLine of String(text ?? "").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq <= 0) continue;
+    const key = line.slice(0, eq).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    let value = line.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!value) continue;
+    env[key] = value;
+  }
+  return env;
+}
+
+/** The local dev env (`<root>/.env.local`), or `{}` when the file is absent. */
+export function readDotEnvLocal(root) {
+  try {
+    return parseDotEnv(readFileSync(join(root, ".env.local"), "utf8"));
+  } catch {
+    return {};
+  }
+}
+
 /** File values under the process environment: an explicit override wins. */
 export function mergeAppEnv(appEnv, processEnv) {
   return { ...appEnv, ...processEnv };
@@ -140,10 +176,18 @@ function main(argv) {
     console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
     process.exit(2);
   }
+  // GĐ 228a (25/09 — test local): merge thêm .env.local (server vars KHÔNG có
+  // prefix VITE_ — TUNNEL_API_BASE_URL / API_TOKEN / APP_CON_URL…) vào env của
+  // tiến trình con. Vite chỉ tự load .env.local vào import.meta.env (client);
+  // SSR process.env KHÔNG nhận — dev server thiếu env server-side → tunnel 401
+  // + SSO trỏ production thay vì localhost. File tồn tại = local run; explicit
+  // process.env vẫn thắng (mảng processEnv merge sau).
+  const localEnv = readDotEnvLocal(projectRoot());
   const appEnv = mergeAppEnv(readAppEnv(projectRoot()), process.env);
   // Inject VITE_APP_VERSION from package.json — makes version available to client via
   // import.meta.env.VITE_APP_VERSION.
   const env = {
+    ...localEnv,
     ...appEnv,
     VITE_APP_VERSION: readPackageVersion(),
   };

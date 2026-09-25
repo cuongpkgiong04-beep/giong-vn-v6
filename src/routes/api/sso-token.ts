@@ -102,7 +102,12 @@ export const createSsoToken = createServerFn({ method: "GET" })
 
       // PHẢI trỏ vào ROUTE xử lý SSO (verify + set cookie + redirect), không phải
       // trang chủ — trang chủ không đọc ?sso (bug phát hiện qua E2E 2026-09-14)
-      const url = `https://giong-banhang.vercel.app/api/auth/sso?sso=${encodeURIComponent(token)}`;
+      // GĐ 228a (25/09 — test local theo quy tắc GĐ 228): URL app con theo env —
+      // local .env.local ghi APP_CON_URL=http://localhost:3100 → nút Bán hàng mở
+      // SSO local; production env Vercel ghi URL production → KHÔNG ĐỔI GÌ.
+      const appConBase =
+        (process.env.APP_CON_URL ?? "").trim() || "https://giong-banhang.vercel.app";
+      const url = `${appConBase}/api/auth/sso?sso=${encodeURIComponent(token)}`;
       return { ok: true, token, url };
     } catch (err) {
       console.error("[createSsoToken]", err);

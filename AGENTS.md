@@ -8782,3 +8782,54 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-25 (GĐ C.85d — quy tắc test-local; repo con 5.7.2 / app tổng 4.1.5)*
 *Người cập nhật: Trợ lý lập trình*
+
+---
+
+### GĐ 228a: SSO local — nút Bán hàng mở localhost:3100 + đăng nhập được local app con (2026-09-25, 4.1.6 + repo con 5.7.3)
+
+> **BUG REPORT của Đại ca (25/09):** (1) Ở app tổng LOCAL, bấm nút "Bán hàng" mở
+> `https://giong-banhang.vercel.app` thay vì localhost:3100; (2) KHÔNG đăng nhập
+> được local app con.
+>
+> **Root cause — 3 lớp chồng nhau:**
+> 1. **4 chỗ hardcode production:** NAV app tổng + sso-token (app tổng) + sso.ts
+>    app con (APP_URL + redirect login). PA-1 (Đại ca chọn): env-driven — local
+>    `.env.local` ghi URL localhost; production không env → fallback như cũ.
+> 2. **Cookie `bh_session` cứng cờ `Secure`:** trình duyệt từ chối Secure cookie
+>    trên HTTP → local không set được phiên. Fix: cờ Secure TỰ NHẬN theo APP_URL
+>    (`isHttps = startsWith("https") || !APP_URL` — không env = production mặc
+>    định HTTPS, giữ nguyên Secure).
+> 3. **Vite không load biến non-VITE vào SSR `process.env`:** sửa env-driven xong
+>    E2E vẫn mở production → mở rộng `with-app-env.mjs` CẢ 2 app: parse + merge
+>    `.env.local` vào env tiến trình con (process.env vẫn thắng; production không
+>    `.env.local` → không đổi gì).
+>
+> **2 bug bắt thêm khi E2E (không đoán):**
+> 4. **NAV là client code** — `process.env.APP_CON_URL` là undefined trong browser
+>    bundle (Vite chỉ define `VITE_*` cho client) → client fallback production dù
+>    SSR đúng. Fix: thêm `VITE_APP_CON_URL` vào `.env.local` + NAV đọc
+>    `import.meta.env` (client + SSR cùng thấy). **Lesson: biến env cho CLIENT
+>    phải tiền tố VITE_* — process.env chỉ tồn tại Node/SSR, guard typeof process
+>    không cứu được.**
+> 5. **app tổng `.env.local` thiếu `APP_JWT_SECRET`** → createSsoToken fail → nút
+>    fallback mở link thẳng KHÔNG token → app con không set cookie. Fix: copy
+>    secret từ app con (2 app phải cùng secret — GĐ 108). **Lesson: checklist
+>    môi trường local = ĐỦ env của CẢ 2 app, không chỉ app đang sửa.**
+>
+> **E2E PASS 6/6 (scripts/test-sso-local-228a.mjs — Playwright, sẽ xóa sau khi
+> ổn định):** login localhost:3000 (đợi nút enabled — lesson GĐ 167) → hover
+> sidebar (lesson GĐ 228) → tab mở đúng localhost:3100 → cookie bh_session
+> secure=false → /api/auth/me trả user (SuperAdmin + mods đầy đủ) → app con
+> render phiên. Production giữ nguyên (không env → fallback; cookie vẫn Secure).
+>
+> **Version:** app tổng 4.1.5 → **4.1.6** · repo con 5.7.2 → **5.7.3** (fix —
+> patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+>
+> **Tiêu chí kiểm chứng:** start-local.bat → app tổng bấm Bán hàng → tab
+> localhost:3100 ĐÃ đăng nhập (tên + role hiện, không "Chưa đăng nhập");
+> production không đổi gì. Test lần sau: `node scripts/test-sso-local-228a.mjs`.
+
+---
+
+*Cập nhật lần cuối: 2026-09-25 (GĐ 228a — SSO local env-driven; app tổng 4.1.6 / repo con 5.7.3)*
+*Người cập nhật: Trợ lý lập trình*
