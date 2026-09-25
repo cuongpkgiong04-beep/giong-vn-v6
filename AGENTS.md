@@ -8633,3 +8633,36 @@ không thành phần nào ≥ 10).
 >
 > **Version:** app tổng 4.1.1 → **4.1.2** (docs-only — patch; repo con 5.5.0 →
 > **5.6.0** — feature minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+### GĐ 226: Hệ sinh thái — Báo cáo công nợ đặt trước (tool 24 → SQL Đường B) (repo con v5.7.0) (2026-09-25)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.84 — builder bccn-dattruoc từ stg_10GDTVX + đối chứng tool 24 + trang /m/bc-congno-dattruoc + phân quyền 3 điểm (v5.7.0) |
+| (app tổng) | docs(agents): GĐ 226 + version 4.1.2 → 4.1.3 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (25/09):** Làm "Báo cáo công nợ đặt trước" (nhóm BÁO CÁO
+> MARKETING) chủ đạo từ tool `24_BCCNKhachDtruoc.py` — đồng bộ dữ liệu đã download
+> 01/01/2018→31/08/2026 vào SQL (T9 chỉ chạy lấy T9), sheet TỔNG HỢP làm báo cáo
+> chính. Chi tiết đầy đủ ở AGENTS.md repo con GĐ C.84.
+
+> **Tóm tắt:** ETL re-import 596 file GDTVX = 89.923 dòng (center rỗng = 0 nhờ
+> regex prefix mã TT Unicode); builder chọn folder lượt tải theo quy ước PA1
+> (tên folder == từ ngày; fallback mới nhất ≤ đến ngày) + parse 4 file f1-f4;
+> web trang mới khung chuẩn + 5 sheet phụ; phân quyền nhóm banhang-marketing.
+
+> **Đối chứng tool 24:** kỳ 2018→30/06/2026 khớp 10/11 ô từng đồng; lệch 164 mũi
+> = BUG NHÂN ĐÔI của tool 24 (f3 nhập trùng khóa → merge pandas nhân đôi) —
+> **số builder là đúng**; kỳ T9 khớp 100% từng đồng (6 gói / 103 mũi).
+
+> **⚠️ Việc còn mở (chờ Đại ca chốt):** (1) tool 24 cần dedupe f3 trước merge
+> (5 gói LB/PY/TO bị đếm gấp đôi trên Excel tool xuất) — em chưa sửa tool gốc;
+> (2) E2E production qua UI sẽ chạy sau khi push (trang mới chưa có trên production);
+> (3) log agent có dòng "[task] tự tạo Task_02 lỗi HTTP 401" sau restart — ngoài
+> phạm vi GĐ 226, cần rà session nội bộ agent→API_Server (GĐ sau).
+
+> **Version:** app tổng 4.1.2 → **4.1.3** (docs-only — patch; checklist GĐ 138 ✓ —
+> không thành phần nào ≥ 10).
+
+*Cập nhật lần cuối: 2026-09-25 (GĐ 226 — Báo cáo công nợ đặt trước; app tổng 4.1.3 / repo con 5.7.0)*
+*Người cập nhật: Trợ lý lập trình*
