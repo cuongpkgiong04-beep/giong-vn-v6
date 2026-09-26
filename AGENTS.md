@@ -8964,3 +8964,40 @@ không thành phần nào ≥ 10).
 không thành phần nào ≥ 10).
 
 ---
+
+### GĐ 228h: Bảng chấm công — số công trừ cố định 1h30 nghỉ giữa ca (2026-09-26, 4.1.9)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(bang-cham-cong): ngày có công trừ CỐ ĐỊNH 1h30 (nghỉ 12:00–13:30) + chặn ≥ 0 |
+| (mới) | chore: tăng version 4.1.8 → 4.1.9 |
+
+> **Yêu cầu của Đại ca (26/09):** Điều chỉnh phần Báo cáo → Bảng chấm công:
+> số công được trừ cố định 1 giờ 30 phút do có thời gian nghỉ giữa ca từ
+> 12 giờ đến 13 giờ 30 phút.
+>
+> **Đã chốt qua vòng hỏi:** (1) trừ CỐ ĐỊNH 1h30 MỖI NGÀY có công (không
+> tính giao ca↔khung nghỉ — đúng chữ "cố định" của Anh; nhược điểm đã báo:
+> ca chiều/không nghỉ trưa vẫn bị trừ oan); (2) chặn ≥ 0 — ngày làm ngắn
+> không ra giờ âm/số công âm.
+>
+> **Fix (surgical — 1 chỗ trong `src/routes/bao-cao/bang-cham-cong.tsx`):**
+> sau khi tổng giờ các cặp vào–tan được cap 24h, nếu `totalSeconds > 0`
+> thì `totalSeconds = max(0, totalSeconds − 90*60)`. Số công
+> `workDays = totalSeconds / 8h` tự cập nhật theo giờ mới (mọi cột card
+> thống kê + CSV export đều lấy từ cùng nguồn reportRows nên tự đúng).
+>
+> **Ví dụ:** ca 08:00–17:00 = 9h → trừ 1h30 = 7h30 → số công 0.94 (trước
+> đây 1.13); ca 2 ca 15h → 13h30 → 1.69.
+>
+> **Verify:** typecheck SẠCH 0 lỗi. Test thêm trên production sau deploy:
+> số công giảm đúng 1h30 so với báo cáo cũ ở ngày có cả vào–tan; ngày chỉ
+> có vào (không tan) vẫn 0 công như cũ.
+>
+> **Tiêu chí kiểm chứng:** Bảng chấm công cột Số công = (tổng giờ − 1h30)/8,
+> tối thiểu 0; card thống kê + CSV khớp; sidebar VERSION 4.1.9.
+
+**Version:** app tổng 4.1.8 → **4.1.9** (fix nghiệp vụ — patch; checklist
+GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---

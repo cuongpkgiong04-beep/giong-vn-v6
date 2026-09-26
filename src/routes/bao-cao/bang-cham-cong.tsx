@@ -151,6 +151,12 @@ function BangChamCongReport() {
       // Cap total daily work time at 24h max
       totalSeconds = Math.min(totalSeconds, 24 * 3600);
 
+      // GĐ 228h (yêu cầu Đại ca): ngày có công trừ CỐ ĐỊNH 1h30 nghỉ giữa ca
+      // (12:00–13:30). Chặn ≥ 0 — ca quá ngắn không ra giờ âm.
+      if (totalSeconds > 0) {
+        totalSeconds = Math.max(0, totalSeconds - 90 * 60);
+      }
+
       const workDays = totalSeconds > 0 ? Math.min(Math.round((totalSeconds / (8 * 3600)) * 100) / 100, 3.0) : 0;
 
       rows.push({
