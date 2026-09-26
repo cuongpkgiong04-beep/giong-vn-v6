@@ -145,6 +145,17 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/up-hoadon-dauvao", label: "UPLOAD Hóa đơn đầu vào" },
     ],
   },
+  // GĐ 229 (26/09/2026 — yêu cầu Đại ca): nhóm ĐIỀU HÀNH — NHIỆM VỤ (bậc 0
+  // app con). Trước đây /m/tasks hardcode mở cho mọi user có quyền Bán hàng →
+  // thiếu phân quyền ở App Tổng. Nay đưa vào BH_GROUPS — nguyên tắc chung:
+  // module mới của app con PHẢI thêm nhóm/lá ở đây để cấu hình được.
+  {
+    key: "bh-dieu-hanh-nhiem-vu",
+    label: "ĐIỀU HÀNH — NHIỆM VỤ",
+    leaves: [
+      { to: "/m/tasks", label: "Nhiệm vụ định kỳ (Task_01 + Task_02)" },
+    ],
+  },
 ];
 
 /** Mọi key nhóm (8) — dùng vòng for, tránh suy diễn từ mảng literal. */
