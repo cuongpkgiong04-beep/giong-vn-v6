@@ -9001,3 +9001,32 @@ không thành phần nào ≥ 10).
 GĐ 138 ✓ — không thành phần nào ≥ 10).
 
 ---
+### GĐ 228o: Hệ sinh thái — Báo cáo tổng hợp "Thống kê gói và Vắc xin đặt trước" từ nguồn 14.GVVXDT (repo con v5.9.4) (2026-09-26)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): GĐ C.84 — Báo cáo tkgvvxdt từ stg_14GVVXDT + builder tách file + trang /m/bc-tkgvvxdt (v5.9.4) |
+| (app tổng) | feat(catalog): GĐ 228o — +1 lá 'Thống kê gói và VX đặt trước' BÁO CÁO MARKETING + version 4.2.0 → 4.2.1 |
+
+> **Bối cảnh:** Tiếp GĐ 228m (tool 32 tải 14.GVVXDT — Thống kê gói và Vắc xin đặt trước, E2E 19/19 trung tâm) — nay dựng BÁO CÁO tổng hợp từ staging. Đã chốt PA-1 với Đại ca: bảng chính Dịch vụ × (Tổng mũi/Tổng tiền/Đã tiêm/Chưa tiêm/Tiền chưa tiêm) gộp 19 trung tâm + dòng TỔNG CỘNG + 2 ô tóm tắt (Tổng số gói/Tổng số đặt trước) + bảng phụ theo trung tâm; nhóm BÁO CÁO MARKETING.
+
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ 228o):**
+> 1. **ETL:** staging `stg_14GVVXDT` (migration 0011 — bảng generic col1..col30); parse GIỮ 2 dòng tổng đầu file (col1='' + col2 nhãn "Tổng số gói"/"Tổng số đặt trước" + col3 giá trị); nạp 688 dòng / 19 TT / 1 report_date=2018-01-01 (snapshot gộp 01/01/2018→25/09/2026).
+> 2. **Builder** `agent/etl/gvvxdt_report.py — build_tkgvvxdt`: snapshot MỚI NHẤT trong kỳ; filter `col2 <> ''`; meta goi/dattruoc/byCenter/snapshotDate. Đối chứng TD khớp từng đồng: 595 mũi / 476.687.800đ / 569 tiêm / 26 chưa / 17.959.200đ + gói 30 / đặt trước 142. Toàn chuỗi: TỔNG 33.723 mũi / 30.553.290.452đ, gói 2.526 / đặt trước 4.771.
+> 3. **Wiring sql_reports.py:** QUERY_KEYS 18 key; REPORT_SOURCE_TABLES checkCol col2; import builder đặt NGAY TRƯỚC khối _REPORT_BUILDERS (tránh circular import).
+> 4. **Web + phân quyền 3 điểm:** trang /m/bc-tkgvvxdt (SqlDataModule + children 2 ô tóm tắt + bảng phụ); nav BC_MARKETING_LEAFS; -smed.ts SQL_SOURCES/GROUP/LEAF; smed-auth ROUTE_TO_GROUP; catalog app tổng +1 lá (Phân quyền tự sinh chip — GĐ 200).
+
+> **E2E DEV PASS:** job tkgvvxdt kỳ 2018-01-01→2026-09-25 → 84 dòng bảng + 2 ô tóm tắt + bảng phụ theo trung tâm — screenshot `giong-apps/apps/banhang/screenshots/test-228o-final.png`. Service agent đã restart nạp builder mới (key tkgvvxdt).
+
+> **LESSON LEARNED — Dòng tổng của tool xuất có col1 rỗng (2026-09-26):** Filter "dòng data" theo col1 <> '' nuốt mất dòng tổng khi cần giữ làm ô tóm tắt. Probe 2-3 dòng đầu/cuối file trước khi viết filter; dòng tổng lưu staging col1='' + nhận diện qua cột nhãn (col2).
+
+> **LESSON LEARNED — Dev server phải restart khi .env.local đổi (tái diễn GĐ 133 lần 3) (2026-09-26):** Vite đọc env lúc khởi động — tunnel URL mới trong .env.local không được nhận nếu dev server sống từ trước → "fetch failed" tưởng tunnel chết. Restart dev server là đủ.
+
+> **LESSON LEARNED — Báo cáo nguồn SNAPSHOT: needsData khi kỳ không chứa snapshot date là ĐÚNG thiết kế (2026-09-26):** GVVXDT có 1 report_date gộp 2018-01-01 — check_source_data lọc theo kỳ → kỳ không chứa mốc = needsData đúng, KHÔNG phải bug. Test báo cáo snapshot phải dùng kỳ rộng bao trùm mốc; cân nhắc sau: hiệu chỉnh check nguồn snapshot đếm theo bảng thay vì theo kỳ.
+
+**App tổng chỉ catalog + docs — không đụng code UI.**
+
+**Version:** app tổng 4.2.0 → **4.2.1** (docs+catalog — patch; checklist GĐ 138 ✓ — không thành phần nào ≥ 10) · repo con 5.9.3 → **5.9.4** (feature — patch).
+
+**Tiêu chí kiểm chứng:** Trang Phân quyền app tổng nhóm "BÁO CÁO MARKETING" có chip lá mới; user được cấp quyền nhóm đó thấy trang /m/bc-tkgvvxdt; bảng + 2 ô tóm tắt + bảng phụ đúng số đối chứng; sidebar app tổng VERSION 4.2.1 / app con VERSION 5.9.4 sau deploy.
+

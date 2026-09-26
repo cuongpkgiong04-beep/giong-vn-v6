@@ -130,6 +130,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-tiem-ho", label: "Báo cáo tiêm hộ" },
       { to: "/m/bc-chietkhau-th", label: "Báo cáo tổng hợp chiết khấu" },
       { to: "/m/bc-congno-dattruoc", label: "Báo cáo công nợ đặt trước" },
+      // GĐ 228o (26/09/2026) — Thống kê gói và VX đặt trước (nguồn 14.GVVXDT tool 32)
+      { to: "/m/bc-tkgvvxdt", label: "Thống kê gói và VX đặt trước" },
       { to: "/m/bc-lich-hen", label: "Danh sách lịch hẹn tiêm" },
     ],
   },
