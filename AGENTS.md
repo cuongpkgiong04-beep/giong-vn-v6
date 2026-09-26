@@ -9057,3 +9057,28 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 > **Tiêu chí kiểm chứng:** Bảng chính 83 dòng dịch vụ không còn hàng TỔNG CỘNG;
 > Subtotal đúng khi không lọc lẫn khi lọc; Tải Excel không có dòng tổng; version
 > repo con 5.9.5 / app tổng 4.2.2.
+
+---
+
+### GĐ 228q: Hệ sinh thái — Báo cáo tkgvvxdt thêm ma trận chưa tiêm theo trung tâm × dịch vụ (repo con v5.9.6) (2026-09-26)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(báo cáo): builder meta.matrix + trang bố cục 2 cột — ma trận chưa tiêm có TỔNG CỘNG không Subtotal, đặt bên phải bảng gói/đặt trước (v5.9.6) |
+| (mới) | docs(agents): GĐ 228q + version 4.2.3 |
+
+> **Yêu cầu của Đại ca (26/09):** Bảng ma trận theo trung tâm và dịch vụ (mũi
+> chưa tiêm + tiền chưa tiêm) đặt BÊN PHẢI bảng "tổng số gói/đặt trước trung
+> tâm" — CÓ tổng cộng, KHÔNG Subtotal.
+>
+> **Đã chốt PA-1:** mỗi TT 2 cột kề (`{code} mũi` | `{code} tiền`) + TỔNG CỘNG;
+> tiêu đề ngắn + chú thích giải nghĩa; grid 2 cột desktop (mobile dọc).
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 4.2.3.
+>
+> **Version:** app tổng 4.2.2 → **4.2.3** (docs-only — patch; checklist GĐ 138 ✓)
+> · repo con 5.9.5 → **5.9.6** (feature — patch).
+>
+> **Tiêu chí kiểm chứng:** Ma trận bên phải bảng gói/đặt trước; số #,##0 căn
+> phải; ô 0 trống; TỔNG CỘNG đậm cuối (khớp SQL thật 1.209 mũi / 883.264.200đ);
+> không Subtotal; Tải Excel OK; version 5.9.6 / 4.2.3.
