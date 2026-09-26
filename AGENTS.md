@@ -9030,3 +9030,30 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 
 **Tiêu chí kiểm chứng:** Trang Phân quyền app tổng nhóm "BÁO CÁO MARKETING" có chip lá mới; user được cấp quyền nhóm đó thấy trang /m/bc-tkgvvxdt; bảng + 2 ô tóm tắt + bảng phụ đúng số đối chứng; sidebar app tổng VERSION 4.2.1 / app con VERSION 5.9.4 sau deploy.
 
+
+---
+
+### GĐ 228p: Hệ sinh thái — Báo cáo tkgvvxdt bỏ dòng TỔNG CỘNG cuối bảng chính (repo con v5.9.5) (2026-09-26)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(báo cáo): builder gvvxdt_report bỏ rows.append(total) — Subtotal web tự cộng theo lọc (v5.9.5) |
+| (mới) | docs(agents): GĐ 228p + version 4.2.2 |
+
+> **Yêu cầu của Đại ca (26/09):** Bỏ dòng TỔNG CỘNG hàng dưới cùng bảng chính
+> bc-tkgvvxdt — Subtotal web đã tự cộng theo lọc, giữ cả hai = cộng 2 lần (pattern
+> GĐ 216 tái áp; lần trước 4 builder kho, lần này builder marketing tkgvvxdt).
+>
+> **Fix repo con:** builder `gvvxdt_report.py` bỏ append dòng tổng vào rows; giữ
+> dict total cho meta (số tổng độc lập bộ lọc); 2 dòng "Tổng số gói/đặt trước" đầu
+> file là ô tóm tắt riêng — GIỮ NGUYÊN. Verify SQL thật: tổng mũi 33.723 / tiền
+> 30.553.290.452đ khớp đối chứng — Subtotal web ra đúng số này.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử + version 4.2.2.
+>
+> **Version:** app tổng 4.2.1 → **4.2.2** (docs-only — patch; checklist GĐ 138 ✓ —
+> không thành phần nào ≥ 10) · repo con 5.9.4 → **5.9.5** (fix — patch).
+>
+> **Tiêu chí kiểm chứng:** Bảng chính 83 dòng dịch vụ không còn hàng TỔNG CỘNG;
+> Subtotal đúng khi không lọc lẫn khi lọc; Tải Excel không có dòng tổng; version
+> repo con 5.9.5 / app tổng 4.2.2.
