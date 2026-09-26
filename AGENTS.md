@@ -8833,3 +8833,134 @@ không thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-09-25 (GĐ 228a — SSO local env-driven; app tổng 4.1.6 / repo con 5.7.3)*
 *Người cập nhật: Trợ lý lập trình*
+
+### GĐ 228e: Nét hóa ảnh Điểm danh + Check-in + trả lời dung lượng Cloudinary (2026-09-26, 4.1.7)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(cham-cong): nén ảnh 1024px/800KB/0.8 → giữ 1080p/2MB/0.85 — ảnh zoom to không vỡ |
+| (mới) | fix(check-in): camera 1280×720 → 1920×1080 — ngang Điểm danh (upload thẳng giữ nguyên) |
+| (mới) | chore: tăng version 4.1.6 → 4.1.7 |
+
+> **BUG REPORT của Đại ca (26/09):** Ảnh chụp Check-in + Điểm danh không nét, zoom to
+> vỡ hình — muốn độ phân giải tốt nhất có thể. Kèm câu hỏi: Cloudinary Free 25GB có
+> đủ chứa ảnh + video ~6 tháng không?
+>
+> **Chẩn đoán ảnh mờ (đọc code — 2 nguyên nhân khác nhau từng trang):**
+> 1. **Điểm danh (cham-cong.tsx):** camera đã xin 1920×1080 + stamp giữ nguyên 1080p
+>    NHƯNG `confirmPunch` gọi `compressBase64Image()` — nén về **1024px cạnh dài
+>    (≈1024×576) + quality 0.8 + limit ≤800KB** (fix GĐ 25 cho mobile upload fail
+>    thời đó). Đây là nguyên nhân chính: 1080p → 576p = mất ~66% pixel.
+> 2. **Check-in (check-in.tsx):** KHÔNG qua nén (upload thẳng ảnh stamp) — nhưng
+>    camera chỉ xin **1280×720** → ảnh gốc đã thấp từ nguồn.
+>
+> **Fix theo phương án Đại ca chốt (3 lựa chọn khuyến nghị):**
+> 1. `compressBase64Image`: `maxSizeKB 800 → 2048` + `MAX_DIM 1024 → 1920` +
+>    quality `0.8 → 0.85` — giữ nguyên độ phân giải camera 1080p, ảnh upload
+>    ~300-500KB (vẫn nén nhẹ để mobile upload ổn định, không dùng file gốc 2-3MB).
+> 2. `check-in.tsx` camera request: `1280×720 → 1920×1080` — trình duyệt tự trả
+>    cao nhất có thể nếu camera trước không đạt 1080p (không vỡ flow).
+> 3. **Ảnh cũ (234 ảnh đã lưu Cloudinary) GIỮ NGUYÊN** — nén đã mất data, không
+>    thể phục hồi; chỉ ảnh chụp MỚI từ bản deploy này mới nét.
+>
+> **TRẢ LỜI CÂU HỎI CLOUDINARY (đo thật từ DB GiondDB + HEAD request file mẫu):**
+> | Chỉ số | Giá trị thực đo |
+> |---|---|
+> | Ảnh Điểm danh hiện có | 124 ảnh (TB **77KB**/ảnh) |
+> | Ảnh Check-in hiện có | 110 ảnh (TB **129KB**/ảnh) |
+> | Video Check-in | **0** (tính năng quay video chưa được dùng) |
+> | **Tổng đã dùng** | **~23 MB = 0.02% của 25GB** |
+> | Tốc độ TB 9/2026 | ~117 ảnh/tháng ≈ **12 MB/tháng** |
+> | **Chiếu 6 tháng** | **~72 MB** — đủ dùng HÀNG CHỤC NĂM, không chỉ 6 tháng |
+>
+> Kết luận cho Đại ca: 25GB THỪA RẤT XA. Ngay cả khi ảnh mới nét hơn (TB ~400KB/ảnh
+> thay vì ~100KB) + video 30s (~5MB/file) vào đều đặn, tốc độ ~250MB/tháng → 6 tháng
+> ~1.5GB — vẫn còn 23GB dự trữ. Đề nghị/Chat/Hồ sơ đính kèm cũng nằm chung account
+> nhưng chiếm dụng rất nhỏ (1 phiếu có đính kèm). KHÔNG cần nâng gói Cloudinary.
+>
+> **Verify:** typecheck SẠCH 0 lỗi (scripts/typecheck.mjs). Không đổi flow upload
+> server (`upload.ts` không đụng) — ảnh base64 lớn hơn (~0.5MB) vẫn nằm trong giới
+> hạn server function (4.5MB GĐ 158).
+>
+> **Tiêu chí kiểm chứng:** Điểm danh mới: ảnh trong dialog chi tiết zoom to nét
+> (stamp đọc rõ), dung lượng ~300-500KB/ảnh; Check-in mới: ảnh 1080p nét ngang
+> Điểm danh; ảnh cũ hiển thị như cũ; Video Check-in khi có dùng vẫn upload bình
+> thường; sidebar hiện VERSION 4.1.7.
+
+**Version:** app tổng 4.1.6 → **4.1.7** (fix — patch; checklist GĐ 138 ✓ —
+không thành phần nào ≥ 10).
+
+---
+
+*Cập nhật lần cuối: 2026-09-26 (GĐ 228e — nét hóa ảnh chấm công/check-in + Cloudinary 25GB thặng dư; app tổng 4.1.7 / repo con 5.7.5)*
+*Người cập nhật: Trợ lý lập trình*
+
+### GĐ 228f: Hoàn thiện Check-in — video lưu được + xoay máy + stamp ngang (2026-09-26, 4.1.8)
+
+| Commit | Thay đổi |
+|---|---|
+| (mới) | fix(check-in): video upload THẲNG Cloudinary (signed upload) — hết chết vì body 4.5MB serverless |
+| (mới) | fix(check-in): orientationchange → tự mở lại camera — xoay máy không còn chụp/quay được ảnh treo |
+| (mới) | fix(check-in): stamp quay ngang = chữ NGANG + góc DƯỚI-TRÁI (bỏ xoay 90° GĐ 102 theo yêu cầu Đại ca) |
+| (mới) | feat(upload): + getCloudinarySignature — server ký SHA-1, trình duyệt POST thẳng file |
+| (mới) | chore: tăng version 4.1.7 → 4.1.8 |
+
+> **BUG REPORT của Đại ca (26/09, 3 hiện tượng Check-in):**
+> 1. Camera quay video KHÔNG lưu trữ được.
+> 2. Quay ngang điện thoại: KHÔNG chụp được ảnh, KHÔNG quay được video.
+> 3. Stamp khi quay ngang KHÔNG nằm ngang + KHÔNG ở dưới trái như quay dọc.
+>
+> **Chẩn đoán (đọc code — mỗi hiện tượng một gốc):**
+> 1. **Video:** quay 30s @1.5Mbps ≈ 5.6MB → base64 phình ~7.5MB gửi qua server
+>    function → Vercel serverless CHẶN body > 4.5MB → request fail trước khi tới
+>    Cloudinary → code catch → chỉ lưu ảnh. Video >15s KHÔNG BAO GIỜ lưu được.
+> 2. **Xoay máy:** Safari iOS/Chrome Android KHÔNG restart stream khi xoay →
+>    stream treo (không còn frame mới) → chụp ra ảnh đen/đứng im, video cũng vậy.
+> 3. **Stamp ngang:** GĐ 102 thiết kế xoay 90° theo cạnh phải (đọc khi nghiêng
+>    đầu) — Đại ca muốn ngược lại: chữ NGANG thường + vị trí DƯỚI-TRÁI như dọc.
+>
+> **Fix theo 3 lựa chọn Đại ca chốt:**
+> 1. **Video → signed upload thẳng Cloudinary:** server function mới
+>    `getCloudinarySignature` (upload.ts) trả SHA-1 chữ ký + timestamp + folder
+>    (payload ~200 bytes, xa giới hạn); client `uploadVideoDirect()` fetch blob
+>    từ base64 → FormData POST thẳng `api.cloudinary.com/.../video/upload`.
+>    Không bị giới hạn 4.5MB, giữ chất lượng 30s đầy đủ. Ảnh vẫn đi đường cũ
+>    (base64 qua server — ảnh ~0.5MB an toàn).
+> 2. **Xoay máy:** listener `orientationchange` — khi dialog mở + chưa chụp/quay
+>    → đợi 400ms (trình duyệt xoay layout xong) → tự `startCamera()` lại.
+>    Mirror `isDialogOpenRef` đồng bộ 4 chỗ setIsDialogOpen (closure-safe).
+> 3. **Stamp ngang:** xóa nhánh xoay 90° của GĐ 102 trong `drawStampBlock` —
+>    MỌI hướng vẽ một khối duy nhất: chữ ngang, góc dưới-trái, dòng chạy từ
+>    dưới lên (giống hệt portrait cũ). `landscape` trong layout còn nhưng chỉ
+>    để tham chiếu, không còn đổi cách vẽ.
+>
+> **Phạm vi:** CHỈ `check-in.tsx` + `upload.ts` (+ version + AGENTS). Điểm danh
+> (cham-cong.tsx) KHÔNG đụng — stamp Điểm danh vốn đã chữ ngang dưới trái.
+>
+> **LESSON LEARNED — Tệp lớn KHÔNG đi qua server function (2026-09-26):**
+> Vercel serverless chặn body 4.5MB — video/audio/file lớn gửi base64 qua
+> server function là CHẾT SỚM trước khi tới dịch vụ đích. Pattern đúng: server
+> chỉ KÝ (signature ~200 bytes) + client POST thẳng lên Cloudinary/Storage.
+> Dấu hiệu nhận diện: tính năng "toast thành công nhưng không có gì lưu" với
+> file > ~3.3MB (4.5/1.37 base64 overhead).
+>
+> **LESSON LEARNED — Stream camera không tự sống lại khi xoay máy (2026-09-26):**
+> getUserMedia stream MỞ RỒI xoay thiết bị → frame đứng im, không lỗi gì trong
+> console. Phải chủ động nghe orientationchange + restart stream. Guard 3 điều
+> kiện: dialog đang mở + chưa có preview + không đang quay — không.restart
+> giữa lúc quay video sẽ mất bản ghi.
+>
+> **Verify:** typecheck SẠCH 0 lỗi (scripts/typecheck.mjs). Video upload đường
+> mới cần test mobile thật (Anh test: quay 30s → Xác nhận → mở chi tiết xem
+> video); xoay máy test khi dialog mở; stamp ngang xem preview + ảnh chụp.
+>
+> **Tiêu chí kiểm chứng:** (1) Quay video 20-30s → Xác nhận → check-in lưu có
+> video, mở chi tiết phát được; (2) mở dialog → xoay máy dọc↔ngang → camera
+> tự sống lại trong ~1s → chụp/quay được cả 2 hướng; (3) quay ngang: preview +
+> ảnh + video đều có dấu chữ NGANG góc DƯỚI-TRÁI như quay dọc; sidebar
+> VERSION 4.1.8 sau deploy.
+
+**Version:** app tổng 4.1.7 → **4.1.8** (fix — patch; checklist GĐ 138 ✓ —
+không thành phần nào ≥ 10).
+
+---

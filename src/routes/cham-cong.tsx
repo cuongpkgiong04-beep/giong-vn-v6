@@ -692,7 +692,7 @@ function ChamCongPage() {
         ? cleanAddress(resolvedAddress)
         : (address || gps);
       // Compress ảnh trước khi upload để tránh lỗi kích thước lớn trên mobile
-      const compressedPhoto = await compressBase64Image(photoPreview);
+      const compressedPhoto = await compressBase64Image(photoPreview); // GĐ 228e: ≤2MB, giữ 1080p
       // Upload photo to Cloudinary — REQUIRED, no base64 fallback
       let photoUrl: string;
       try {
@@ -1334,14 +1334,15 @@ function ChamCongPage() {
 
 /**
  * Nén ảnh base64 sang JPEG — giảm kích thước để tránh lỗi upload trên mobile.
- * Target: ≤ 800KB, resize về max 1024px nếu ảnh gốc quá lớn.
+ * GĐ 228e: giữ 1080p (MAX_DIM 1024 → 1920) + quality 0.8 → 0.85 + nới limit 800KB → 2MB
+ * — ảnh zoom to không còn vỡ (đúng nguyên bản camera 1920×1080 của Điểm danh).
  */
-export async function compressBase64Image(base64: string, maxSizeKB = 800): Promise<string> {
+export async function compressBase64Image(base64: string, maxSizeKB = 2048): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const MAX_DIM = 1024;
+      const MAX_DIM = 1920;
       let { width, height } = img;
       if (width > MAX_DIM || height > MAX_DIM) {
         const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
@@ -1352,7 +1353,7 @@ export async function compressBase64Image(base64: string, maxSizeKB = 800): Prom
       canvas.height = height;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, width, height);
-      let result = canvas.toDataURL("image/jpeg", 0.8);
+      let result = canvas.toDataURL("image/jpeg", 0.85);
       // Kiểm tra kích thước, giảm quality nếu vẫn quá lớn
       const sizeKB = (result.length * 0.75) / 1024;
       if (sizeKB > maxSizeKB) {

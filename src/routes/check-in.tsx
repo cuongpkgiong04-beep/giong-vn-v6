@@ -17,7 +17,7 @@ import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore, getPendingSyncRecords } from "@/lib/store";
 import { reverseGeocode } from "@/routes/api/data";
-import { uploadImage } from "@/routes/api/upload";
+import { uploadImage, getCloudinarySignature } from "@/routes/api/upload";
 
 /** Clean address: remove postal codes (e.g. "11810") but keep house numbers. */
 function cleanAddress(addr: string): string {
@@ -48,6 +48,8 @@ function CheckInPage() {
   const [q, setQ] = useState("");
   const [center, setCenter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // GĐ 228f: mirror ref cho listener xoay máy (closure cũ không thấy state mới)
+  const isDialogOpenRef = useRef(false);
   const [note, setNote] = useState("");
   const [gps, setGps] = useState("Đang lấy vị trí...");
   const [address, setAddress] = useState("Đang xác định vị trí...");
@@ -198,6 +200,32 @@ function CheckInPage() {
     });
   }
 
+  /**
+   * GĐ 228f: upload video THẲNG lên Cloudinary từ trình duyệt (signed upload).
+   * Video 30s ~5-6MB qua server function (base64) vượt giới hạn body 4.5MB của
+   * Vercel → không bao giờ lưu được. Server chỉ ký tên; trình duyệt POST thẳng.
+   */
+  async function uploadVideoDirect(base64DataUrl: string): Promise<string> {
+    const sig = await getCloudinarySignature({ data: { folder: "giong-vn/check-in" } });
+    const blob = await (await fetch(base64DataUrl)).blob();
+    const form = new FormData();
+    form.append("file", blob);
+    form.append("api_key", sig.apiKey);
+    form.append("timestamp", String(sig.timestamp));
+    form.append("signature", sig.signature);
+    form.append("folder", sig.folder);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Cloudinary upload failed (${res.status}): ${text.slice(0, 120)}`);
+    }
+    const json = (await res.json()) as { secure_url: string };
+    return json.secure_url;
+  }
+
   function formatPunchDate(date = new Date()) {
     return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
   }
@@ -271,9 +299,8 @@ function CheckInPage() {
         { text: timeStr, size: bigTimeMaxWidth, bold: true, color: "#ffffff" },
       ],
     ];
-    // GĐ 102: khung NGANG (w > h — camera ngang/máy quay ngang) → stamp xoay dọc
-    // theo cạnh NGẮN (bên phải khung) — đọc được khi người xem NGHIÊNG đầu sang phải,
-    // đúng như yêu cầu "quay ngang thì dấu cũng sang ngang" (dấu theo trục máy).
+    // GĐ 228f (đổi theo yêu cầu Đại ca): bỏ xoay 90° — quay ngang hay dọc, dấu
+    // LUÔN chữ NGANG + góc DƯỚI-TRÁI như nhau. `landscape` chỉ còn để thông tin.
     const landscape = detectLandscape() || w > h;
     return { w, h, scale, groups, groupGap, maxStampWidth, landscape };
   }
@@ -297,9 +324,9 @@ function CheckInPage() {
     requestAnimationFrame(drawOverlay);
   }, [currentName, gps, address]);
 
-  /** GĐ 102: vẽ khối stamp từ layout — landscape thì xoay 90° theo cạnh phải (đọc khi nghiêng đầu sang phải, cùng trục máy ngang); portrait giữ nguyên góc trái-dưới như cũ. */
+  /** GĐ 228f: vẽ khối stamp — LUÔN chữ ngang + góc dưới-trái (bỏ nhánh xoay 90° của GĐ 102 theo yêu cầu Đại ca: quay ngang stamp phải giống quay dọc). */
   function drawStampBlock(ctx: CanvasRenderingContext2D, layout: ReturnType<typeof buildStampLayout>) {
-    const { w, h, scale, groups, groupGap, landscape } = layout;
+    const { w, h, scale, groups, groupGap } = layout;
     ctx.textAlign = "left";
     const lineGap = Math.round(10 * scale);
 
@@ -315,57 +342,30 @@ function CheckInPage() {
     }
 
     const margin = Math.round(14 * scale);
-    ctx.save();
-    if (landscape) {
-      // Xoay 90° clockwise, neo cạnh PHẢI khung, chạy từ trên xuống — chữ dọc theo
-      // trục ngang của máy: người xem nghiêng đầu phải là đọc bình thường.
-      ctx.translate(w - margin, margin);
-      ctx.rotate(Math.PI / 2);
-      // Sau rotate: trục x = hướng xuống cạnh phải, trục y = sang trái khung.
-      const lineX = 0;
-      const textX = lineX + Math.round(7 * scale);
-      const lineWidth = Math.round(3 * scale);
-      ctx.fillStyle = "#22c55e";
-      ctx.fillRect(lineX, -lineWidth, totalH + Math.round(6 * scale), lineWidth);
-      let y = 0;
-      for (let gi = 0; gi < groups.length; gi++) {
-        for (const l of groups[gi]) {
-          y += l.size;
-          ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-          ctx.fillStyle = "rgba(0,0,0,0.7)";
-          ctx.fillText(l.text, textX + 1, y + 1);
-          ctx.fillStyle = l.color;
-          ctx.fillText(l.text, textX, y);
-          y += lineGap;
-        }
-        if (gi < groups.length - 1) y += groupGap;
+    // GĐ 228f: một khối duy nhất — chữ NGANG, góc DƯỚI-TRÁI (bỏ nhánh xoay 90° GĐ 102
+    // theo yêu cầu Đại ca: quay ngang stamp phải giống hệt quay dọc).
+    const boxBottom = h - margin;
+    const boxLeft = margin;
+    let y = boxBottom;
+    const lineX = boxLeft;
+    const textX = lineX + Math.round(7 * scale);
+    const lineWidth = Math.round(3 * scale);
+    const lineTop = y - totalH - Math.round(4 * scale);
+    const lineHeight = totalH + Math.round(6 * scale);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
+    for (let gi = 0; gi < groups.length; gi++) {
+      for (const l of groups[gi]) {
+        y -= l.size;
+        ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillText(l.text, textX + 1, y + 1);
+        ctx.fillStyle = l.color;
+        ctx.fillText(l.text, textX, y);
+        y -= lineGap;
       }
-    } else {
-      // Portrait — nguyên bản: khối trái-dưới, dòng chạy từ dưới lên
-      const boxBottom = h - margin;
-      const boxLeft = margin;
-      let y = boxBottom;
-      const lineX = boxLeft;
-      const textX = lineX + Math.round(7 * scale);
-      const lineWidth = Math.round(3 * scale);
-      const lineTop = y - totalH - Math.round(4 * scale);
-      const lineHeight = totalH + Math.round(6 * scale);
-      ctx.fillStyle = "#22c55e";
-      ctx.fillRect(lineX, lineTop, lineWidth, lineHeight);
-      for (let gi = 0; gi < groups.length; gi++) {
-        for (const l of groups[gi]) {
-          y -= l.size;
-          ctx.font = `${l.bold ? "bold " : ""}${l.size}px Arial, Helvetica, sans-serif`;
-          ctx.fillStyle = "rgba(0,0,0,0.7)";
-          ctx.fillText(l.text, textX + 1, y + 1);
-          ctx.fillStyle = l.color;
-          ctx.fillText(l.text, textX, y);
-          y -= lineGap;
-        }
-        if (gi < groups.length - 1) y -= groupGap;
-      }
+      if (gi < groups.length - 1) y -= groupGap;
     }
-    ctx.restore();
     void maxW;
   }
 
@@ -409,7 +409,7 @@ function CheckInPage() {
     const freshAddr = address;
 
     const layout = buildStampLayout(w, h, currentName, freshAddr, freshGps);
-    // GĐ 102: dùng chung drawStampBlock — landscape xoay 90° như overlay live
+    // GĐ 228f: dùng chung drawStampBlock — LUÔN chữ ngang + dưới trái (cả ngang lẫn dọc)
     drawStampBlock(ctx, layout);
 
     const stamped = canvas.toDataURL("image/jpeg", 0.92);
@@ -561,7 +561,8 @@ function CheckInPage() {
     const facing = modeOverride ?? facingModeRef.current;
     stopCamera();
     const streamPromise = navigator.mediaDevices.getUserMedia({
-      video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
+      // GĐ 228e: nâng 1280×720 → 1920×1080 — ngang Điểm danh, ảnh nét khi zoom
+      video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } },
       audio: false,
     });
     streamPromise.then((stream) => {
@@ -585,6 +586,23 @@ function CheckInPage() {
     if (video) video.srcObject = null;
     setCameraActive(false);
   }
+
+  // GĐ 228f: xoay máy dọc↔ngang khi dialog mở → stream camera TREO (không còn frame
+  // mới) → chụp ảnh đen / quay video đứng im. Fix chuẩn: nghe orientationchange
+  // → tự đóng + mở lại camera sau một nhịp (chỉ khi dialog mở, chưa chụp, không quay).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onOrientation = () => {
+      if (!isDialogOpenRef.current) return;
+      if (photoPreview || videoPreview || isRecording) return; // đang xem preview/quay thì không đụng
+      setTimeout(() => {
+        startCamera().catch(() => {});
+      }, 400); // đợi trình duyệt xoay layout xong rồi mới mở lại stream
+    };
+    window.addEventListener("orientationchange", onOrientation);
+    return () => window.removeEventListener("orientationchange", onOrientation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function requestLocation() {
     if (!navigator.geolocation) {
@@ -619,6 +637,7 @@ function CheckInPage() {
 
   function handleOpenDialog() {
     setIsDialogOpen(true);
+    isDialogOpenRef.current = true;
     setGps("Đang lấy vị trí...");
     setAddress("Đang xác định vị trí...");
     setLocationStatus("Đang xác định vị trí...");
@@ -653,12 +672,12 @@ function CheckInPage() {
         submittingRef.current = false;
         return;
       }
-      // GĐ 102: upload video (nếu có) — resource_type video tự detect từ base64 header
+      // GĐ 228f: video upload THẲNG Cloudinary (signed upload) — video 30s ~5-6MB
+      // vượt giới hạn body 4.5MB serverless nên trước đây KHÔNG BAO GIỜ lưu được.
       let videoUrl = "";
       if (videoPreview?.base64) {
         try {
-          const result = await uploadImage({ data: { base64: videoPreview.base64, folder: "giong-vn/check-in" } });
-          videoUrl = result.url;
+          videoUrl = await uploadVideoDirect(videoPreview.base64);
         } catch (err: any) {
           console.warn("[check-in] Upload video thất bại — gửi không video:", err?.message);
           toast.warning("Video chưa gửi được — check-in vẫn lưu với ảnh");
@@ -667,6 +686,7 @@ function CheckInPage() {
       addCheckin(gpsStr, address, note || "", photoUrl, currentEmployee?.center ?? "VP", videoUrl);
       toast.success("Check-in thành công");
       setIsDialogOpen(false);
+      isDialogOpenRef.current = false;
       setPhotoPreview(null);
       if (videoPreview) URL.revokeObjectURL(videoPreview.url);
       setVideoPreview(null);
@@ -698,19 +718,20 @@ function CheckInPage() {
         submittingRef.current = false;
         return;
       }
-      // GĐ 102: upload video (nếu có)
+      // GĐ 228f: video upload THẲNG Cloudinary (như confirmCheckin)
       let videoUrl = "";
       if (videoPreview?.base64) {
         try {
-          const result = await uploadImage({ data: { base64: videoPreview.base64, folder: "giong-vn/check-in" } });
-          videoUrl = result.url;
+          videoUrl = await uploadVideoDirect(videoPreview.base64);
         } catch (err: any) {
           console.warn("[check-in] Upload video thất bại:", err?.message);
+          toast.warning("Video chưa gửi được — điểm danh vẫn lưu với ảnh");
         }
       }
       addCheckin(gpsStr, address, "", photoUrl, currentEmployee?.center ?? "VP", videoUrl);
       toast.success("Điểm danh tan ca thành công");
       setIsDialogOpen(false);
+      isDialogOpenRef.current = false;
       setPhotoPreview(null);
       if (videoPreview) URL.revokeObjectURL(videoPreview.url);
       setVideoPreview(null);
@@ -988,7 +1009,7 @@ function CheckInPage() {
           </div>
 
           <div className="mt-5 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => { stopRecording(); setIsDialogOpen(false); stopCamera(); }} disabled={isSubmitting}>
+            <Button variant="outline" onClick={() => { stopRecording(); setIsDialogOpen(false); isDialogOpenRef.current = false; stopCamera(); }} disabled={isSubmitting}>
               Hủy
             </Button>
             <Button onClick={confirmCheckin} disabled={isSubmitting || isRecording || !photoPreview || !!videoPreview}>

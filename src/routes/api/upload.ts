@@ -120,3 +120,26 @@ export const deleteImage = createServerFn({ method: "POST" })
       return { deleted: false };
     }
   });
+
+/**
+ * GĐ 228f: ký chữ ký upload THẲNG lên Cloudinary từ trình duyệt (signed upload).
+ * Dùng cho VIDEO check-in — file 30s ~5-6MB vượt giới hạn body 4.5MB của Vercel
+ * serverless khi gửi base64 qua server function (video không bao giờ lưu được).
+ * Server chỉ trả chữ ký (nhỏ); trình duyệt POST thẳng file lên Cloudinary.
+ */
+export const getCloudinarySignature = createServerFn({ method: "POST" })
+  .validator((data: { folder?: string }) => data)
+  .handler(async ({ data }) => {
+    if (!isConfigured()) {
+      throw new Error("Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.");
+    }
+    const crypto = await import("node:crypto");
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = data?.folder || "giong-vn/check-in";
+    // Chữ ký SHA-1 của params + api_secret theo chuẩn Cloudinary signed upload
+    const signature = crypto
+      .createHash("sha1")
+      .update(`folder=${folder}&timestamp=${timestamp}${API_SECRET}`)
+      .digest("hex");
+    return { signature, timestamp, folder, cloudName: CLOUD_NAME, apiKey: API_KEY };
+  });
