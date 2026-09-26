@@ -84,6 +84,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/mkt-chietkhau", label: "Báo cáo chiết khấu" },
       { to: "/m/mkt-hentiem", label: "Lịch hẹn tiêm" },
       { to: "/m/mkt-dattruoc", label: "Gói tiêm - Đặt trước Vắc Xin" },
+      // GĐ 228m (26/09/2026) — Thống kê gói và Vắc xin đặt trước (số 4)
+      { to: "/m/mkt-tkgvvxdt", label: "Thống kê gói và Vắc xin đặt trước" },
     ],
   },
   {
