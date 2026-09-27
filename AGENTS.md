@@ -9263,3 +9263,31 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 > app tổng chứa "4.3.0" + app con "6.0.0" (quy tắc GĐ 124 — tải bundle grep
 > version); Tổng quan F5 hiện từ cache (GĐ 232); camera đẹp + video check-in
 > của GĐ 234 hoạt động.
+
+---
+
+### GĐ 237: Tổng quan app con — bổ sung nguồn DT tổng hợp Chuỗi + đổi tên BKCCN (repo con C.93, 2026-09-27)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `8a55d13` | feat(overview): +dtthc (đếm nguồn/banner/tải khi Cập nhật) + đổi tên bkccn → "Bảng kê chung cuối ngày (SMED)" |
+
+> **Yêu cầu Đại ca (27/09):** Tổng quan bấm Cập nhật còn thiếu 2 báo cáo:
+> "Thống kê DT tổng hợp Chuỗi" + "Bảng kê chung cuối ngày" → bổ sung để chạy.
+>
+> **Phát hiện khi phân tích (PA-1 anh chốt — đầy đủ nguồn):** "Bảng kê chung
+> cuối ngày" = `bkccn` (tool 3) ĐÃ CÓ từ GĐ 217 nhưng nhãn "Báo cáo bán hàng"
+> gây nhầm → đổi tên. "DT tổng hợp Chuỗi" = `dtthc` (tool 20) THIẾT SỰ thiếu →
+> thêm đầy đủ: đếm nguồn (stg_3DTTHC — file không có cột ngày GĐ 151 nên chỉ
+> làm tín hiệu đã-tải, không phải nguồn số liệu biểu đồ) + banner hỏi thiếu +
+> treo download khi bấm Cập nhật.
+>
+> **ĐA AGENT:** session khác ghi GĐ 236 (sidebar) trong lúc em làm → entry repo
+> con đổi thành C.93. Phiên này lần 2 trùng số GĐ trong ngày → cần quy ước khóa
+> số GĐ trước khi làm việc dài (báo Đại ca xem xét).
+>
+> **Version:** KHÔNG bump (chờ anh nói "Push").
+>
+> **Tiêu chí kiểm chứng (sau deploy):** banner thiếu kỳ mới hiện nhãn "Bảng kê
+> chung cuối ngày (SMED)"; bấm Cập nhật treo đủ 9 nguồn (kể cả dtthc); typecheck
+> 0 lỗi; build OK.
