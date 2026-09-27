@@ -9291,3 +9291,50 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 > **Tiêu chí kiểm chứng (sau deploy):** banner thiếu kỳ mới hiện nhãn "Bảng kê
 > chung cuối ngày (SMED)"; bấm Cập nhật treo đủ 9 nguồn (kể cả dtthc); typecheck
 > 0 lỗi; build OK.
+
+---
+
+### GĐ 239: Hệ sinh thái — Audit DB backfill + Task_01 thông minh: chỉ tải tháng CHƯA TỪNG có, loại MISA (repo con C.94, v6.0.0) (2026-09-27)
+
+> **Yêu cầu của Đại ca (27/09 — 4 điểm):** (1) rà DATABASE — bao nhiêu báo cáo
+> DOWNLOAD có Agent, bao nhiêu đã nạp DB kỳ 01/01/2025→31/08/2026, còn thiếu
+> bao nhiêu; (2) sửa Task_01 để CHỈ tải tháng chưa từng download (code cũ tải
+> lại file đã có nên anh chưa chạy); (3) LOẠI MISA (tool lỗi, anh làm tay);
+> (4) đã download GIỮ NGUYÊN.
+>
+> **Kết quả audit (staging GiondDB + job history — DB là nguồn quyết định,
+> GĐ 178):** 13 phân hệ có Agent − 2 MISA = 11 SMED. Đủ data cả 20 tháng:
+> hddt(2025-07→2026-08; 2025-01→06 nguồn SMED rỗng — file probe chỉ header,
+> anh chốt coi như ĐỦ), dtdt, bkccn, nhapkho, xuatkho, chietkhau, hentiem
+> (2025-12→08; 2025-01→11 nguồn rỗng), blth. Thiếu thật:
+> **dattruoc/GDTVX 20 tháng** (job duy nhất chỉ 09/2026) + **xnkt 5 tháng**
+> (2025-11/12, 2026-03/05/08 — tool crash 'thoát mã 1') + **dtthc 3 tháng**
+> (2025-01 chưa từng có job, 2025-09 fail, 2026-01) = **28 bước ≈ 5.5 giờ**.
+>
+> **Triển khai (repo con GĐ C.94 — chỉ agent/task_runner.py, app tổng không
+> đổi code):** TASK_REPORTS bỏ MISA (cả Task_01 lẫn Task_02); _build_task_steps
+> backfill chia THÁNG mọi phân hệ, skip khi staging có tháng (map STG_TABLES,
+> STG_TABLES_NO_DATE cho DTTHC/GDTVX không cột ngày — GĐ 151) HOẶC job done
+> bao trùm (kể cả done+no_data — nguồn rỗng hợp lệ); fail-safe query lỗi →
+> đưa vào kế hoạch (không bỏ sót); daily giữ nguyên 11 bước. Verify stub +
+> tunnel thật: kế hoạch đúng 28 bước, 188 tháng skip đúng, 0 MISA.
+>
+> **LESSON — kênh SQL của API Server là $N, không phải ? (2026-09-27):**
+> `/query` nhận SQL PostgreSQL-style ($1) rồi dịch $N→?; gửi `?` + params
+> trực tiếp 500 ODBC ngầm. Lần thứ 3 gặp dạng contract lệch (GĐ 70 sql.raw,
+> GĐ 96 SELECT ${}). Kèm: `_task_cancelled`/`_spawn_daily_task` cũ dùng `?`
+> → hủy task đang âm thầm KHÔNG hoạt động — sửa cùng lúc.
+>
+> **LESSON — date_from smed_pull_jobs là CHUỖI DD/MM/YYYY (2026-09-27):**
+> So sánh với ISO là so CHUỖI (DD/MM/YYYY < '2025-...' luôn False) → lọc im
+> lặng sai; phải CONVERT(103). Checklist: cột "date" bảng tự tạo phải soi
+> INFORMATION_SCHEMA trước khi viết điều kiện so sánh.
+>
+> **Tiêu chí kiểm chứng:** Anh bấm "Chạy ngay" Task_01 trên trang NHIỆM VỤ
+> (sau khi restart GIONG_SMED_Agent để agent nạp task_runner mới) → agent
+> chạy đúng 28 bước download (không tái tạo file đã có) + 17 báo cáo SQL;
+> bảng results ghi rõ từng tháng OK/LỖI; chạy lại lần 2 → kế hoạch còn 0
+> bước download (mọi tháng đã có) → chỉ chạy lại báo cáo SQL.
+>
+> **Version:** repo con 6.0.0 giữ nguyên (task_runner không nằm bundle web);
+> app tổng 4.3.0 không đổi code — chỉ ghi lịch sử. KHÔNG push — chờ Đại ca.
