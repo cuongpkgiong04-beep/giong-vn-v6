@@ -9106,3 +9106,80 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 > **Tiêu chí kiểm chứng:** Ma trận bên phải bảng gói/đặt trước; số #,##0 căn
 > phải; ô 0 trống; TỔNG CỘNG đậm cuối (khớp SQL thật 1.209 mũi / 883.264.200đ);
 > không Subtotal; Tải Excel OK; version 5.9.6 / 4.2.3.
+
+---
+
+### GĐ 229: Ban hành Nguyên tắc Push ĐA AGENT (2026-09-26)
+
+| Commit | Thay đổi |
+|---|---|
+| `7112f5a` | docs(agents): thay luật push — KHÔNG tự động push (chỉ commit + ghi AGENTS.md); bump version CHỈ khi Đại ca nói "Push"; rà trùng lặp giữa các Agent trước push |
+
+> **Chỉ thị của Đại ca (26/09):** Anh làm việc trên NHIỀU session với NHIỀU AI Agent
+> khác nhau cùng xử lý 1 dự án → ban hành 3 nguyên tắc: (1) KHÔNG tự động Push —
+> chỉ commit + ghi AGENTS.md; (2) Khi anh nói "Push" → xem lại lịch sử Version tạo
+> số mới cho CẢ app tổng + app con; (3) Trước Push phải kiểm tra trùng lặp/sửa đè
+> giữa các Agent → CẢNH BÁO nếu có.
+>
+> **Đã chốt qua vòng hỏi (anh chọn cả 3 khuyến nghị):** (a) mục "Nguyên tắc Push"
+> cũ GIỮ + gạch đầu dòng đánh dấu HẾT HIỆU LỰC (AI đọc thấy rõ luật nào đúng);
+> (b) rà sửa đủ 3 chỗ (Workflow dòng 3 + Quy tắc code + Quy tắc làm việc mới
+> 2026-08-30 — chỗ này từng nói "sửa xong PHẢI push"); (c) ghi CẢ 2 repo.
+>
+> **Điểm sửa (app tổng `7112f5a` + repo con `7a7ba6f`):**
+> - **AGENTS.md app tổng (5 chỗ):** Workflow mục 4 — dòng 3 đổi thành "COMMIT +
+>   ghi AGENTS.md — KHÔNG tự push", dòng 4 đổi thành "Khi Đại ca nói Push → rà
+>   trùng lặp + bump version CẢ HAI app"; Quy tắc code — bullet "PHẢI HỎI TRƯỚC
+>   KHI PUSH" đổi thành "KHÔNG tự động Push"; mục "Quy tắc làm việc mới
+>   (2026-08-30)" — dòng "sửa xong PHẢI push" gạch ngang + ghi hết hiệu lực;
+>   mục "Nguyên tắc Push (2026-09-07)" — đánh dấu ⛔ HẾT HIỆU LỰC, GIỮ để đối
+>   chiếu lịch sử; thêm mục MỚI "🤖 Nguyên tắc Push ĐA AGENT" (3 nguyên tắc +
+>   quy trình chuẩn + cách rà trùng lặp); mục "Cách tăng Version" — thêm chú ý
+>   thời điểm bump = lúc Đại ca nói Push.
+> - **AGENTS.md repo con (2 chỗ):** khối cảnh báo đầu file (nguyên tắc push 3
+>   lựa chọn cũ) đánh dấu HẾT HIỆU LỰC; thêm mục 3a "🤖 Nguyên tắc Push ĐA AGENT"
+>   đầy đủ (3 nguyên tắc + quy trình + cách rà trùng lặp — không phụ thuộc đọc
+>   AGENTS.md app tổng — bài học GĐ 138: quy tắc phải nằm ở NƠI LÀM VIỆC).
+>
+> **Quy trình chuẩn mỗi nhiệm vụ từ giờ:** sửa code → verify (typecheck/test) →
+> commit → ghi AGENTS.md → BÁO xong và DỪNG (không push, không bump version).
+>
+> **Version:** KHÔNG bump (theo đúng nguyên tắc mới — bump chỉ khi anh nói "Push").
+> Hiện tại: app tổng 4.2.3 / app con 5.9.6 — sẽ bump cả 2 khi anh nói Push.
+>
+> **Tiêu chí kiểm chứng:** AGENTS.md cả 2 repo: mục cũ đánh dấu hết hiệu lực rõ
+> ràng + mục ĐA AGENT đầy đủ 3 nguyên tắc; grep không còn chỗ nào bắt buộc push
+> khi sửa xong; commit chỉ chứa AGENTS.md (không dính file dở session khác);
+> nhiệm vụ KẾ TIẾP bất kỳ áp dụng đúng quy trình mới (commit + ghi, DỪNG trước push).
+
+---
+
+### GĐ 232: Tổng quan app con — cache theo kỳ cho KPI + 7 biểu đồ (repo con C.89, 2026-09-27)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `076c33f` | feat(overview): cache IndexedDB theo kỳ cho KPI + 7 biểu đồ Tổng quan (mở lại kỳ đã xem hiện ngay + tải nền tự cập nhật) |
+
+> **Bối cảnh (2026-09-27):** Kiểm chứng yêu cầu cũ của Đại ca "báo cáo đã lập mở
+> lại load nhanh" (GĐ 220/221): ĐO THẬT production — báo cáo tkgvvxdt lần 1
+> 22.6s (qua tunnel), lần 2 13.1s với network BỊ CHẶN = 100% từ cache thiết bị
+> → cache báo cáo HOẠT ĐỘNG đúng thiết kế. Tổng quan KHÔNG có cache — load
+> 12-16s mỗi lần mở (đo thật) → Đại ca chốt PA-1: cache theo kỳ + tự làm mới
+> (đã hỏi 3 PA, anh chọn 1). Session khác commit GĐ 230-231 xong em mới làm
+> (nguyên tắc ĐA AGENT — check git status + hỏi anh trước khi đụng).
+>
+> **Chi tiết kỹ thuật:** repo con GĐ C.89 (1 file `overview-dashboard.tsx` —
+> cacheKey `giong-ovr-{kind}|{unitId}|{kỳ}` cho hook useChart + loadKpi; cache
+> IndexedDB dùng chung `giong-report-cache` với báo cáo, tiền tố riêng để dọn
+> độc lập; lỗi cache nuốt im lặng — không bao giờ làm hỏng luồng chính). Key
+> gồm unit + kỳ → không nhầm số. Không migration, không sửa server function.
+>
+> **Verify (E2E dev local — tự ký bh_session, bài học GĐ C.60):** lần 1 6.5s
+> (tải tunnel), 8/8 key cache ghi; lần 2 F5 CHẶN network → KPI hiện 1.7s từ
+> cache. tsc 0 lỗi; vite build OK.
+>
+> **Version:** KHÔNG bump (quy tắc ĐA AGENT — bump khi anh nói "Push").
+>
+> **Tiêu chí kiểm chứng (sau deploy):** Mở Tổng quan → F5 → KPI + biểu đồ hiện
+> ngay từ cache (không chờ tunnel); đổi kỳ/trung tâm lần đầu vẫn tải, lần sau
+> hiện ngay; số luôn khớp kỳ + trung tâm đang chọn.
