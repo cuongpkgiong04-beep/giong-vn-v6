@@ -9375,3 +9375,30 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 >
 > **Version:** repo con 6.0.0 giữ nguyên (chờ lệnh Push); app tổng 4.3.0
 > không đổi code. KHÔNG push — chờ Đại ca.
+
+### GĐ 241: Hệ sinh thái — Báo cáo Công nợ đặt trước: bỏ 3 cột CHECK_SL + CL + GHI CHÚ 1 khỏi TỔNG HỢP (repo con C.96) (2026-09-27)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `65d15c3` | fix(báo cáo): GĐ C.96 — builder bccn_dattruoc bỏ CHECK_SL/CL/GHI CHÚ 1 khỏi TỔNG HỢP |
+| (app tổng) | docs(agents): GĐ 241 — không đổi code |
+
+> **Yêu cầu của Đại ca (27/09):** Báo cáo công nợ đặt trước (chạy từ SQL GiondDB)
+> bỏ cột: (1) CHECK_SL; (2) CL; (3) GHI CHÚ 1. Đã chốt: xóa hẳn cả web + Excel ·
+> giữ nguyên 5 sheet phụ tra cứu.
+>
+> **Tóm tắt (chi tiết ở AGENTS.md repo con GĐ C.96):** sửa surgical 1 chỗ —
+> builder `bccn_dattruoc` (agent/etl/sql_reports.py): xóa 3 key khỏi dict
+> `th_rows` + dọn dead code `check_sl`/`cl`. Dòng CỘNG + columns tính động →
+> tự thu hẹp 22 → 19 cột; web + Excel tải về sinh từ cùng nguồn → không cần
+> sửa web. Sheet TH_CongNo giữ "Ghi chú 1" vì là data thật (Gói dịch vụ/
+> ĐT_VắcXin), không phải cột trống.
+>
+> **Verify:** chạy thật GiongDB kỳ 01→27/09 — 19 cột, 0 cột sót; row0 keys
+> khớp columns; dòng CỘNG sạch; 5 sheet phụ nguyên vẹn; py_compile OK.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH để nạp builder
+> mới (cùng đợt với C.95 — restart 1 lần đủ cho cả 2 GĐ).
+>
+> **Version:** repo con 6.0.0 + app tổng 4.3.0 giữ nguyên (chờ lệnh Push).
+> KHÔNG push — chờ Đại ca.
