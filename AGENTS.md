@@ -9203,3 +9203,36 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 > **Tiêu chí kiểm chứng (sau deploy):** Mở Tổng quan → F5 → KPI + biểu đồ hiện
 > ngay từ cache (không chờ tunnel); đổi kỳ/trung tâm lần đầu vẫn tải, lần sau
 > hiện ngay; số luôn khớp kỳ + trung tâm đang chọn.
+
+
+---
+
+### GĐ 234: Chấm công/Check-in — nút Làm đẹp camera + sửa bug Check-in video không lưu được (2026-09-27)
+
+| Commit | Thay đổi |
+|---|---|
+| `062ed59` | feat(cham-cong): nút Làm đẹp (Sparkles, mặc định BẬT) màn camera chụp ảnh + quay video (filter canvas sáng/mềm da/đậm màu, stamp chữ luôn nét); FIX bug lưu video — nút Xác nhận bị `\|\| !!videoPreview` khóa vĩnh viễn khi có video + confirmCheckin bắt buộc photo trong khi UI chỉ có 1 preview → video KHÔNG BAO GIỜ lưu được; nay photo HOẶC video đều gửi được, video-only fail upload → DỪNG toast |
+
+> **Yêu cầu Đại ca (27/09):** (1) Camera Chấm công + Check-in cho dùng 'chức
+> năng camera của điện thoại' làm đẹp — nhiều chị em không muốn hiện mọc/cận:
+> canvas `ctx.filter = brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)`
+> mô phỏng beauty mode, mặc định BẬT, nút Sparkles tắt/bật, áp cả ảnh lẫn từng
+> frame video; tắt filter NGAY sau khi vẽ frame để chữ đóng dấu không bị mềm.
+> (2) Bug quay video không lưu (nhắc ở GĐ trước chưa hết): nguyên nhân GỐC là
+> 2 lớp — nút Xác nhận `disabled={... \|\| !!videoPreview}` (có video = khóa
+> nút) + `confirmCheckin` return khi `!photoPreview` (UI chỉ render 1 preview
+> ảnh XOR video → quay video xong không thể có photo). Sửa: nút disabled chỉ
+> khi KHÔNG có cả 2; confirmCheckin chấp nhận video-only; fail upload video
+> khi không có ảnh → DỪNG với toast, giữ video cho bấm lại (không lưu thiếu
+> cả 2 bằng chứng).
+>
+> **Verify:** npx tsc --noEmit 0 lỗi; SSR /check-in 200 không lỗi server; tồn
+> kho logic: addCheckin/insertCheckin/validator đã nhận photo='' + video từ
+> GĐ 102/228f — không cần đổi store/API. Không test UI camera thật được trên
+> desktop (cần thiết bị di động + đăng nhập auth thật) — Đại ca test trên
+> điện thoại: quay video → nút Xác nhận sáng → bấm → lưu kèm video.
+>
+> **⚠️ Rà trùng lặp (nguyên tắc 3):** GĐ 233 bị Agent CLI dùng trước (commit
+> `9990a55` — quy tắc Worktree, cùng ngày) → em nhảy sang GĐ 234 theo lesson
+> grep-max. Làm việc trong working tree `giong-vn-v6` nhánh main (Agent
+> Desktop) đúng phân vai GĐ 233. Version KHÔNG bump (bump khi anh nói Push).
