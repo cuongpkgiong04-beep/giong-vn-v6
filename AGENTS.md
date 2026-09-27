@@ -9236,3 +9236,30 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 > `9990a55` — quy tắc Worktree, cùng ngày) → em nhảy sang GĐ 234 theo lesson
 > grep-max. Làm việc trong working tree `giong-vn-v6` nhánh main (Agent
 > Desktop) đúng phân vai GĐ 233. Version KHÔNG bump (bump khi anh nói Push).
+
+---
+
+### GĐ 235: Push lần 1 theo quy trình ĐA AGENT (2026-09-27, 4.3.0 + repo con 6.0.0)
+
+| Commit | Thay đổi |
+|---|---|
+| (push) | main 2 repo: GĐ 232-234 (cache Tổng quan C.89 + worktree ĐA AGENT 233 + camera 234) + version 4.3.0 / 6.0.0 |
+
+> **Lệnh "Push" của Đại ca (27/09) — lần ĐẦU TIÊN chạy trọn quy trình GĐ 233:**
+> 1. **Rà trùng lặp:** main có GĐ 234 của session khác (camera cham-cong/check-in)
+>    + GĐ 232-233 của em — phạm vi KHÔNG giao nhau ✓; agent-cli KHÔNG có commit
+>    riêng (chưa có việc CLI) → merge "Already up to date" cả 2 repo.
+> 2. **Dọn phụ phẩm:** 2 worktree CLI có package-lock.json modified (side effect
+>    npm install) → checkout -- khôi phục, không đưa vào push.
+> 3. **Bump version (checklist GĐ 138):** app tổng 4.2.3 → **4.3.0** (minor +
+>    1 — feature cache Tổng quan GĐ 232); app con 5.9.6 → **6.0.0** (minor đang
+>    9 ĐẦY → về 0 + nhớ major 5→6 — quy tắc tròn trăm). 4 chỗ = 1 script node
+>    đường dẫn tuyệt đối (bài học GĐ 141) + grep đối chiếu khớp ✓ — không thành
+>    phần nào ≥ 10 ✓.
+>
+> **Version:** app tổng **4.3.0** · repo con **6.0.0** (2 nơi mỗi app khớp).
+>
+> **Tiêu chí kiểm chứng:** Vercel deploy 2 project OK; bundle JS domain chính
+> app tổng chứa "4.3.0" + app con "6.0.0" (quy tắc GĐ 124 — tải bundle grep
+> version); Tổng quan F5 hiện từ cache (GĐ 232); camera đẹp + video check-in
+> của GĐ 234 hoạt động.
