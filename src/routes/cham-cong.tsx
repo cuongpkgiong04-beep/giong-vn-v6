@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2, X } from "lucide-react";
+import { Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, Sparkles, TimerReset, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -97,6 +97,10 @@ function ChamCongPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [photoStamped, setPhotoStamped] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
+  // GĐ 233 (27/09 — yêu cầu Đại ca): "làm đẹp" khi chụp — filter canvas mô phỏng
+  // camera đẹp của điện thoại (sáng hơn + mềm da + đậm màu) che khuyết điểm.
+  // BẬT MẶC ĐỊNH, nút bấm tắt/bật ngay trên màn camera.
+  const [beauty, setBeauty] = useState(true);
   // iOS: live preview phải xem ĐỦ KHUNG (contain) — Android giữ nguyên như cũ
   const [isIOS] = useState(detectIOS);
 
@@ -542,7 +546,11 @@ function ChamCongPage() {
     if (!ctx) return;
 
     // Vẽ video frame lên captureCanvas (cần cho static photo output)
+    // GĐ 233: filter "làm đẹp" khi BẬT — vẽ xong frame phải tắt filter NGAY để
+    // chữ đóng dấu vẽ sau KHÔNG bị làm mềm theo (chữ dấu phải luôn nét).
+    if (beauty) ctx.filter = "brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)";
     ctx.drawImage(video, 0, 0, w, h);
+    ctx.filter = "none";
 
     const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
     const { groups, groupGap, scale } = layout;
@@ -1137,6 +1145,15 @@ function ChamCongPage() {
                     />
                   {/* Capture button + camera switch */}
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
+                    {/* GĐ 233: nút Làm đẹp — sáng + mềm da (mặc định BẬT) */}
+                    <button
+                      type="button"
+                      onClick={() => setBeauty((b) => !b)}
+                      className={`size-10 rounded-full border-2 flex items-center justify-center transition ${beauty ? "border-amber-300 bg-amber-400/80 hover:bg-amber-400" : "border-white/70 bg-black/40 hover:bg-black/60"}`}
+                      title={beauty ? "Làm đẹp: đang BẬT — bấm để tắt" : "Làm đẹp: đang TẮT — bấm để bật"}
+                    >
+                      <Sparkles className="size-5 text-white" />
+                    </button>
                     <button
                       type="button"
                       onClick={capturePhoto}

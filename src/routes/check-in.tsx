@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, TimerReset, Trash2, X } from "lucide-react";
+import { Camera, Eye, Loader2, LogIn, LogOut, MapPin, RotateCcw, Sparkles, TimerReset, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -95,6 +95,10 @@ function CheckInPage() {
   const MAX_RECORD_SECONDS = 30;
   const [photoStamped, setPhotoStamped] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
+  // GĐ 233 (27/09 — yêu cầu Đại ca): "làm đẹp" khi chụp/quay — filter canvas mô
+  // phỏng camera đẹp của điện thoại (sáng hơn + mềm da + đậm màu) để che khuyết
+  // điểm trên mặt. BẬT MẶC ĐỊNH, nút bấm tắt/bật ngay trên màn camera.
+  const [beauty, setBeauty] = useState(true);
   // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
   const facingModeRef = useRef<"user" | "environment">("user");
   if (facingModeRef.current !== facingMode) facingModeRef.current = facingMode;
@@ -400,7 +404,11 @@ function CheckInPage() {
     }
 
     // Vẽ video frame lên captureCanvas (cần cho static photo output)
+    // GĐ 233: filter "làm đẹp" khi BẬT — vẽ xong frame phải tắt filter NGAY để
+    // chữ đóng dấu vẽ sau KHÔNG bị làm mềm theo (chữ phải luôn nét).
+    if (beauty) ctx.filter = "brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)";
     ctx.drawImage(video, 0, 0, w, h);
+    ctx.filter = "none";
 
     const timeStr = formatPunchTime();
     const dateStr = formatPunchDate();
@@ -435,7 +443,10 @@ function CheckInPage() {
     }
     const ctx = rec.getContext("2d");
     if (!ctx) return;
+    // GĐ 233: làm đẹp từng frame video (giống ảnh) — tắt filter trước khi vẽ overlay
+    if (beauty) ctx.filter = "brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)";
     ctx.drawImage(vid, 0, 0, w, h);
+    ctx.filter = "none";
     // Overlay canvas đang có stamp mới nhất (drawOverlay loop vẽ liên tục) —
     // composite thẳng overlay lên frame là chữ dấu khớp 100% với preview.
     const overlay = overlayCanvasRef.current;
@@ -653,7 +664,10 @@ function CheckInPage() {
   }
 
   async function confirmCheckin() {
-    if (submittingRef.current || isSubmitting || !gpsCoords || !photoPreview) return;
+    // GĐ 233: chấp nhận PHOTO HOẶC VIDEO (UI chỉ hiển thị 1 preview tại 1 thời
+    // điểm — quay video xong không thể chụp ảnh mà không mất video → bắt buộc
+    // photo từ trước làm check-in bằng video KHÔNG BAO GIỜ lưu được).
+    if (submittingRef.current || isSubmitting || !gpsCoords || (!photoPreview && !videoPreview)) return;
     submittingRef.current = true;
     setIsSubmitting(true);
     try {
@@ -661,25 +675,36 @@ function CheckInPage() {
       // GĐ 103 fix tràn Neon: upload Cloudinary là BẮT BUỘC — fail thì DỪNG với toast
       // rõ ràng, giữ ảnh/video trong dialog cho user bấm lại (không còn lưu base64
 // 50-100KB vào Neon như trước — đã thấy 1 ảnh lọt vào DB).
+      // GĐ 233: ảnh TÙY CHỌN khi có video — không có ảnh vẫn lưu được check-in.
       let photoUrl = "";
-      try {
-        const result = await uploadImage({ data: { base64: photoPreview, folder: "giong-vn/check-in" } });
-        photoUrl = result.url;
-      } catch (err: any) {
-        console.warn("[check-in] Upload ảnh thất bại:", err?.message);
-        toast.error("Upload ảnh thất bại — kiểm tra mạng rồi bấm Xác nhận lại. Dữ liệu chưa gửi đi.");
-        setIsSubmitting(false);
-        submittingRef.current = false;
-        return;
+      if (photoPreview) {
+        try {
+          const result = await uploadImage({ data: { base64: photoPreview, folder: "giong-vn/check-in" } });
+          photoUrl = result.url;
+        } catch (err: any) {
+          console.warn("[check-in] Upload ảnh thất bại:", err?.message);
+          toast.error("Upload ảnh thất bại — kiểm tra mạng rồi bấm Xác nhận lại. Dữ liệu chưa gửi đi.");
+          setIsSubmitting(false);
+          submittingRef.current = false;
+          return;
+        }
       }
       // GĐ 228f: video upload THẲNG Cloudinary (signed upload) — video 30s ~5-6MB
       // vượt giới hạn body 4.5MB serverless nên trước đây KHÔNG BAO GIỜ lưu được.
+      // GĐ 233: video là BẰNG CHỨNG chính khi không có ảnh — fail upload video
+      // phải DỪNG (không lưu thiếu cả ảnh lẫn video), giữ video cho user bấm lại.
       let videoUrl = "";
       if (videoPreview?.base64) {
         try {
           videoUrl = await uploadVideoDirect(videoPreview.base64);
         } catch (err: any) {
-          console.warn("[check-in] Upload video thất bại — gửi không video:", err?.message);
+          console.warn("[check-in] Upload video thất bại:", err?.message);
+          if (!photoUrl) {
+            toast.error("Upload video thất bại — kiểm tra mạng rồi bấm Xác nhận lại. Dữ liệu chưa gửi đi.");
+            setIsSubmitting(false);
+            submittingRef.current = false;
+            return;
+          }
           toast.warning("Video chưa gửi được — check-in vẫn lưu với ảnh");
         }
       }
@@ -855,7 +880,7 @@ function CheckInPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogTitle>Thêm Check-in</DialogTitle>
-          <DialogDesc>Ghi nhận check-in. Yêu cầu: chụp ảnh + bật định vị GPS.</DialogDesc>
+          <DialogDesc>Ghi nhận check-in. Yêu cầu: chụp ảnh HOẶC quay video + bật định vị GPS. Video quay được lưu kèm check-in.</DialogDesc>
 
           <div className="mt-5 space-y-4">
             {/* Camera / Preview area (cả 2 platform dùng maxWidth:400 + contain cho Android, contain cho iOS) */}
@@ -880,6 +905,15 @@ function CheckInPage() {
                   />
 
                   <div className="absolute top-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
+                    {/* GĐ 233: nút Làm đẹp — sáng + mềm da (mặc định BẬT) */}
+                    <button
+                      type="button"
+                      onClick={() => setBeauty((b) => !b)}
+                      className={`size-10 rounded-full border-2 flex items-center justify-center transition ${beauty ? "border-amber-300 bg-amber-400/80 hover:bg-amber-400" : "border-white/70 bg-black/40 hover:bg-black/60"}`}
+                      title={beauty ? "Làm đẹp: đang BẬT — bấm để tắt" : "Làm đẹp: đang TẮT — bấm để bật"}
+                    >
+                      <Sparkles className="size-5 text-white" />
+                    </button>
                     <button
                       type="button"
                       onClick={switchCamera}
@@ -1012,7 +1046,11 @@ function CheckInPage() {
             <Button variant="outline" onClick={() => { stopRecording(); setIsDialogOpen(false); isDialogOpenRef.current = false; stopCamera(); }} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button onClick={confirmCheckin} disabled={isSubmitting || isRecording || !photoPreview || !!videoPreview}>
+            {/* GĐ 233 (27/09 — BUG Đại ca báo 2 lần): trước đây điều kiện
+                `|| !!videoPreview` làm nút Xác nhận KHÓA VĨNH VIỄN ngay khi quay
+                video xong → video KHÔNG BAO GIỜ lưu được. Photo + video gửi song
+                song đều OK (confirmCheckin chỉ bắt buộc photo) → bỏ điều kiện video. */}
+            <Button onClick={confirmCheckin} disabled={isSubmitting || isRecording || (!photoPreview && !videoPreview)}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
