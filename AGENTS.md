@@ -9338,3 +9338,40 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 >
 > **Version:** repo con 6.0.0 giữ nguyên (task_runner không nằm bundle web);
 > app tổng 4.3.0 không đổi code — chỉ ghi lịch sử. KHÔNG push — chờ Đại ca.
+
+### GĐ 240: Hệ sinh thái — Task_01/Task_02 sửa cấu hình ngay trên web + "Áp dụng & Chạy ngay" (repo con C.95) (2026-09-27)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `b498f66` | feat(tasks): GĐ C.95 — task_runner đọc config web (reload 30s) + updateScheduledTask + dialog sửa (giờ/phân hệ/báo cáo/retry/khoảng ngày) |
+| (app tổng) | docs(agents): GĐ 240 — không đổi code |
+
+> **Yêu cầu của Đại ca (27/09, sau GĐ 239):** Cho sửa chi tiết bên trong nhiệm vụ
+> (Task_01 + Task_02) ngay tại app + có lệnh thực thi. Đã chốt PA-1 + "Lưu +
+> Áp dụng & Chạy ngay" gộp dialog + MISA để checkbox (anh tự bật).
+>
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.95):**
+> - **Agent (task_runner.py):** TASK_REPORTS_ALL 13 phân hệ / default 11 SMED;
+>   `_selected_reports(config)`; `_parse_hhmm` clamp; `_load_daily_config` đọc
+>   bản seed cũ nhất (đúng chỗ anh sửa); `_spawn_daily_task(cfg)` truyền config
+>   sang bản pending theo ngày; loop RELOAD config MỖI 30s — đổi giờ/phân hệ/
+>   báo cáo/retry hiệu lực ≤30s KHÔNG cần restart service.
+> - **Web app con:** loadScheduledTasks trả thêm config; server fn MỚI
+>   `updateScheduledTask` (Admin, MERGE config, chặn khi running); dialog ✏️
+>   tự viết (fixed inset-0 z-[70]): giờ chạy + 13 phân hệ checkbox (2 MISA ⭐)
+>   + 17 báo cáo checkbox + retry slider 1-5 (+ Task_01 from/to date); nút
+>   "Lưu" và "Áp dụng & Chạy ngay" (lưu xong runScheduledTask → agent nhặt
+>   ≤30s); badge/desc đọc config thay vì cứng. Fix bug: createScheduledTask
+>   INSERT thiếu cột config.
+>
+> **Verify:** py_compile + stub test (188 SKIP + 28 bước backfill) PASS;
+> tsc --noEmit app con 0 lỗi (2 vòng fix: serializer return — lesson GĐ 148
+> lần 3; type lan taskMeta khi thêm server fn mới vào file có sẵn).
+>
+> **⚠️ VIỆC CẦN LÀM khi duyệt:** restart GIONG_SMED_Agent KHI AGENT RẢNH
+> (check job đang chạy — GĐ 136) để nạp task_runner mới. Sau đó: sửa config
+> tại NHIỆM VỤ → Lưu → hiệu lực ≤30s không cần restart; "Áp dụng & Chạy
+> ngay" → agent nhận ≤30s.
+>
+> **Version:** repo con 6.0.0 giữ nguyên (chờ lệnh Push); app tổng 4.3.0
+> không đổi code. KHÔNG push — chờ Đại ca.
