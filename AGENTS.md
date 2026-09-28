@@ -9771,3 +9771,52 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **⚠️ Lưu ý:** Script dùng placeholder `$1/$2` PostgreSQL-style (gửi `?` trực tiếp
 > bị 500 'COUNT field incorrect' — lesson GĐ C.94 trong task_runner.py).
+
+---
+
+### GĐ 251: "Sai mật khẩu" sau push TÁI DIỄN — root cause tunnel chết ngầm + watchdog sai tầng (2026-09-29, 4.3.5)
+
+| Commit | Thay đổi |
+|---|---|
+| (app tổng) | fix(login): isInfraDown() — signIn fail khi mất DB báo "Không kết nối được dữ liệu" thay vì "Sai email hoặc mật khẩu" |
+| (repo con C.105) | fix(tunnel): watchdog check /health thay DNS — tự hồi phục ≤3 phút; version 6.2.2 |
+| (mới) | chore: tăng version 4.3.4 → 4.3.5 (fix — patch) |
+
+> **BUG REPORT của Đại ca (29/09 00:09, kèm ảnh):** Đăng nhập app tổng "Sai email
+> hoặc mật khẩu" — nhấn mạnh KHÔNG phải lần đầu sau push. Yêu cầu: khắc phục +
+> ghi nhớ cho các lần sau.
+>
+> **ROOT CAUSE — KHÔNG phải mật khẩu, KHÔNG phải code auth:** tunnel Cloudflare
+> chết ngầm đúng lúc 00:15 (log API Server: watchdog ghi "DNS không resolve 1/3"
+> 00:15:47) → Better Auth không đọc được GiondDB → signIn fail → UI đổ lỗi sai.
+> **Lỗ hổng thật: watchdog GĐ 169 check DNS — Quick Tunnel chết thì DNS vẫn resolve
+> (IPv6 edge) → watchdog không bao giờ kích hoạt → chết dai.** Chi tiết kỹ thuật +
+> test giả lập kill cloudflared 2 lần ở AGENTS.md repo con GĐ C.105.
+>
+> **Fix 2 tầng:**
+> 1. **Repo con (tự hồi phục):** watchdog check HTTP /health (timeout 8s, 60s/lần,
+>    fail 3 liên tiếp) → kill cloudflared → keep_tunnel tạo tunnel mới + Gist +
+>    Vercel tự cập nhật. Tunnel chết tối đa ~3 phút tự lành — không cần restart tay.
+> 2. **App tổng (đúng bản chất):** login.tsx `isInfraDown()` — khi signIn fail,
+>    ping get-session; 5xx/throw → toast "Không kết nối được dữ liệu — hệ thống
+>    đang mất kết nối máy chủ. Vui lòng thử lại sau ít phút (KHÔNG phải sai mật khẩu)".
+>
+> **Đã khôi phục ngay cho Anh trước khi fix:** restart API Server 00:17 → tunnel
+> mới → E2E login production 200 + vào app ✅ (Anh đăng nhập lại được từ 00:17).
+>
+> **LESSON LEARNED — "Sai mật khẩu" sau push = checklist chẩn đoán 3 bước (2026-09-29):**
+> Lỗi này tái diễn lần 2 (18/09 + 29/09) cùng một gốc: HẠ TẦNG chứ không phải auth.
+> Từ giờ gặp "sai mật khẩu" bất thường (đặc biệt sau push/restart): (1) curl /health
+> tunnel URL từ Gist — 530/timeout = hạ tầng, không đụng auth; (2) xem log API Server
+> 15 phút gần nhất — có watchdog/tunnel lỗi không; (3) CHỈ khi tunnel sống mà vẫn fail
+> mới điều tra data auth (pattern GĐ 165 — user trúng password random).
+>
+> **LESSON LEARNED — Thông báo lỗi phải đúng NGHĨA (bổ sung GĐ 146):** lỗi hạ tầng
+> hiển thị thành "sai thông tin đăng nhập" khiến người dùng tự nghi mình + mất thời
+> gian gõ lại mật khẩu. Mọi thông báo lỗi ĐẦU VÀO phải phân biệt được: (a) dữ liệu
+> người dùng sai, (b) hệ thống đang bận/mất kết nối. Khi signIn fail vì 5xx/timeout
+> → KHÔNG BAO GIỜ đổ lỗi thông tin đăng nhập.
+>
+> **Tiêu chí kiểm chứng (ĐÃ PASS):** E2E login production 200 + vào app; kill
+> cloudflared giả lập → tunnel mới ≤3 phút tự lên Gist/Vercel; app con /api/units
+> 200; version 4.3.5 (app tổng) + 6.2.2 (repo con) khớp 2 nơi mỗi app.

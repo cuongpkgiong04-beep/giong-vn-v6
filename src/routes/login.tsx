@@ -11,6 +11,20 @@ import { getEmployeeByEmail } from "@/lib/catalog";
 
 const REMEMBER_KEY = "giong-vn-login-remember";
 
+/** GĐ 251 (29/09 — lần 2 Anh bị "sai mật khẩu" sau push): signIn fail có 2 bản chất
+ * KHÁC NHAU — (a) sai thông tin thật, (b) HẠ TẦNG DB mất (tunnel chết ngầm → Better
+ * Auth không đọc được GiondDB, từng diễn ra 18/09 + 29/09 00:15). Thông báo nhầm làm
+ * Anh tưởng mật khẩu sai. Phân biệt: ping /api/auth/get-session (nhẹ, ~0.4s khi sống);
+ * 5xx/timeout = hạ tầng xuống — báo đúng bản chất, KHÔNG đổ lỗi thông tin đăng nhập. */
+async function isInfraDown(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/auth/get-session", { cache: "no-store" });
+    return res.status >= 500;
+  } catch {
+    return true; // fetch throw = mạng/server function không phản hồi
+  }
+}
+
 export const Route = createFileRoute("/login")({ component: Login });
 
 function Login() {
@@ -159,7 +173,12 @@ function Login() {
             }
           } catch (err: any) {
             console.error("[login] ensureAuthUser error:", err);
-            toast.error("Sai email hoặc mật khẩu");
+            // GĐ 251: lỗi khi tạo/đọc account — phân biệt hạ tầng trước khi đổ lỗi thông tin
+            if (await isInfraDown()) {
+              toast.error("Không kết nối được dữ liệu — hệ thống đang mất kết nối máy chủ. Vui lòng thử lại sau ít phút (KHÔNG phải sai mật khẩu).");
+            } else {
+              toast.error("Sai email hoặc mật khẩu");
+            }
           }
           return;
         }
@@ -167,7 +186,12 @@ function Login() {
         window.location.href = "/";
       }
     } catch (err: any) {
-      toast.error(err?.message ?? "Lỗi không xác định");
+      // GĐ 251: signIn throw (mạng/rpc fail) → phân biệt hạ tầng trước khi báo lỗi chung
+      if (await isInfraDown()) {
+        toast.error("Không kết nối được dữ liệu — hệ thống đang mất kết nối máy chủ. Vui lòng thử lại sau ít phút (KHÔNG phải sai mật khẩu).");
+      } else {
+        toast.error(err?.message ?? "Lỗi không xác định");
+      }
     } finally {
       setLoading(false);
     }
