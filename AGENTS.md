@@ -9577,3 +9577,36 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > mới — bảng mới có sau khi chạy lại báo cáo.
 >
 > **Version:** giữ nguyên (chờ lệnh Push). KHÔNG push — chờ Đại ca.
+
+---
+
+### GĐ 247: Chat @mention — chọn được người + nút @ + @All nhắc cả nhóm (2026-09-28)
+
+> **Yêu cầu Đại ca:** (1) Nhóm đang có @ để tìm người nhắn trực tiếp nhưng KHÔNG chọn được
+> người; (2) thêm @All để nhắn cho tất cả mọi người trong nhóm.
+>
+> **Root cause lỗi không chọn được người:** regex bắt chữ sau "@" match cả dấu cách
+> (`/@([^@\n]*)$/`) → gõ "@All " (dấu cách cuối) → query "all " → filter
+> `name.includes("all ")` không khớp tên nào → dropdown biến mất, không chọn được ai.
+>
+> **FIX (commit `12bc533`, 1 file `src/routes/chat.tsx` — anh duyệt phương án A):**
+> 1. Trim query mention trước khi lọc → gõ "@All " hay dư dấu cách vẫn chọn được người.
+> 2. Thêm nút @ (AtSign) cạnh ô soạn tin nhóm → bấm mở dropdown chọn ngay, không cần
+>    nhớ gõ "@"; text chưa có "@" thì append thay vì replace.
+> 3. Thêm mục **@All** đầu dropdown (nhãn "nhắc cả nhóm") → chèn "@All " vào tin;
+>    dropdown vẫn hiện kể cả không có tên khớp query để @All luôn chọn được.
+> 4. Highlight "@All" trong bubble như tag người thật (`/^all$/i`).
+> @All là tag "cả nhóm" — tin nhóm bản chất mọi member đều nhận, không đổi phân phối tin.
+>
+> **Verify:** typecheck sạch; code review diff 55+/-5 dòng đúng 6 chỗ thiết kế.
+> **Hạn chế verify UI local:** cookie Better Auth local dùng prefix `__Host-` + flag
+> `Secure` → browser KHÔNG lưu cookie qua HTTP localhost → login UI local không giữ
+> session (API sign-in vẫn 200). Em đã xác nhận bằng curl (Set-Cookie có Secure) +
+> fetch trong tab (cookie rỗng). **UI @mention cần Đại ca test trên Vercel sau khi push.**
+> Không phải bug mới — local vốn test đầy đủ trên Vercel theo AGENTS.md.
+>
+> **Trùng số GĐ 246:** ban đầu em đánh số 246, nhưng Agent khác commit `b32b489`
+> (docs repo con C.97) dùng 246 trước → amend commit thành GĐ 247. Không trùng file,
+> không đè nhau — chỉ trùng số, đã xử lý.
+>
+> **Version:** 4.3.1 giữ nguyên — không bump. Chưa push — chờ lệnh.
