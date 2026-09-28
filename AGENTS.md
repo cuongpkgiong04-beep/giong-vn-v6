@@ -9552,3 +9552,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** 4.3.1 giữ nguyên — không bump (chỉ bump khi Đại ca nói "Push").
 > Chưa push — chờ lệnh.
+
+### GĐ 246: Hệ sinh thái — Thống kê gói/VX đặt trước thêm 2 cột còn nợ theo trung tâm (repo con C.97) (2026-09-28)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `dbae2f4` | feat(báo cáo): GĐ C.97 — byCenter thêm "Tổng số mũi còn nợ" + "Tổng số tiền còn nợ" |
+| (app tổng) | docs(agents): GĐ 246 — không đổi code |
+
+> **Yêu cầu của Đại ca (28/09, kèm ảnh):** Bảng "Tổng số gói / đặt trước theo
+> trung tâm" (BÁO CÁO MARKETING → Thống kê gói và Vắc xin đặt trước) thêm 2
+> cột: Tổng số mũi còn nợ + Tổng số tiền còn nợ — điền theo từng trung tâm.
+> Đã chốt: công thức = cột CHƯA TIÊM (SUM col6/col7 — đối chứng BH 51 mũi /
+> 39.360.000đ khớp đối chứng tổng−đã + khớp SUBTOTAL ma trận anh đang thấy) ·
+> áp cả web + Excel.
+>
+> **Tóm tắt (chi tiết ở AGENTS.md repo con GĐ C.97):** tool 32 không xuất dòng
+> còn nợ → tính từ col6/col7 (mũi/tiền chưa tiêm) từng dòng dịch vụ, gộp per
+> center; 0 → rỗng (ẩn 0); web moneyCols thêm tiền còn nợ (#,##0 + SUBTOTAL
+> tự cộng theo lọc). Verify: builder thật 19 trung tâm, BH đúng đối chứng;
+> py_compile + tsc 0 lỗi.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH để nạp builder
+> mới — bảng mới có sau khi chạy lại báo cáo.
+>
+> **Version:** giữ nguyên (chờ lệnh Push). KHÔNG push — chờ Đại ca.
