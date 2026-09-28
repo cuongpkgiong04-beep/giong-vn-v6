@@ -9402,3 +9402,63 @@ GĐ 138 ✓ — không thành phần nào ≥ 10).
 >
 > **Version:** repo con 6.0.0 + app tổng 4.3.0 giữ nguyên (chờ lệnh Push).
 > KHÔNG push — chờ Đại ca.
+
+---
+
+## 🤖 KIẾN TRÚC MULTI-AGENT — nhiều AI cùng làm 1 dự án (GĐ 242, 2026-09-27)
+
+> **Quyết định của Đại ca (27/09):** Anh dùng NHIỀU Agent song song cùng làm dự án
+> (hiện có 2, sau này thêm nữa) — KHÔNG xóa workspace của agent nào. Mỗi Agent một
+> clone riêng, gặp nhau trên GitHub.
+
+### Bản đồ workspace (máy chủ công ty — D:\DuLieuChung\CUONG_2026\)
+
+| Agent | Workspace app tổng | Workspace repo con (giong-apps) |
+|---|---|---|
+| 🤖 **Trợ lý Freebuff** (em) | `giong-vn-v6\` | `giong-vn-v6\giong-apps\` |
+| 🤖 **Agent CLI** | `giong-vn-v6-cli\` | `giong-vn-v6\giong-apps-cli\` |
+| 🤖 Agent sau này | clone mới (VD `-agent3`) | clone mới tương tự |
+
+**Cả 2 app tổng clone CÙNG remote `github.com/cuongpkgiong04-beep/giong-vn-v6`;
+cả 2 repo con clone CÙNG remote `.../giong-apps`.** GitHub là điểm gặp nhau duy nhất.
+Thư mục `-cli` được gitignore tại app tổng (dòng `giong-apps-cli/`) — clone không
+lọt git của nhau.
+
+### ⚠️ 4 QUY TẮC SỐNG CÒN (mọi Agent bắt buộc tuân thủ)
+
+1. **PULL TRƯỚC MỖI PHIÊN LÀM** — `git pull origin main` ở CẢ repo trước khi đụng
+   code. Agent khác có thể vừa push giai đoạn mới; làm trên bản cũ = xung đột +
+   mất công. Nếu pull có conflict: DỪNG, đọc AGENTS.md xem agent khác làm gì, hỏi
+   Đại ca trước khi xử lý.
+2. **PUSH NGAY sau khi Đại ca duyệt** — đừng giữ commit local lâu (càng lâu càng
+   dễ lệch). Mỗi giai đoạn được duyệt = push trong phiên đó. AGENTS.md luôn ghi
+   rõ "KHÔNG push — chờ Đại ca" khi đang giữ commit.
+3. **KHÔNG force push / amend / rebase viết lại lịch sử** — nhiều agent cùng repo
+   thì lịch sử phải CHỈ ĐI TỚI. Ngoại lệ khẩn cấp (lộ password — GĐ 123): phải có
+   Đại ca chỉ thị trực tiếp.
+4. **AGENTS.md là kênh phối hợp chung** — mọi agent ghi giai đoạn của mình vào
+   AGENTS.md (kèm commit hash + ngày). Trước khi làm nhiệm vụ lớn: đọc AGENTS.md
+   phần mới nhất để biết agent khác vừa làm gì, TRÁNH đụng cùng module cùng lúc.
+   Mỗi agent GHI rõ tên mình (VD: "Trợ lý Freebuff" / "Agent CLI") trong giai
+   đoạn của nó.
+
+### Quy ước đặt tên clone mới (khi Đại ca thêm Agent)
+
+`<repo>-<tên-agent>` — VD `giong-vn-v6-agent3`, `giong-apps-agent3`. ĐỪNG dùng
+tên trùng hoặc hậu tố chung chung dễ nhầm. Thêm dòng gitignore tương ứng tại
+app tổng nếu clone repo con nằm trong thư mục app tổng.
+
+### GĐ 242 (tiếp): Đẩy C.95/C.96 + bump version cả 2 repo — Trợ lý Freebuff (27/09)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `ef81719` | chore: bump 6.0.0 → 6.1.0 — push C.95 (b498f66) + C.96 (65d15c3) lên GitHub |
+| (app tổng) | chore: bump 4.3.0 → 4.3.1 + mục Kiến trúc Multi-Agent ở trên |
+
+> **Checklist GĐ 138:** 6.1.0 (6/1/0) + 4.3.1 (4/3/1) — không thành phần nào ≥ 10 ✓;
+> 2 nơi mỗi app khớp (package.json + DEFAULT_VERSION, grep đối chiếu).
+
+> **⚠️ VIỆC CẦN LÀM cho Đại ca sau deploy:** restart GIONG_SMED_Agent KHI AGENT
+> RẢNH (check job đang chạy — GĐ 136) để nạp task_runner C.95 + builder C.96.
+> Sau đó test: NHIỆM VỤ → ✏️ sửa config → Lưu (hiệu lực ≤30s) / Áp dụng & Chạy
+> ngay; Báo cáo công nợ đặt trước → TỔNG HỢP hết CHECK_SL/CL/GHI CHÚ 1.
