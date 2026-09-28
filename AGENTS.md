@@ -9704,3 +9704,43 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Tiêu chí kiểm chứng:** Vercel deploy repo con bản 6.2.0 (soi chunk JS); app
 > tổng 4.3.2 sau deploy; các tiêu chí kiểm chứng từng GĐ ở AGENTS.md repo con.
+
+---
+
+### GĐ 250: Hệ sinh thái — Fix Task_02 daily 401: service agent thiếu env API_TOKEN (repo con C.104, 6.2.1) (2026-09-28)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(service): service-install.bat set đủ 5 env + nssm set service đang chạy — hết 401 Task_02; version 6.2.1 |
+| (mới) | docs(agents): GĐ 250 + version 4.3.2 → 4.3.3 (docs-only — patch) |
+
+> **Bối cảnh:** Sau khi restart GIONG_SMED_Agent verify C.99/C.101 (Đại ca yêu cầu),
+> log agent lộ `[task] /query lỗi: 401` — Task_02 daily 17:40 hôm nay KHÔNG chạy.
+>
+> **Chẩn đoán (decode env thật bằng `nssm get <svc> AppEnvironmentExtra`):** service
+> agent THIẾU env `API_TOKEN` (task_runner gọi `/query` nội bộ bằng `x-api-token`;
+> API Server xác thực bằng env cùng tên) → token rỗng ≠ token API Server → 401.
+> Nguồn gốc: `service-install.bat` chỉ set 2 env — 3 env bổ sung về sau không ai
+> cập nhật vào bat. Chi tiết đầy đủ + lesson ở AGENTS.md repo con GĐ C.104.
+>
+> **Fix:** nssm set đủ 5 env cho service + sửa bat; restart → `/query` hết 401,
+> **Task_02 catch-up tự chạy** 11 download + 16 báo cáo ngày 28/09. Trong lúc sửa,
+> em từng retype token bằng tay → sai 1 ký tự → claim 401 ngược chiều; fix bằng
+> copy programmatic từ env của API Server. **Lesson: không bao giờ retype secret.**
+>
+> **Verify trước đó trong phiên (cùng lượt restart):** C.99 nhập kho 27/09 — job
+> mới Hoàn thành + note vàng, job cũ needsData bấm Chạy lại → Hoàn thành, dialog
+> biến mất (5/5 PASS); C.101 tkgvvxdt — "Trung tâm TC …" đầy đủ + cột mũi còn nợ
+> (3/3 PASS). Ảnh bằng chứng: screenshots/verify-c99-loop-closed.png,
+> verify-c101-tkgvvxdt.png.
+>
+> **Kèm phát hiện vận hành:** có 1 agent chạy TAY lạc loài (PID 1828, khởi động
+> 13:55, không thuộc service — `sc stop` không đụng tới) poll claim SONG SONG với
+> service → nguy cơ 2 agent giành job. Đã kill; từ giờ chỉ chạy qua service.
+>
+> **Version:** app tổng 4.3.2 → **4.3.3** (docs-only — patch; checklist GĐ 138 ✓
+> — không thành phần nào ≥ 10). Repo con 6.2.0 → **6.2.1** (fix — patch).
+>
+> **Tiêu chí kiểm chứng:** log agent sạch (không 401); Task_02 hôm nay chạy xong
+> → Tổng quan có data 28/09; mai Task_02 tự chạy 17:40 đúng giờ; version
+> 6.2.1 (repo con) + 4.3.3 (app tổng) khớp 2 nơi mỗi app sau deploy.
