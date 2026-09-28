@@ -9610,3 +9610,60 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > không đè nhau — chỉ trùng số, đã xử lý.
 >
 > **Version:** 4.3.1 giữ nguyên — không bump. Chưa push — chờ lệnh.
+---
+
+### GĐ 248: Hệ sinh thái — Fix Tổng quan trắng (placeholder động = tham số) + data A/B/C đủ nguồn (repo con C.98 47aac9c) (2026-09-28)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `47aac9c` | fix(overview): C.98 — countSources sinh placeholder động nhúng vào template bị coi là 1 THAM SỐ → SQL `in ($3,4,5,...)` → Conversion failed → 7/7 KPI/chart "Tunnel SQL 500"; fix viết thẳng `in ($3,$4,...,$10)` |
+| (repo con) `dbae2f4` | (C.97 — đã ghi GĐ 246) bảng byCenter /m/bc-tkgvvxdt thêm 2 cột còn nợ |
+| (app tổng) | docs(agents): GĐ 248 + version giữ nguyên (chờ lệnh Push) |
+
+> **BUG REPORT của Đại ca (28/09):** Trang Tổng quan app con trắng — KPI/biểu đồ không
+> hiện số. **PHỤC TẠO xác nhận 100%:** 7/7 response KPI/chart đều "Tunnel SQL 500".
+>
+> **ROOT CAUSE — lesson GĐ 96 tái diễn lần 2 (placeholder động trong template):**
+> `countSources()` trong `-overview.ts` sinh chuỗi placeholder ĐỘNG:
+> `const ph = codes.map((_, i) => \`${i+3}\`).join(",")` rồi nhúng `in (${ph})` vào
+> template server function → `${ph}` bị coi là 1 THAM SỐ duy nhất (không phải 8
+> placeholder) → SQL thật gửi đi `in ($3,4,5,6,7,8,9,10)` → cột `report_code`
+> (nvarchar) so với int → `Conversion failed when converting the varchar value
+> '12BLTH' to data type int` → MỌI query đi qua countSources (KPI + 7 chart +
+> freshness) chết hàng loạt → Tổng quan trắng.
+>
+> **Fix (surgical — 1 chỗ):** viết thẳng `in ($3, $4, $5, $6, $7, $8, $9, $10)` —
+> số placeholder = số phần tử cố định của REPORT_CODES (không còn sinh động).
+> Verify query mới qua tunnel: PASS 8/8 report_code.
+>
+> **✅ E2E production sau deploy `47aac9c` — PASS:** KPI trả data thật — Thu tiền
+> Hôm qua **476.525.000đ** / Tháng này **5.937.965.400đ**; HĐ GTGT 568/6151 tờ;
+> Lượt tiêm 712/5236 mũi; Nhập VX 3.355.535.166đ~7.657 liều; Tồn kho asOf
+> 25/09/2026; đổi kỳ "Tháng này" → biểu đồ có data 01/09. Hết Tunnel SQL 500.
+>
+> **Data A/B/C (3 điểm thiếu đã chốt) — tạo job qua UI, TẤT CẢ done:**
+> | Job | Kỳ | Kết quả |
+> |---|---|---|
+> | A hentiem | 16→27/09 | done — LHT đủ đến 27/09 (+259 dòng 18→22/09) |
+> | B1 bkct-hdgtgt | 27/09 | done 0 dòng — 27/09/2026 là CHỦ NHẬT không phát sinh hóa đơn → rỗng HỢP LỆ (import_log không có 1HDDT 27/09) |
+> | B2 kho-xnt (xnkt) | 27/09 | done — ~19 file 58-71 dòng (~1.200 dòng NXT 27/09) |
+> | B3 misa-bkth | 27/09 | done — 11BKTH 27/09 +568 dòng |
+> | C tkgvvxdt | 22→28/09 | done — 19 file, report_date 2026-09-22 → data cột còn nợ cho builder C.97 |
+>
+> **LESSON LEARNED — Placeholder động trong template server function = THAM SỐ
+> (lần 2 — GĐ 96 lặp):** Cả 2 lần (GĐ 96 SELECT ${cột}, nay `in (${ph})`) cùng
+> một gốc: template tagged của interface SQL coi MỌI ${} là tham số. Số lượng
+> placeholder phải ĐỊNH KỲ TẠO VIẾT THẲNG — nếu danh sách thay đổi, viết template
+> mới, KHÔNG sinh chuỗi placeholder lúc runtime. Checklist: grep `map((_, i)` +
+> `join(",")` quanh template SQL khi viết query IN động.
+>
+> **LESSON — /query API Server contract: placeholder $N (PG-style), KHÔNG ? trực
+> tiếp:** translator dịch $N → ?ODBC; gửi `?` + params trực tiếp → lỗi 07002
+> "COUNT field incorrect". Mọi probe debug qua tunnel dùng `$1, $2...`.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH — builder C.97
+> (bảng còn nợ) chưa nạp vào service; trước khi restart, chạy báo cáo công nợ
+> đặt trước trên web vẫn ra bảng CŨ (không có 2 cột còn nợ).
+>
+> **Version:** app tổng 4.3.1 + repo con 6.1.0 giữ nguyên — chờ lệnh Push
+> (checklist GĐ 138 sẽ áp khi bump).
