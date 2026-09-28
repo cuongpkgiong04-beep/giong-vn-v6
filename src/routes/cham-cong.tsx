@@ -101,6 +101,11 @@ function ChamCongPage() {
   // camera đẹp của điện thoại (sáng hơn + mềm da + đậm màu) che khuyết điểm.
   // BẬT MẶC ĐỊNH, nút bấm tắt/bật ngay trên màn camera.
   const [beauty, setBeauty] = useState(true);
+  // GĐ 245: chuỗi filter dùng CHUNG — áp cả CSS trên <video> preview live
+  // (bấm nút thấy khác NGAY trên màn camera, khớp 100% ảnh chụp) lẫn canvas
+  // lúc chụp. Đậm hơn GĐ 233 (1.08/1.18 quá nhẹ, anh test không thấy khác):
+  // sáng 1.18 + mềm da 1.4px + màu tươi 1.35 + giữ nét tương đối 0.94.
+  const BEAUTY_FILTER = "brightness(1.18) saturate(1.35) contrast(0.94) blur(1.4px)";
   // iOS: live preview phải xem ĐỦ KHUNG (contain) — Android giữ nguyên như cũ
   const [isIOS] = useState(detectIOS);
 
@@ -548,7 +553,7 @@ function ChamCongPage() {
     // Vẽ video frame lên captureCanvas (cần cho static photo output)
     // GĐ 233: filter "làm đẹp" khi BẬT — vẽ xong frame phải tắt filter NGAY để
     // chữ đóng dấu vẽ sau KHÔNG bị làm mềm theo (chữ dấu phải luôn nét).
-    if (beauty) ctx.filter = "brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)";
+    if (beauty) ctx.filter = BEAUTY_FILTER;
     ctx.drawImage(video, 0, 0, w, h);
     ctx.filter = "none";
 
@@ -1133,8 +1138,8 @@ function ChamCongPage() {
                     muted
                     className="w-full rounded-2xl"
                     style={isIOS
-                      ? { maxHeight: 540, objectFit: "contain" }
-                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto" }}
+                      ? { maxHeight: 540, objectFit: "contain", filter: beauty ? BEAUTY_FILTER : undefined }
+                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto", filter: beauty ? BEAUTY_FILTER : undefined }}
                   />
                   {/* Overlay canvas draws on top of video */}                    <canvas
                       ref={overlayCanvasRef}

@@ -99,6 +99,11 @@ function CheckInPage() {
   // phỏng camera đẹp của điện thoại (sáng hơn + mềm da + đậm màu) để che khuyết
   // điểm trên mặt. BẬT MẶC ĐỊNH, nút bấm tắt/bật ngay trên màn camera.
   const [beauty, setBeauty] = useState(true);
+  // GĐ 245: chuỗi filter dùng CHUNG — áp cả CSS trên <video> preview live
+  // (bấm nút thấy khác NGAY trên màn camera, khớp 100% ảnh/video chụp) lẫn
+  // canvas lúc chụp/quay. Đậm hơn GĐ 233 (1.08/1.18 quá nhẹ — anh test không
+  // thấy khác): sáng 1.18 + mềm da 1.4px + màu tươi 1.35 + giữ nét tương đối 0.94.
+  const BEAUTY_FILTER = "brightness(1.18) saturate(1.35) contrast(0.94) blur(1.4px)";
   // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
   const facingModeRef = useRef<"user" | "environment">("user");
   if (facingModeRef.current !== facingMode) facingModeRef.current = facingMode;
@@ -406,7 +411,7 @@ function CheckInPage() {
     // Vẽ video frame lên captureCanvas (cần cho static photo output)
     // GĐ 233: filter "làm đẹp" khi BẬT — vẽ xong frame phải tắt filter NGAY để
     // chữ đóng dấu vẽ sau KHÔNG bị làm mềm theo (chữ phải luôn nét).
-    if (beauty) ctx.filter = "brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)";
+    if (beauty) ctx.filter = BEAUTY_FILTER;
     ctx.drawImage(video, 0, 0, w, h);
     ctx.filter = "none";
 
@@ -444,7 +449,7 @@ function CheckInPage() {
     const ctx = rec.getContext("2d");
     if (!ctx) return;
     // GĐ 233: làm đẹp từng frame video (giống ảnh) — tắt filter trước khi vẽ overlay
-    if (beauty) ctx.filter = "brightness(1.08) saturate(1.18) contrast(0.96) blur(0.4px)";
+    if (beauty) ctx.filter = BEAUTY_FILTER;
     ctx.drawImage(vid, 0, 0, w, h);
     ctx.filter = "none";
     // Overlay canvas đang có stamp mới nhất (drawOverlay loop vẽ liên tục) —
@@ -894,8 +899,8 @@ function CheckInPage() {
                     muted
                     className="w-full rounded-2xl"
                     style={isIOS
-                      ? { maxHeight: 540, objectFit: "contain" }
-                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto" }}
+                      ? { maxHeight: 540, objectFit: "contain", filter: beauty ? BEAUTY_FILTER : undefined }
+                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto", filter: beauty ? BEAUTY_FILTER : undefined }}
                   />                  <canvas
                     ref={overlayCanvasRef}
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
