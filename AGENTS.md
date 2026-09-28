@@ -9744,3 +9744,30 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Tiêu chí kiểm chứng:** log agent sạch (không 401); Task_02 hôm nay chạy xong
 > → Tổng quan có data 28/09; mai Task_02 tự chạy 17:40 đúng giờ; version
 > 6.2.1 (repo con) + 4.3.3 (app tổng) khớp 2 nơi mỗi app sau deploy.
+
+---
+
+## 📌 VIỆC HẸN SÁNG 29/09 — kiểm tra Task_02 17:40 tự chạy + Tổng quan data mới
+
+> **Bối cảnh (28/09 tối, GĐ 250):** Task_02 daily đã bị 401 từ khi thiếu env API_TOKEN —
+> hôm nay 17:40 KHÔNG chạy. Đã fix + restart 23:18 → catch-up tự spawn, đang chạy
+> nền (11 download + 16 báo cáo ngày 28/09) — sáng nay có thể chưa xong hết nếu
+> BKCCN/đặt trước chậm. Kịch bản phải xảy ra mai: **17:40 task tự spawn KHÔNG cần
+> restart** (log `[task] daily — tự tạo Task_02`).
+>
+> **Cách kiểm tra (1 lệnh — từ `giong-apps/apps/banhang`):**
+> ```bash
+> python scripts/verify-daily-task.py
+> ```
+> Script kiểm tra 3 nhóm qua tunnel (pattern GĐ 181 — script chuẩn tái sử dụng):
+> 1. `scheduled_tasks` mới nhất — Task_02 hôm nay phải status `done` (hoặc running
+>    nếu chưa xong), created_by "Task-runner", **started_at ~17:40**
+> 2. `import_log` hôm qua + hôm nay — mỗi report_code ~19 file (download OK)
+> 3. staging 4 bảng chính — có dòng ngày mới (ETL-sau-download OK)
+>
+> **Cách đọc:** PASS = Task_02 hôm nay ~17:40 tự chạy + staging có data mới.
+> Chi tiết cách đọc + hướng dẫn xử lý khi FAIL ghi trong cuối script.
+> Sau khi PASS: ghi kết quả vào GĐ 250 (app tổng + repo con C.104) + bump docs.
+>
+> **⚠️ Lưu ý:** Script dùng placeholder `$1/$2` PostgreSQL-style (gửi `?` trực tiếp
+> bị 500 'COUNT field incorrect' — lesson GĐ C.94 trong task_runner.py).
