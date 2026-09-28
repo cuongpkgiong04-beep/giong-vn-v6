@@ -9525,3 +9525,30 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** 4.3.1 giữ nguyên (script tools, không đụng bundle). Commit +
 > push theo lệnh Đại ca.
+
+---
+
+### GĐ 245: Filter "Làm đẹp" hiện ngay trên preview camera — WYSIWYG + đậm hơn (2026-09-28)
+
+> **Vấn đề:** Nút Sparkles "Làm đẹp" ở Chấm công + Check-in bấm vào không thấy tác động gì.
+>
+> **Root cause (2 lớp):**
+> 1. Preview camera live là thẻ `<video>` THÔ — filter CSS chỉ được áp vào `ctx.filter`
+>    lúc vẽ `captureCanvas` khi CHỤP → trước khi chụp, preview không phản ánh filter
+>    → bấm nút thấy "không có gì thay đổi" (WYSIWYG fail).
+> 2. Cường độ filter cũ quá nhẹ (brightness 1.08 / saturate 1.18 / contrast 0.96 /
+>    blur 0.4px) — kể cả nhìn ảnh chụp cũng khó phân biệt có/không filter.
+>
+> **FIX (commit `91f1746`, 2 file `src/routes/cham-cong.tsx` + `src/routes/check-in.tsx`):**
+> - Thêm hằng `BEAUTY_FILTER = "brightness(1.18) saturate(1.35) contrast(0.94) blur(1.4px)"`
+>   ngay sau state `beauty` — dùng CHUNG cho mọi chỗ.
+> - Thẻ `<video>` preview live thêm `filter: beauty ? BEAUTY_FILTER : undefined` vào style
+>   (cả 2 nhánh isIOS) → bấm Sparkles preview đổi NGAY, tắt → về ảnh gốc ngay.
+> - Canvas chụp/quay đổi sang dùng chung `BEAUTY_FILTER` (check-in có 2 chỗ canvas) →
+>   ảnh chụp ra KHỚP preview (WYSIWYG), không còn "preview 1 kiểu chụp 1 kiểu".
+>
+> **Verify:** typecheck app tổng sạch; curl `localhost:3000/check-in` → 200.
+> Camera thật cần thiết bị di động — chờ Đại ca test trên điện thoại.
+>
+> **Version:** 4.3.1 giữ nguyên — không bump (chỉ bump khi Đại ca nói "Push").
+> Chưa push — chờ lệnh.
