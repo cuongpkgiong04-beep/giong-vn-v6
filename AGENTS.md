@@ -9667,3 +9667,40 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** app tổng 4.3.1 + repo con 6.1.0 giữ nguyên — chờ lệnh Push
 > (checklist GĐ 138 sẽ áp khi bump).
+---
+
+### GĐ 249: Hệ sinh thái — gói push repo con C.99→C.102 + bump 2 app (repo con 6.2.0) (2026-09-28)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) `88bca9e`..`aecb1cc` | 5 commits đã push: C.99 vòng lặp "Chưa đủ dữ liệu" Chủ nhật · C.100 chống bấm 2 lần Cập nhật + Hủy từng tác vụ · C.101 4 điểm bảng gói/đặt trước theo trung tâm · C.102 banner gộp 1 lần tải đủ + dialog tồn theo trung tâm · C.103 bump 6.2.0 |
+| (app tổng) | docs GĐ 249 + bump version 4.3.1 → 4.3.2 (docs-only — patch) |
+
+> **Lệnh của Đại ca (28/09):** Push + bump version đầy đủ (mục 3 nguyên tắc push —
+> CẢ HAI repo).
+>
+> **Tóm tắt nội dung 4 giai đoạn repo con (chi tiết đầy đủ ở AGENTS.md repo con):**
+> - **C.99:** post-check `run_sql_report` lọc nguồn ĐÃ nạp file (import_log có
+>   entry trong kỳ) + builder 0 dòng = không phát sinh → hết vòng lặp hỏi download
+>   oan kỳ Chủ nhật 27/09; web banner vàng emptyNote cho bảng rỗng hợp lệ.
+> - **C.100:** `requestOverviewData` chặn tạo job trùng (cùng user + nguồn + kỳ
+>   chồng lấn + 30 phút — chặn cả F5 lẫn đa máy) + auto-resume nút Cập nhật sau
+>   F5 + nút Hủy TỪNG tác vụ trong dropdown thanh % (Hủy tổng giữ nguyên).
+> - **C.101:** `sanitizeSheetName` trị nút Tải Excel chết (SheetJS chặn tên sheet
+>   >31 ký tự hoặc chứa `/`) — áp mọi báo cáo; moneyCols thêm "Tổng số mũi còn
+>   nợ" (Subtotal + căn phải); tên trung tâm đầy đủ từ dbo.centers.
+> - **C.102:** banner đầu trang gộp nguồn thiếu KPI + 7 biểu đồ — 1 bấm tải đủ
+>   (chuẩn hóa 2 bộ key bkn/nhapkho); bấm cột VX biểu đồ Tồn kho → dialog tồn
+>   theo trung tâm (thead + SUBTOTAL dính).
+>
+> **Version:** app tổng 4.3.1 → **4.3.2** (docs — patch) · repo con 6.1.0 →
+> **6.2.0** (feature — minor). Checklist GĐ 138 ✓ — không thành phần nào ≥ 10,
+> 2 nơi mỗi app khớp (grep đối chiếu 4 giá trị PASS).
+>
+> **⚠️ VIỆC CẦN LÀM tại máy chạy tool:** restart GIONG_SMED_Agent KHI AGENT RẢNH
+> — builder C.99 + C.101 (agent-side) cần nạp vào service; sau restart chạy lại
+> báo cáo nhập kho kỳ 27/09 (bảng rỗng + ghi chú, hết dialog) và báo cáo công nợ
+> đặt trước (tên trung tâm đầy đủ).
+>
+> **Tiêu chí kiểm chứng:** Vercel deploy repo con bản 6.2.0 (soi chunk JS); app
+> tổng 4.3.2 sau deploy; các tiêu chí kiểm chứng từng GĐ ở AGENTS.md repo con.
