@@ -9462,3 +9462,66 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > RẢNH (check job đang chạy — GĐ 136) để nạp task_runner C.95 + builder C.96.
 > Sau đó test: NHIỆM VỤ → ✏️ sửa config → Lưu (hiệu lực ≤30s) / Áp dụng & Chạy
 > ngay; Báo cáo công nợ đặt trước → TỔNG HỢP hết CHECK_SL/CL/GHI CHÚ 1.
+
+### GĐ 243: "Sai mật khẩu" thật ra là mất tunnel + PREFLIGHT PUSH bắt buộc (2026-09-28)
+
+> **BUG REPORT của Đại ca (28/09, kèm ảnh localhost:3000):** Đăng nhập báo "Sai email
+> hoặc mật khẩu" — đôi lúc diễn ra khi thay đổi/tăng Version. Yêu cầu: làm sao kiểm
+> tra TRƯỚC khi Push, tránh người dùng không vào được app.
+>
+> **Chẩn đoán (đo thật từng bước — KHÔNG đoán):**
+> 1. **Production OK** — đăng nhập tài khoản anh trên giong-vn-v6.vercel.app (4.3.1)
+>    = HTTP 200. Người dùng web thật KHÔNG bị ảnh hưởng trong lần này.
+> 2. **localhost:3000 = 500** — ảnh anh chụp là bản dev, chưa có env token mới.
+> 3. **Gốc rễ:** Quick Tunnel đổi URL sáng nay 08:43 (service restart) — `.env.local`
+>    máy còn URL cũ `poet-east-lens-one…` → fetch failed → GiondDB không nối được →
+>    sign-in 500. Production tự phục hồi nhờ fallback Gist GĐ 169; bản dev không có
+>    token nên đứng yên.
+>
+> **Vì sao hiện "Sai mật khẩu" — TOAST BÁO LỘI SAI (root cause thứ 2):** handler
+> đăng nhập có catch-all — MỌI lỗi (kể cả 500 máy chủ/mất DB) đều rơi vào nhánh
+> hiện "Sai email hoặc mật khẩu" → người dùng tưởng gõ sai, trong khi mật khẩu
+> đúng. Đây là dạng lỗi hiển thị che mất bản chất lỗi hạ tầng.
+>
+> **Vì sao "đôi lúc kèm tăng Version" — TRÙNG THỜI ĐIỂM, không phải nhân quả:**
+> push version mới thường đi kèm deploy/restart — đúng khung tunnel đổi URL.
+> Chứng minh phản chứng: bump 4.3.1 hôm qua → production login 200 bình thường.
+>
+> **FIX theo lựa chọn Đại ca — phương án A: PREFLIGHT PUSH bắt buộc:**
+> `scripts/preflight-push.mjs` (thuần node fetch, không deps):
+> - Mode **PRE-PUSH** (mặc định): (1) tunnel sống — đọc Gist GĐ 169 lấy URL hiện
+>   hành + `/health` HTTP 200; (2) đăng nhập production = HTTP 200.
+> - Mode **--verify** (sau khi Vercel Ready): thêm (3) bundle version khớp
+>   package.json (quy tắc GĐ 124).
+> - Credentials đọc từ `.env.local` (`PREFLIGHT_EMAIL`/`PREFLIGHT_PASSWORD` —
+>   gitignored, KHÔNG hardcode mật khẩu trong repo).
+> - **Đã bắt 1 bug của chính script khi verify:** fetch thuần thiếu header
+>   `Origin` → Better Auth CSRF chặn 403 MISSING_OR_NULL_ORIGIN (trong khi curl
+>   cũ vẫn 200 vì... thực ra curl trước đó chạy qua đường khác — lesson: cùng 1
+>   endpoint, client khác nhau có thể gặp luật CSRF khác nhau). Fix: gửi
+>   `Origin: PROD` như trình duyệt thật.
+> - Kết quả thật: PASS cả 2 mode (tunnel 200 + login 200 + bundle 4.3.1).
+>
+> **QUY TẮC BẮT BUỘC từ GĐ 243 — quy trình Push có thêm 2 cửa kiểm:**
+> 1. **TRƯỚC KHI báo "đã push":** chạy `node scripts/preflight-push.mjs` — PASS
+>    mới được báo; FAIL → tự xử lý (tunnel chết → restart GIONG_API_Server hoặc
+>    chờ tự ghi Gist; login fail → soi HTTP status: 500 = hạ tầng, 401 = sai pass)
+>    hoặc báo lỗi NGAY kèm output.
+> 2. **SAU KHI Vercel Ready:** chạy `node scripts/preflight-push.mjs --verify`
+>    (bundle version khớp + login 200 trên bản mới) + ghim domain (GĐ 124) —
+>    xong mới tổng kết phiên.
+>
+> **LESSON LEARNED — Toast lỗi chung che bản chất lỗi hạ tầng (2026-09-28):**
+> "Sai email hoặc mật khẩu" cho MỌI lỗi đăng nhập khiến lỗi mất-DB biễn diễn thành
+> lỗi user-gõ-sai — anh mất thời gian debug nhầm hướng. Cần hỏi Đại ca duyệt
+> phương án B (phân biệt toast: 500 → "Máy chủ dữ liệu không liên lạc"; chỉ 401
+> mới "Sai mật khẩu") — ghi vào Việc đề xuất, CHƯA làm (ngoài phạm vi lần này).
+>
+> **LESSON LEARNED — Tự viết script test auth: dùng đúng header trình duyệt
+> (2026-09-28):** Better Auth kiểm Origin (CSRF). Script test phải gửi
+> `Content-Type` + `Origin` giống browser, nếu không bị chặn 403 với thông báo
+> khác hẳn lỗi thật. Khi script test ra kết quả XÎNH LẼ so với curl tay → soi
+> body response trước khi sửa code app (body 403 ghi rõ MISSING_OR_NULL_ORIGIN).
+>
+> **Version:** 4.3.1 giữ nguyên (script tools, không đụng bundle). Commit +
+> push theo lệnh Đại ca.
