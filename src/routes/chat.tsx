@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  AtSign,
   Bookmark,
   CheckSquare,
   Copy,
@@ -397,7 +398,8 @@ function ChatPage() {
   /* GĐ 77: ứng viên @mention — member nhóm đang mở (trừ mình), lọc theo chữ sau "@" */
   const mentionCandidates = useMemo(() => {
     if (mentionQuery === null || tab !== "group" || !groupId) return [];
-    const q = mentionQuery.toLowerCase();
+    // GĐ 246: trim query — gõ "@All " hay dư dấu cách sau tên vẫn tìm được người (trước đây dropdown biến mất)
+    const q = mentionQuery.trim().toLowerCase();
     return (activeGroup?.members ?? [])
       .filter((m) => m.employeeId !== currentUserId)
       .map((m) => employees.find((e) => e.id === m.employeeId))
@@ -422,9 +424,19 @@ function ChatPage() {
 
   /* GĐ 77: chọn người từ dropdown — thay "@chữ" bằng "@Tên " + lưu ID vào mentions */
   function pickMention(empId: string, name: string) {
-    if (!mentionQuery) return;
-    setText((prev) => prev.replace(/@([^@\n]*)$/, `@${name} `));
+    // GĐ 246: mở dropdown bằng nút @ thì text chưa có "@" → append thay vì replace
+    setText((prev) =>
+      /@[^@\n]*$/.test(prev) ? prev.replace(/@([^@\n]*)$/, `@${name} `) : `${prev}@${name} `,
+    );
     setMentionedIds((prev) => (prev.includes(empId) ? prev : [...prev, empId]));
+    setMentionQuery(null);
+  }
+
+  /* GĐ 246: chọn @All — nhắn cho TẤT CẢ mọi người trong nhóm (tô đậm như tag người thật) */
+  function pickMentionAll() {
+    setText((prev) =>
+      /@[^@\n]*$/.test(prev) ? prev.replace(/@([^@\n]*)$/, "@All ") : `${prev}@All `,
+    );
     setMentionQuery(null);
   }
 
@@ -1142,9 +1154,30 @@ function ChatPage() {
                 </div>
               );
             })()}
-            {/* GĐ 77: dropdown @mention — gõ "@" trong nhóm để chọn người */}
-            {mentionQuery !== null && mentionCandidates.length > 0 && (
+            {/* GĐ 77: dropdown @mention — gõ "@" hoặc bấm nút @ trong nhóm để chọn người.
+                GĐ 246: luôn có mục @All đầu danh sách (nhắc cả nhóm); dropdown vẫn hiện
+                kể cả khi không có tên khớp query để @All luôn chọn được. */}
+            {mentionQuery !== null && tab === "group" && (
               <div className="mb-2 max-h-44 overflow-y-auto rounded-md border border-line bg-surface shadow-md">
+                {/* GĐ 246: @All — tag TẤT CẢ mọi người trong nhóm, luôn đứng đầu */}
+                <button
+                  type="button"
+                  onClick={pickMentionAll}
+                  className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left hover:bg-surface-2"
+                >
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-white">
+                    @
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+                    All
+                    <span className="ml-1.5 text-xs font-normal text-muted">nhắc cả nhóm</span>
+                  </span>
+                </button>
+                {mentionCandidates.length === 0 && (
+                  <p className="px-2.5 py-1.5 text-xs text-faint">
+                    Không có tên khớp — gõ tiếp hoặc chọn All
+                  </p>
+                )}
                 {mentionCandidates.map((e) => (
                   <button
                     key={e.id}
@@ -1203,6 +1236,20 @@ function ChatPage() {
                   e.target.value = "";
                 }}
               />
+              {/* GĐ 246: nút @ — mở dropdown chọn người để tag ngay, không cần gõ "@" */}
+              {tab === "group" && canSend && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  disabled={uploading}
+                  onClick={() => setMentionQuery((prev) => (prev === null ? "" : null))}
+                  aria-label="Tag thành viên (@)"
+                  title="Tag thành viên (@) — chọn @All để nhắc cả nhóm"
+                >
+                  <AtSign className="size-4" />
+                </Button>
+              )}
               <Button
                 type="button"
                 size="icon"
@@ -1749,7 +1796,10 @@ function renderTextWithMentions(
   let key = 0;
   while ((match = regex.exec(text)) !== null) {
     const rawName = match[1].trim();
+    // GĐ 246: @All = tag cả nhóm — tô đậm như tag người thật
+    const isAll = /^all$/i.test(rawName);
     const hit =
+      isAll ||
       mentionedNames.has(rawName) ||
       [...mentionedNames].some((n) => n.startsWith(rawName) && rawName.length >= 2) || // gõ @Cường khớp @CườngPK
       rawName === currentUserId;
