@@ -10107,3 +10107,48 @@ thành phần nào ≥ 10).
 > Excel mẫu từng ngân hàng; (2) có mẫu → dựng staging + builder SQL + nâng cấp
 > 4 trang placeholder thành báo cáo thật.
 
+
+---
+
+### GĐ 260: Hệ sinh thái — Module 2. Sao kê ngân hàng TCB (repo con C.113) (2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `962ea9f`) | feat(bank): GĐ C.113 — tool 41_tcb_saoke.py + REPORT_MAP bank-tcb + trang /m/bank-tcb thật + phân quyền 3 điểm (OUTPUT\16.BANK_TCB) |
+
+> **Yêu cầu của Đại ca (29/09, kèm code Playwright codegen chạy tay 1 ngày):**
+> Triển khai Module **2. Sao kê ngân hàng TCB** trong nhóm DỮ LIỆU TỪ BANK theo
+> lịch sử phân hệ DOWNLOAD — nhớ cả phần phân quyền. Chi tiết đầy đủ ở
+> **AGENTS.md repo con GĐ C.113** (đã chốt PA-1 chuẩn đầy đủ + thư mục
+> `OUTPUT\16.BANK_TCB` qua vòng hỏi).
+>
+> **Tóm tắt (repo con, app tổng không đổi code):**
+> - **Tool 41** theo pattern tool 40 VCB: credentials `.secrets/tcb_user.txt` +
+>   `tcb_pass.txt` (gitignored — **password trong tin nhắn codegen KHÔNG ghi
+>   vào code, staged diff grep 0 match**); login 2 BƯỚC (user/pass + nút Tiếp
+>   tục — KHÔNG captcha nên không cần ddddocr); chọn DN "CONG TY CO PHAN GIONG
+>   VIET NAM"; "Tải xuống báo cáo giao dịch" → tab Sao kê; **lặp TỪNG NGÀY**
+>   (bài học C.111 — VCB kỳ dài chỉ ra ngày cuối); XLSX (tối đa 30,000 giao
+>   dịch); file ngày đã có bỏ qua; SMED_OUTPUT_DIR là thư mục NGÀY đích
+>   (lesson C.110 — hết ghép đúp 2 tầng).
+> - **Agent:** REPORT_MAP `"bank-tcb"` → 41 + base 16.BANK_TCB; marker
+>   `"✅ Đã lưu: "` (thanh % chạy theo từng ngày).
+> - **Web:** `/m/bank-tcb` placeholder → SmedPullModule (totalCenters=1,
+>   expectedFiles=1, cta "Tải sao kê TCB").
+> - **Phân quyền 3 điểm (đúng yêu cầu "nhớ phân quyền"):** smed-auth
+>   REPORT_GROUP `"bank-tcb" → banhang-bank`; `-smed.ts` LEAF_ROUTE +
+>   whitelist report + expectedFiles=1; `api_server.py` REPORT_GROUP. Chip lá
+>   `/m/bank-tcb` đã sinh sẵn trong trang Phân quyền từ GĐ 253 — user không
+>   cấp nhóm BANK không thấy module + API chặn 3 lớp.
+>
+> **✅ Verify:** py_compile 3 file Python OK; TypeScript API 0 lỗi; staged diff
+> sạch password.
+>
+> **⚠️ VIỆC CẦN LÀM cho Đại ca khi test:** (1) tạo `.secrets/tcb_user.txt` +
+> `tcb_pass.txt`; (2) tạo thư mục `OUTPUT\16.BANK_TCB`; (3) restart
+> GIONG_SMED_Agent + GIONG_API_Server KHI AGENT RẢNH (GĐ 136); (4) tạo job 1
+> ngày trên web → XLSX về `OUTPUT\16.BANK_TCB\<từ ngày>\`. Selector lần đầu có
+> thể cần chỉnh theo site thật (như VCB mất 2 vòng E2E — log agent in chi tiết).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — hiện app tổng 4.5.0 / repo con 6.5.0).
+
