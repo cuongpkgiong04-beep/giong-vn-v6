@@ -9820,3 +9820,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Tiêu chí kiểm chứng (ĐÃ PASS):** E2E login production 200 + vào app; kill
 > cloudflared giả lập → tunnel mới ≤3 phút tự lên Gist/Vercel; app con /api/units
 > 200; version 4.3.5 (app tổng) + 6.2.2 (repo con) khớp 2 nơi mỗi app.
+
+---
+
+### GĐ 252: Kiểm tra Trợ lý AI app con + fix panel trong suốt — trắng đục + backdrop (2026-09-29)
+
+> **Yêu cầu của Đại ca (29/09):** Kiểm tra lại phần sử dụng "Trợ lý AI" app con
+> 4 mục: (1) đang dùng tài khoản nào; (2) không dùng background trong suốt;
+> (3) cơ chế vận hành; (4) gợi ý sử dụng hiệu quả.
+>
+> **Kết quả thẩm định (đọc code 2 file `ai-assistant.tsx` + `api/ai/chat.ts`
+> repo con — KHÔNG sửa code app tổng):**
+> 1. **Model:** Z.ai **GLM-4.5-Flash** (FREE, OpenAI-compatible) — key
+>    `ZAI_API_KEY` Secret trên Vercel. Mọi user đăng nhập dùng được; tạo/hủy
+>    job đi qua đúng phân quyền nhóm bộ phận.
+> 2. **Background:** phát hiện + SỬA (chi tiết GĐ C.106 repo con) — panel khai
+>    báo `bg-surface` #fbfcfb MÀU ĐẶC nhưng thiếu backdrop → nội dung trang
+>    phía sau đè lên nhìn như xuyên nền. Đại ca xác nhận bị trên TẤT CẢ thiết
+>    bị + chốt PA-1: `bg-white` tuyệt đối + backdrop `bg-black/30` bấm-để-đóng
+>    + z-50. Commit `e822a9a` (fix) + `d7e5631` (docs) repo con.
+> 3. **Cơ chế:** POST /api/ai/chat → GLM + 5 tool (query_data 5 dataset /
+>    create_download_job / run_report / list_jobs / cancel_job) — tối đa 3 vòng
+>    tool; LLM KHÔNG tự viết SQL (whitelist cứng + parameterized $N + top 40);
+>    retry timeout 20s + 429 đợi 4s.
+> 4. **Gợi ý hiệu quả:** hỏi đủ sản phẩm + trung tâm + kỳ; báo cáo phức tạp
+>    dùng trang BÁO CÁO; tin cột TỔNG CỘNG của tool, đừng tin phép cộng nhẩm
+>    của LLM.
+>
+> **LESSON LEARNED — Nền "đặc" gần-trắng vẫn nhìn như trong suốt khi thiếu
+> backdrop (2026-09-29):** chi tiết ở GĐ C.106 repo con — khi user báo "bị
+> trong suốt", kiểm tra CẢ màu nền LẪN độ tương phản với trang phía sau; panel
+> overlay thiếu lớp phân tách (backdrop/shadow đậm) thì user luôn mô tả là
+> "trong suốt" dù kỹ thuật màu đặc 100%.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
+> tổng 4.3.5 / repo con 6.2.2 — sẽ bump cả 2 khi Anh nói "Push".
+
+*Cập nhật lần cuối: 2026-09-29 (GĐ 252 — Trợ lý AI thẩm định + fix panel; app tổng 4.3.5 / repo con 6.2.2)*
+*Người cập nhật: Trợ lý Freebuff*
