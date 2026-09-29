@@ -9923,3 +9923,37 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 *Cập nhật lần cuối: 2026-09-29 (GĐ 254 — Trợ lý AI 10 tool; app tổng 4.3.5 / repo con 6.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 255: Trợ lý AI HIỂU TOÀN BỘ GiondDB — PA-3 2 lớp: +list_tables +query_custom (guard 5 lớp) + đủ 19 queryKey (2026-09-29)
+
+> **Câu hỏi của Đại ca (29/09):** Làm sao cho Trợ lý AI hiểu được toàn bộ dự
+> án, lấy được tất cả dữ liệu khi cần hỏi? Chi tiết kỹ thuật ở GĐ C.109 repo
+> con (commit `972bf33` + `35e5a68`).
+>
+> **Trả lời — trước đây AI "mù" 14/19 bảng + 10/19 báo cáo (chỉ thấy những gì
+> khai báo tay); nay theo PA-3 anh chốt (whitelist chuẩn + cửa khám phá
+> đọc-only, phạm vi app con):**
+> - **Lớp 1:** run_report mở ĐỦ 19 queryKey (thêm TH_NXT, tồn kho, xuất hủy,
+>   kiểm kê, công nợ đặt trước, TKGVVXDT...); tool **list_tables** — AI tự đọc
+>   metadata runtime (bảng + số dòng + cột) → biết "nhà có gì", bảng mới thêm
+>   sau không cần sửa code.
+> - **Lớp 2:** tool **query_custom** — AI tự viết SQL SELECT cho câu hỏi lạ,
+>   qua **GUARD 5 LỚP**: chỉ-SELECT chặn mọi từ khóa ghi (kể cả INTO/UNION —
+>   test attack bắt được lỗ hổng rồi vá) · whitelist bảng (12 stg_* + danh
+>   mục) · ép top 50 · timeout 10s · log audit. Ưu tiên tool chuẩn > custom.
+>
+> **Trợ lý AI giờ 12 tool** — hỏi được MỌI dữ liệu GiondDB bằng tiếng Việt
+> tự nhiên, an toàn chỉ-đọc.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử. Version KHÔNG bump (chờ lệnh
+> Push — hiện app tổng 4.3.5 / repo con 6.2.2).
+>
+> **Tiêu chí kiểm chứng (test sau deploy):** "Tổng công nợ đặt trước theo
+> trung tâm?" → AI tự query stg_10GDTVX; "chạy báo cáo kiểm kê tháng 9" →
+> run_report kiem-ke; câu hỏi lạ → list_tables rồi tự tra; thử "xóa bảng..."
+> → AI từ chối (guard).
+
+*Cập nhật lần cuối: 2026-09-29 (GĐ 255 — Trợ lý AI 12 tool toàn-dự-án; app tổng 4.3.5 / repo con 6.2.2)*
+*Người cập nhật: Trợ lý Freebuff*
