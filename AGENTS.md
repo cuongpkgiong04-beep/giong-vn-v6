@@ -10274,3 +10274,49 @@ thành phần nào ≥ 10).
 > **Version:** repo con 6.6.0 (Agent khác đã bump trước — giữ nguyên, không đụng
 > nguyên tắc ĐA AGENT); app tổng giữ version hiện tại. KHÔNG push — chờ Đại ca.
 
+
+---
+
+### GĐ 264: Push lần 2 — SỰ CỐ repo con BLOCKED: author email sai chính tả `@gmal.com` (2026-09-29, 4.6.0 + repo con 6.6.0)
+
+> **Bối cảnh (29/09 tối):** Đại ca nói "Push" — em chạy trọn quy trình ĐA AGENT:
+> rà trùng lặp (agent-cli 0 commit riêng, remote 0 diverge) → push cả 2 repo →
+> ghim domain + verify bundle.
+>
+> **Kết quả:** App tổng push `f3fb61d..023e40c` → Vercel build **success** →
+> ghim domain → bundle **4.6.0** live + PREFLIGHT PASS (tunnel 200 + login 200
+> + bundle 4.6.0) ✅. Repo con push `8a3d957..71d969f` (16 commit GĐ 249-263)
+> → deployment **BLOCKED** — domain giong-banhang.vercel.app kẹt bản cũ 6.3.0.
+>
+> **Chẩn đoán (bằng chứng từng bước, KHÔNG đoán):**
+> 1. GitHub không report status cho commit repo con (integration bỏ qua) —
+>    chỉ soi được qua `vercel ls --json`.
+> 2. 2 deployment build từ `71d969f` + 1 deploy thủ công `--prod` đều
+>    `readyState: BLOCKED`, không có build log (bị chặn TRƯỚC khi build).
+> 3. REST API Vercel (token từ auth.json CLI): `seatBlock: {blockCode:
+>    'COMMIT_AUTHOR_REQUIRED'}` — tính năng Git integration chặn deployment
+>    khi **commit author không phải thành viên team**.
+> 4. Đối chiếu author: 13/16 commit repo con author email =
+>    `cuongpk.giong04@gmal.com` (**sai chính tả gmail** — thiếu chữ 'i') —
+>    commit từ worktree CLI nơi config local sai. App tổng author đúng
+>    (`@gmail.com`) → build OK ngay.
+>
+> **FIX (không force-push — đúng nguyên tắc ĐA AGENT):** tạo commit docs mới
+> (GĐ 264 này) với author đúng email `@gmail.com` → Vercel build commit đó →
+> bản 6.6.0 live. 13 commit cũ sai author GIỮ NGUYÊN trên GitHub (lịch sử
+> chỉ đi tới — GĐ 242); chúng chỉ chứa docs/agent code không ảnh hưởng Vercel
+> build (build chạy từ working tree commit mới cùng source code).
+>
+> **LESSON LEARNED — Git author email sai chính tả = Vercel BLOCKED deployment
+> (2026-09-29):** Vercel Git integration xác thực commit author qua EMAIL
+> khớp thành viên team — email sai 1 ký tự (`gmal` ≠ `gmail`) là bị coi
+> người lạ → `COMMIT_AUTHOR_REQUIRED` → BLOCKED, KHÔNG có build log, GitHub
+> không report status. Dấu hiệu nhận biết: deployment BLOCKED + no logs +
+> GitHub status rỗng → soi `seatBlock` qua REST API `/v13/deployments/<id>`.
+> **Quy tắc từ giờ:** worktree/workspace mới tạo xong PHẢI `git config
+> user.email` đối chiếu email tài khoản GitHub+Vercel TRƯỚC khi commit đầu
+> tiên; sau mỗi lần push, check GitHub status commit — rỗng/BLOCKED = soi
+> author email ngay.
+>
+> **Version:** app tổng 4.6.0 + repo con 6.6.0 (đã push; bump trong commit
+> trước). KHÔNG bump thêm — commit này chỉ docs.
