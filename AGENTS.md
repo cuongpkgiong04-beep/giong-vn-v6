@@ -10152,3 +10152,41 @@ thành phần nào ≥ 10).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — hiện app tổng 4.5.0 / repo con 6.5.0).
 
+
+---
+
+### GĐ 261: Hệ sinh thái — SỰ CỐ job TCB chạy nhầm tool HĐĐT + guard report lạ (repo con C.115) (2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `8f44050`) | fix(agent): guard report lạ — REPORT_MAP thiếu key → raise RuntimeError thay fallback câm hddt |
+
+> **BUG REPORT của Đại ca (29/09 tối):** Chạy sao kê TCB 01/09→29/09 không thấy
+> file về `OUTPUT\16.BANK_TCB`. Chi tiết chẩn đoán + fix ở **AGENTS.md repo con
+> GĐ C.115**.
+>
+> **Kết luận nhanh:** (1) service agent start 15:26 — TRƯỚC commit 15:51 có
+> key `bank-tcb` → process nạp code cũ → `REPORT_MAP.get("bank-tcb")` missing →
+> fallback câm `hddt` → chạy tool 1_smed + ghi đè 19 file vào
+> `OUTPUT\1.HDDT\2026-09-01`; (2) `.secrets` chưa có `tcb_user.txt` +
+> `tcb_pass.txt` — tool 41 chưa thể chạy kể cả process mới.
+>
+> **Fix (anh chốt PA-2):** agent — report có giá trị mà không có trong
+> REPORT_MAP → `raise RuntimeError` (thông điệp chỉ nguyên nhân + hướng dẫn
+> restart); chỉ job KHÔNG report (job cũ) mới fallback hddt. Mô phỏng 3/3 PASS.
+>
+> **LESSON — Map tra cứu chọn TOOL/đích ghi: key lạ PHẢI raise, không fallback
+> câm (2026-09-29):** chi tiết ở GĐ C.115 repo con — fallback `.get(key,
+> DEFAULT)` cho hành động thực thi biến job lạ thành job mặc định + phá data
+> phân hệ khác âm thầm.
+>
+> **⚠️ VIỆC CẦN LÀM cho Đại ca (bước tiếp theo để TCB chạy được):**
+> 1. Tạo `agent\.secrets\tcb_user.txt` + `tcb_pass.txt` (user/pass TCB anh
+>    dùng codegen — mật khẩu chỉ anh có)
+> 2. Restart GIONG_SMED_Agent (khi agent rảnh — log hiện "chưa có job mới")
+> 3. Tạo lại job TCB 01/09→29/09 → tool 41 chạy headful → XLSX về
+>    `OUTPUT\16.BANK_TCB\2026-09-01\` (29 file — 1 file/ngày)
+> 4. Nếu sai bước nào: gửi em log agent mới nhất (`agent\LOG\web_agent_*.log`)
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.5.0 / repo con 6.5.0).
+
