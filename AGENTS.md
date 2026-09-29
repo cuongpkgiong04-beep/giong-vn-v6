@@ -10064,3 +10064,46 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 **Version:** 4.4.0 → **4.5.0** (docs-only — patch; checklist GĐ 138 ✓ — không
 thành phần nào ≥ 10).
+
+---
+
+### GĐ 258: Hệ sinh thái — BC_Sao kê ngân hàng VCB/TCB/TPB/VTB — 4 báo cáo số 10-13 BÁO CÁO KẾ TOÁN (repo con C.111, 2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `c3c2d8c`, 6.5.0) | feat(bank): nav BC_BANK_LEAFS + 4 route /m/bc-bank-* + ROUTE_TO_GROUP + routeTree (GĐ 257 — gộp trong commit C.110) |
+| (app tổng `f05b782`, 4.5.0) | feat(catalog): +4 lá BC_Sao kê BH_GROUPS (chip Phân quyền tự sinh) + version 4.5.0 |
+| (repo con `6748660`) | docs(agents): ghi GĐ C.111 — chi tiết phiên |
+
+> **Yêu cầu của Đại ca (29/09):** Thêm 4 module vào nhóm BÁO CÁO — BÁO CÁO KẾ
+> TOÁN: 10. BC_Sao kê ngân hàng VCB · 11. TCB · 12. TPB · 13. VTB — kết cấu +
+> thể hiện GIỐNG các phần trước (màu sắc, mầu nền, cỡ chữ).
+>
+> **Đã chốt PA-1 (quy trình 5 bước GĐ 198):** khung placeholder giống MIA 8-9
+> — tool download chỉ có VCB (C.110), 3 ngân hàng còn lại chưa có tool; chưa
+> có staging + chưa probe cấu trúc file sao kê mẫu (không đoán mờ). Nội dung
+> SQL thật làm BƯỚC SAU khi đủ tool + file mẫu.
+>
+> **Triển khai:** nav.ts BC_BANK_LEAFS (khai báo TRƯỚC literal dùng spread —
+> bắt lỗi "used before declaration" qua TS API lần 1) + spread cuối
+> BC_KE_TOAN_LEAFS → sidebar tự đánh số 10-13; 4 route ModuleRoute (component
+> dùng chung → đồng nhất 100% UI với MIA); smed-auth ROUTE_TO_GROUP 4 route →
+> bh-bao-cao-ke-toan (kèm vá 2 route MIA 8-9 thiếu từ GĐ 223); routeTree sinh
+> lại; catalog app tổng +4 lá (chip Phân quyền tự sinh theo GĐ 200).
+>
+> **✅ Verify:** TypeScript API 0 lỗi CẢ 2 app; vite build repo con 2465
+> modules transformed OK (dừng ENOTSUP SMB — giới hạn môi trường máy Linux
+> agent GĐ 256, không phải lỗi code; Vercel build là gate cuối).
+>
+> **LESSON — Commit-hộ agent song song bao trùm công việc đang dở (2026-09-29):**
+> Em sửa nav/smed-auth + tạo route xong verify, trong lúc đó Agent Desktop
+> commit `c3c2d8c`/`f05b782` GOM CẢ phần em (nội dung y hệt — diff chuẩn-hóa
+> EOL = 0 khác biệt). Working tree chỉ còn nhiễu CRLF↔LF do ghi file qua SMB —
+> `git diff` 314/314 dòng tưởng thật, so `tr -d '\r'` mới thấy chỉ EOL; đã
+> checkout -- dọn, KHÔNG commit trùng. Bài học: trước khi commit — `git log -2`
+> xem agent khác vừa làm gì; nhiễu EOL phải chuẩn hóa trước khi so sánh.
+>
+> **⚠️ VIỆC SAU (cần Đại ca):** (1) tool 40 mở rộng tải TCB/TPB/VTB + file
+> Excel mẫu từng ngân hàng; (2) có mẫu → dựng staging + builder SQL + nâng cấp
+> 4 trang placeholder thành báo cáo thật.
+
