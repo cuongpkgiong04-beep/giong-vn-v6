@@ -9893,3 +9893,33 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 *Cập nhật lần cuối: 2026-09-29 (GĐ 253 — Trợ lý AI 8 tool; app tổng 4.3.5 / repo con 6.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 254: Trợ lý AI mở rộng tiếp — 10 tool: +configure_task (Task_01 kỳ riêng) +overview_detail (chi tiết hộp KPI) (2026-09-29)
+
+> **Yêu cầu của Đại ca (29/09):** Mở rộng thêm 2 tính năng: (1) treo Task_01
+> theo kỳ riêng; (2) hỏi chi tiết 1 hộp KPI. Chi tiết kỹ thuật ở GĐ C.108
+> repo con (commit `64b3f4b` + `098458d`).
+>
+> **Tóm tắt (anh chốt: PA-1 2 tool riêng + cảnh báo lưu vĩnh viễn + 20 dòng):**
+> - **configure_task** — "Tải lại tháng 5 vào Task_01" → AI CẢNH BÁO kỳ này
+>   LƯU VĨNH VIỄN (lần chạy sau vẫn dùng) + hỏi xác nhận → sửa from/to qua
+>   `updateScheduledTask` (Admin chặn sẵn) → hỏi chạy luôn không.
+> - **overview_detail** — "chi tiết tồn kho" / "thu tiền từng ngày" / "HĐGTGT
+>   từng trung tâm"... → bảng chi tiết đúng nguồn dialog trang Tổng quan
+>   (7 box), tối đa 20 dòng + nêu tổng số dòng.
+>
+> **Trợ lý AI giờ 10 tool:** query_data · create_download_job · run_report ·
+> list_jobs · cancel_job · overview_kpi · run_task · cancel_task ·
+> configure_task · overview_detail.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử. Version KHÔNG bump (chờ lệnh
+> Push — hiện app tổng 4.3.5 / repo con 6.2.2).
+>
+> **Tiêu chí kiểm chứng:** Test app con sau deploy: "Tải lại tháng 5" → cảnh
+> báo + hỏi trước; "chi tiết hộp tồn kho" → bảng vắc xin tối đa 20 dòng;
+> user thường yêu cầu sửa Task → "Chỉ Admin sửa nhiệm vụ".
+
+*Cập nhật lần cuối: 2026-09-29 (GĐ 254 — Trợ lý AI 10 tool; app tổng 4.3.5 / repo con 6.2.2)*
+*Người cập nhật: Trợ lý Freebuff*
