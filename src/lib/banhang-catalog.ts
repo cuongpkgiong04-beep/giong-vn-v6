@@ -106,7 +106,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-mia-muavao-chitiet", label: "Bảng kê HĐ GTGT mua vào - Chi tiết (MiaTool)" },
       // GĐ 257 (29/09/2026 — yêu cầu Đại ca): 4 báo cáo sao kê ngân hàng — số 10-13
       // nhóm BÁO CÁO KẾ TOÁN (placeholder khung — nội dung SQL làm khi có file mẫu).
-      { to: "/m/bc-bank-vcb", label: "BC_Sao kê ngân hàng VCB" },
+      { to: "/m/bc-bank-vcb", label: "BC_Sao kê VCB - Chi tiết" },
+      { to: "/m/bc-bank-vcb-th", label: "BC_Sao kê VCB - Tổng hợp theo TT" },
       { to: "/m/bc-bank-tcb", label: "BC_Sao kê ngân hàng TCB" },
       { to: "/m/bc-bank-tpb", label: "BC_Sao kê ngân hàng TPB" },
       { to: "/m/bc-bank-vtb", label: "BC_Sao kê ngân hàng VTB" },

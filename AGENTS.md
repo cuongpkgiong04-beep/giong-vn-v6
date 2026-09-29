@@ -10220,3 +10220,36 @@ thành phần nào ≥ 10).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.5.0 / repo con 6.5.0).
 
+
+---
+
+### GĐ 263: Hệ sinh thái — BC_Sao kê VCB NỘI DUNG THẬT: bảng tường minh GiondDB + SQL 2 bảng (repo con v6.6.0) (2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(bank-vcb): GĐ C.118 — ETL bank_vcb_import + tool 40 fix 4 lỗi debug + agent thu file/ETL riêng + 2 trang thật + expectedFiles = số ngày (v6.6.0) |
+| (app tổng) | feat(catalog): đổi nhãn lá "BC_Sao kê VCB - Chi tiết" + version 4.5.0 → 4.6.0 |
+
+> **Tiếp nối GĐ 257 (placeholder) + GĐ 256/C.110 (tool 40):** VCB là báo cáo
+> sao kê ĐẦU TIÊN có nội dung thật. Đại ca chốt PA-1 (2 vòng hỏi): tool tự
+> tính lại từng ngày (VCB chỉ xuất 1 ngày/lượt) + nạp GiondDB bảng tường minh
+> `bank_vcb_tx` / `bank_vcb_tid` + tổng hợp chỉ cộng GHI CÓ + tên trung tâm
+> từ dbo.centers + danh mục TID từ file DSACH (OUTPUT\15.BANK_VCB).
+>
+> **Kết quả verify (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.118):**
+> Backfill 01→29/09 = 25 file (01-02 rỗng hợp lệ); ETL 3.793 dòng 27 ngày,
+> TID map ~98%; tổng ghi có toàn kỳ 6.760.483.515đ — đối chứng 26/09 SQL =
+> Excel gốc từng đồng; tổng hợp 466 dòng ngày × trung tâm tên đầy đủ.
+> **Điểm nghiệp vụ:** 14 giao dịch ghi có KHÔNG qua POS (322.666.935đ —
+> CK trực tiếp/lãi) → tổng hợp theo TT chỉ gồm tiền POS 6.437.816.580đ.
+>
+> **LESSON (repo con đã ghi đủ):** (1) "trang trắng" phải dump deep dialog +
+> body text trước khi sửa — ngày rỗng là kết quả hợp lệ, không phải bug;
+> (2) get_by_text trên site động phải lọc VISIBLE + verify giá trị — dropdown
+> phân trang chèn option ẩn trùng số ngày (10/20/25).
+>
+> **⚠️ Việc cho Đại ca:** restart GIONG_SMED_Agent KHI RẢNH (tool 40 + agent
+> bản mới); test 2 trang BÁO CÁO KẾ TOÁN 10 + 11 kỳ 01→29/09.
+>
+> **Version:** app tổng 4.5.0 → **4.6.0** (docs+catalog — minor theo repo con;
+> checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
