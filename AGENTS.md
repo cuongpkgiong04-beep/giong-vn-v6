@@ -10013,3 +10013,54 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 *Cập nhật lần cuối: 2026-09-29 (GĐ 256 — E2E 12 tool PASS; app tổng 4.3.5 / repo con 6.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 256: Hệ sinh thái — Module 1. Sao kê ngân hàng VCB — tool + web + phân quyền (repo con C.110, 6.5.0) (2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(bank): GĐ C.110 — tool 40_vcb_saoke.py (Playwright + OCR captcha ddddocr + headful bắt buộc) + REPORT_MAP bank-vcb + trang /m/bank-vcb SmedPullModule + quyền banhang-bank end-to-end (v6.5.0) |
+| (mới) | docs(agents): GĐ 256 + version 4.4.0 → 4.5.0 (docs-only — patch) |
+
+> **Yêu cầu của Đại ca (29/09):** Module ĐẦU TIÊN nhóm DỮ LIỆU TỪ BANK (GĐ 253
+> đã dựng 4 lá placeholder) — **Sao kê ngân hàng VCB** dựa codegen Playwright
+> anh chạy tay thành công 1 ngày; dặn "Nhớ cả phần phân quyền nhé".
+>
+> **Tóm tắt (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.110):** Tool đăng nhập
+> vcbdigibiz.vietcombank.com.vn bằng credentials .secrets (gitignored) + OCR
+> captcha ddddocr (retry 3) + HEADFUL bắt buộc (WAF chặn headless — probe GĐ
+> 254); web /m/bank-vcb qua SmedPullModule; quyền end-to-end: nhóm "DỮ LIỆU
+> TỪ BANK" + chip lá /m/bank-vcb trong Phân quyền app tổng (GĐ 253) → sidebar
+> app con lọc ROUTE_TO_GROUP → API gate canAccessReport 3 lớp.
+>
+> **✅ E2E production PASS sau 2 vòng fix:** (1) tool bỏ qua VCBS_HEADLESS khi
+> agent set mode=headless → WAF chặn → fix LUÔN headful; (2) file rơi lồng 2
+> tầng 15.BANK_VCB/2026-09-28/15.BANK_VCB/2026-09-28/ — SMED_OUTPUT_DIR của
+> agent đã là thư mục NGÀY đích, tool ghép thêm nữa → fix dùng nguyên env.
+> Vòng 3: job done, **1 file `lich-su-giao-dich-tai-khoan.xls` (55.8KB) về đúng
+> `OUTPUT\15.BANK_VCB\2026-09-28\`** — verify nội dung: SAO KÊ TÀI KHOẢN, CONG
+> TY CP GIONG VIET NAM, TK số tài khoản công ty (trong .secrets), kỳ 28/09/2026, số dư đầu kỳ
+> 130.138.052, ~104 dòng giao dịch.
+>
+> **LESSON — Env SMED_OUTPUT_DIR là THƯ MỤC ĐÍCH CUỐI, không phải gốc OUTPUT
+> (2026-09-29):** Chuẩn GĐ C.1.8: agent truyền thư mục ngày đích. Tool mới copy
+> pattern OUTPUT_BASE từ tool cũ dễ ghép đúp. Checklist tool mới: grep
+> SMED_OUTPUT_DIR trong tool đang chạy → giá trị agent set là ĐÍCH CUỐI, dùng
+> nguyên; chỉ tự ghép khi env rỗng (chạy tay).
+>
+> **LESSON — mode=headless của job web không ràng buộc tool có WAF (2026-09-29):**
+> mode là ý người dùng "chạy ẩn"; tool BANK bị VCB chặn headless → TUÂN NGUỒN
+> (VCB) quan trọng hơn tham số hiển thị — tool tự quyết + log rõ đầu phiên.
+>
+> **LƯU Ý:** Đang là bản DOWNLOAD — ETL nạp GiondDB + bảng báo cáo web làm
+> BƯỚC SAU theo chốt PA-1 (đã có file Excel mẫu 28/09 làm gốc). 2 service máy
+> anh ĐÃ restart nạp bản mới (agent rảnh khi restart).
+>
+> **Tiêu chí kiểm chứng:** /m/bank-vcb tạo job → agent nhận → file .xls về
+> OUTPUT\15.BANK_VCB\<từ ngày>\; user không cấp nhóm BANK không thấy module +
+> API chặn; version app tổng 4.5.0 / repo con 6.5.0 (2 nơi mỗi app khớp —
+> checklist GĐ 138 ✓).
+
+**Version:** 4.4.0 → **4.5.0** (docs-only — patch; checklist GĐ 138 ✓ — không
+thành phần nào ≥ 10).
