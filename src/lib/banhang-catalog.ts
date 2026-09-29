@@ -158,6 +158,20 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/tasks", label: "Nhiệm vụ định kỳ (Task_01 + Task_02)" },
     ],
   },
+  // GĐ 253 (29/09/2026 — yêu cầu Đại ca): nhóm DỮ LIỆU TỪ BANK — 4 sao kê
+  // ngân hàng (placeholder khung, nội dung download làm khi có tool/nguồn).
+  // App con: nav.ts nhánh cuối DOWNLOAD + smed-auth.ts ROUTE_TO_GROUP
+  // "banhang-bank" (đồng bộ BH_ALL_GROUP_KEYS).
+  {
+    key: "banhang-bank",
+    label: "DỮ LIỆU TỪ BANK",
+    leaves: [
+      { to: "/m/bank-vcb", label: "Sao kê ngân hàng VCB" },
+      { to: "/m/bank-tcb", label: "Sao kê ngân hàng TCB" },
+      { to: "/m/bank-tpb", label: "Sao kê ngân hàng TPB" },
+      { to: "/m/bank-vtb", label: "Sao kê ngân hàng VTB" },
+    ],
+  },
 ];
 
 /** Mọi key nhóm (8) — dùng vòng for, tránh suy diễn từ mảng literal. */

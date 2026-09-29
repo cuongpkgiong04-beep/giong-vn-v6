@@ -9957,3 +9957,29 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 *Cập nhật lần cuối: 2026-09-29 (GĐ 255 — Trợ lý AI 12 tool toàn-dự-án; app tổng 4.3.5 / repo con 6.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 253: Hệ sinh thái — Nhóm DỮ LIỆU TỪ BANK (4 sao kê VCB/TCB/TPB/VTB) (repo con C.107, 6.4.0) (2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(nav+routes): nhánh BANK cuối DOWNLOAD + 4 trang placeholder + ROUTE_TO_GROUP banhang-bank (6.4.0) |
+| (app tổng) | feat(catalog): BH_GROUPS nhóm "banhang-bank" + 4 lá — Phân quyền tự sinh + version 4.4.0 |
+
+> **Yêu cầu Đại ca (29/09):** Thêm nhóm **DỮ LIỆU TỪ BANK** vào DOWNLOAD DỮ LIỆU
+> app con: 1. Sao kê VCB · 2. TCB · 3. TPB · 4. VTB — kết cấu/hiển thị giống
+> các phần trước. Chốt PA-1: placeholder khung (giống MIA GĐ 223 — dùng chung
+> ModulePage → tự khớp 100% màu/nền/cỡ chữ), vị trí CUỐI nhóm DOWNLOAD.
+>
+> **Phân quyền đầy đủ:** nhóm `banhang-bank` — trang Phân quyền app tổng tự sinh
+> toggle nhóm + 4 chip lá (BH_GROUPS); sidebar + API guard app con cùng nguồn
+> (ROUTE_TO_GROUP + BH_ALL_GROUP_KEYS). Chi tiết kỹ thuật + lesson NAV phẳng ở
+> AGENTS.md repo con GĐ C.107.
+>
+> **Verify:** tsc 0 lỗi cả 2 app · build repo con OK · SSR curl 4/4 trang
+> placeholder render · sidebar nhánh + 4 lá hiện (E2E local). Nội dung download
+> thật chờ Anh cung cấp tool/nguồn sao kê từng ngân hàng.
+>
+> **Version:** app tổng 4.3.5 → **4.4.0** (feature — minor) · repo con
+> 6.3.0 → **6.4.0** (feature — minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
