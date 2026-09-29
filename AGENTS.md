@@ -10190,3 +10190,33 @@ thành phần nào ≥ 10).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.5.0 / repo con 6.5.0).
 
+
+---
+
+### GĐ 262: Hệ sinh thái — Module 3. Sao kê ngân hàng TPB (repo con C.116/C.117) (2026-09-29)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `202294f`) | feat(bank): GĐ C.116 — tool 42_tpb_saoke.py + REPORT_MAP bank-tpb + trang /m/bank-tpb thật + phân quyền 3 điểm (OUTPUT\17.BANK_TPB) |
+
+> **Yêu cầu của Đại ca (29/09, kèm code Playwright codegen 1 ngày):** Triển khai
+> Module **3. Sao kê ngân hàng TPB** — chọn khoảng ngày; thư mục
+> `OUTPUT\17.BANK_TPB`; nhớ phân quyền. Chi tiết đầy đủ ở **AGENTS.md repo con
+> GĐ C.117** (đã chốt PA-1: 1 lượt cả khoảng — 1 file XLSX cho cả kỳ).
+>
+> **Tóm tắt:** tool 42 (pattern tool 40/41) — credentials `.secrets/tpb_*`
+> (password codegen KHÔNG ghi vào code, staged grep 0 match); login thuần;
+> **xuất GIÁN TIẾP** qua tab "Sao kê đã xuất" — download row MỚI NHẤT theo
+> regex ngày + retry 3 (KHÔNG hardcode giờ như codegen); agent REPORT_MAP
+> `bank-tpb` + marker; web `/m/bank-tpb` → SmedPullModule; phân quyền 3 điểm
+> nhóm `banhang-bank` (chip lá sẵn GĐ 253).
+>
+> **✅ Verify:** py_compile ×3 OK; TypeScript API 0 lỗi; staged diff sạch password.
+>
+> **⚠️ VIỆC CẦN LÀM cho Đại ca:** tạo `.secrets/tpb_user.txt` + `tpb_pass.txt`
+> → restart 2 service khi agent rảnh → tạo job TPB khoảng ngày → XLSX về
+> `OUTPUT\17.BANK_TPB\<từ ngày>\`. Selector lần đầu có thể cần chỉnh — gửi em
+> log `agent\LOG\web_agent_*.log` nếu dừng.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.5.0 / repo con 6.5.0).
+
