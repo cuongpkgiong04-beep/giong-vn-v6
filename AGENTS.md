@@ -9983,3 +9983,33 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** app tổng 4.3.5 → **4.4.0** (feature — minor) · repo con
 > 6.3.0 → **6.4.0** (feature — minor; checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---
+
+### GĐ 256: E2E 12 tool Trợ lý AI — tầng SQL thật 12/12 PASS + fix whitelist stg_10GDTVX (2026-09-29)
+
+> **Yêu cầu của Đại ca (29/09):** Test E2E toàn bộ 12 tool AI trên production.
+> Anh chọn test local trước (chưa push). Chi tiết kỹ thuật ở GĐ C.110 repo con
+> (commit `d94696c` + `328d945`).
+>
+> **Kết quả — 12/12 PASS tầng SQL thật** (query_data ×5 dataset · run_report ·
+> list_jobs · overview_kpi · list_tables · query_custom ×2 · scheduled_tasks)
+> + guard query_custom 15/15 PASS (chặn INSERT/UPDATE/DELETE/DROP/INTO/UNION
+> + bảng lạ + top 50 + timeout).
+>
+> **🐛 Fix từ E2E:** stg_10GDTVX đã tách f1-f4 từ GĐ 228 — whitelist + ví dụ
+> SQL + metadata ghiChu sửa theo; nếu không AI báo "không tra được" mọi câu
+> hỏi đặt trước.
+>
+> **⚠️ Phát hiện chờ Anh duyệt:** API Server `/query` nhận INSERT (token API
+> có quyền ghi) — đề xuất thêm chế độ read-only cho token AI ở GĐ sau.
+>
+> **Vận hành:** dev server :3100 không chạy được trên máy Linux này
+> (node_modules Windows + SMB I/O treo) — test tầng SQL qua tunnel thay thế;
+> script chuẩn `scripts/test-ai-12tools-sql-e2e.mjs` tái sử dụng được.
+> Tầng GLM chat end-to-end test sau khi push + deploy production.
+>
+> **Version:** giữ nguyên (chờ lệnh Push — app tổng 4.3.5 / repo con 6.2.2).
+
+*Cập nhật lần cuối: 2026-09-29 (GĐ 256 — E2E 12 tool PASS; app tổng 4.3.5 / repo con 6.2.2)*
+*Người cập nhật: Trợ lý Freebuff*
