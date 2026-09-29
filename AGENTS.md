@@ -10320,3 +10320,54 @@ thành phần nào ≥ 10).
 >
 > **Version:** app tổng 4.6.0 + repo con 6.6.0 (đã push; bump trong commit
 > trước). KHÔNG bump thêm — commit này chỉ docs.
+
+---
+
+### GĐ 265: Bug Task_02 kẹt vĩnh viễn 77% — 2 task ma "Đang chạy" — root cause needsData rơi vào nhánh chờ vô hạn (repo con C.120) (2026-09-29)
+
+> **Câu hỏi của Đại ca (29/09, kèm ảnh):** "App đang chạy gì thế? Biểu hiện này là gì?" —
+> Trang NHIỆM VỤ app con hiện 4 dòng: 2 Task_02 "Đang chạy" 77% GIỐNG HỆT NHAU
+> (Báo cáo 7/16: hddt-bkth — lần 1/3), 1 Task_01 Hoàn thành 8/24, 1 Task_02 Chờ agent.
+>
+> **Chẩn đoán (tra DB thật qua tunnel + đọc code 3 file — KHÔNG đoán):**
+> 1. **App KHÔNG chạy gì** — 2 dòng "Đang chạy" là TASK MA kẹt từ 09:40 (bản
+>    catch-up spawn sau restart GĐ 250) và 17:40 (bản daily tự chạy ĐÚNG GIỜ —
+>    đánh dấu Task_02 tự spawn sau GĐ 250 hoạt động ✓). Cả 2 đứng im ở cùng
+>    bước: báo cáo 7/16 = `hddt-bkth` (Bảng kê hóa đơn MISA), updated_at
+>    09:40:52 / 19:04:42 — mãi không nhúc nhích.
+> 2. **ROOT CAUSE:** Task KHÔNG tải MISA (GĐ C.94 loại theo chỉ đạo) nhưng
+>    `TASK_QUERY_KEYS` vẫn có 2 báo cáo MISA (hddt-bkth/bkct) → job sqlreport
+>    trả `needsData` (thiếu nguồn 11BKTH). `_wait_job_done()` trong
+>    `task_runner.py` chỉ coi `done/error/cancel/cancelRequested` là kết thúc —
+>    **needsData rơi vào nhánh "chờ tiếp" → chờ VÔ HẠN** → task kẹt vĩnh viễn,
+>    14 báo cáo còn lại không bao giờ chạy.
+> 3. **Bug phụ khép án thêm:** Task_01 "8/24 bước OK" — 8 download OK đúng kế
+>    hoạch GĐ 239 (chỉ tải tháng thiếu), 16 báo cáo LỖI "query_key 'sqlreport'
+>    không hỗ trợ" = bug queryKey GĐ 252 ĐÃ FIX trong api_server.py nhưng
+>    service chạy bản cũ lúc 01:29 — không phải bug mới.
+>
+> **Fix (PA-1 Đại ca chọn — fix gốc + dọn):**
+> 1. `task_runner.py — _wait_job_done`: thêm nhánh `needsData` → return
+>    (False, "thiếu dữ liệu nguồn…") — vòng lặp retry ghi lỗi, chạy tiếp tới
+>    16/16. Hệ quả: task mai 17:40 chạy TRỌN VẸN, 2 báo cáo MISA ghi lỗi
+>    thiếu data đúng thực tế (đã hỏi PA-2 bỏ 2 báo cáo MISA khỏi Task — Đại
+>    ca chọn PA-1 giữ nguyên, lỗi lặp hằng ngày là chấp nhận được).
+> 2. **Dọn 3 task ma DB** (UPDATE status='cancel' qua tunnel): 2 bản running
+>    kẹt + 1 bản seed pending 24/09 (chưa bao giờ claim — bỏ). Verify: 4 dòng
+>    scheduled_tasks giờ = 3 cancel + 1 Task_01 done.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH để nạp
+> task_runner.py mới — KHÔNG restart thì task mai VẪN kẹt đúng ở bước 7.
+>
+> **LESSON LEARNED — Trạng thái "chờ người dùng quyết" phải có lối thoát trong
+> luồng TỰ ĐỘNG (2026-09-29):** needsData sinh ra cho UI tương tác (dialog
+> "Có/Không" — GĐ C.45) nhưng task runner tự động consumes cùng trạng thái mà
+> không nhánh nó → queue kẹt vô hạn không lỗi không timeout. Mỗi trạng thái
+> mới của job cần tự hỏi: "luồng TỰ ĐỘNG gặp trạng thái này thì sao?" — giống
+> lesson GĐ C.18 (trạng thái dở dang phải có chốt thời gian) nhưng ngược chiều:
+> C.18 là "chết im phải tự nhận ra", lần này là "chờ quyết phải tự quyết".
+>
+> **Tiêu chí kiểm chứng:** Sau restart service: Task_02 mai 17:40 tự spawn,
+> download xong → 16 báo cáo chạy HẾT (không kẹt ở 7/16), 2 báo cáo MISA ghi
+> LỖI thiếu nguồn, task kết thúc status=done; trang NHIỆM VỤ không còn task
+> ma; repo con commit 35f1f80 (KHÔNG push — chờ Đại ca).
