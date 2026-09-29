@@ -9858,3 +9858,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 *Cập nhật lần cuối: 2026-09-29 (GĐ 252 — Trợ lý AI thẩm định + fix panel; app tổng 4.3.5 / repo con 6.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 253: Trợ lý AI app con mở rộng — 8 tool: +doanh thu Tổng quan + chạy Task_01/02 (2026-09-29)
+
+> **Yêu cầu của Đại ca (29/09):** Mở rộng Trợ lý AI thêm tool: (1) doanh thu
+> Tổng quan; (2) chạy Task_01/02. Chi tiết kỹ thuật đầy đủ ở GĐ C.107 repo con
+> (commit `44f0740` fix + `e0127f9` docs).
+>
+> **Tóm tắt (anh chốt qua vòng hỏi: PA-1 3 tool riêng + AI tự suy kỳ + Task
+> phải hỏi xác nhận):**
+> - **overview_kpi** — trả 7 hộp KPI trang Tổng quan (Thu tiền/HĐGTGT/Lượt
+>   tiêm/Nhập VX/Xuất VX/Tồn kho/HSD) theo kỳ + trung tâm; gọi thẳng
+>   `loadOverviewKpi` — đúng nguồn trang, tự hưởng mọi fix freshness/snapshot
+>  /múi giờ từ GĐ C.70→C.75. Hỏi "hôm nay/hôm qua/tháng này" → AI tự suy ngày;
+>   không nói kỳ → Hôm qua (khớp mặc định Tổng quan).
+> - **run_task / cancel_task** — "Chạy Task_01/Task_02" → tra id theo kind rồi
+>   gọi ĐÚNG `runScheduledTask`/`cancelScheduledTask` — phân quyền "Chỉ Admin"
+>   tự đúng, không thêm check. Task chạy HÀNG GIỜ nên LLM được dặn: nhắc đến
+>   Task mà chưa yêu cầu rõ → chỉ giải thích + hỏi lại; chỉ chạy khi anh nói
+>   "có/chạy đi".
+>
+> **Trợ lý AI giờ có 8 tool:** query_data · create_download_job · run_report ·
+> list_jobs · cancel_job · overview_kpi · run_task · cancel_task.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử. Version KHÔNG bump (chờ lệnh
+> Push — quy tắc ĐA AGENT; hiện app tổng 4.3.5 / repo con 6.2.2).
+>
+> **Tiêu chí kiểm chứng:** Test trên app con sau deploy: hỏi "doanh thu hôm
+> qua tại Long Biên?" → số 7 hộp đúng kỳ 1 ngày + trung tâm; "Task_02 làm
+> gì?" → giải thích + hỏi lại KHÔNG chạy; "chạy Task_02" (Admin) → task vào
+> pending, agent nhặt ≤30s; user thường → nhận "Chỉ Admin chạy nhiệm vụ".
+
+*Cập nhật lần cuối: 2026-09-29 (GĐ 253 — Trợ lý AI 8 tool; app tổng 4.3.5 / repo con 6.2.2)*
+*Người cập nhật: Trợ lý Freebuff*
