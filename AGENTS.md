@@ -10253,3 +10253,24 @@ thành phần nào ≥ 10).
 >
 > **Version:** app tổng 4.5.0 → **4.6.0** (docs+catalog — minor theo repo con;
 > checklist GĐ 138 ✓ — không thành phần nào ≥ 10).
+
+---
+
+### GĐ 263: Hệ sinh thái — MIA TOOL hoàn thiện (docs app tổng — code nằm repo con GĐ C.118) (2026-09-29)
+
+> **Yêu cầu của Đại ca (29/09):** Hoàn thiện DOWNLOAD DỮ LIỆU \ DỮ LIỆU TỪ MIA
+> TOOL trong app con — MIA TOOL 2026 cài tại máy chủ. Chi tiết nghiên cứu +
+> triển khai ở **AGENTS.md repo con GĐ C.118** (commit `71d969f`).
+>
+> **Tóm tắt:** MIA TOOL 2026 bản chất là client requests gọi thẳng API
+> hoadondientu.gdt.gov.vn (đọc source decompiled) → tool 43_mia_hddt.py gọi
+> thẳng API (không điều khiển .exe GUI), captcha OCR ddddocr, 4 phân hệ
+> Mua vào/Bán ra × Tổng quan/Chi tiết khớp 4 trang placeholder GĐ 223, file
+> Excel khớp template MIA (HDTQ 15 cột + HDCT 37 cột), thư mục OUTPUT\18.MIA_MUA
+> + 19.MIA_BAN. Phân quyền nhóm banhang-misa (chip lá đã sinh từ GĐ 223).
+>
+> **App tổng KHÔNG đổi code** (4 lá MIA catalog đã có từ GĐ 223).
+>
+> **Version:** repo con 6.6.0 (Agent khác đã bump trước — giữ nguyên, không đụng
+> nguyên tắc ĐA AGENT); app tổng giữ version hiện tại. KHÔNG push — chờ Đại ca.
+
