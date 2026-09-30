@@ -10371,3 +10371,113 @@ thành phần nào ≥ 10).
 > download xong → 16 báo cáo chạy HẾT (không kẹt ở 7/16), 2 báo cáo MISA ghi
 > LỖI thiếu nguồn, task kết thúc status=done; trang NHIỆM VỤ không còn task
 > ma; repo con commit 35f1f80 (KHÔNG push — chờ Đại ca).
+
+---
+
+### GĐ 266: Nguyên tắc MỚI — Agent TỰ RESET khi rảnh + chẩn đoán BANK (2026-09-29)
+
+> **Nguyên tắc mới của Đại ca (29/09 — áp dụng APP CON):** Em TỰ RESET agent
+> (GIONG_SMED_Agent) sau khi sửa agent/tool để bản mới có hiệu lực — KHÔNG
+> chờ Đại ca bảo. Quy trình: (1) check job đang chạy (query smed_pull_jobs
+> status running/pending/waitdownload); (2) CÓ job → CHỜ hết job (job xong
+> hoặc hủy) rồi reset; (3) rảnh → reset NGAY (sc stop/start + verify log mới).
+>
+> **Bug report của Đại ca (kèm 3 ảnh — nhóm DỮ LIỆU TỪ BANK):** (1) toàn bộ
+> phần download BANK chạy chưa ổn — dữ liệu chưa về thư mục được chỉ định;
+> (2) yêu cầu test.
+>
+> **Chẩn đoán 3 hiện tượng (bằng chứng log agent + OUTPUT + DB — KHÔNG đoán):**
+> 1. **TCB/TPB ghi nhầm `OUTPUT\1.HDDT\2026-09-29`** (ảnh 2-3, web còn hiện
+>    "Hoàn thành 19/1 file Excel"): log agent 20:31/20:36 chạy tool
+>    `1_smed_THSDHD.py` cho report bank-tcb/bank-tpb — service khởi động
+>    **15:26** TRƯỚC commit GĐ 260 (15:51) thêm `bank-tcb`/GĐ 262 (16:xx)
+>    thêm `bank-tpb` vào REPORT_MAP → report lạ → fallback HDDT (lesson
+>    GĐ 261 đúng một lần nữa). Code ĐÃ SẮN — restart là hết.
+> 2. **VCB job 20:29 thiếu 1/1 file:** log 20:29:58 ghi "🗑️ Đã xóa 1 file cũ
+>    trong 2026-09-29" — bản code cũ trong process chưa có C.111 (bank-vcb
+>    KHÔNG xóa trước, tự quản file từng ngày) → xóa mất file 29/09 do
+>    backfill tay 17:19 tải; tool xong 0 file (đã logged) → job thiếu file.
+> 3. **VCB job 15:17 thiếu 19/19:** cùng gốc — service bản cũ; file
+>    01→28/09 thực ra ĐỦ (backfill tay 17:19-17:20 tải đủ + 28/09 có file
+>    15:27 — verify từng file XLS nội dung đúng ngày từng giao dịch).
+>
+> **Đã xử lý:** (a) reset agent 23:15 theo nguyên tắc mới — log mới xác nhận
+> nạp bản mới; (b) hủy Task_02 catch-up 23:15 (trùng data 29/09 đã đủ từ
+> task 17:40 — giải phóng agent test BANK, tránh chờ ~1h); (c) 19 file HDDT
+> bị fallback ghi đè vào 1.HDDT/2026-09-29 là data HĐĐT 29/09 đúng ngày
+> (không hỏng data HDDT — task 17:40 đã tải bộ này).
+>
+> **LESSON LEARNED — Job rơi nhầm phân hệ khác nhưng web "Hoàn thành":**
+> fallback REPORT_MAP cũ chạy tool sai + web đọc driveDir từ job → hiện
+> đường 1.HDDT NHƯNG badge "Hoàn thành 19/1" — người dùng nhìn badge xanh
+> dễ tin là đã tải đúng. Kiểm tra đường driveDir trong lịch sử phải SOI
+> ĐƯỜNG THƯ MỤC, đừng tin badge. Lesson GĐ 261 lặp lại lần 2 — chỉ khi
+> service agent không restart sau commit; nguyên tắc reset-khi-rảnh của
+> Đại hóa giải tận gốc.
+>
+> **Tiêu chí kiểm chứng:** Sau reset: tạo job bank-tcb/bank-tpb/bank-vcb →
+> tool đúng (41/42/40), file về 16.BANK_TCB/17.BANK_TPB/15.BANK_VCB, badge
+> đủ file theo expectedFiles (số ngày).
+
+---
+
+### GĐ 267: Nhóm BANK — 3 root cause tool không tải file + TPB PASS + TCB chờ codegen + VCB lỗi server-side (repo con C.121) (2026-09-30)
+
+> **Yêu cầu của Đại ca (29/09, kèm 3 ảnh):** (1) toàn bộ phần download BANK
+> chạy chưa ổn — dữ liệu chưa về thư mục được chỉ định; (2) kiểm tra + chạy
+> test; (3) **NGUYÊN TẮC MỚI:** Em TỰ RESET agent khi rảnh (chờ hết job mới
+> reset) để bản sửa có hiệu lực — KHÔNG chờ anh bảo.
+>
+> **Nguyên tắc TỰ RESET đã áp dụng 3 lần trong phiên** (check job running/
+> pending qua SQL → rảnh → sc stop/start + verify log mới): 23:15 (nạp GĐ 265),
+> 00:36 (nạp fix argv), 05:48 (nạp fix has_text).
+>
+> **3 ROOT CAUSE bắt được + fix (commit 949ade4):**
+> 1. **Agent không truyền ngày cho tool BANK** — tool BANK chỉ nhận sys.argv,
+>    agent Popen chỉ truyền env → tool rơi về "hôm qua" (job TCB test 29/09
+>    chạy ngày 28/09 — log "Bắt đầu TCB sao kê 28/09"). Job kỳ dài chỉ tải 1
+>    ngày. Fix: Popen truyền `[date_from, date_to]` — tool SMED/MISA đọc env,
+>    argv thừa vô hại.
+> 2. **Tool BANK không đọc env SMED_FROM/TO_DATE** — thêm fallback env (pattern
+>    tool SMED dòng 76) — phòng thủ khi gọi qua đường không argv.
+> 3. **TPB filter(has=regex) → AttributeError** — Playwright yêu cầu has_text=
+>    cho regex ('re.Pattern' has no attribute '_impl_obj' — verify bằng mô
+>    phỏng trên trang fake). Fix has_text → **E2E PASS**: file
+>    TPBANK_HISTORY_*.xlsx về đúng 17.BANK_TPB\2026-09-25\, header kỳ 25→29/09
+>    đúng, status done (file 10 dòng header — TPB xuất rỗng kỳ này, data phía TPB).
+>
+> **VCB:** kỳ 28/09 tải lại PASS từng đồng (file đúng kỳ). Kỳ 29/09: VCB trả
+> modal "Hệ thống đang không xử lý được. Quý khách vui lòng thử lại sau." LIÊN
+> TỤC (probe 06:13 + 8 lần bấm trong 2h) — **lỗi phía VCB server, không phải
+> tool** (kỳ 28/09 cùng luồng thành công ngay lần 1). Fix phòng thủ: retry 3
+> lần + Đóng modal giữa các lần + ngày fail KHÔNG raise (các ngày khác trong
+> kỳ vẫn OK — job kỳ dài không còn ERROR oan). File 29/09 sẽ về khi VCB hết lỗi
+> (job Task_02 tự chạy lại hàng ngày).
+>
+> **TCB — chờ Đại ca (PA-2 anh chọn):** vai "HUNG TRAN MANH" trên TCB hiện
+> KHÔNG có menu "Tải xuống báo cáo giao dịch" (probe dump toàn bộ navigation —
+> chỉ có Tổng quan/Tài khoản/Chuyển khoản/ngoại tệ/Tiết kiệm/Tín dụng/Đầu tư/
+> Tiện ích). Anh sẽ làm codegen mới theo luồng thật rồi gửi — em viết lại tool
+> 41 (có thể là phân quyền vai, hoặc luồng mới).
+>
+> **LESSON LEARNED — Tool nhận tham số qua argv nhưng runner chỉ truyền env =
+> rơi mặc định ÂM THẦM (2026-09-30):** job TCB test 29/09 chạy tool ngày 28/09
+> KHÔNG lỗi KHÔNG cảnh báo — chỉ nhìn log tool mới thấy sai ngày. Checklist
+> khi thêm tool mới vào REPORT_MAP: đối chiếu CÁCH tool nhận tham số (argv/env)
+> với CÁCH agent truyền — hai đầu phải khớp, dạng "hai đầu không khớp" lần N.
+>
+> **LESSON LEARNED — Playwright filter(has=) nhận Locator, regex phải has_text=
+> (2026-09-30):** filter(has=regex) ném AttributeError runtime (không phải lúc
+> viết code). Mô phỏng 10 dòng trên trang fake bắt ngay; từ giờ locator lọc
+> theo regex DÙNG has_text= — has= chỉ dành cho Locator con.
+>
+> **LESSON LEARNED — Lỗi 3rd-party tạm thời phải phân biệt với lỗi tool
+> (2026-09-30):** VCB "Hệ thống đang không xử lý được" lặp lại nhiều lần là
+> lỗi server VCB — retry + bỏ qua ngày fail (các ngày khác vẫn OK) đúng hơn
+> raise (job ERROR oan + retry vô ích). So sánh kỳ ĐÃ TỪNG OK (28/09) cùng
+> luồng để chứng minh lỗi là theo-kỳ/ngẫu-nhiên, không phải code.
+>
+> **Tiêu chí kiểm chứng:** TPB tạo job kỳ bất kỳ → file về 17.BANK_TPB\<từ
+> ngày>\ đúng kỳ; VCB kỳ ngày thường → file về 15.BANK_VCB (kỳ 29/09 đợi
+> VCB hết lỗi); TCB chờ codegen mới của anh; task Task_02 mai 17:40 tự chạy
+> full 16 báo cáo (GĐ 265); repo con commit 949ade4 — KHÔNG push chờ anh.
