@@ -10565,3 +10565,21 @@ thành phần nào ≥ 10).
 > đã đính chính, sửa thật). Test GLM end-to-end sau deploy production.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.0 / repo con 6.6.0).
+
+### GĐ 272: Hệ sinh thái — Job chi tiết bán ra MIA crash 429 + fix throttle/retry (repo con C.126b) (2026-09-30)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(mia): GĐ C.126b — _get nhánh 429 đợi 30-120s + fetch_details skip-HĐ với fail_streak 10 + throttle 0.25s |
+| (app tổng) | docs(agents): GĐ 272 — không đổi code |
+
+> **Diễn biến:** Job chi tiết bán ra T9 crash 80/6632 — chạy tay bắt stderr: HTTP 429
+> rate-limit MIA (tool gọi ~2,5 HĐ/s liên tục). Fix: 429 có nhánh riêng đợi dài 30-120s;
+> lỗi 1 HĐ không chết job (skip + ngưỡng dừng 10 fail liên tiếp); throttle 0.25s.
+> Đã restart agent + treo lại job `2299A659` — chạy qua đêm, dự kiến xong ~01:30-02:00,
+> agent tự ETL → sáng mai báo cáo 11 + AI tra hàng hóa có data.
+
+> **LESSON — 429 = "đợi lâu", không nhét retry ngắn chung; lời hứa "lỗi 1 đơn vị không
+> chết job" phải viết bằng code (catch+skip+ngưỡng), đừng chỉ ghi docstring.**
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.0 / repo con 6.6.0).
