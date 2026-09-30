@@ -10548,3 +10548,20 @@ thành phần nào ≥ 10).
 > phải chạy thật ≥1 lần trước khi ghi hoàn thành** (chi tiết 2 lesson ở repo con C.125).
 
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). app tổng 4.6.0 / repo con 6.6.0.
+
+### GĐ 271: Hệ sinh thái — Trợ lý AI hỏi được HĐ GTGT MIA (dataset hoa-don-mia + whitelist query_custom, PA-3) (repo con C.126) (2026-09-30)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | feat(ai): GĐ C.126 — dataset query_data "hoa-don-mia" (nhánh kind=mia — ntao DD/MM/YYYY, tiền số) + whitelist query_custom mia_hddt_hd/hh + list_tables |
+| (app tổng) | docs(agents): GĐ 271 — không đổi code |
+
+> **Bối cảnh:** Sau C.125 (6.632 HĐ bán ra vào GiondDB), Đại ca yêu cầu Trợ lý AI hỏi được
+> "doanh thu bán ra tháng 9". Em trình PA-3 — anh chốt: dataset chuẩn + mở whitelist cùng lúc.
+
+> **Kết quả verify:** SQL mô phỏng đúng server dựng → tổng bán ra T9 6.718.191.700đ khớp từng
+> đồng; query_custom HĐ tiền cao nhất T9 hoạt động; GUARD whitelist + chặn ghi PASS; tsc 0 lỗi.
+> **⚠️ Phát hiện khi soi code:** whitelist CHƯA có sẵn bảng MIA (em tuyên bố sai buổi sáng —
+> đã đính chính, sửa thật). Test GLM end-to-end sau deploy production.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.0 / repo con 6.6.0).
