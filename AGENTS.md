@@ -10525,3 +10525,26 @@ thành phần nào ≥ 10).
 
 > **Tiêu chí kiểm chứng:** App con → BÁO CÁO → BÁO CÁO KẾ TOÁN: mục 8-11 chạy báo cáo được (mua vào có data thật, bán ra rỗng + banner hỏi tải data đúng quy trình GĐ C.45); trang Phân quyền app tổng nhóm BÁO CÁO KẾ TOÁN có thêm 2 chip lá bán ra; version app tổng 4.5.0 / repo con 6.5.0 (KHÔNG bump — chờ lệnh Push).
 
+
+### GĐ 270: Hệ sinh thái — C.124b hoàn tất: HĐ bán ra MIA nằm ở đường sco-query, đối chứng 6.632 HĐ / 6,7 tỷ (repo con C.125) (2026-09-30)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `4c9d25d`) | fix(mia): GĐ C.125 — tool 43 bán ra quét cả query + sco-query + fix builder 8-11 + fix ETL DELETE nhầm bảng (C.124b) |
+| (app tổng) | docs(agents): GĐ 270 — không đổi code |
+
+> **Bối cảnh:** Phiên trước để lại sửa dở trong working tree repo con (C.124b — HĐ bán ra MIA
+> = 0 HĐ do tool chỉ quét 1/2 đường API). Phiên này verify + hoàn tất theo phương án 1 Đại ca
+> chọn: chạy thật kỳ T9 → đối chứng probe cũ → ETL → builder → commit.
+
+> **Kết quả verify (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.125):**
+> - **6.632 HĐ bán ra / 6.718.191.700đ — KHỚP TỪNG ĐỒNG probe T9** (HĐ bán ra nằm ở đường
+>   API `sco-query` — HĐ mã khởi tạo từ máy tính tiền; tool cũ chỉ quét `query` nên ra 0).
+> - Kèm fix 2 bug chỉ lộ khi chạy thật lần đầu: builder 8-11 lệch signature `_rows`
+>   (TypeError num_cols trùng) + ETL DELETE cả 2 bảng cho mọi file (bảng hàng hóa luôn rỗng).
+> - Data đã trong GiondDB — báo cáo 8-11 web chạy được NGAY; agent service chờ restart khi rảnh.
+
+> **LESSON — "0 dòng = nguồn rỗng" phải probe ĐỦ đường API trước khi kết luận; builder mới
+> phải chạy thật ≥1 lần trước khi ghi hoàn thành** (chi tiết 2 lesson ở repo con C.125).
+
+**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). app tổng 4.6.0 / repo con 6.6.0.
