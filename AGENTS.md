@@ -10505,3 +10505,23 @@ thành phần nào ≥ 10).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). app tổng 4.5.0 / repo con 6.5.0 giữ nguyên.
 
+
+---
+
+### GĐ 269: Hệ sinh thái — 4 Báo cáo Bảng kê HĐ GTGT MIA TOOL (repo con C.124) (2026-09-30)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `93d9b90`) | feat(mia): GĐ C.124 — 4 báo cáo Bảng kê HĐ GTGT MIA (số 8-11 KẾ TOÁN): ETL mia_hddt_import (2 bảng tường minh, nạp đè theo kỳ gộp) + 4 builder + 4 trang web + phân quyền |
+| (app tổng) | feat(catalog): BH_GROUPS +2 lá bán ra MiaTool + docs GĐ 269 |
+
+> **Yêu cầu của Đại ca (30/09):** Làm Báo cáo Bảng kê HĐ GTGT mua vào/bán ra (nhóm BÁO CÁO KẾ TOÁN số 8-9) đọc từ OUTPUT\18.MIA_MUA/19.MIA_BAN. Anh chốt PA-1: đủ 4 lá (8-9 mua vào + 10-11 bán ra mới — lá sao kê ngân hàng tự dời 12-15) + 2 bảng tường minh GiondDB (dbo.mia_hddt_hd + dbo.mia_hddt_hh — pattern bank_vcb).
+
+> **Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.124.** Tóm tắt: ETL `mia_hddt_import.py` nạp đè theo KỲ GỘP (period_from/period_to từ tên file — file MIA là file gộp kỳ, khác stg_* theo ngày); 4 builder lọc OVERLAP kỳ; 4 trang web SqlDataModule (2 trang mua vào từ placeholder GĐ 223 → thật, 2 trang bán ra mới); phân quyền 3 điểm — nhóm bh-bao-cao-ke-toan; catalog app tổng +2 lá (chip Phân quyền tự sinh).
+
+> **✅ Verify:** Data thật đã trong GiondDB (345 HĐ mua vào + 43 dòng hàng hóa); builder SQL đối chứng TỪNG ĐỒNG tổng tiền 5.011.806.767đ khớp file Excel kỳ dài; bán ra rỗng hợp lệ (chưa tải); TS 0 lỗi cả 2 app; routeTree sinh lại.
+
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH — agent mới tự chạy mia_hddt_import.py sau mỗi job mia-* (dữ liệu hiện tại đã nạp tay — báo cáo chạy được NGAY).
+
+> **Tiêu chí kiểm chứng:** App con → BÁO CÁO → BÁO CÁO KẾ TOÁN: mục 8-11 chạy báo cáo được (mua vào có data thật, bán ra rỗng + banner hỏi tải data đúng quy trình GĐ C.45); trang Phân quyền app tổng nhóm BÁO CÁO KẾ TOÁN có thêm 2 chip lá bán ra; version app tổng 4.5.0 / repo con 6.5.0 (KHÔNG bump — chờ lệnh Push).
+
