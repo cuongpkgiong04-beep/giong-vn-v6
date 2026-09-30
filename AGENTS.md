@@ -10747,5 +10747,45 @@ thành phần nào ≥ 10).
 
 **Version:** app tổng **4.6.1** · repo con **6.6.1** — ĐÃ LIVE production qua Vercel CLI.
 
-*Cập nhật lần cuối: 2026-10-01 (GĐ 274 — push qua Vercel CLI + chờ SSH key GitHub; app tổng 4.6.1 / repo con 6.6.1)*
+---
+
+### GĐ 275: TCB sao kê — viết lại tool theo codegen (C.127) + FIX kỳ đơn ngày (C.128) + MIA running qua đêm (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `36e0d32`) | fix(tcb): C.127/C.128 — viết lại tool 41 theo codegen mới + fix kỳ đơn ngày nút disabled vô hạn (fill trực tiếp bb_input_8/9) |
+| (app tổng) | docs(agents): GĐ 275 — không đổi code |
+
+> **2 việc của phiên (theo kế hoạch):** (1) verify job MIA bán ra `2299A659` re-treo
+> qua đêm (fix 429 C.126b); (2) viết lại tool 41 TCB theo codegen mới — giải đáp
+> GĐ 267. Chi tiết kỹ thuật đầy đủ ở **AGENTS.md repo con GĐ C.127 + C.128**.
+
+> **1. MIA `2299A659` — RUNNING, KHÔNG phải treo (để chạy tiếp):** process tool 43
+> (PID 20300) sống, connection ESTABLISHED tới server MIA, heartbeat job mới (05:xx).
+> Kỳ T9 bán ra = 6.632 HĐ → listing 26 ngày × 2 đường + detail từng HĐ (0.25s/HĐ
+> + retry 429 đợi 30-120s) → thực tế 6-10 tiếng, KHÔNG phải 70 phút như dự đoán
+> C.126b (con số đó chỉ tính detail, quên listing + retry đợi). Hủy = mất 6 tiếng
+> → giữ chạy, check lại buổi sáng.
+
+> **2. TCB PA-3 CHỐT PA-1 (C.127):** chạy kỳ thật 01→30/09 ×2 → file khớp 331 giao
+> dịch / 24 ngày riêng / 100% tháng 9 → **TCB kỳ dài trả ĐỦ cả tháng** (khác VCB
+> C.111) → 1 lượt cả kỳ, 1 file/kỳ — expectedFiles=1 khớp sẵn GĐ 260.
+
+> **3. FIX kỳ đơn ngày (C.128):** 4 lần chạy kỳ 29/09 fail "nút Tải xuống disabled
+> vô hạn". Dump DOM trong TOOL (probe tách rời đã xóa — chạy lệch luồng tool không
+> tái tạo được, lesson C.115) chỉ ra: bộ lọc kỳ thực = bb_input_8 (TỪ) + bb_input_9
+> (ĐẾN); popup lịch ô RỖNG mở theo THÁNG HIỆN TẠI → 29/09 là OUTSIDE-DAY mờ —
+> click không lỗi nhưng form không nhận → nút disabled vĩnh viễn. Fix: FILL TRỰC
+> TIẾP input + Enter (pattern MISA C.25), verify ô nhận giá trị, popup là fallback.
+> Verify 2 kỳ: đơn 29/09 = 17 giao dịch 100% đúng ngày; hồi quy T9 = 332 giao dịch
+> (331 cũ + 1 mới) ✓.
+
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (đang bận job MIA
+> — chờ xong job rồi restart; Task_02 daily 17:40 sẽ tự dùng tool 41 mới cho kỳ
+> đơn ngày).
+
+> **Version:** KHÔNG bump (quy tắc ĐA AGENT — bump khi anh nói "Push"). Hiện tại:
+> app tổng 4.6.1 / repo con 6.6.1 (GĐ 274 đã push production qua Vercel CLI).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 275 — TCB codegen + kỳ đơn ngày fix; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
