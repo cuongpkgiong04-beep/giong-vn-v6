@@ -10583,3 +10583,81 @@ thành phần nào ≥ 10).
 > chết job" phải viết bằng code (catch+skip+ngưỡng), đừng chỉ ghi docstring.**
 
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.0 / repo con 6.6.0).
+
+---
+
+### GĐ 273: Camera Chấm công + Check-in — mịn da 2 lớp THẤY RÕ + crop WYSIWYG hết ảnh lệch (2026-09-30, commit dca746c)
+
+| Commit | Thay đổi |
+|---|---|
+| `dca746c` | fix(camera): filter mịn da 2 lớp giữ nét chi tiết + crop WYSIWYG khớp preview — hết ảnh lưu lệch trái/trống trên (cham-cong + check-in) |
+
+> **BUG REPORT của Đại ca (30/09 — 2 vấn đề, test cả iPhone lẫn Android):**
+> 1. Filter "Làm đẹp" (GĐ 233/234/245) bấm vào KHÔNG thấy thay đổi rõ; khi thấy
+>    thì CHỈ chuyển vàng, không làm rõ/nét/che khuyết điểm.
+> 2. Ảnh chụp lưu bị NGHIÊNG/lệch trái + PHÍA TRÊN trống nhiều ở CẢ Chấm công
+>    và Check-in. Anh làm rõ khi hỏi lại: KHÔNG phải lật gương — chỉ lệch trái
+>    + trên trống nhiều.
+
+> **ROOT CAUSE 1 — filter cũ sai bản chất (3 lớp chồng lỗi):**
+> `brightness(1.18) saturate(1.35) contrast(0.94) blur(1.4px)`:
+> - `blur(1.4px)` trên ảnh gốc 1920×1080 = VÔ HÌNH (1.4px quá nhỏ) → không che
+>   được mọc/cận → đúng phản hồi "không thấy thay đổi".
+> - `saturate(1.35)` + `brightness(1.18)` cùng đẩy → màu da ám VÀNG đậm → đúng
+>   phản hồi "chỉ thấy vàng".
+> - CSS blur 1 lớp mờ CẢ ẢNH (cả mắt) không phải "mịn da giữ nét" như camera
+>   làm đẹp của điện thoại (đó là lớp skin-smoothing tách riêng).
+
+> **ROOT CAUSE 2 — preview và ảnh lưu KHÁC KHUNG (triệu chứng "lệch trái +
+> trống trên" kinh điển):** Preview `<video>` dùng `objectFit: cover/contain`
+> (chỉ HIỂN THỊ một phần/khung co giãn), còn canvas chụp `drawImage(video, 0, 0, w, h)`
+> lấy TOÀN BỘ khung gốc camera. iPhone trả stream dọc lệch tỉ lệ so với khung
+> hiển thị → phần mép (trên/trái) lọt vào ảnh lưu nhưng KHÔNG có trên preview →
+> mặt bị lệch, trên trống. KHÔNG phải lỗi mirror (Anh xác nhận không lật gương).
+
+> **Fix (PA-1 Anh chốt — 3 file, commit `dca746c`):**
+> 1. **`src/lib/camera-frame.ts` (mới — helper dùng chung 2 trang):**
+>    - `computeCenterCrop(frameW, frameH, viewW, viewH)` — vùng crop TRUNG TÂM
+>      theo tỉ lệ khung hiển thị (WYSIWYG).
+>    - `drawCameraFrame(ctx, video, crop, opts)` — MỊN DA 2 LỚP: lớp 1 frame gốc
+>      NÉT đầy đủ; lớp 2 (beauty) cùng frame + `blur(6px) brightness(1.08)
+>      saturate(1.08)` vẽ bán trong suốt 55% → da/mọc/cận mềm đi nhưng mắt +
+>      viền mặt + chi tiết chính VẪN NÉT (giống skin-smoothing camera điện thoại).
+>      Filter tắt ngay sau khi vẽ ảnh — chữ đóng dấu vẽ sau luôn nét (giữ rule GĐ 233).
+> 2. **Khung preview CỐ ĐỊNH `aspectRatio: "3 / 4"` dọc + cover** cả 2 trang
+>    (bỏ 2 nhánh iOS/Android lệch nhau — iPhone lẫn Android cùng 1 khung) +
+>    ảnh/video preview + overlay canvas cùng tỉ lệ. `isIOS` = false giữ biến
+>    (còn tham chiếu preview ảnh/video cũ — đã thay hết style iOS-specific).
+> 3. **Ảnh chụp + video quay + overlay stamp ĐỀU crop 3/4** (computeCenterCrop)
+>    → dấu khớp ảnh, preview khớp ảnh lưu 100% — hết lệch trái/trống trên.
+
+> **LESSON LEARNED — Blur CSS áp trên ảnh lớn là vô hình; mịn da thật = 2 lớp
+> blur bán trong suốt (2026-09-30):** blur 1.4px trên khung 1920px mắt thường
+> không phân biệt được — "có filter" ≠ "thấy filter". Camera làm đẹp điện thoại
+> dùng kỹ thuật skin-smoothing: giữ lớp nét + đè lớp blur mờ in → chỉ da mềm,
+> chi tiết chính không mất. Muốn che khuyết điểm phải làm đúng kỹ thuật này,
+> tăng hệ số màu chỉ làm lệch tông (vàng) không che được gì.
+
+> **LESSON LEARNED — Preview và ảnh lưu phải cùng MỘT khung crop (2026-09-30):**
+> `objectFit` chỉ là HIỂN THỊ — canvas lấy pixel thô toàn khung. Mọi tính năng
+> chụp ảnh có preview + lưu phải: (a) khung preview cố định aspect, (b) canvas
+> crop cùng aspect đó (computeCenterCrop trung tâm), (c) overlay/stamp vẽ trên
+> khung đã crop. Khác 1 trong 3 = preview khớp, ảnh lưu lệch (dạng "hai đầu
+> không khớp" lần N — lần này là preview↔canvas).
+
+> **LƯU Ý khi test (thiết bị thật — camera không test được qua desktop):**
+> 1. Mở Chấm công → màn camera giờ là KHUNG DỌC 3/4 (cao hơn trước) — người
+>    nằm gọn trong khung, không còn dải trống.
+> 2. Nút ✨ Làm đẹp BẬT sẵn: bấm tắt/bật thấy da mềm/rõ ràng trên preview
+>    (không còn vàng); chụp → ảnh lưu GIỐNG HỆT preview (đúng vị trí, không
+>    lệch trái, không trống trên), da mịn, mắt nét.
+> 3. Check-in: chụp ảnh + QUAY VIDEO đều có mịn da + khung 3/4 khớp.
+> 4. Ảnh/video CŨ đã lưu giữ nguyên — chỉ ảnh chụp MỚI từ bản này.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 4.6.0 /
+> repo con 6.6.0 giữ nguyên.
+
+**Version:** KHÔNG bump — chờ Đại ca nói "Push" (app tổng 4.6.0 / repo con 6.6.0).
+
+*Cập nhật lần cuối: 2026-09-30 (GĐ 273 — camera mịn da 2 lớp + crop WYSIWYG; app tổng 4.6.0 / repo con 6.6.0)*
+*Người cập nhật: Trợ lý Freebuff*
