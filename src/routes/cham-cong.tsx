@@ -15,6 +15,8 @@ import { CENTERS, findEmployeeByLooseText, getVisibleCenterCodes, isAdminRole } 
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore, getPendingSyncRecords, triggerPendingSyncNow, getPendingSyncStats } from "@/lib/store";
+// GĐ 273: helper dùng chung camera — crop WYSIWYG + mịn da 2 lớp giữ nét chi tiết
+import { computeCenterCrop, drawCameraFrame } from "@/lib/camera-frame";
 import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage } from "@/routes/api/upload";
 
@@ -105,9 +107,13 @@ function ChamCongPage() {
   // (bấm nút thấy khác NGAY trên màn camera, khớp 100% ảnh chụp) lẫn canvas
   // lúc chụp. Đậm hơn GĐ 233 (1.08/1.18 quá nhẹ, anh test không thấy khác):
   // sáng 1.18 + mềm da 1.4px + màu tươi 1.35 + giữ nét tương đối 0.94.
-  const BEAUTY_FILTER = "brightness(1.18) saturate(1.35) contrast(0.94) blur(1.4px)";
-  // iOS: live preview phải xem ĐỦ KHUNG (contain) — Android giữ nguyên như cũ
-  const [isIOS] = useState(detectIOS);
+  // GĐ 273: bỏ blur khỏi chuỗi màu — blur đã chuyển sang LỚP 2 mịn da (blur 6px
+  // đè bán trong suốt, da mềm + giữ nét mắt/viền mặt). Saturate 1.35→1.08 +
+  // brightness 1.18→1.08 — hết ám vàng (triệu chứng "chỉ thấy vàng" của Đại ca).
+  const BEAUTY_FILTER = "brightness(1.08) saturate(1.08)";
+  // GĐ 273: isIOS/bản ghi iOS-specific đã bỏ — preview + ảnh lưu dùng chung khung
+  // aspect 3/4 trên mọi thiết bị (không còn 2 nhánh iOS/Android lệch nhau).
+  const isIOS = false;
 
   // Refresh pending records periodically
   useEffect(() => {
@@ -402,8 +408,10 @@ function ChamCongPage() {
 
     const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    canvas.width = w;
-    canvas.height = h;
+    // GĐ 273: overlay vẽ trên khung CROP 3/4 — khớp preview (aspect 3/4) + ảnh lưu
+    const crop = computeCenterCrop(w, h, 3, 4);
+    canvas.width = crop.sw;
+    canvas.height = crop.sh;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -411,7 +419,7 @@ function ChamCongPage() {
     // Không vẽ video frame — giữ canvas trong suốt, chỉ vẽ stamp text
     // Video đã hiển thị qua <video> element bên dưới
 
-    const layout = buildStampLayout(w, h, currentName, address, gps);
+    const layout = buildStampLayout(crop.sw, crop.sh, currentName, address, gps);
     const { groups, groupGap, scale } = layout;
 
     ctx.textAlign = "left";
@@ -428,7 +436,7 @@ function ChamCongPage() {
     }
 
     const margin = Math.round(14 * scale);
-    const boxBottom = h - margin;
+    const boxBottom = crop.sh - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
@@ -545,19 +553,22 @@ function ChamCongPage() {
   ) {
     const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    canvas.width = w;
-    canvas.height = h;
+    // GĐ 273: crop WYSIWYG — lấy đúng vùng preview hiển thị (tỉ lệ khung),
+    // hết ảnh lưu bị trống phía trên + lệch trái (mép preview không khớp khung gốc).
+    const crop = computeCenterCrop(w, h, video.clientWidth || 400, video.clientHeight || 300);
+    canvas.width = crop.sw;
+    canvas.height = crop.sh;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Vẽ video frame lên captureCanvas (cần cho static photo output)
-    // GĐ 233: filter "làm đẹp" khi BẬT — vẽ xong frame phải tắt filter NGAY để
-    // chữ đóng dấu vẽ sau KHÔNG bị làm mềm theo (chữ dấu phải luôn nét).
-    if (beauty) ctx.filter = BEAUTY_FILTER;
-    ctx.drawImage(video, 0, 0, w, h);
-    ctx.filter = "none";
+    // GĐ 273: vẽ frame crop + mịn da 2 lớp (lớp blur đè bán trong suốt — da mềm
+    // nhưng mắt/viền nét). Filter tắt ngay sau khi vẽ ảnh — chữ dấu luôn nét.
+    drawCameraFrame(ctx, video, crop, { beauty, beautyFilter: BEAUTY_FILTER });
+    const w2 = crop.sw;
+    const h2 = crop.sh;
 
-    const layout = buildStampLayout(w, h, currentName, addrStr, gpsStr);
+    // GĐ 273: stamp vẽ trên khung ĐÃ CROP (w2/h2) — vị trí dấu khớp ảnh lưu
+    const layout = buildStampLayout(w2, h2, currentName, addrStr, gpsStr);
     const { groups, groupGap, scale } = layout;
 
     ctx.textAlign = "left";
@@ -573,7 +584,7 @@ function ChamCongPage() {
     }
 
     const margin = Math.round(14 * scale);
-    const boxBottom = h - margin;
+    const boxBottom = h2 - margin;
     const boxLeft = margin;
     let y = boxBottom;
 
@@ -1131,22 +1142,21 @@ function ChamCongPage() {
               {!photoPreview ? (
                 <>
                   {/* Live camera view */}
+                  {/* GĐ 273: khung preview CỐ ĐỊNH tỉ lệ 3/4 dọc + cover — hết lệch
+                      giữa thiết bị trả stream ngang/dọc; ảnh lưu crop cùng tỉ lệ 3/4
+                      (computeCenterCrop) → preview khớp ảnh chụp 100%. */}
                   <video
                     ref={videoRef}
                     autoPlay
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={isIOS
-                      ? { maxHeight: 540, objectFit: "contain", filter: beauty ? BEAUTY_FILTER : undefined }
-                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto", filter: beauty ? BEAUTY_FILTER : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? BEAUTY_FILTER : undefined }}
                   />
                   {/* Overlay canvas draws on top of video */}                    <canvas
                       ref={overlayCanvasRef}
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                      style={isIOS
-                        ? { zIndex: 10, maxHeight: 540 }
-                        : { maxHeight: 400, width: 400, marginLeft: "auto", marginRight: "auto", zIndex: 10 }}
+                      style={{ zIndex: 10 }}
                     />
                   {/* Capture button + camera switch */}
                   <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
@@ -1183,7 +1193,7 @@ function ChamCongPage() {
               ) : (
                 /* Stamped photo preview */
                 <div className="relative">
-                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl mx-auto" style={{ maxHeight: 400, objectFit: "contain", maxWidth: isIOS ? "100%" : 400 }} />
+                  <img src={photoPreview} alt="Ảnh đã đóng dấu" className="w-full rounded-2xl mx-auto" style={{ aspectRatio: "3 / 4", objectFit: "cover" }} />
                   {/* Retake button */}
                   <button
                     type="button"

@@ -16,6 +16,8 @@ import { CENTERS, findEmployeeByLooseText, getVisibleCenterCodes, isAdminRole } 
 import { hasPermission } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import { useAppStore, getPendingSyncRecords } from "@/lib/store";
+// GĐ 273: helper dùng chung camera — crop WYSIWYG + mịn da 2 lớp giữ nét chi tiết
+import { computeCenterCrop, drawCameraFrame } from "@/lib/camera-frame";
 import { reverseGeocode } from "@/routes/api/data";
 import { uploadImage, getCloudinarySignature } from "@/routes/api/upload";
 
@@ -103,11 +105,15 @@ function CheckInPage() {
   // (bấm nút thấy khác NGAY trên màn camera, khớp 100% ảnh/video chụp) lẫn
   // canvas lúc chụp/quay. Đậm hơn GĐ 233 (1.08/1.18 quá nhẹ — anh test không
   // thấy khác): sáng 1.18 + mềm da 1.4px + màu tươi 1.35 + giữ nét tương đối 0.94.
-  const BEAUTY_FILTER = "brightness(1.18) saturate(1.35) contrast(0.94) blur(1.4px)";
+  // GĐ 273: bỏ blur khỏi chuỗi màu — blur chuyển sang LỚP 2 mịn da (blur 6px đè
+  // bán trong suốt, da mềm + giữ nét mắt/viền). Saturate/brightness giảm — hết ám vàng.
+  const BEAUTY_FILTER = "brightness(1.08) saturate(1.08)";
   // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
   const facingModeRef = useRef<"user" | "environment">("user");
   if (facingModeRef.current !== facingMode) facingModeRef.current = facingMode;
-  const [isIOS] = useState(detectIOS);
+  // GĐ 273: isIOS/bản ghi iOS-specific đã bỏ — preview + ảnh/video lưu dùng chung
+  // khung aspect 3/4 trên mọi thiết bị (không còn 2 nhánh iOS/Android lệch nhau).
+  const isIOS = false;
 
   // Desktop (lg+): đo chiều cao khối ghim (tiêu đề + bộ lọc) để thead bảng sticky ngay bên dưới
   const stickyHeaderRef = useRef<HTMLDivElement>(null);
@@ -321,13 +327,15 @@ function CheckInPage() {
 
     const w = video.videoWidth && video.videoWidth > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    canvas.width = w;
-    canvas.height = h;
+    // GĐ 273: overlay vẽ trên khung CROP 3/4 — khớp preview (aspect 3/4) + ảnh/video lưu
+    const crop = computeCenterCrop(w, h, 3, 4);
+    canvas.width = crop.sw;
+    canvas.height = crop.sh;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const layout = buildStampLayout(w, h, currentName, address, gps);
+    const layout = buildStampLayout(crop.sw, crop.sh, currentName, address, gps);
     drawStampBlock(ctx, layout);
 
     requestAnimationFrame(drawOverlay);
@@ -400,20 +408,20 @@ function CheckInPage() {
 
     const w = video.videoWidth && video.videoHeight > 100 ? video.videoWidth : (video.clientWidth || 640);
     const h = video.videoHeight && video.videoHeight > 100 ? video.videoHeight : (video.clientHeight || 480);
-    canvas.width = w;
-    canvas.height = h;
+    // GĐ 273: crop WYSIWYG theo tỉ lệ 3/4 dọc — hết ảnh lưu trống trên + lệch trái
+    const crop = computeCenterCrop(w, h, 3, 4);
+    canvas.width = crop.sw;
+    canvas.height = crop.sh;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       setIsCapturing(false);
       return;
     }
 
-    // Vẽ video frame lên captureCanvas (cần cho static photo output)
-    // GĐ 233: filter "làm đẹp" khi BẬT — vẽ xong frame phải tắt filter NGAY để
-    // chữ đóng dấu vẽ sau KHÔNG bị làm mềm theo (chữ phải luôn nét).
-    if (beauty) ctx.filter = BEAUTY_FILTER;
-    ctx.drawImage(video, 0, 0, w, h);
-    ctx.filter = "none";
+    // GĐ 273: vẽ frame crop + mịn da 2 lớp. Filter tắt ngay sau khi vẽ ảnh — chữ dấu luôn nét.
+    drawCameraFrame(ctx, video, crop, { beauty, beautyFilter: BEAUTY_FILTER });
+    const w2 = crop.sw;
+    const h2 = crop.sh;
 
     const timeStr = formatPunchTime();
     const dateStr = formatPunchDate();
@@ -421,7 +429,8 @@ function CheckInPage() {
     const freshGps = gps;
     const freshAddr = address;
 
-    const layout = buildStampLayout(w, h, currentName, freshAddr, freshGps);
+    // GĐ 273: stamp vẽ trên khung ĐÃ CROP (w2/h2) — vị trí dấu khớp ảnh lưu
+    const layout = buildStampLayout(w2, h2, currentName, freshAddr, freshGps);
     // GĐ 228f: dùng chung drawStampBlock — LUÔN chữ ngang + dưới trái (cả ngang lẫn dọc)
     drawStampBlock(ctx, layout);
 
@@ -442,23 +451,24 @@ function CheckInPage() {
   function drawRecordFrame(rec: HTMLCanvasElement, vid: HTMLVideoElement) {
     const w = vid.videoWidth > 100 ? vid.videoWidth : 640;
     const h = vid.videoHeight > 100 ? vid.videoHeight : 480;
-    if (rec.width !== w || rec.height !== h) {
-      rec.width = w;
-      rec.height = h;
+    // GĐ 273: crop WYSIWYG cùng tỉ lệ 3/4 — video lưu khớp preview
+    const crop = computeCenterCrop(w, h, 3, 4);
+    if (rec.width !== crop.sw || rec.height !== crop.sh) {
+      rec.width = crop.sw;
+      rec.height = crop.sh;
     }
     const ctx = rec.getContext("2d");
     if (!ctx) return;
-    // GĐ 233: làm đẹp từng frame video (giống ảnh) — tắt filter trước khi vẽ overlay
-    if (beauty) ctx.filter = BEAUTY_FILTER;
-    ctx.drawImage(vid, 0, 0, w, h);
-    ctx.filter = "none";
+    // GĐ 273: làm đẹp từng frame video (mịn da 2 lớp) — filter tắt trước khi vẽ overlay
+    drawCameraFrame(ctx, vid, crop, { beauty, beautyFilter: BEAUTY_FILTER });
     // Overlay canvas đang có stamp mới nhất (drawOverlay loop vẽ liên tục) —
     // composite thẳng overlay lên frame là chữ dấu khớp 100% với preview.
+    // GĐ 273: overlay phải cùng khung đã crop — lệch thì vẽ stamp lại trên (sw/sh).
     const overlay = overlayCanvasRef.current;
-    if (overlay && overlay.width === w && overlay.height === h) {
+    if (overlay && overlay.width === crop.sw && overlay.height === crop.sh) {
       ctx.drawImage(overlay, 0, 0);
     } else {
-      drawStampBlock(ctx, buildStampLayout(w, h, currentName, address, gps));
+      drawStampBlock(ctx, buildStampLayout(crop.sw, crop.sh, currentName, address, gps));
     }
   }
 
@@ -892,21 +902,20 @@ function CheckInPage() {
             <div className="relative overflow-hidden rounded-2xl border border-line bg-black">
               {!photoPreview && !videoPreview ? (
                 <>
+                  {/* GĐ 273: khung preview CỐ ĐỊNH tỉ lệ 3/4 dọc + cover — hết lệch
+                      giữa thiết bị trả stream ngang/dọc; ảnh/video lưu crop cùng tỉ lệ
+                      3/4 (computeCenterCrop) → preview khớp ảnh chụp 100%. */}
                   <video
                     ref={videoRef}
                     autoPlay
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={isIOS
-                      ? { maxHeight: 540, objectFit: "contain", filter: beauty ? BEAUTY_FILTER : undefined }
-                      : { maxHeight: 400, objectFit: "cover", maxWidth: 400, margin: "0 auto", filter: beauty ? BEAUTY_FILTER : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? BEAUTY_FILTER : undefined }}
                   />                  <canvas
                     ref={overlayCanvasRef}
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
-                    style={isIOS
-                      ? { zIndex: 10, maxHeight: 540 }
-                      : { maxHeight: 400, width: 400, marginLeft: "auto", marginRight: "auto", zIndex: 10 }}
+                    style={{ zIndex: 10 }}
                   />
 
                   <div className="absolute top-4 left-0 right-0 flex items-center justify-center gap-3" style={{ zIndex: 20 }}>
@@ -980,7 +989,7 @@ function CheckInPage() {
                     controls
                     playsInline
                     className="w-full rounded-2xl mx-auto"
-                    style={{ maxHeight: 400, objectFit: "contain", maxWidth: isIOS ? "100%" : 400 }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover" }}
                   />
                   <button
                     type="button"
@@ -992,11 +1001,12 @@ function CheckInPage() {
                   </button>
                 </div>
               ) : photoPreview ? (
-                <div className="relative">                    <img
+                <div className="relative">
+                  <img
                       src={photoPreview}
                       alt="Ảnh check-in đã đóng dấu"
                       className="w-full rounded-2xl mx-auto"
-                      style={{ maxHeight: 400, objectFit: "contain", maxWidth: isIOS ? "100%" : 400 }}
+                      style={{ aspectRatio: "3 / 4", objectFit: "cover" }}
                     />
                   <button
                     type="button"
