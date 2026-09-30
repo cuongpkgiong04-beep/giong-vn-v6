@@ -10481,3 +10481,27 @@ thành phần nào ≥ 10).
 > ngày>\ đúng kỳ; VCB kỳ ngày thường → file về 15.BANK_VCB (kỳ 29/09 đợi
 > VCB hết lỗi); TCB chờ codegen mới của anh; task Task_02 mai 17:40 tự chạy
 > full 16 báo cáo (GĐ 265); repo con commit 949ade4 — KHÔNG push chờ anh.
+
+---
+
+### GĐ 268: Hệ sinh thái — MIA TOOL E2E PRODUCTION 4/4 PASS (repo con C.122) (2026-09-30)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `925cb8d`) | fix(mia): GĐ C.122 — E2E production 4/4 PASS; 2 root cause: thiếu header `request-id` (WAF 403) + ngày phải DD/MM/YYYY (400); OCR retry 24 + bỏ stroke nhiễu captcha |
+| (app tổng) | docs(agents): GĐ 268 — không đổi code |
+
+> **Bối cảnh:** Đại ca tạo xong `.secrets/mia_user.txt` + `mia_pass.txt` và giao em tự test. Em chạy E2E 2 tầng: máy em (login + fetch thật qua tool 43) → service GIONG_SMED_Agent thật trên máy anh (job tạo qua tunnel API — file về OUTPUT).
+
+> **2 root cause fix (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.122):**
+> 1. **WAF F5 chặn 403 "hành vi không hợp lệ"** — Cổng HĐĐT Quốc gia yêu cầu header `request-id: <uuid v4>` trên MỌI request (axios interceptor của bundle Next.js); thiếu = 403 cho DÙ captcha/user/pass đúng. Tìm ra bằng cách đọc bundle của Cổng, probe TLS fingerprint là lạc hướng.
+> 2. **API ngày phải DD/MM/YYYY** — gửi ISO `2026-09-28` → 400 "Truy vấn không hợp lệ". Bằng chứng trong `requests_log_*.txt` (log request thật của MIA trên máy anh — tài nguyên tool cũ chính là spec API chính xác nhất).
+
+> **✅ Kết quả E2E production (4/4 PASS):** mua-vào-tổng-quát 33 HĐ (Excel 15 cột template MIA) · mua-vào-chi-tiết 44 dòng × 37 cột (MCCQT + NCC đầy đủ) · bán-ra 2 phân hệ 0 file (28/09 Chủ nhật không phát sinh — hợp lệ). File về đúng `OUTPUT\18.MIA_MUA\2026-09-28\`; log agent xác nhận trọn chuỗi claim → tool → report.
+
+> **⚠️ Bổ sung buổi sáng (từ log agent anh yêu cầu xem):** service API Server sáng 07:38 crash 1 lần (`_ctypes DLL write protected` — máy restart dở) rồi tự sống lại 07:44; SQL Server `.\SQLEXPRESS` chờn kết nối 45 lần (lỗi 08001) 07:44-07:46 rồi tự hồi phục. Giờ hạ tầng khỏe — không cần hành động.
+
+> **Tiêu chí kiểm chứng:** Anh mở web app con → DOWNLOAD DỮ LIỆU → DỮ LIỆU TỪ MIA TOOL → 4 trang tạo job được (kỳ nào cũng ra file trừ ngày không phát sinh); Excel mở đúng template MIA; phiên login token dùng nhiều giờ (job liên tiếp không cần login lại mỗi lần — tool tự dùng lại token trong 1 lần chạy).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). app tổng 4.5.0 / repo con 6.5.0 giữ nguyên.
+
