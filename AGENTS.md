@@ -196,6 +196,7 @@
 > |---|---|---|---|
 > | **Agent Desktop** (Windows) | `giong-vn-v6` | `giong-vn-v6/giong-apps` | `main` |
 > | **Agent CLI** (Terminal) | `giong-vn-v6-cli` | `giong-vn-v6/giong-apps-cli` | `agent-cli` |
+> | *(Agent 3+ thêm vào đây + cập nhật AGENT_REGISTRY.md)* | | | |
 >
 > **Quy tắc làm việc song song:**
 > 1. **Agent nào nhận việc → làm đúng working tree của mình** (đọc `git worktree list` biết ngay mình ở đâu + nhánh nào). KHÔNG đụng working tree của Agent kia.
@@ -204,6 +205,39 @@
 > 4. **Khi Đại ca nói "Push":** Agent nhận lệnh MERGE nhánh `agent-cli` về `main` (cả 2 repo) + rà trùng lặp (nguyên tắc 3) + bump version + push 1 lần. Conflict khi merge → dừng, báo Đại ca.
 > 5. **Untracked files (screenshots/, scripts test tạm, attachments/, .env)** KHÔNG tự động có trong worktree mới (git chỉ clone tracked files) — Agent CLI tự tạo tạm của mình, KHÔNG quay về worktree kia lấy.
 > 6. **Worktree mới thiếu node_modules** → `npm install` 1 lần trước khi chạy dev/build (worktree app tổng + worktree repo con đều vậy).
+
+### 🎫 CẤP SỐ GIAI ĐOẠN ĐA AGENT — REGISTRY LOCK (bắt buộc — hiệu lực GĐ 285, 2026-10-01):
+
+> **Vấn đề:** 3 lần trùng số GĐ (234/237/247) vì số được "cấp" lúc GHI XONG
+> chứ không bị KHÓA lúc BẮT ĐẦU LÀM — việc dài 1-2 tiếng, giữa chừng agent
+> khác vào grep → cùng chọn 1 số. Kèm 1 lần cướp commit (GĐ 257), author email
+> sai (GĐ 264), add nhầm file agent khác (GĐ 274).
+>
+> **Nguồn sự thật duy nhất: file `AGENT_REGISTRY.md` (app tổng — Đại ca chốt
+> 1 file duy nhất, quản lý CẢ dải GĐ app tổng LẪN dải C.x repo con).**
+>
+> **Quy trình claim (TRƯỚC KHI LÀM — thay hoàn toàn cách "grep số lớn nhất +1"):**
+> 1. `git log --all --oneline -15` + đọc bảng trong AGENT_REGISTRY.md → số mới =
+>    max + 1 (worktree dùng chung `.git` → commit local thấy ngay, không cần push).
+>    GĐ và C.x là 2 dải độc lập, không đếm chung.
+> 2. Thêm 1 dòng vào bảng registry: số + tên Agent + nhiệm vụ + **PHẠM VI FILE dự
+>    kiến** + trạng thái 🔒 → **COMMIT NGAY** (commit chỉ chứa registry — 0 đụng
+>    code, KHÔNG vi phạm quy tắc KHÔNG tự push GĐ 229).
+> 3. Làm việc → xong: ghi entry AGENTS.md + commit code → sửa dòng registry 🔒 →
+>    ✅ kèm hash → commit cuối (docs-only).
+> 4. 2 agent claim cùng số (hiếm): ai commit VÀO TRƯỚC giữ số — agent sau lấy
+>    max+1 lại, commit lại. KHÔNG tranh số.
+>
+> **3 QUY TẮC COMMIT CỨNG (áp mọi agent, mọi commit):**
+> 1. **CẤM `git add .` / `git add -A`** — chỉ add TƯỜNG MINH từng file của mình;
+>    `git status --short` trước khi add, file lạ = của agent khác → KHÔNG đụng.
+> 2. **Commit message chuẩn:** `feat|fix|docs(<scope>): GĐ <số> (<tên Agent>) — mô tả`
+>    (repo con: `C.x (<tên Agent>)`) — truy vết ai làm gì bằng `git log`.
+> 3. **Checklist khởi động phiên:** pull CẢ 2 repo → `git config user.email` phải
+>    `cuongpk.giong04@gmail.com` (chặn GĐ 264) → đọc AGENTS.md + registry mới nhất
+>    → claim số TRƯỚC khi viết code đầu tiên.
+>
+> **Chi tiết đầy đủ + bảng khóa số trực tiếp:** xem `AGENT_REGISTRY.md`.
 >
 > **Lệnh cơ bản (Agent đọc khi cần):** `git worktree list` (xem các working tree) · `git -C <worktree> log --oneline -5` (xem commit Agent kia) · merge khi Push: `git checkout main && git merge agent-cli`.
 
@@ -11322,3 +11356,64 @@ thành phần nào ≥ 10).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
 > tổng 4.7.0 / repo con 6.7.0 — sẽ bump khi Anh nói "Push".
+
+---
+
+### GĐ 285: Ban hành REGISTRY LOCK — hệ thống cấp số Giai đoạn đa Agent + 3 quy tắc commit cứng (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| `e97ef93` | chore(registry): tạo AGENT_REGISTRY.md — bảng khóa số 2 dải (GĐ + C.x) + quy trình claim 5 bước + 3 quy tắc commit cứng + lịch sử 7 sự cố |
+| (mới) | docs(agents): mục "CẤP SỐ GIAI ĐOẠN ĐA AGENT" vào khối Worktree ĐA AGENT + entry GĐ 285; docs repo con C.137 |
+
+> **Yêu cầu của Đại ca (01/10):** 4-5 AI Agent cùng đọc + sửa dự án, cần cách
+> ghi nhận GĐ không trùng lặp + quản lý commit — phân tích và đưa giải pháp ổn
+> định nhất.
+>
+> **Đã chạy đúng quy trình 5 bước (và nhiệm vụ này là lần chạy đầu của cơ chế
+> mới):** phân tích 7 sự cố đa Agent trong lịch sử (234/237/247 trùng số — grep
+> race; 257 cướp commit; 264 author email sai → Vercel BLOCKED; 267 agent lạc
+> loài; 274 add nhầm file) → trình 3 PA kèm dự đoán (PA-1 Registry lock / PA-2
+> chia dải số / PA-3 giữ nguyên) → anh chốt PA-1 + claim MỌI nhiệm vụ + 1 file
+> ở app tổng → triển khai.
+>
+> **Chân rễ đã chẩn đoán:** số GĐ được "cấp" lúc GHI XONG chứ không bị KHÓA lúc
+> BẮT ĐẦU LÀM. Việc dài 1-2 tiếng — 2 agent grep cùng lúc → cùng chọn 1 số
+> (TOCTOU). Giải pháp chuyển sang mô hình "grab 1 số lấy vé": claim TRƯỚC bằng
+> commit ngay.
+>
+> **Kiến trúc (3 tài liệu phân vai rõ):**
+> - **`AGENT_REGISTRY.md` (app tổng, MỚI)** — NGUỒN SỰ THẬT DUY NHẤT: bảng khóa
+>   số 2 dải (GĐ app tổng + C.x repo con — 1 bảng duy nhất theo chốt), danh sách
+>   Agent đăng ký, quy trình claim 5 bước, cách resolve conflict, lịch sử sự cố.
+> - **AGENTS.md app tổng** — mục "🎫 CẤP SỐ GIAI ĐOẠN ĐA AGENT" đặt ngay trong
+>   khối Worktree ĐA AGENT (GĐ 233) — nơi agent đọc đầu tiên; entry GĐ 285.
+> - **AGENTS.md repo con** — mục C.137 rút gọn + trỏ về registry (không tạo file
+>   registry riêng ở repo con — 1 file duy nhất theo chốt).
+>
+> **3 quy tắc commit cứng (chống tái diễn GĐ 257/264/274):** (1) CẤM `git add .`/`-A`
+> — chỉ add tường minh từng file, `git status --short` trước khi add; (2) commit
+> message chuẩn `GĐ <số> (<tên Agent>)` — truy vết được; (3) checklist khởi động
+> phiên: pull 2 repo + kiểm tra `user.email` = `@gmail.com` + đọc registry + claim.
+>
+> **LESSON LEARNED — Cấp phát tài nguyên chung phải KHÓA TRƯỚC, không phải phát
+> hiện trùng rồi xử lý (2026-10-01):** 3 lần trùng số đều bị phát hiện SAU khi
+> làm xong → amend/nhảy số — tốn công xử lý mỗi lần. Mô hình đúng: tài nguyên
+> chung (số GĐ, file, module) phải được KHÓA bằng commit ngay khi bắt đầu, kèm
+> khai báo phạm vi để agent khác tự tránh. Giống khóa hàng trong DB (SELECT FOR
+> UPDATE) hay lock file hệ điều hành — khóa trước, làm sau, nhả khóa khi xong.
+> Khi số lượng thực thể song song tăng (2 → 4-5 agent), quy trình "làm xong mới
+> ghi" tự phá vỡ — quy trình phải thiết kế cho THỂ LƯỢNG tối đa chứ không phải
+> số lượng hiện tại.
+>
+> **⚠️ Phạm vi:** AGENT_REGISTRY.md + AGENTS.md (app tổng + repo con) — KHÔNG
+> đụng code. 3 file docs .bat/log của agent khác trong working tree KHÔNG add
+> (quy tắc 1 — áp dụng ngay lần đầu).
+>
+> **Tiêu chí kiểm chứng:** `AGENT_REGISTRY.md` tồn tại + có dòng khóa GĐ 285
+> trạng thái ✅; commit message chứa "(Trợ lý Freebuff)"; nhiệm vụ KẾ TIẾP của
+> MỌI agent claim số 286+ qua registry trước khi viết code; 2 agent claim cùng
+> số → agent sau tự nhường theo quy tắc resolve.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
+> tổng 4.7.0 / repo con 6.7.0.

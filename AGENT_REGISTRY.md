@@ -21,7 +21,7 @@
 
 | Số | Agent | Nhiệm vụ | Phạm vi file dự kiến | Trạng thái | Thời điểm claim | Hoàn tất |
 |---|---|---|---|---|---|---|
-| GĐ 285 | Trợ lý Freebuff | Ban hành quy trình Registry lock + 3 quy tắc commit cứng | AGENTS.md, AGENT_REGISTRY.md, start-session.md (app tổng + repo con docs) | 🔒 | 01/10 | — |
+| GĐ 285 | Trợ lý Freebuff | Ban hành quy trình Registry lock + 3 quy tắc commit cứng | AGENT_REGISTRY.md, AGENTS.md (2 repo docs) | ✅ | 01/10 | e97ef93 (registry) + commit docs |
 
 ---
 
