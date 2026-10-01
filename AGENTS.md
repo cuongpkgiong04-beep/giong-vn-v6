@@ -11406,6 +11406,19 @@ thành phần nào ≥ 10).
 > ghi" tự phá vỡ — quy trình phải thiết kế cho THỂ LƯỢNG tối đa chứ không phải
 > số lượng hiện tại.
 >
+> **⚠️ SỰ CỐ THỰC ĐỊA ngay phiên đầu — commit repo con nuốt file agent khác
+> (lỗi của chính em, bắt được bằng self-audit ngay sau commit):** commit đầu
+> C.137 (`255dbc7`) gom cả `42_tpb_saoke.py` + 93 dòng thay đổi CÓ CHỦ ĐÍCH của
+> agent khác (đang đổi luồng TPB — việc dở unstaged). ROOT CAUSE MỚI: file nằm
+> **SẴN TRONG INDEX từ phiên trước** — `git add AGENTS.md` KHÔNG xóa phần staged
+> cũ. **Đã xử lý sạch:** `git reset HEAD~1` → file agent khác về nguyên trạng
+> unstaged → commit lại CHỈ AGENTS.md sau khi `git diff --cached --stat` xác
+> nhận 1 file (`4c2a3c2`). Quy tắc mới đã bổ sung vào registry: **TRƯỚC MỌI
+> commit phải `git diff --cached --stat`** — staged phải đúng bằng danh sách
+> file mình định commit. Đây là lần thứ 2 dạng này (GĐ 257 + GĐ 285) — GĐ 257
+> do add sai, GĐ 285 do index bẩn từ phiên trước — 2 đường vào khác nhau, cùng
+> một cửa chặn: soi staged trước commit.
+>
 > **⚠️ Phạm vi:** AGENT_REGISTRY.md + AGENTS.md (app tổng + repo con) — KHÔNG
 > đụng code. 3 file docs .bat/log của agent khác trong working tree KHÔNG add
 > (quy tắc 1 — áp dụng ngay lần đầu).

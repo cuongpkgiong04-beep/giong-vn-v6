@@ -21,7 +21,7 @@
 
 | Số | Agent | Nhiệm vụ | Phạm vi file dự kiến | Trạng thái | Thời điểm claim | Hoàn tất |
 |---|---|---|---|---|---|---|
-| GĐ 285 | Trợ lý Freebuff | Ban hành quy trình Registry lock + 3 quy tắc commit cứng | AGENT_REGISTRY.md, AGENTS.md (2 repo docs) | ✅ | 01/10 | e97ef93 (registry) + commit docs |
+| GĐ 285 | Trợ lý Freebuff | Ban hành quy trình Registry lock + 3 quy tắc commit cứng | AGENT_REGISTRY.md, AGENTS.md (2 repo docs) | ✅ | 01/10 | e97ef93 + 81219dc (app tổng) · 4c2a3c2 (repo con) |
 
 ---
 
@@ -66,8 +66,15 @@
    Trước khi add: `git status --short` đối chiếu — file lạ KHÔNG nằm trong phạm
    vi khai báo ở bảng trên = của agent khác đang dở → KHÔNG add, KHÔNG đụng,
    KHÔNG checkout/revert nó (trừ khi chính mình tạo).
+   **⚠️ Bắt buộc thêm (bắt được ngay phiên đầu GĐ 285):** TRƯỚC MỌI `git commit`
+   chạy `git diff --cached --stat` — staged phải ĐÚNG BẰNG danh sách file mình
+   định commit. File của agent khác có thể nằm SẴN trong index từ phiên trước
+   (`git add <file mình>` KHÔNG xóa phần staged cũ) — commit sẽ nuốt luôn.
 2. **Commit message chuẩn:** `feat|fix|docs(<scope>): GĐ <số> (<tên Agent>) — mô tả`
    (repo con: `C.x (<tên Agent>)`). Truy vết được ai làm gì bằng `git log`.
+   **⚠️ Kiểm tra staged bắt buộc trước commit:** `git diff --cached --stat` phải
+   đúng bằng danh sách file mình định commit (file agent khác có thể nằm sẵn
+   trong index từ phiên trước — Lesson phiên đầu GĐ 285).
 3. **Checklist khởi động phiên (mọi agent, mọi phiên):**
    - `git pull origin main` CẢ 2 repo (nguyên tắc 1 GĐ 242 — pull trước mỗi phiên)
    - `git config user.email` phải là `cuongpk.giong04@gmail.com` — sai = sửa ngay
@@ -89,6 +96,7 @@
 | 264 | Author email `@gmal.com` từ worktree CLI → Vercel BLOCKED | Worktree mới thiếu config email | Commit docs mới |
 | 267 | Agent chạy tay PID lạc loài poll song song service | Không đăng ký phiên | Kill tay |
 | 274 | Push gặp 2 file của agent khác đang dở | Quét phạm vi trước add | Checkout -- |
+| GĐ 285 (phiên đầu) | Commit repo con nuốt `42_tpb_saoke.py` của agent khác — file nằm SẴN trong index từ phiên trước | Chưa check `git diff --cached` trước commit | `git reset HEAD~1` → commit lại chỉ AGENTS.md (`4c2a3c2`) — file agent khác về nguyên trạng |
 
 **Chốt của Đại ca (GĐ 285):** từ GĐ này mọi nhiệm vụ claim trước bằng registry —
 hết trạng thái "phát hiện trùng rồi mới xử lý".
