@@ -11059,3 +11059,71 @@ thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-10-01 (GĐ 280 — audit 3 bước SMED/MISA; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 281: Bug MIA — 4 trang báo cáo lỗi "query_key không hỗ trợ" + job chạy lại cùng kỳ báo sai "thiếu file" (repo con C.134) (2026-10-01)
+
+> **BUG REPORT của Đại ca (01/10, kèm 4 ảnh):** (1) "Mua vào - Chi tiết (MiaTool)"
+> chạy lâu không ra dữ liệu như lần trước — 2 job 11:25 + 12:13 web báo vàng
+> "Chưa hoàn thành — thiếu file 0/1"; (2) trang BÁO CÁO chi tiết + (3) tổng quan
+> bấm Chạy báo cáo → lỗi đỏ `query_key 'mia-muavao-*' không hỗ trợ — các key
+> hợp lệ: …` (danh sách 22 key không có mia); (4) "Mua vào - Tổng quan"
+> download Hoàn thành đúng. "Các báo cáo cũng không chạy ra được."
+
+> **ROOT CAUSE — 2 lỗi độc lập (bằng chứng log agent + code + DB):**
+> 1. **Whitelist QUERY_KEYS thiếu 4 key mia (C.123 quên):** `_REPORT_BUILDERS`
+>    có đủ 26 builder (4 mia từ C.123) nhưng `QUERY_KEYS` chỉ 22 →
+>    `run_sql_report` dòng 2473 chặn. E2E C.123 hôm trước gọi builder Python
+>    TRỰC TIẾP nên không đi qua whitelist → không phát hiện.
+> 2. **Agent đếm "file mới" theo TÊN file** (`before` snapshot tên → `after`
+>    loại tên trùng): tool 43 chạy lại cùng kỳ GHI ĐÈ cùng tên
+>    `HDCTMuaVao<kỳ>.xlsx` → job 2 trở đi luôn đếm 0 file → web badge vàng
+>    "thiếu file" SAI BẰNG CHỨNG. Log chứng minh job Chi tiết 11:14 SÁNG đã
+>    thành công ("✅ 1 file Excel mới" + ETL nạp **595 dòng** vào GiondDB từ
+>    11:21) — dữ liệu KHÔNG mất, chỉ badge đếm sai. Tổng quan chạy đúng vì
+>    tên file kỳ 30/09 lần đầu xuất hiện (chưa từng có).
+
+> **FIX (PA-1 Đại ca chốt):**
+> 1. `sql_reports.py`: `QUERY_KEYS` thêm 4 key `mia-muavao-tongquan/chitiet`,
+>    `mia-banra-tongquan/chitiet` → 26 key = 26 builder (0 lệch).
+> 2. `40_web_agent.py`: đếm file theo **MTIME** — `run_started = time.time()-2s`
+>    (dung sai 2s granularity filesystem) trước khi chạy tool; `after` lọc
+>    `p.stat().st_mtime >= run_started` thay vì tên không trùng — áp MỌI
+>    phân hệ (SMED/MISA/MIA/BANK đều lợi: tool ghi đè cùng tên vẫn đếm đúng,
+>    file cũ không đụng không bị đếm oan).
+
+> **✅ Verify (đo thật từng bước):** py_compile OK cả 2 file; QUERY_KEYS =
+> BUILDERS 26/26 0 lệch; **chạy thật qua đường production** `run_sql_report`
+> (lesson C.123 — verify phải qua đúng đường) kỳ 01→30/09: chi tiết **638
+> dòng × 15 cột**, tổng quan **763 dòng × 15 cột** (gồm kỳ cũ overlap — đúng
+> thiết kế file gộp kỳ MIA); mô phỏng mtime: ghi đè đếm được, file cũ không
+> đụng không đếm oan; agent restart 14:35 nạp bản mới (nguyên tắc GĐ 266 —
+> agent rảnh khi restart).
+
+> **Kết luận cho Đại ca:** Dữ liệu chi tiết 595 dòng ĐÃ nạp GiondDB từ 11:21
+> sáng — sau fix, trang BÁO CÁO Chi tiết/Tổng quan Mua vào + Bán ra chạy ra
+> NGAY không cần tải lại (trang báo cáo đã anh test kỳ 01/09→30/09: bấm
+> "Chạy báo cáo" kỳ nào đó sẽ hiện bảng 15 cột). Trang DOWNLOAD khi chạy lại
+> cùng kỳ giờ đếm đúng "1 file" (ghi đè = file của lần chạy này) — badge
+> "thiếu file" sai không còn.
+
+> **LESSON LEARNED — Verify tính năng mới phải qua CÙNG đường production
+> (C.123 tái phát — lần 2):** E2E gọi builder Python trực tiếp lọt whitelist
+> QUERY_KEYS 5 ngày. "Code đúng" ≠ "chạy được qua đường user" — checklist
+> verify: bấm qua UI/endpoint thật (query job qua web → agent → builder),
+> đừng test hàm riêng.
+>
+> **LESSON LEARNED — Đếm sản phẩm theo TÊN file là bom khi tool ghi đè cùng
+> tên (2026-10-01):** Chạy lại cùng kỳ là thao tác thường (tool lần trước chết
+> giữa chừng, user muốn dữ liệu mới) — tool ghi cùng tên kỳ là chuẩn (ETL +
+> web history đều phụ thuộc tên). "File mới" đúng nghĩa = "file được GHI trong
+> lần chạy này" — so mtime với thời điểm bắt đầu tool, không so tên. Dấu hiệu
+> nhận biết: job "thiếu file" nhưng thư mục đúng có file đúng kỳ + ETL nạp
+> được → kiểm tra cách đếm của runner trước khi nghi tool.
+
+> **App tổng không đổi code** — chỉ ghi lịch sử. Version KHÔNG bump (chờ lệnh
+> Push — app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 281 — fix whitelist QUERY_KEYS MIA + đếm file theo mtime; app tổng 4.6.1 / repo con 6.6.1)*
+*Người cập nhật: Trợ lý Freebuff*
