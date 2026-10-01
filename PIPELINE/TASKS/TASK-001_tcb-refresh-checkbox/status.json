@@ -1,0 +1,12 @@
+{
+  "task": "TASK-001",
+  "title": "TCB 2 báo cáo thiếu hộp Tải dữ liệu mới nhất trước khi chạy",
+  "current_stage": "plan done",
+  "owner": "planner (Trợ lý Freebuff)",
+  "next_action": "Đại ca duyệt plan.md → dán STARTERS/CODER.txt vào phiên Coder",
+  "updated_at": "2026-10-02",
+  "history": [
+    { "stage": "brief", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" },
+    { "stage": "plan done — root cause: SQL_SOURCES_BY_QUERY thiếu 2 key TCB (web-side); agent-side đã có", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" }
+  ]
+}

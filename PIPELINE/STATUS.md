@@ -7,7 +7,8 @@ Cập nhật lúc: 02/10/2026 — GĐ 290 (Trợ lý Freebuff — dựng hệ)
 
 | Task | Tóm tắt | Brief | Planner | Coder | Tester | Reviewer | Kết luận cuối |
 |---|---|---|---|---|---|---|---|
-| *(chưa có task — chờ Đại ca giao việc đầu tiên qua Planner)* | | | | | | | |
+| TASK-001 | TCB 2 báo cáo thiếu hộp "Tải dữ liệu mới nhất" — root cause: `SQL_SOURCES_BY_QUERY` thiếu 2 key TCB | ✅ | ✅ plan done (`plan.md` — fix 2 dòng `-smed.ts`) | ⬜ | ⬜ | ⬜ | chờ duyệt plan |
+| *(task kế tiếp — chờ Đại ca giao việc qua Planner)* | | | | | | | |
 
 ## Chú giải giai đoạn
 
