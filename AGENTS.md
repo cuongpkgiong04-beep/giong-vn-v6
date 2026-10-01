@@ -11430,3 +11430,44 @@ thành phần nào ≥ 10).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
 > tổng 4.7.0 / repo con 6.7.0.
+
+---
+
+### GĐ 286: TPB sao kê — PA-1 revert luồng gốc "Xuất sao kê" + tải row ĐÚNG KỲ (repo con C.138) (2026-10-01)
+
+> **Yêu cầu của Đại ca (01/10 chiều):** Phần Download "Sao kê ngân hàng TPB" —
+> cách lấy dữ liệu phải đúng FILE CỦA NGÂN HÀNG, chưa được phép điều chỉnh gì,
+> giữ nguyên bản 100% dữ liệu; ETL làm sau ở bước báo cáo. Em đã trình đối chiếu
+> 2 file cùng kỳ (file chuẩn `TPBANK_HISTORY…` 15 GD đủ 2 chiều vs `DSGD` PA-A
+> 5 GD chỉ ghi nợ — thiếu toàn bộ tiền vào) → Đại ca chốt **PA-1: revert luồng
+> gốc**. Chi tiết kỹ thuật đầy đủ ở **AGENTS.md repo con GĐ C.138** (probe 4
+> vòng: tab "Sao kê đã xuất" không có role button → click bằng TEXT; TPB xử lý
+> vài phút → tải "row mới nhất" đâm row stale kỳ khác → tìm row ĐÚNG KỲ chờ 3
+> phút; file GIỮ NGUYÊN 100%, không biến đổi).
+
+> **✅ E2E thật 2 kỳ PASS (16:47):** 08→12/09 = **15 GD** đủ 2 chiều (Tổng Có
+> 1.007.800.000 + Tổng Nợ 1.060.667.000); 25→29/09 = **1 GD** — file xlsx chuẩn
+> ngân hàng về đúng `OUTPUT\17.BANK_TPB\<từ ngày>\`, log ghi số giao dịch.
+
+> **LESSON LEARNED — "row mới nhất" là giảm phát sai khi nền tảng có hàng chờ
+> xử lý (2026-10-01):** TPB xử lý xuất mất vài phút — tải ngay sau bấm = đâm
+> row stale (kỳ khác, format khác). Cách đúng: tìm bản ghi THEO ĐÍNH DANH
+> NGHIỆP VỤ (kỳ yêu cầu) + chờ nó xuất hiện, không so "mới nhất" mù.
+
+> **LESSON LEARNED — Kết luận "nguồn hỏng" phải chờ đủ thời gian xử lý thực tế
+> (2026-10-01):** C.131 khép án "TPB sinh file rỗng" sau vài giây chờ — thực tế
+> TPB xử lý vài phút và lần chạy 16:47 hôm nay trả file 15 GD đúng kỳ. "File
+> rỗng" là hiện tượng tạm thời phía TPB, không phải luồng hỏng.
+
+> **Restart đã xong 15:07 (trước C.138) — cần RESTART LẠI khi agent rảnh để
+> nạp tool 42 bản C.138.** Registry: C.138 🔒 → ✅ `e003712` (repo con).
+
+> **Tiêu chí kiểm chứng:** Job TPB kỳ bất kỳ qua web → file TPBANK_HISTORY xlsx
+> chuẩn về đúng thư mục ngày; TPB chưa xử lý xong → log chờ 15s/lần tới 3 phút
+> rồi mới báo lỗi rõ; KHÔNG còn file DSGD thiếu tiền vào.
+
+**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
+tổng 4.7.0 / repo con 6.7.0.
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 286 — TPB revert luồng gốc C.138; app tổng 4.7.0 / repo con 6.7.0)*
+*Người cập nhật: Trợ lý Freebuff*
