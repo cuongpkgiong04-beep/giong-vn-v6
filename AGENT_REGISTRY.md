@@ -21,6 +21,7 @@
 
 | Số | Agent | Nhiệm vụ | Phạm vi file dự kiến | Trạng thái | Thời điểm claim | Hoàn tất |
 |---|---|---|---|---|---|---|
+| C.138 (Trợ lý Freebuff) | Trợ lý Freebuff | PA-1 revert tool 42 TPB về luồng gốc "Xuất sao kê" + tải row ĐÚNG KỲ | giong-apps/apps/banhang/agent/42_tpb_saoke.py + AGENTS.md (2 repo) | 🔒 | 01/10 16:50 | |
 | GĐ 285 | Trợ lý Freebuff | Ban hành quy trình Registry lock + 3 quy tắc commit cứng | AGENT_REGISTRY.md, AGENTS.md (2 repo docs) | ✅ | 01/10 | e97ef93 + 81219dc (app tổng) · 4c2a3c2 (repo con) |
 
 ---
