@@ -11516,3 +11516,28 @@ tổng 4.7.0 / repo con 6.7.0.
 > nhau (VD DTTDT 14-27/09 rồi 20-30/09) → chạy ETL → báo cáo doanh thu từng ngày
 > KHÔNG tăng gấp đôi; mở báo cáo đã xem cũ khi DB vừa nạp data mới → banner vàng
 > hiện trong ~10s (poll) + bấm Chạy lại → báo cáo mới gồm data mới.
+
+### GĐ 288: App con — Sidebar bậc 3 MIA TOOL phân cấp rõ (repo con C.140) (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `4baf8bb` + `b142486`) | fix(ui): C.140 — Sidebar bậc 3 MUA VÀO/BÁN RA chữ nhỏ 10.5px + nghiêng + lùi đầu dòng pl-5 |
+
+> **Yêu cầu của Đại ca (01/10):** Sidebar app con — DOWNLOAD DỮ LIỆU \ DỮ LIỆU TỪ
+> MIA TOOL: 2 mục con "BẢNG KÊ HĐ GTGT MUA VÀO/BÁN RA" cần phân cấp rõ — chữ nhỏ
+> hơn nhóm chính + lùi đầu dòng + nghiêng. Chi tiết kỹ thuật + verify 6/6 PASS ở
+> **AGENTS.md repo con GĐ C.140**.
+>
+> **Điểm nhấn kỹ thuật:** root cause thật của bug phân tầng là **đệ quy truyền
+> `depth={2}` CỨNG** cho mọi nhóm con (không phải thiếu style) — SidorbarNhom
+> bậc 2 và bậc 3 cùng depth → style bậc 3 dính cả MIA TOOL. Fix: đệ quy truyền
+> `depth + 1`. Phát hiện nhờ đo Playwright computed style (không đoán qua ảnh).
+>
+> **Trùng số lần 2 (lesson GĐ 237):** em claim C.139 17:10, Agent khác ghi GĐ 287
+> dùng C.139 17:40 → em nhảy C.140. Registry đã đánh dấu C.139 ⛔ (của agent khác)
+> + thêm C.140 ✅.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.7.0 / repo con 6.7.0).
+
+*Cập nhật: 2026-10-01 (GĐ 288 — Sidebar bậc 3 MIA phân cấp; app tổng 4.7.0 / repo con 6.7.0)*
+*Người cập nhật: Trợ lý Freebuff*
