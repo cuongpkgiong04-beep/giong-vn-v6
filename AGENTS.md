@@ -10960,3 +10960,32 @@ thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-10-01 (GĐ 278 — fix tool TPB + root cause TPB sinh file rỗng; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 279: Hệ sinh thái — PA-A TPB: đổi tool 42 sang luồng "Truy vấn giao dịch → Tải bảng kê" (repo con C.132) (2026-10-01)
+
+> **Đại ca chốt PA-A** (tiếp GĐ 278): đổi tool 42 TPB sang luồng Truy vấn giao
+> dịch — có data thật ngay. Chi tiết đầy đủ ở **AGENTS.md repo con GĐ C.132**
+> (commit `3b79f60` + `857e837`).
+
+> **Tóm tắt:** Vào "Truy vấn giao dịch" → mở pill kỳ → fill 2 input
+> `mat-datepicker-input` (dd/mm/yyyy + Enter) → "Xác nhận" → "Tải bảng kê" →
+> file `DSGD_Chuyen_tien_<từ ngày>.xlsx` về `OUTPUT\17.BANK_TPB\<từ ngày>\`.
+> **E2E thật 2 kỳ PASS:** 08→12/09 = 5 GD đúng kỳ (29/09 ngoài kỳ bị loại
+> đúng); 01→30/09 = 6 GD + tổng 1.071.526.000đ.
+
+> **⚠️ ĐỊNH MỨC NGHIỆP VỤ:** Bảng kê Truy vấn gồm giao dịch KHỞI TẠO từ IB
+> (chi lương, liên ngân hàng…) — **KHÔNG gồm tiền NẠP tự động vào TK** (ghi có
+> từ POS/bank khác). Phần tiền vào vẫn thiếu cho tới khi TPB sửa luồng "Xuất
+> sao kê" — Đại ca gọi hotline TPB vẫn nên làm song song (phương án B), khi
+> TPB sửa có thể quay lại luồng chuẩn nếu cần.
+
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH — tool 42 mới
+> có hiệu lực sau restart; trước restart job TPB trên web vẫn chạy luồng cũ.
+
+> **App tổng không đổi code** — chỉ ghi lịch sử. Version KHÔNG bump (chờ lệnh
+> Push — app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 279 — PA-A TPB luồng Truy vấn; app tổng 4.6.1 / repo con 6.6.1)*
+*Người cập nhật: Trợ lý Freebuff*
