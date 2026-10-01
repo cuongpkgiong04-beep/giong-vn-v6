@@ -11179,5 +11179,68 @@ thành phần nào ≥ 10).
 
 **Version:** app tổng **4.7.0** · repo con **6.7.0** (bump theo lệnh Push; checklist GĐ 138 ✓).
 
-*Cập nhật lần cuối: 2026-10-01 (GĐ 282 — PA-B device flow + SSH key + Push lần 4; app tổng 4.7.0 / repo con 6.7.0)*
+*Cập nhật lần cuối: 2026-10-01 (GĐ 283 — fix MIA Ngày lập + lệch tổng; app tổng 4.7.0 / repo con 6.7.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 283: MIA — báo cáo Chi tiết thiếu Ngày lập + 2 báo cáo MIA lệch tổng cộng (2026-10-01)
+
+> **BUG REPORT của Đại ca (01/10, 2 ảnh):** (1) Báo cáo "Bảng kê HĐ GTGT mua vào -
+> Chi tiết (MiaTool)" không có ngày tháng của hóa đơn; (2) Chi tiết + Tổng quan
+> cùng chạy kỳ tháng 9/2026 nhưng tổng cộng LỆCH NHAU — "nhìn số cộng tổng là
+> không đúng rồi. Em kiểm tra cách lấy dữ liệu và cách xây dựng bảng".
+>
+> **Chẩn đoán bằng DB thật (pyodbc GiondDB — chi tiết đầy đủ ở repo con GĐ
+> C.136, commit `fd6989d`):**
+> - **Lỗi 1 (thiếu ngày):** bảng `mia_hddt_hh` (tạo GĐ C.124) không có cột
+>   `ntao` (Ngày lập) — file Excel HDCT có ntao ở cột 3 nhưng ETL không đọc.
+> - **Lỗi 2 (lệch tổng — 2 lớp):** (a) DB tích 3 kỳ LỒNG nhau (01→29 + 01→30 +
+>   28→28 — tool tải 01-30 không xóa kỳ cũ lồng) → builder lọc overlap trả
+>   **763 HĐ** thay vì 385 (TQ) / 638 dòng thay vì 594 (CT); (b) `tgtttbso`
+>   trong file CT là giá trị CẤP HÓA ĐƠN lặp lại trên MỖI dòng hàng hóa →
+>   Subtotal chi tiết 7.772.236.782 vs Tổng quan 5.481.247.927.
+> - **Phát hiện công thức MIA:** `tgtttbso = tgtcthue + tgtthue` (KHÔNG trừ
+>   chiết khấu `ttcktmai`) — xác nhận từng hóa đơn (C26TSM-855: 20.400.000 +
+>   2.040.000 = 22.440.000, ck 3.600.000 không trừ).
+>
+> **FIX (PA-1 Đại ca chốt — fix đủ cả 3):**
+> 1. **ntao end-to-end:** CREATE TABLE + **ALTER in-place** `IF COL_LENGTH
+>    ('dbo.mia_hddt_hh','ntao') IS NULL ALTER TABLE ADD ntao` + parse_hh đọc
+>    cột 3 + INSERT 20 cột + builder chi tiết thêm cột "Ngày lập" (16 cột).
+> 2. **Superset-elimination:** DELETE nạp đè MỞ RỘNG (`period_from>=? AND
+>    period_to<=?` — kỳ mới RỘNG xóa mọi kỳ cũ bị bao trùm) + builder TQ + CT
+>    thêm `NOT EXISTS` loại kỳ bị bao trùm → chỉ giữ kỳ RỘNG NHẤT.
+> 3. **First-row allocation:** chi tiết `case when row_number() over (partition
+>    by khhdon, shdon order by id) = 1 then tgtttbso else 0 end` — tổng cấp HĐ
+>    ở DÒNG ĐẦU mỗi HĐ → Subtotal = tổng cấp HĐ, khớp Tổng quan từng đồng.
+>
+> **✅ Verify (run_sql_report — đường production thật):** TQ **763×15 → 385×15**,
+> CT **638×15 → 594×16** (có Ngày lập 'dd/mm/yyyy'); tổng TQ = CT = DB =
+> **5.481.247.927 khớp TỪNG ĐỒNG**; kỳ hẹp 28→28 không còn trùng 33+385; bán ra
+> TQ 6.632 / CT 8.036 dòng khớp 6.718.191.700; re-import 8 file 16.247 dòng
+> (import_log MIA xóa sạch trước — GAP hash); agent restart 15:10 nạp bản mới
+> (rảnh khi restart — nguyên tắc GĐ 266).
+>
+> **LESSON LEARNED — Kỳ lồng nhau trong bảng "nạp đè theo kỳ gộp" (2026-10-01):**
+> ETL nạp đè theo kỳ + tool tải nhiều lần kỳ LỒNG nhau → DB tích kỳ chồng dù
+> từng lần nạp đều đúng. 2 lớp chống: DELETE mở rộng (kỳ mới RỘNG xóa kỳ bị
+> bao trùm lúc nạp) + NOT EXISTS builder (kỳ mới HẸP). Một lớp không đủ.
+>
+> **LESSON LEARNED — Giá trị cấp-hóa-đơn lặp trên dòng hàng hóa → phân bổ dòng
+> đầu:** Chi tiết 1-N với cột tổng cấp HĐ lặp mọi dòng → cộng thẳng nhân đôi N
+> lần. `row_number()=1` giữ Subtotal = tổng cấp HĐ khớp bảng hóa đơn; dòng sau
+> 0 → trống (ẩn 0 GĐ C.56).
+>
+> **LESSON LEARNED — CREATE IF NOT EXISTS không alter bảng cũ (tái diễn pattern
+> migration in-place):** Thêm cột vào bảng có sẵn phải kèm `IF COL_LENGTH(...) IS
+> NULL ALTER TABLE ADD ...` ngay trong ensure_tables — không thì bảng cũ thiếu
+> cột, INSERT placeholder lệch số → ETL crash.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.7.0 / repo con 6.7.0;
+> checklist GĐ 138 sẽ áp khi bump).
+>
+> **Tiêu chí kiểm chứng (Đại ca test):** Trang /m/bc-mia-muavao-chitiet +
+> /m/bc-mia-muavao-tongquan chạy cùng kỳ 01→30/09 → cả 2 tổng **5.481.247.927**
+> giống nhau; chi tiết có cột "Ngày lập"; các cột tiền cột "Tổng tiền thanh
+> toán" chỉ tính ở dòng ĐẦU mỗi hóa đơn (các dòng hàng hóa sau để trống).
