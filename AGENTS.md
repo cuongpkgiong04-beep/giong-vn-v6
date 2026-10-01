@@ -11664,3 +11664,66 @@ tổng 4.7.0 / repo con 6.7.0.
 > code-report → test-report → review; STATUS.md luôn phản ánh đúng giai đoạn;
 > Reviewer APPROVE → anh nói "Push" → merge pipeline-work về main + bump version
 > CẢ HAI app theo checklist GĐ 138.
+
+---
+
+### GĐ 292: Điều tra "7 hộp KPI Tổng quan app con biến mất sau điều chỉnh" — KHÔNG phải bug code, là tunnel Quick Tunnel chết ngầm + cửa sổ fallback hở (2026-10-02, 4.8.0)
+
+> **BUG REPORT của Đại ca (02/10, kèm ảnh localhost:3100 22:13):** Sau GĐ 291 (fix KPI
+> Xuất VX + PA-C countSourcesAll), 7 hộp KPI trên Tổng quan app con BIẾN MẤT hoàn toàn
+> — trang chỉ còn các biểu đồ, dropdown "Hôm nay 01/10/2026", không có lỗi nhìn thấy.
+>
+> **Điều tra 5 bước — bằng chứng từng tầng:**
+> 1. **Soi code 2 commit GĐ 291** (`8b1d155`, `22e2857`): handler/destructuring/
+>    query đúng hết, tsc 0 lỗi — nghi vấn code bị loại.
+> 2. **Soi log watchdog API Server** (`agent/api_server/LOG/api_server_20261001.log`)
+>    — **ROOT CAUSE hạ tầng:** Quick Tunnel bất ổn nặng tối 01/10: blip 20:28 →
+>    21:48 → 22:04 (đều hồi phục) → **22:17-22:19 chết hẳn 3/3** → watchdog restart
+>    22:20 tạo `corners-…` → **corners cũng chết 22:34** → restart 22:36 tạo
+>    `hiking-sailing-replies-pine` — sống (health 200 + query thật OK).
+> 3. **Cơ chế "KPI mất mà biểu đồ còn":** tunnel chết → `loadOverviewKpi` fetch
+>    fail → client `.catch(() => setKpi(null))` (overview-dashboard.tsx ~532)
+>    **GHI ĐÈ cả cache GĐ 232 vừa hiển thị** → khối KPI ẩn; trong khi biểu đồ
+>    (useChart) giữ data cache → nhìn như "chỉ KPI mất".
+> 4. **Verify code sạch (2 lần):** tunnel hiking sống + env đúng → **7/7 KPI hiện**
+>    (THU TIỀN · HÓA ĐƠN GTGT · LƯỢT TIÊM · NHẬP VẮC XIN · XUẤT VẮC XIN · TỒN KHO ·
+>    CẬN HẠN), banner sạch, **0 response HTTP ≥ 400** — lỗi duy nhất là hydration
+>    #418 cosmetic (biết sẵn).
+> 5. **Verify fallback Gist GĐ 169 (test chủ động):** set env app con = URL CHẾT
+>    (anderson) + restart :3100 → **7/7 KPI VẪN hiện** — app tự đọc Gist → URL mới.
+>    Fallback hoạt động; trả env về hiking sau test.
+>
+> **Đã xử lý:** `.env.local` CẢ 2 app = `hiking-sailing-replies-pine…` (từ Gist)
+> + restart 2 dev server (kill PID cũ + start lại — Vite đọc env lúc khởi động,
+> lesson GĐ 228o). Sau xử lý: :3000 login OK (SSO qua), :3100 7/7 KPI.
+>
+> **Vì sao anh gặp đúng lúc 22:13 — "cửa sổ fallback hở":** fallback Gist chỉ cứu
+> khi Gist có URL MỚI + SỐNG. Lúc 22:13: Gist vẫn = anderson (URL đang dùng, chưa
+> kịp update — watchdog cần ~3-4 phút: 3×60s check + 30s delay + tạo tunnel) →
+> mọi blip tunnel trong cửa sổ này KHÔNG có đường cứu → server fn fail → KPI trắng.
+> Sau 22:36 (Gist = hiking sống) mọi lần load sau đều OK.
+>
+> **Tooling:** `scripts/debug-overview-kpi.mjs` (đổi tên từ debug-kpi-tmp.mjs —
+> script chuẩn tái sử dụng): login :3000 (đợi nút enabled — GĐ 167) → SSO qua nút
+> Bán hàng → :3100 → check 7 tên KPI + banner + bắt mọi HTTP ≥ 400 + screenshot.
+>
+> **LESSON — "KPI mất mà biểu đồ còn" là dấu hiệu CACHE lệch, không phải bug code
+> (2026-10-02):** chart + KPI đều có cache GĐ 232 nhưng đường xử lý lỗi khác nhau
+> (KPI: catch → null GHI ĐÈ cache; chart: giữ data cũ). Khi điều tra "mất một phần"
+> trên trang có cache: xác định phần nào đang hiển thị từ cache TRƯỚC khi nghi code.
+> (Đề xuất cải tiến chưa làm — chờ anh duyệt: `.catch` của KPI nên giữ cache +
+> hiện badge "dữ liệu cũ" thay vì setKpi(null).)
+>
+> **LESSON — Quick Tunnel bất ổn (tái diễn GĐ 165/251):** tối 01/10 tunnel chết
+> ngầm 2 lần trong 20 phút (Cloudflare thu hồi DNS — nslookup Non-existent domain
+> dù cloudflared process sống). Nếu tối nay/mai vẫn bất ổn → trình anh PA-3 Named
+> Tunnel (URL cố định, hết cửa sổ fallback).
+>
+> **LƯU Ý VẬN HÀNH cho Đại ca:** KPI trắng/lỗi dữ liệu trên local → (1) chạy
+> `update-tunnel-local.bat` rồi restart dev server; (2) hoặc đợi ≤ 4 phút watchdog
+> tự đổi tunnel mới rồi F5. Nếu vẫn lỗi → chạy
+> `node scripts/debug-overview-kpi.mjs` (từ apps/banhang) gửi em output.
+>
+> **Tiêu chí kiểm chứng:** 7/7 KPI hiện trên :3100 (verify 3 lần: env đúng ·
+> env chết + fallback Gist · env đúng lần cuối); 0 HTTP ≥ 400; version giữ nguyên
+> 4.8.0 (không bump — chờ lệnh Push).
