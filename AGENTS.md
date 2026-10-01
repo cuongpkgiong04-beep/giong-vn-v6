@@ -10890,7 +10890,39 @@ thành phần nào ≥ 10).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
 
-*Cập nhật lần cuối: 2026-10-01 (GĐ 277 — báo cáo sao kê TCB PA-1; app tổng 4.6.1 / repo con 6.6.1)*
+---
+
+### GĐ 278: CHUẨN HÓA Quy trình nghiệp vụ Download → ETL → Báo cáo thành NGUYÊN TẮC 📌 (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | docs(agents): GĐ C.131 — khối 📌 "QUY TRÌNH NGHIỆP VỤ DOWNLOAD → ETL → BÁO CÁO" đặt cạnh khối nguyên tắc định dạng GĐ C.54 |
+| (app tổng) | docs(agents): GĐ 278 — cùng khối 📌 đặt cạnh khối nguyên tắc định dạng GĐ 184 |
+
+> **Theo yêu cầu của Đại ca (01/10):** Chuẩn hóa quy trình "Download xong → chạy
+> báo cáo dùng ETL; thiếu báo cáo thì ghi nhận thiếu sót" thành NGUYÊN TẮC
+> vĩnh viễn (không chỉ là ghi chép giai đoạn C.130/GĐ 277).
+
+> **Nội dung khối 📌 (cả 2 repo cùng nội dung — nguyên tắc phải nằm ở NƠI LÀM
+> VIỆC, bài học GĐ 138):** 3 bước bắt buộc DOWNLOAD (chuẩn file theo tool — GĐ
+> 276) → ETL (bảng tường minh khi lệch >2 giả định khung; nạp đè theo NGÀY/KỲ
+> GỘP; agent tự ETL sau job; đối chứng từng đồng) → BÁO CÁC (builder + trang +
+> phân quyền 3 điểm; chạy thật 1 kỳ đối chứng) + checklist 5 bước khi thêm phân
+> hệ MỚI + 4 nguyên tắc kèm theo (đề xuất trước khi code GĐ 198 · đối chứng
+> bằng chứng · bảng tường minh vs stg_* · file gộp kỳ vs theo ngày).
+>
+> **Trạng thái áp dụng ghi kèm:** SMED 11 ✅ · MISA 2 ✅ · MIA 4 ✅ · VCB ✅ ·
+> TCB ✅ (GĐ 277 — phân hệ ĐẦU TIÊN chạy trọn quy trình) · TPB/VTB ⚠️ THIẾU SÓT
+> (chờ tool + file mẫu — GĐ 257).
+
+> **Tiêu chí kiểm chứng:** Mọi phân hệ download MỚI sau ngày này được đối chiếu
+> 3 bước + checklist 5 mục trước khi báo xong; thiếu bước nào ghi THIẾU SÓT
+> rõ ràng trong AGENTS.md; AI đọc AGENTS.md (cả 2 repo) thấy khối 📌 ngay cạnh
+> khối nguyên tắc định dạng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 278 — chuẩn hóa quy trình Download→ETL→Báo cáo thành nguyên tắc; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
 
 ---
