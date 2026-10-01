@@ -11574,7 +11574,43 @@ tổng 4.7.0 / repo con 6.7.0.
 > Task_02 ngày 01/10 tự spawn; Vercel 2 project Ready; domain chính 2 app serve
 > bundle đúng version; PREFLIGHT 3/3 PASS.
 
-*Cập nhật: 2026-10-01 (GĐ 289 — Push lần 3; app tổng 4.8.0 / repo con 6.8.0)*
+### GĐ 291: Fix KPI Xuất VX = 0 đầu tháng + đo chậm loadOverviewKpi (repo con C.141, 8b1d155) (2026-10-02)
+
+> **BUG REPORT của Đại ca (02/10, kèm ảnh):** KPI XUẤT VẮC XIN Tổng quan app con
+> hiện `0~0|0 liều` cho "Ngày hôm qua" + "Tháng này"; kèm ghi nhận "không hiển
+> thị số hoặc hiển thị quá chậm".
+>
+> **Đã chạy đúng quy trình 5 bước (phiên 5):** probe DB + đọc code → trình 3 PA
+> + dự đoán → anh chốt **PA-1** (sửa WHERE) + xác nhận "mỗi lần mở đều chậm".
+>
+> **ROOT CAUSE (bằng chứng tunnel):** Query hộp Xuất VX (GĐ 210) gộp 2 kỳ bằng
+> WHERE chung `BETWEEN monthStart AND pTo` — ngày đầu tháng (01/10) monthStart >
+> pTo (30/09) → khoảng ĐẢO NGƯỢC → rỗng → 24 SUM NULL → 0 âm thầm. Data 30/09
+> CÓ thật (205 dòng · 237 liều · 149.173.703đ). Sửa WHERE bao 2 khoảng →
+> **201 phiếu · 201 liều · 148.538.015đ**. Chi tiết kỹ thuật ở AGENTS.md repo
+> con GĐ C.141. Bug nằm im từ GĐ 210, bùng phát đúng ngày đầu tháng.
+>
+> **Đo chậm (anh xác nhận "mỗi lần mở đều chậm"):** đo 16 query con qua tunnel —
+> SQL nhanh nhất 129ms / chậm nhất 755ms; **nút cổ chai: 8 round-trip TUẦN TỰ**
+> của freshnessToday + freshnessMonth (2× countSources × 4 query nối tiếp)
+> ≈ 3.3s trên tổng ~5s. Client ĐÃ có cache (GĐ 232 — F5 cùng kỳ hiện ngay);
+> chậm rơi vào lần ĐẦU mỗi ngày/kỳ/đơn vị.
+>
+> **⚠️ VIỆC ĐỀ XUẤT tăng tốc (chờ anh duyệt — CHƯA làm):**
+> 1. **PA-A (khuyến nghị):** gộp 3 lần countSources thành 1 query duy nhất tính
+>    CẢ 3 khoảng (kỳ chọn / hôm nay / tháng này) — 16 subquery thay 12 round-trip
+>    tuần tự → dự đoán 5s → ~1.5-2s.
+> 2. **PA-B (dễ nhất — 3 dòng):** đưa 2 freshness vào Promise.all chung thay await
+>    tuần tự → 5s → ~3.3s.
+> 3. **PA-C:** kết hợp A+B.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+>
+> **Tiêu chí kiểm chứng:** Tổng quan kỳ Hôm qua → hộp XUẤT VẮC XIN hiện số thật
+> (148.538.015 ~ 201|X liều cho kỳ có data); "Tháng này" = 0 hợp lệ; các hộp
+> khác không đổi; typecheck 0 lỗi.
+
+*Cập nhật: 2026-10-02 (GĐ 291 — fix KPI Xuất VX đầu tháng; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
 
 ---

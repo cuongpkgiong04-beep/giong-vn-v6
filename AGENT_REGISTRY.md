@@ -22,6 +22,7 @@
 | Số | Agent | Nhiệm vụ | Phạm vi file dự kiến | Trạng thái | Thời điểm claim | Hoàn tất |
 |---|---|---|---|---|---|---|
 | GĐ 290 (Trợ lý Freebuff) | Trợ lý Freebuff | Dựng `PIPELINE/` — hệ điều hành đội 4 Agent (Planner/Coder/Tester/Reviewer) + worktree `giong-vn-v6-pipeline` nhánh `pipeline-work` | PIPELINE/** + AGENT_REGISTRY.md + AGENTS.md — KHÔNG đụng code app | ✅ | 02/10 | b9108e8 (claim) + commit PIPELINE (phiên này) |
+| GĐ 291 / C.141 (Trợ lý Freebuff) | Trợ lý Freebuff | Fix KPI Xuất VX = 0 đầu tháng (WHERE BETWEEN monthStart AND pTo đảo ngược) + đo chậm loadOverviewKpi | giong-apps/apps/banhang/src/routes/api/-overview.ts + AGENTS.md (2 repo) | ✅ | 02/10 | 8b1d155 (repo con) + GĐ 291 (app tổng) |
 | C.138 (Trợ lý Freebuff) | Trợ lý Freebuff | PA-1 revert tool 42 TPB về luồng gốc "Xuất sao kê" + tải row ĐÚNG KỲ | giong-apps/apps/banhang/agent/42_tpb_saoke.py + AGENTS.md (2 repo) | ✅ | 01/10 16:50 | e003712 (repo con) + GĐ 286 (app tổng) |
 | C.139 (Trợ lý Freebuff) | Trợ lý Freebuff | ~~Sidebar bậc 3 MIA~~ BỎ CLAIM — Agent khác dùng số này qua GĐ 287 (17:40) trước | — | ⛔ | 01/10 17:10 | 2d6e4c6 (của GĐ 287) |
 | C.140 (Trợ lý Freebuff) | Trợ lý Freebuff | Sidebar bậc 3 MIA (MUA VÀO/BÁN RA) — chữ nhỏ hơn + lùi đầu dòng + nghiêng | giong-apps/apps/banhang/src/components/app-shell.tsx + AGENTS.md (2 repo) | ✅ | 01/10 17:55 | 4baf8bb (repo con) + GĐ 288 (app tổng) |
