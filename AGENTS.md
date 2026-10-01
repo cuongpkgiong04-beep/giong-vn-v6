@@ -11247,7 +11247,7 @@ thành phần nào ≥ 10).
 
 ---
 
-### GĐ 284: Camera Chấm công + Check-in — Beauty Pro 3 lớp + xác nhận crop đúng giữa (unit test 6/6) (2026-10-01, commit `<hash>`)
+### GĐ 284: Camera Chấm công + Check-in — Beauty Pro 3 lớp + xác nhận crop đúng giữa (unit test 6/6) (2026-10-01, commit `dd230e3`)
 
 > **BUG REPORT của Đại ca (01/10):** Điểm danh/Check-in chụp ảnh còn 2 triệu chứng:
 > (1) Khuôn mặt trong khung hình vẫn bị nghiêng sang trái; (2) Làm đẹp chưa sâu —
