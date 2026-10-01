@@ -24,7 +24,7 @@
 | C.138 (Trợ lý Freebuff) | Trợ lý Freebuff | PA-1 revert tool 42 TPB về luồng gốc "Xuất sao kê" + tải row ĐÚNG KỲ | giong-apps/apps/banhang/agent/42_tpb_saoke.py + AGENTS.md (2 repo) | ✅ | 01/10 16:50 | e003712 (repo con) + GĐ 286 (app tổng) |
 | C.139 (Trợ lý Freebuff) | Trợ lý Freebuff | Sidebar bậc 3 MIA (MUA VÀO/BÁN RA) — chữ nhỏ hơn + lùi đầu dòng + nghiêng | giong-apps/apps/banhang/src/components/app-shell.tsx + AGENTS.md (2 repo) | 🔒 | 01/10 17:10 | |
 | GĐ 285 | Trợ lý Freebuff | Ban hành quy trình Registry lock + 3 quy tắc commit cứng | AGENT_REGISTRY.md, AGENTS.md (2 repo docs) | ✅ | 01/10 | e97ef93 + 81219dc (app tổng) · 4c2a3c2 (repo con) |
-| GĐ 287 (Trợ lý Freebuff) | Trợ lý Freebuff | 3 nguyên tắc dữ liệu: dedupe đa-lượt-tải ETL (NT1+2) + banner báo cáo cũ khi có data mới (NT3) | giong-apps/apps/banhang/agent/etl/etl_import.py + src/routes/api/-smed.ts + src/components/sql-data-module.tsx + AGENTS.md (2 repo) | 🔒 | 01/10 17:40 | — |
+| GĐ 287 (Trợ lý Freebuff) | Trợ lý Freebuff | 3 nguyên tắc dữ liệu: dedupe đa-lượt-tải ETL (NT1+2) + banner báo cáo cũ khi có data mới (NT3) | giong-apps/apps/banhang/agent/etl/etl_import.py + src/routes/api/-smed.ts + src/components/sql-data-module.tsx + AGENTS.md (2 repo) | ✅ | 01/10 17:40 | 2d6e4c6 (repo con) + 2a87fb4 (app tổng) |
 
 ---
 
