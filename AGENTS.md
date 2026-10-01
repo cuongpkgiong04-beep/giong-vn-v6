@@ -10787,5 +10787,36 @@ thành phần nào ≥ 10).
 > **Version:** KHÔNG bump (quy tắc ĐA AGENT — bump khi anh nói "Push"). Hiện tại:
 > app tổng 4.6.1 / repo con 6.6.1 (GĐ 274 đã push production qua Vercel CLI).
 
-*Cập nhật lần cuối: 2026-10-01 (GĐ 275 — TCB codegen + kỳ đơn ngày fix; app tổng 4.6.1 / repo con 6.6.1)*
+**Version:** KHÔNG bump (quy tắc ĐA AGENT — bump khi anh nói "Push"). Hiện tại:
+> app tổng 4.6.1 / repo con 6.6.1 (GĐ 274 đã push production qua Vercel CLI).
+
+---
+
+### GĐ 276: Chuẩn file sao kê ngân hàng THEO TỪNG TOOL — chỉ đạo NEW của Đại ca (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `0b51247`) | fix(bank): C.129 — chuẩn file sao kê theo từng tool (TCB/TPB 1 file/kỳ, VCB 1 file/ngày) + sửa expected_files job cũ qua tunnel |
+| (app tổng) | docs(agents): GĐ 276 — không đổi code |
+
+> **Chỉ đạo của Đại ca (01/10, kèm ảnh job bank-tcb kỳ 01→30/09 badge vàng
+> "Tỷ lệ hoàn thành: 1/30 file — thiếu 29 file"):** Kết quả TCB chưa phản ứng
+> đúng thực tế — download chỉ có 1 file. **LƯU Ý cho các việc lần sau: CHỈ riêng
+> phần download SMED là 19 file cho 19 trung tâm; phân hệ khác phải ĐỌC KỸ tool
+> khi tương tác để lấy số lượng file cho đúng.**
+
+> **ROOT CAUSE:** chuẩn C.111 ghi CHUNG "bank-* = 1 file/mỗi ngày" cho cả 3
+> ngân hàng — nhưng PA-1 C.127 đã chốt TCB = 1 file/CẢ KỲ (file trả đủ lịch sử
+> cả tháng). Web badge theo expected_files=30 → job done 1 file bị coi "thiếu
+> 29" sai. Fix + chi tiết kỹ thuật ở **AGENTS.md repo con GĐ C.129** (tách nhánh
+> expected: VCB = số ngày · TCB/TPB = 1 · SMED = 19 · MISA/MIA = 1); 4 job TCB
+> cũ đã UPDATE expected_files=1 qua tunnel — badge web tự đúng.
+
+> **LESSON (ghi cho mọi agent):** Chuẩn file là THUỘC TÍNH CỦA TOOL, không của
+> NHÓM phân hệ — thêm phân hệ mới phải đọc tool ra bao nhiêu file trước khi
+> đặt expected. Chỉ SMED = 19 file/19 trung tâm; nhóm khác mỗi tool một chuẩn.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 276 — chuẩn file bank theo từng tool; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
