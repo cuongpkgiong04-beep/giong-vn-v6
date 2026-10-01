@@ -1,12 +1,14 @@
 {
   "task": "TASK-001",
   "title": "TCB 2 báo cáo thiếu hộp Tải dữ liệu mới nhất trước khi chạy",
-  "current_stage": "plan done",
-  "owner": "planner (Trợ lý Freebuff)",
-  "next_action": "Đại ca duyệt plan.md → dán STARTERS/CODER.txt vào phiên Coder",
+  "current_stage": "code done",
+  "owner": "coder (Trợ lý Freebuff)",
+  "next_action": "Đại ca dán STARTERS/TESTER.txt vào phiên Tester (verify criteria 1-4 plan mục 6)",
   "updated_at": "2026-10-02",
+  "registry_claim": "GĐ 292 (app tổng) / C.142 (repo con, commit eedc272)",
   "history": [
     { "stage": "brief", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" },
-    { "stage": "plan done — root cause: SQL_SOURCES_BY_QUERY thiếu 2 key TCB (web-side); agent-side đã có", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" }
+    { "stage": "plan done — root cause: SQL_SOURCES_BY_QUERY thiếu 2 key TCB (web-side); agent-side đã có", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" },
+    { "stage": "code done — +2 entry TCB vào -smed.ts sau cặp VCB, typecheck EXIT=0, chi tiết code-report.md", "by": "coder (Trợ lý Freebuff)", "at": "2026-10-02" }
   ]
 }
