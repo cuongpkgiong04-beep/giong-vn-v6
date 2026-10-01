@@ -1,0 +1,1 @@
+Anh giao nhiệm vụ: đọc PIPELINE/ROLES/TESTER.md rồi đọc PIPELINE/TASKS/TASK-001/plan.md (mục 6) + code-report.md và thực hiện đúng vai Tester cho TASK-001.

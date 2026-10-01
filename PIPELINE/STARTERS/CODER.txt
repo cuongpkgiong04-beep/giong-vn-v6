@@ -1,0 +1,1 @@
+Anh giao nhiệm vụ: đọc PIPELINE/ROLES/CODER.md rồi đọc PIPELINE/TASKS/TASK-001/plan.md và thực hiện đúng vai Coder cho TASK-001.

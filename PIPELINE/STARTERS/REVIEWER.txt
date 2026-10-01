@@ -1,0 +1,1 @@
+Anh giao nhiệm vụ: đọc PIPELINE/ROLES/REVIEWER.md rồi đọc toàn bộ PIPELINE/TASKS/TASK-001/ (brief, plan, code-report, test-report) và soi diff thực tế để viết review.md cho TASK-001.

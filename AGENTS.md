@@ -11576,3 +11576,55 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật: 2026-10-01 (GĐ 289 — Push lần 3; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 290: PIPELINE — Hệ điều hành đội 4 AI Agent (Planner → Coder → Tester → Reviewer) (2026-10-02)
+
+> **Chỉ đạo của Đại ca (02/10):** Dựng đội 4 AI Agent Freebuff (GLM 5.3 Flash — mỗi
+> vai một tài khoản, anh trực tiếp quản lý) theo mô hình **PA-1 anh chốt qua vòng
+> hỏi**: (1) PIPELINE folder + kích hoạt từng bước bằng câu lệnh STARTER (không tự
+> động hóa — Freebuff chưa có API chat giữa các phiên); (2) PIPELINE/ đặt GỐC app
+> tổng (đi theo git — 3 worktree cùng thấy); (3) Reviewer chỉ ĐỀ XUẤT — Push vẫn
+> chỉ khi anh nói (giữ nguyên tắc GĐ 229); (4) đội làm trên **nhánh riêng
+> `pipeline-work`** (worktree `giong-vn-v6-pipeline` mới tạo) — Reviewer APPROVE
+> → merge về main là cổng chất lượng.
+>
+> **Đội hình 4 vai:** 🧭 Planner (nhận việc trực tiếp từ anh — viết bản mô tả kỹ
+> thuật chi tiết từ cấu trúc file đến lỗi tiềm ẩn) → 👨‍💻 Coder (code theo plan,
+> claim GĐ qua registry, typecheck) → 🧪 Tester (chạy kiểm tra theo tiêu chí plan
+> mục 6, KHÔNG sửa code) → 🔍 Reviewer (CHỈ ĐỌC, soi diff, APPROVE/
+> CHANGES_REQUESTED).
+>
+> **Đã dựng (folder `PIPELINE/` — 12 file):**
+> - `README.md` — luồng 4 vai + quy tắc chung + cách anh vận hành (chỉ nhìn STATUS.md)
+> - `STATUS.md` — bảng trạng thái tổng (task × 5 giai đoạn + ký hiệu 🔁🚧🟢🔵🔴)
+> - `ROLES/{PLANNER,CODER,TESTER,REVIEWER}.md` — vai + checklist từng bước + quy tắc cứng từng vai
+> - `STARTERS/{PLANNER,CODER,TESTER,REVIEWER}.txt` + `README.txt` — câu lệnh copy-paste
+>   kích hoạt từng agent (thay TASK-001 bằng ID task thực tế — chính là "truyền tay"
+>   giữa 4 phiên chat qua folder PIPELINE)
+> - `templates/{brief,plan,code-report,test-report,review}.md` — 5 mẫu file chuẩn,
+>   plan template ép Planner phải có mục 4 "lỗi tiềm ẩn" + mục 6 "tiêu chí kiểm chứng"
+> - `TASKS/` — mỗi task 1 folder: brief → plan → code-report → test-report → review + status.json
+>
+> **Kiến trúc hoạt động:** thông tin truyền giữa 4 agent QUA FILE trong PIPELINE/,
+> không qua trí nhớ phiên chat — agent mở phiên mới chỉ cần đọc đúng file là đủ
+> ngữ cảnh (kể cả chưa từng thấy task). Mọi quy tắc đa Agent hiện có vẫn áp dụng
+> nguyên văn: claim GĐ (chỉ Coder) qua AGENT_REGISTRY.md · KHÔNG tự push (GĐ 229)
+> · 3 quy tắc commit cứng (GĐ 285) · checklist khởi động phiên.
+>
+> **Khối mới đăng ký trong registry (đòng hành GĐ 290):** 4 agent PIPELINE sẽ
+> ghi tên trong commit `GĐ <số> (Coder — <tên agent>)` — reviewer soi đúng ai làm gì.
+>
+> **⚠️ SỰ CỐ nhỏ trong phiên:** 3 lần write_file đầu bị lỗi tham số
+> (`instructions` missing) — tạo lại đủ tham số là xong, không mất nội dung.
+>
+> **Worktree mới:** `giong-vn-v6-pipeline` (nhánh `pipeline-work`, từ commit
+> b9108e8) — `git worktree list` giờ có 3 worktree. Repo con clone nội bộ khi
+> task đụng app con (nhánh riêng tương ứng).
+>
+> **Tiêu chí kiểm chứng:** PIPELINE/ đủ 12 file theo cấu trúc README mục 5; anh
+> giao việc đầu tiên qua Planner → các file xuất hiện tuần tự brief → plan →
+> code-report → test-report → review; STATUS.md luôn phản ánh đúng giai đoạn;
+> Reviewer APPROVE → anh nói "Push" → merge pipeline-work về main + bump version
+> CẢ HAI app theo checklist GĐ 138.

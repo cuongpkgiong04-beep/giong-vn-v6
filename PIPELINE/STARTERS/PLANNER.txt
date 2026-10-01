@@ -1,0 +1,1 @@
+Anh giao nhiệm vụ: đọc PIPELINE/ROLES/PLANNER.md rồi đọc PIPELINE/TASKS/TASK-001/brief.md và thực hiện đúng vai Planner cho TASK-001.
