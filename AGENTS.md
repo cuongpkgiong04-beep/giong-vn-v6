@@ -11127,3 +11127,57 @@ thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-10-01 (GĐ 281 — fix whitelist QUERY_KEYS MIA + đếm file theo mtime; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 282: PA-B hoàn tất — gh CLI device flow + SSH key lên GitHub + PUSH lần 4 (2026-10-01, 4.7.0 + repo con 6.7.0)
+
+> **Lệnh của Đại ca (01/10):** "PA-B em tự làm nhé" — Đại ca tự nhập mã device flow (em tự sinh qua OAuth device flow của GitHub CLI), em lo phần còn lại: đăng nhập CLI, thêm SSH key lên GitHub, sửa remote, push 2 repo, verify deploy.
+
+> **Cách làm PA-B (không cần Anh tự tạo PAT tay — device flow 2 chân):**
+> 1. Em gọi `POST github.com/login/device/code` (client_id công khai của GitHub CLI) với scope `repo + admin:public_key` → nhận **user_code 8 ký tự** (`B35A-DED4`) + `device_code`.
+> 2. Anh mở `github.com/login/device` trên máy đang login account **beep**, nhập mã, Authorize.
+> 3. Em poll `POST /login/oauth/access_token` với `device_code` (interval 5s) → **access_token về trực tiếp máy**, Anh KHÔNG hề thấy/gửi token nào. Token xóa ngay sau khi dùng (không lưu repo).
+> 4. Thay vì `gh auth login` (bắt buộc scope `read:org` mà device flow mình không xin), em gọi **REST API trực tiếp** `POST /user/keys` bằng token → SSH key `server-cty-giong` (id 165024012) lên account beep ✅.
+>
+> **Lưu ý kỹ thuật:** Python (Windows) ghi `/tmp/...` vào `D:\tmp\` — bash `cat /tmp/...` đọc chỗ KHÁC lần đầu gây nhầm "mất token"; glob 2 đường là thấy. Lỗi `gh auth login: missing required scope 'read:org'` là bình thường với device flow scope hẹp — không cần xin thêm, dùng API thẳng.
+
+> **Lộ trình hoàn tất (tất cả ✅):**
+> 1. ✅ SSH key `id_ed25519_beep` đã sinh sẵn (GĐ 274) → lên GitHub qua API (title `server-cty-giong`).
+> 2. ✅ `ssh -T git@github-beep` → `Hi cuongpkgiong04-beep!` — key sống.
+> 3. ✅ Sửa remote app tổng `git@github.com:` → `git@github-beep:` (repo con đã đúng từ GĐ 274) — **lesson GĐ 274 sót: 2 repo phải đổi remote cùng lúc, lần trước chỉ đổi repo con.**
+> 4. ✅ Rà trùng lặp (nguyên tắc 3): pull cả 2 repo "Already up to date" — remote KHÔNG có commit Agent CLI nào trong thời gian treo; 18 commit app tổng + 20 commit repo con author 100% `cuongpk.giong04@gmail.com` ĐÚNG (hết nỗi lo GĐ 264); untracked files (screenshots/*.png, *.log, attachments/, .bat) là phụ phẩm session khác — KHÔNG add.
+> 5. ✅ **PUSH lần 4:** app tổng `ec39fc9..cd2a49c` (18 commit: GĐ 275→282), repo con `740dbeb..1fd3736` (20 commit: C.127→C.135) — SSH key push mượt, hết cảnh GCM/Credential Manager treo vô hạn.
+> 6. ✅ Vercel auto-deploy: app tổng commit `cd2a49c` Ready `giong-vn-v6-769vpazxr` → **ghim domain** (quy tắc GĐ 124); app con commit `1fd3736` `giong-banhang-l3oxikvxy` — auto-aliasing tự nắm domain (đã hồi phục GĐ 264).
+> 7. ✅ **PREFLIGHT PASS** (`--verify`): tunnel sống HTTP 200 + login production 200 + bundle domain chính = đúng version bump.
+> 8. ✅ Bump version (lệnh Push → checklist GĐ 138): **app tổng 4.6.1 → 4.7.0** · **repo con 6.6.1 → 6.7.0** (feature mới = minor; 4/7/0 + 6/7/0 — không thành phần nào ≥ 10 ✓; 4 chỗ = package.json + DEFAULT_VERSION mỗi app).
+
+> **LESSON LEARNED — Device flow = cách cấp quyền GitHub không cần gửi token tay (2026-10-01):**
+> Mô hình 2 chân: máy muốn quyền tự sinh mã 8 ký tự + giữ device_code; người cấp chỉ cần
+> nhập mã trên trình duyệt ĐANG LOGIN account đích. Token never travels through người cấp —
+> phù hợp khi Agent trên máy chủ không có credential của Anh. Scope xin HẸP đúng việc
+> (repo + admin:public_key) — `gh auth login` đòi thêm `read:org` thì dùng REST API thẳng
+> với scope hẹp thay vì xin rộng hơn cần thiết.
+>
+> **LESSON LEARNED — Python Windows ghi `/tmp` = `D:\tmp`, bash `/tmp` là chỗ khác (2026-10-01):**
+> Trên Git Bash Windows, `python file <<EOF` mở path `/tmp/x` qua Win32 → `D:\tmp\x`; bash
+> redirect `cat /tmp/x` đọc `/tmp` của MSYS. File "biến mất" giữa python→bash là chuẩn nhầm
+> đầu tiên cần soi. Quy tắc: truyền file giữa python và bash trên Windows dùng path tuyệt
+> đối trong thư mục dự án, hoặc kiểm tra `os.path.exists` từ chính python.
+>
+> **Việc treo GĐ 274 ĐÃ ĐÓNG** — Git integration GitHub↔Vercel hoạt động lại bình thường
+> (GitHub là điểm gặp nhau duy nhất của kiến trúc ĐA AGENT GĐ 242); gh CLI trên máy đã
+> login account beep (token device flow, scope repo + admin:public_key — thiếu read:org
+> nên một số lệnh org-limited sẽ phải dùng REST API thẳng).
+
+> **Tiêu chí kiểm chứng (ĐÃ PASS):** GitHub account beep có SSH key `server-cty-giong`;
+> `ssh -T git@github-beep` chào đúng account; 2 repo push thành công qua SSH; Vercel build
+> tự trigger từ GitHub (app tổng `cd2a49c`, app con `1fd3736`); PREFLIGHT --verify PASS;
+> sidebar app tổng hiện VERSION 4.7.0 + app con 6.7.0 sau deploy.
+
+---
+
+**Version:** app tổng **4.7.0** · repo con **6.7.0** (bump theo lệnh Push; checklist GĐ 138 ✓).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 282 — PA-B device flow + SSH key + Push lần 4; app tổng 4.7.0 / repo con 6.7.0)*
+*Người cập nhật: Trợ lý Freebuff*
