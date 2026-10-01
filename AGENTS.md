@@ -10818,5 +10818,36 @@ thành phần nào ≥ 10).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
 
-*Cập nhật lần cuối: 2026-10-01 (GĐ 276 — chuẩn file bank theo từng tool; app tổng 4.6.1 / repo con 6.6.1)*
+---
+
+### GĐ 277: Báo cáo SAO KÊ TCB (PA-1 chuẩn VCB 100%) + quy trình NGHIỆP VỤ Download→ETL→Báo cáo (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `dfb3ae0`) | feat(bank): C.130 — báo cáo sao kê TCB (PA-1 chuẩn VCB): ETL 2 bảng tường minh + builder chi tiết/tổng hợp theo ngày + 2 trang web + phân quyền 3 điểm + agent tự ETL |
+| (app tổng) | feat(catalog): +1 lá 'BC_Sao kê TCB - Tổng hợp theo ngày' + docs GĐ 277 |
+
+> **Quy trình NGHIỆP VỤ mới của Đại ca (01/10):** Download dữ liệu xong → CHẠY
+> BÁO CÁO (xử lý dữ liệu thô) dùng ETL; phần chưa có code báo cáo → GHI NHẬN
+> THIẾU SÓT làm sau. Đã trình 3 PA + 3 câu hỏi → anh chốt **PA-1 (TCB chuẩn VCB
+> 100%: Chi tiết + Tổng hợp theo NGÀY)**. Chi tiết kỹ thuật đầy đủ ở **AGENTS.md
+> repo con GĐ C.130**.
+
+> **Thiếu sót đã ghi nhận:** TPB/VTB chỉ download chưa ETL/báo cáo (chờ file mẫu
+> + tool — GĐ 257); SMED các phân hệ download đã có builder trọn bộ từ trước.
+
+> **Kết quả (verify đối chứng từng đồng):** ETL nạp 335 GD (T9 326 + đơn 29/09
+> 9) — bank_tcb_balance khớp 100% meta file TCB (nợ 6.175.399.661 · có
+> 6.107.002.382 · phí+VAT 220.000 · 261 nợ / 72 có); 2 báo cáo mới: Chi tiết 12
+> cột (335 dòng) + Tổng hợp theo NGÀY (24 ngày: vào 6.060.000.000 / ra
+> -6.108.473.468 / 335 GD); agent tự ETL sau job; phân quyền 3 điểm đồng bộ;
+> tsc + typecheck 0 lỗi cả 2 app.
+
+> **⚠️ Lưu ý:** báo cáo lọc kỳ GỘP overlap (pattern MIA) — kỳ nằm trong kỳ đã
+> tải trả cả kỳ gộp. Restart GIONG_SMED_Agent khi rảnh để agent mới tự ETL
+> (data hiện tại đã nạp tay — báo cáo chạy được NGAY trên local).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 277 — báo cáo sao kê TCB PA-1; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
