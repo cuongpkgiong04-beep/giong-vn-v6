@@ -11469,5 +11469,50 @@ thành phần nào ≥ 10).
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
 tổng 4.7.0 / repo con 6.7.0.
 
-*Cập nhật lần cuối: 2026-10-01 (GĐ 286 — TPB revert luồng gốc C.138; app tổng 4.7.0 / repo con 6.7.0)*
+*Cập nhật lần cuối: 2026-10-01 (GĐ 287 — 3 nguyên tắc dữ liệu: dedupe ETL + banner báo cáo cũ; repo con C.139, 2d6e4c6)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 287: 3 nguyên tắc dữ liệu app con — dedupe đa-lượt-tải + banner báo cáo cũ khi có data mới (2026-10-01)
+
+> **Nguyên tắc mới của Đại ca (01/10, claim GĐ 287/C.139 qua AGENT_REGISTRY.md):**
+> (1) Dữ liệu lấy theo nguồn file download về MỚI NHẤT; (2) kiểm tra trùng lặp
+> trước khi cập nhật DB — download nhiều kỳ trùng khoảng thời gian không được
+> gấp đôi/gấp ba data; (3) báo cáo + số liệu đầu ra luôn làm mới khi có data
+> mới bổ sung vào DB. **Đã chốt qua vòng hỏi (quy trình 5 bước GĐ 198):**
+> PA-1 (nạp đúng + cảnh báo, không tự re-run) + nghĩa NT1 "Ghép vùng" (ngày có
+> file mới dùng mới, còn lại dùng cũ).
+>
+> **Bằng chứng chẩn đoán:** stg_2DTTDT có 53 cặp (ngày, TT) nhận data từ 2 file
+> (kỳ download chồng nhau); 339 khóa (ngày, TT, mã phiếu) trùng = 790 dòng thừa.
+> Root cause: wipe GĐ B.2.1 chỉ chạy 1 lần/ngày trong run — phần ngày của file
+> cũ mà file mới KHÔNG chứa vẫn sót cạnh data mới.
+>
+> **FIX (3 file — chi tiết đầy đủ ở repo con GĐ C.139, commit `2d6e4c6`):**
+> 1. **etl_import.py `dedupe_multiload`:** hàm chạy CUỐI-RUN ETL quét trực tiếp
+>    từng bảng stg (skip GDTVX tường minh + _backup) — cặp (ngày, TT) đa-file
+>    giữ duy nhất file mtime mới nhất, xóa phần còn lại.
+> 2. **-smed.ts `checkReportFreshness`:** so finished_at job done vs
+>    max(import_log.imported_at) nguồn trong kỳ → hasNewer.
+> 3. **sql-data-module.tsx banner vàng + nút Chạy lại:** data mới hơn báo cáo
+>    đang xem → cảnh báo "nạp lúc HH:MM" + bấm Chạy lại tạo job mới (PA-1 —
+>    không tự re-run).
+>
+> **✅ Verify:** chạy ETL thật → xóa 581 dòng từ file cũ; quét toàn hệ thống 0
+> cặp đa-file còn lại (DTTDT 133.593 → 133.198); khóa trùng 339 → 0; py_compile
+> + TS API 0 lỗi; logic freshness khớp query thật (job 30/09 xong 22:48 < import
+> 01/10 08:22 → banner đúng).
+>
+> **LESSON LEARNED — Nạp-đè-theo-ngày không đụng vùng "file cũ nạp sau"
+> (2026-10-01):** wipe per-ngày chỉ phòng file mới nạp sau; ngược lại (file cũ
+> nạp sau trong cùng run, hoặc run mới skip file đã nạp theo hash) data cũ lọt
+> qua. Dedupe phải dựa NGUỒN SỰ THẬT (bảng stg + mtime file OUTPUT), không dựa
+> state của run.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.7.0 / repo con 6.7.0).
+>
+> **Tiêu chí kiểm chứng (anh test sau khi agent nạp bản mới):** tải 2 kỳ chồng
+> nhau (VD DTTDT 14-27/09 rồi 20-30/09) → chạy ETL → báo cáo doanh thu từng ngày
+> KHÔNG tăng gấp đôi; mở báo cáo đã xem cũ khi DB vừa nạp data mới → banner vàng
+> hiện trong ~10s (poll) + bấm Chạy lại → báo cáo mới gồm data mới.
