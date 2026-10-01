@@ -7290,6 +7290,47 @@ Tunnel — giải tận gốc).
 
 ---
 
+## 📌 QUY TRÌNH NGHIỆP VỤ DOWNLOAD → ETL → BÁO CÁO (Đại ca chốt 01/10/2026 — hiệu lực vĩnh viễn, áp dụng MỌI phân hệ dữ liệu app con)
+
+> **Chỉ thị của Đại ca (01/10, GĐ 277):** Thống nhất quy trình — **Download dữ
+> liệu xong thì CHẠY BÁO CÁC** (xử lý dữ liệu thô từ file download), dùng **ETL
+> để tinh chỉnh và tạo báo cáo**. Phần nào CHƯA có code chạy báo cáo → **GHI
+> NHẬN THIẾU SÓT** vào AGENTS.md và thực hiện sau (không để hở im lặng).
+
+> **3 BƯỚC BẮT BUỘC cho MỌI phân hệ download (SMED / MISA / MIA / BANK / nguồn
+> mới sau này):**
+>
+> | Bước | Việc | Kiểm chứng |
+> |---|---|---|
+> | **1. DOWNLOAD** | Tool tải file về `OUTPUT\<phân hệ>\<từ ngày>\` — chuẩn số file THEO TỪNG TOOL (chỉ SMED = 19 file/19 TT; phân hệ khác đọc kỹ tool — GĐ 276) | Job done đủ file theo expected_files |
+> | **2. ETL** | Script `etl/<phân hệ>_import.py` nạp GiondDB — bảng tường minh khi dữ liệu lệch >2 giả định khung stg_* (VCB/TCB/MIA); nạp đè theo NGÀY (file theo-ngày) hoặc KỲ GỘP (file gộp kỳ); hash dedupe + idempotent; agent TỰ chạy ETL sau job (không chờ auto-ETL 60 phút) | Đối chứng tổng/số dòng với file gốc TỪNG ĐỒNG trước khi tin |
+> | **3. BÁO CÁC** | Builder trong `sql_reports.py` (QUERY_KEYS + REPORT_SOURCE_TABLES + EMPTY_OK nếu rỗng hợp lệ) + trang web SqlDataModule + phân quyền 3 điểm (ROUTE_TO_GROUP · SQL_QUERY_LEAF · catalog app tổng) | Chạy thật 1 kỳ đối chứng số với nguồn; typecheck 0 lỗi |
+>
+> **Checklist khi thêm phân hệ DOWNLOAD MỚI (bắt buộc theo thứ tự):**
+> 1. Tool tải file về đúng thư mục + expected_files đúng chuẩn tool (GĐ 276)
+> 2. ETL nạp GiondDB + đối chứng tổng từng đồng với file mẫu
+> 3. Builder + trang web + phân quyền 3 điểm + nav leaf
+> 4. Agent hook tự ETL sau job
+> 5. Ghi AGENTS.md — nếu thiếu bước nào → ghi rõ "THIẾU SÓT: ..." + kế hoạch làm
+
+> **Nguyên tắc kèm theo:**
+> - **Đề xuất TRƯỚC khi viết code** (quy trình 5 bước GĐ 198) — trình phương án
+>   + dự đoán kết quả cho Đại ca chốt (mẫu: TCB GĐ 277 — 3 PA + 3 câu hỏi).
+> - **Đối chứng bằng chứng:** không tin "ETL xong, không lỗi" — phải SELECT tổng
+>   so với file gốc (mẫu: TCB khớp nợ 6.175.399.661 từng đồng).
+> - **Bảng tường minh vs stg_*:** dữ liệu lệch >2 giả định khung generic
+>   (không cột ngày / không trung tâm / nhiều bảng liên quan) → bảng riêng
+>   (bank_vcb_tx, bank_tcb_tx, mia_hddt_hd...), đừng ép vào stg_* (lesson C.126).
+> - **File gộp kỳ vs file theo ngày:** định nghĩa chuẩn file ngay từ ETL —
+>   nạp đè theo đúng đơn vị đó (TCB/MIA theo KỲ, VCB/SMED theo NGÀY) + check
+>   nguồn cùng chuẩn (checkCol 'period' vs 'tx_date' vs report_date).
+
+**Trạng thái áp dụng (01/10/2026):** SMED 11 phân hệ ✅ · MISA 2 ✅ · MIA 4 ✅ ·
+VCB ✅ · **TCB ✅ (GĐ 277 — phân hệ đầu tiên chạy trọn quy trình này)** ·
+TPB ⚠️ THIẾU SÓT (chờ tool + file mẫu — GĐ 257) · VTB ⚠️ THIẾU SÓT (chờ tool).
+
+---
+
 ### GĐ 184: Hệ sinh thái — Nguyên tắc định dạng toàn app + sửa 4 builder cộng nhầm Đơn giá (repo con v4.5.1) (2026-09-21)
 
 | Commit | Thay đổi |
@@ -10850,4 +10891,40 @@ thành phần nào ≥ 10).
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
 
 *Cập nhật lần cuối: 2026-10-01 (GĐ 277 — báo cáo sao kê TCB PA-1; app tổng 4.6.1 / repo con 6.6.1)*
+*Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 278: Hệ sinh thái — FIX tool 42 TPB (repo con C.131): lỗi chọn ngày + ROOT CAUSE 2 tầng — TPB sinh file RỖNG (2026-10-01)
+
+> **Yêu cầu của Đại ca (01/10):** "Trong app con kiểm tra cho anh cách lấy file
+> download dữ liệu của sao kê ngân hàng TPB. Nó đang bị lỗi." Chi tiết đầy đủ ở
+> **AGENTS.md repo con GĐ C.131** (commit `94e642f` + `d934a9c`).
+
+> **Tóm tắt 2 tầng root cause:**
+> 1. **Tầng tool (ĐÃ FIX):** chọn ngày bằng click calendar bị `cdk-overlay-backdrop`
+>    chặn + calendar mở theo tháng hiện tại → chọn nhầm tháng. Fix fill trực tiếp
+>    ô input (pattern TCB C.128/MISA C.25) + fallback calendar scoped có điều hướng
+>    tháng. Verify 2 kỳ thật: file về đúng thư mục, header kỳ đúng 100%.
+> 2. **Tầng TPB (ngoài tầm tool):** file xuất đúng kỳ nhưng **0 giao dịch** — trong
+>    khi Truy vấn giao dịch TPB hiển thị 6 giao dịch thật của TK 1169 8866 789
+>    (chi lương 29/09 + 11/09 ×3 + 10/09 + liên ngân hàng 08/09). Loại trừ 6 giả
+>    thiết (sheet, kỳ dài, file cũ, MT940, nâng cao, sinh-chậm) → generator "Xuất
+>    sao kê" của TPB trả file rỗng cho TK này — lỗi phía TPB.
+> **Đường thay thế ĐÃ XÁC MINH có data:** "Truy vấn giao dịch → Tải bảng kê" →
+> file 19 dòng đủ 6 giao dịch + tổng tiền (định mức: chỉ tab Chuyển tiền).
+
+> **Đã trình Đại ca chốt hướng:** (A) đổi tool 42 sang luồng Tải bảng kê (khuyến
+> nghị — có data ngay) · (B) giữ luồng xuất + gọi hotline TPB hỏi · (C) làm cả hai.
+> **Chưa sửa thêm — chờ Đại ca chọn.**
+
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH — tool 42 bản mới
+> (chọn ngày fill trực tiếp) có hiệu lực sau restart; trước restart job TPB trên
+> web vẫn có thể dính lỗi chọn ngày cũ.
+
+> **App tổng không đổi code** — chỉ ghi lịch sử.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 278 — fix tool TPB + root cause TPB sinh file rỗng; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
