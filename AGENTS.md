@@ -10989,3 +10989,73 @@ thành phần nào ≥ 10).
 
 *Cập nhật lần cuối: 2026-10-01 (GĐ 279 — PA-A TPB luồng Truy vấn; app tổng 4.6.1 / repo con 6.6.1)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 280: Rà nhanh các phân hệ SMED/MISA đối chiếu đủ 3 bước quy trình 📌 (repo con C.133) (2026-10-01)
+
+> **Yêu cầu của Đại ca (01/10):** Rà nhanh các phân hệ SMED/MISA hiện có — đối
+> chiếu đủ 3 bước quy trình mới ban hành ở GĐ 278/C.131 (Download → ETL →
+> Báo cáo), lập bảng đối chiếu, ghi THIẾU SÓT vào AGENTS.md, commit (KHÔNG
+> push). Đánh số: grep thấy GĐ 279/C.132 đã dùng (tool 42 TPB) → việc này =
+> **GĐ 280 / C.133**.
+
+> **Phương pháp audit (bằng chứng, không đoán):** grep REPORT_MAP agent (21
+> entry) + hook ETL `40_web_agent.py` + `_REPORT_BUILDERS`/`QUERY_KEYS` (25
+> builder) + `REPORT_SOURCE_TABLES` + nav.ts BC_*_LEAFS + các trang `bc-*.tsx`
+> (grep queryKey từng trang) + `SQL_QUERY_GROUP`/`SQL_QUERY_LEAF` (-smed.ts) +
+> catalog BH_GROUPS (app tổng) — đối chiếu chéo từng phân hệ; data staging
+> đếm trực tiếp GiondDB bằng pyodbc (COUNT + MAX(report_date) 14 bảng stg_*).
+
+> **BẢNG ĐỐI CHIẾU 14 phân hệ SMED/MISA × 3 bước (kết quả thật):**
+>
+> | Phân hệ (tool) | 1. DOWNLOAD → OUTPUT | 2. ETL → stg_* | 3. BÁO CÁO | Kết luận |
+> |---|---|---|---|---|
+> | hddt (tool 1) | ✅ 1.HDDT · 19 file | ✅ stg_1HDDT 118.028 dòng | ✅ bc-sd-hddt (hddt-usage) + nguồn TX-DS | **ĐỦ 3 BƯỚC** |
+> | dtdt (tool 2) | ✅ 2.DTTDT · 19 file | ✅ stg_2DTTDT 133.593 | ✅ bc-thu-tien (tt-by-date) + nguồn Tổng quan | **ĐỦ 3 BƯỚC** |
+> | bkccn (tool 3) | ✅ 4.BKCCN · 19 file | ✅ stg_4BKCCN 58.233 | ✅ bc-banhang (dt-by-date) | **ĐỦ 3 BƯỚC** |
+> | dtthc (tool 20) | ✅ 3.DTTHC · 2 file | ✅ stg_3DTTHC 840 | ⚠️ **KHÔNG có báo cáo standalone** — chỉ làm nguồn dsxk-comparison + Tổng quan (đúng thiết kế: tool 20 gộp chuỗi, không phân rã TT) | **ĐỦ 2/3 — THIẾU SÓT báo cáo riêng** |
+> | nhapkho (tool 4) | ✅ 5.BKN · 19 file | ✅ stg_5BKN 9.022 | ✅ bc-nhap-kho + bc-matrix-nhap | **ĐỦ 3 BƯỚC** |
+> | xuatkho (tool 5) | ✅ 6.BKX · 19 file | ✅ stg_6BKX 239.754 | ✅ bc-xuat-kho + bc-xuat-huy + bc-matrix-xuat | **ĐỦ 3 BƯỚC** |
+> | xnkt (tool 7) | ✅ 7.BCNXT_KT · 19 file | ✅ stg_7BCNXT 43.670 | ✅ 4 báo cáo (nxt-luong/luong-tien + tonkho-luong + kiem-ke) | **ĐỦ 3 BƯỚC (thừa đủ!)** |
+> | chietkhau (tool 17) | ✅ 8.BCCK · 19 file | ✅ stg_8BCCK 86.084 | ❌ **KHÔNG có builder + trang** — nav chỉ có lá placeholder `bc-chietkhau-th` (không queryKey) | **THIẾU SÓT BƯỚC 3** |
+> | hentiem (tool 19) | ✅ 9.LHT · 19 file | ✅ stg_9LHT 13.914 | ❌ **KHÔNG có builder + trang** — nav chỉ có lá placeholder `bc-lich-hen` (không queryKey) | **THIẾU SÓT BƯỚC 3** |
+> | dattruoc (tool 23) | ✅ 10.GDTVX · 76 file | ✅ 4 bảng f1-f4 tường minh (5.308/29.828/2.802/31.306) | ✅ bc-congno-dattruoc (bccn-dattruoc — đọc f1-f4 GĐ 228i) | **ĐỦ 3 BƯỚC** |
+> | tkgvvxdt (tool 32) | ✅ 14.GVVXDT · 19 file | ✅ stg_14GVVXDT 738 | ✅ bc-tkgvvxdt | **ĐỦ 3 BƯỚC** |
+> | blth (tool 22) | ✅ 12.DTTDT_BLTH · 19 file | ✅ stg_12BLTH 228.530 | ⚠️ KHÔNG có báo cáo standalone — chỉ làm nguồn revenue-by-day + Tổng quan | **ĐỦ 2/3 — THIẾU SÓT báo cáo riêng** |
+> | bkct-hdgtgt (tool 30 MISA) | ✅ 11.BKCT_HDGTGT · 1 file/kỳ | ✅ stg_11BKCT 10.578 | ✅ bc-bkct (hddt-bkct) + nguồn TX-DS | **ĐỦ 3 BƯỚC** |
+> | bkth-hdgtgt (tool 31 MISA) | ✅ 13.BKTH_HDGTGT · 1 file/kỳ | ✅ stg_11BKTH 5.581 | ✅ bc-bkth (hddt-bkth) | **ĐỦ 3 BƯỚC** |
+>
+> **Kết quả: 10/14 ĐỦ 3 bước · 2/14 thiếu báo cáo riêng (dtthc, blth — có data
+> nhưng được dùng làm nguồn khác, cân nhắc có cần báo cáo riêng không) ·
+> 2/14 THIẾU SÓT bước 3 thật sự (chietkhau, hentiem — data nằm chết trong
+> staging 86.084 + 13.914 dòng, chưa tổng hợp thành báo cáo nào).**
+
+> **Đối chiếu chéo phát hiện thêm (đã verify sạch):**
+> - **Hook ETL agent:** mọi rep SMED/MISA đi nhánh `else "etl_import.py"`
+>   → auto-ETL sau job cover đủ 14 phân hệ ✓ (VCB/TCB/MIA đi nhánh riêng).
+> - **Phân quyền 3 điểm:** 22 QUERY_KEYS đủ khai báo SQL_QUERY_GROUP +
+>   SQL_QUERY_LEAF; LEAF_ROUTE_BY_REPORT đủ 21 report ✓; catalog BH_GROUPS
+>   ↔ nav.ts repo con **0 lệch** (so danh sách route 2 chiều bằng comm).
+> - **REPORT_SOURCE_TABLES** (cảnh báo thiếu data GĐ C.45) đủ cho 22 key,
+>   checkCol khớp chuẩn WHERE builder.
+> - Ghi chú: stg_10GDTVX generic KHÔNG còn (tách 4 bảng f1-f4 GĐ 228i +
+>   backup_228i) — mọi consumer đã đọc f1-f4, không phá vỡ gì.
+
+> **📌 2 THIẾU SÓT cần bổ sung (đề xuất ưu tiên — chờ Đại ca quyết):**
+> 1. **Chiết khấu (chietkhau):** xây builder tổng hợp từ stg_8BCCK (86.084
+>    dòng) + trang thật thay lá placeholder `bc-chietkhau-th` — nhóm BÁO CÁO
+>    MARKETING. Dự phóng nội dung cần probe file Excel tool 17.
+> 2. **Lịch hẹn tiêm (hentiem):** xây builder tổng hợp từ stg_9LHT (13.914
+>    dòng) + trang thật thay lá placeholder `bc-lich-hen` — nhóm BÁO CÁO
+>    MARKETING. Dự phóng nội dung cần probe file Excel tool 19.
+>
+> *2 phân hệ dtthc/blth: data hợp lệ đã dùng làm nguồn báo cáo khác (đối
+> soát + doanh thu) — KHÔNG khẩn cấp; làm báo cáo riêng chỉ khi Đại ca cần
+> xem dạng phân rã riêng.*
+
+> **App tổng không đổi code** — chỉ ghi lịch sử + bảng audit. Version KHÔNG
+> bump (quy tắc ĐA AGENT — chờ lệnh Push; app tổng 4.6.1 / repo con 6.6.1).
+
+*Cập nhật lần cuối: 2026-10-01 (GĐ 280 — audit 3 bước SMED/MISA; app tổng 4.6.1 / repo con 6.6.1)*
+*Người cập nhật: Trợ lý Freebuff*
