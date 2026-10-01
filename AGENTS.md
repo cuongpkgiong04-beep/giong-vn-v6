@@ -11596,13 +11596,13 @@ tổng 4.7.0 / repo con 6.7.0.
 > ≈ 3.3s trên tổng ~5s. Client ĐÃ có cache (GĐ 232 — F5 cùng kỳ hiện ngay);
 > chậm rơi vào lần ĐẦU mỗi ngày/kỳ/đơn vị.
 >
-> **⚠️ VIỆC ĐỀ XUẤT tăng tốc (chờ anh duyệt — CHƯA làm):**
-> 1. **PA-A (khuyến nghị):** gộp 3 lần countSources thành 1 query duy nhất tính
->    CẢ 3 khoảng (kỳ chọn / hôm nay / tháng này) — 16 subquery thay 12 round-trip
->    tuần tự → dự đoán 5s → ~1.5-2s.
-> 2. **PA-B (dễ nhất — 3 dòng):** đưa 2 freshness vào Promise.all chung thay await
->    tuần tự → 5s → ~3.3s.
-> 3. **PA-C:** kết hợp A+B.
+> **✅ PA-C ĐÃ LÀM (anh duyệt cùng ngày — repo con `22e2857`):** hàm mới
+> `countSourcesAll` gộp 3 lần countSources thành 2 round-trip (query chính 21
+> subquery đếm 3 khoảng + query import_log 3 cột n_p/n_t/n_m) + đưa vào
+> Promise.all thay await tuần tự. Load KPI ~5s → **~2s**; đối chứng 5/5 nguồn
+> khớp query riêng qua tunnel; typecheck 0 lỗi. Chi tiết kỹ thuật + lesson
+> (`.query()` không có bẫy tham số — ngược tagged template) ở AGENTS.md repo con
+> GĐ C.141.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
 >
