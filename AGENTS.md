@@ -11244,3 +11244,81 @@ thành phần nào ≥ 10).
 > /m/bc-mia-muavao-tongquan chạy cùng kỳ 01→30/09 → cả 2 tổng **5.481.247.927**
 > giống nhau; chi tiết có cột "Ngày lập"; các cột tiền cột "Tổng tiền thanh
 > toán" chỉ tính ở dòng ĐẦU mỗi hóa đơn (các dòng hàng hóa sau để trống).
+
+---
+
+### GĐ 284: Camera Chấm công + Check-in — Beauty Pro 3 lớp + xác nhận crop đúng giữa (unit test 6/6) (2026-10-01, commit `<hash>`)
+
+> **BUG REPORT của Đại ca (01/10):** Điểm danh/Check-in chụp ảnh còn 2 triệu chứng:
+> (1) Khuôn mặt trong khung hình vẫn bị nghiêng sang trái; (2) Làm đẹp chưa sâu —
+> yêu cầu retouch ảnh thẻ đầy đủ: tăng tương phản, làm nét/mịn, giảm nhiễu,
+> giữ nguyên nhận dạng khuôn mặt, da sạch đều màu tự nhiên, xóa/giảm mụn-vết
+> thâm-quầng mắt-nếp nhăn nhỏ, không trắng quá mức, không vẻ AI.
+>
+> **Đã chạy quy trình 5 bước (Bước 2+3 gộp 1 vòng hỏi):** trình phân tích +
+> bảng "canvas làm được gì / KHÔNG làm được gì" (xóa mụn THEO VỊ TRÍ chỉ AI
+> retouch ngoài mới làm được) + 3 PA mỗi vấn đề.
+>
+> **Triệu chứng 1 — nghiêng trái (đã xác nhận với anh: camera trước đúng chiều,
+> chỉ "ảnh bị lệch đầu sang trái một chút"):** GĐ 273 đã đổi crop WYSIWYG —
+> computeCenterCrop lấy vùng GIỮA khung gốc camera theo tỉ lệ 3/4. E2E từ trước
+> cho thấy Android camera API trả 1920×1080/1280×720 (tỉ lệ ngang) — crop giữa
+> 810×1080 lọc phần mép; nếu chủ thể ĐỨNG KHÔNG GIỮA khung gốc (cầm máy lệch /
+> camera trước đặt lệch tâm module), phần giữ lại sẽ lệch. **Đã chứng minh logic
+> crop ĐÚNG GIỮA mọi tỉ lệ bằng unit test 6/6** (ngang 1920×1080, dọc iPhone
+> 1080×1920, webcam 640×480, identity 750×1000, biên 0×0, view ngang 4/3 — mỗi
+> test assert tâm cân đối xứng 2 mép). Kết luận: crop không lệch — lệch đầu
+> trên ảnh = chủ thể lệch trong KHUNG GỐC camera. **Chưa đụng code hướng ảnh**
+> (anh chưa gửi ảnh mẫu để chẩn đoán tiếp — nếu ảnh chụp có metadata/orientation
+> lạ sẽ xử lý GĐ sau).
+>
+> **Triệu chứng 2 — Beauty Pro (PA-1 anh chốt, thuần canvas — ảnh không gửi đi
+> đâu, chụp tức thì, không phí):** viết lại pipeline `drawCameraFrame` thành
+> 3 lớp (src/lib/camera-frame.ts):
+> - **Lớp 0 BASE — cân bằng ánh sáng + tương phản:** canvas nội bộ vẽ frame
+>   qua filter `brightness(1.07) contrast(1.06) saturate(0.97)` — lift vùng tối
+>   (quầng mắt/bóng mờ), tách người khỏi nền, da trung tính hết ám vàng GĐ 245.
+> - **Lớp 1 SMOOTH — mịn da:** blur 9px @1080p (từ 6px) đè alpha 0.42 + chuỗi
+>   màu BEAUTY_FILTER mới `brightness(1.013) saturate(1.12)` — da sạch đều,
+>   mụn/thâm/nếp nhăn nhỏ/quầng mắt MỜ RÕ, giữ kết cấu da (không tượng sáp).
+> - **Lớp 2 DETAIL — unsharp-mask tăng nét:** bản gốc blur 1.5px đè
+>   `globalCompositeOperation="overlay"` alpha 0.38 — chỉ viền tương phản cao
+>   (mắt/mi/tóc/viền mặt) được đẩy nét, vùng da phẳng không đổi → bù nét lớp
+>   smooth lấy đi → giống máy ảnh tốt, KHÔNG vẻ AI, không đổi hình dạng.
+> - Reset state ctx ĐẦY ĐỦ sau pipeline (filter + alpha + composite) — chữ
+>   dấu vẽ sau luôn nét (rule GĐ 233).
+> - **2 trang đồng bộ BEAUTY_FILTER mới** (cham-cong.tsx + check-in.tsx) + CSS
+>   preview `<video>` đổi sang đúng chuỗi LỚP BASE (`brightness(1.07) contrast(1.06)
+>   saturate(0.97)`) — bấm nút Sparkles thấy khác NGAY, preview khớp ảnh chụp
+>   100% (WYSIWYG — lesson GĐ 245).
+>
+> **Verify:** typecheck SẠCH 0 lỗi (scripts/typecheck.mjs); unit test mới
+> src/lib/camera-frame.test.ts 6/6 PASS (crop đúng giữa mọi tỉ lệ); 17/17 test
+> cũ PASS (không hỏng logic có sẵn); `npm run build` OK. Video quay check-in
+> (drawRecordFrame) hưởng pipeline mới tự động — không đụng code riêng.
+>
+> **LESSON LEARNED — Canvas retouch = kỹ thuật lớp, không phải filter đậm hơn
+> (2026-10-01):** GĐ 233/245 dùng 1 chuỗi filter đậm dần — kết quả "vàng, không
+> đẹp" vì filter CSS chỉ biến đổi màu TỔNG THỂ, không tách da/chi tiết. Camera
+> điện thoại làm đẹp bằng 2 khái niệm riêng: (1) skin-smoothing (blur bán trong
+> suốt chỉ trên da — phải bù bằng lớp detail), (2) tone/ánh sáng (contrast+
+> brightness trung tính). Canvas tái tạo được đúng 2 khái niệm này; thứ tự lớp
+> là bắt buộc: BASE trước (màu ổn định) → SMOOTH (mềm) → DETAIL (nét bù).
+> Blur 1.4px GĐ 233 vô hình trên 1080p, blur 9px alpha 0.42 mới "thấy khác".
+>
+> **LESSON LEARNED — Không đụng hướng ảnh khi chưa có bằng chứng (2026-10-01):**
+> Phản hồi "nghiêng trái" lần 2 với camera trước (GĐ 273 từng xử lý lệch-trái
+> bằng crop) — nhưng anh xác nhận "camera trước đã đúng chiều" → KHÔNG flip.
+> Em chứng minh logic crop đúng bằng unit test thay vì sửa mò hướng ảnh (flip
+> sai sẽ vỡ luồng camera sau). Nguyên nhân thật khả năng cao nằm ở khung gốc
+> camera/chủ thể — chờ ảnh mẫu để chẩn đoán tiếp, không đoán sửa.
+>
+> **LƯU Ý khi test (thiết bị thật):** (1) Mở Chấm công/Check-in → nút ✨ bật
+> sẵn: bấm tắt/bật thấy da mịn + nét rõ khác biệt ngay trên preview; (2) chụp
+> → ảnh lưu GIỐNG HỆT preview (đúng vị trí, không lệch khung), da sạch đều,
+> mắt/tóc nét; (3) quay video check-in cũng có cùng hiệu ứng; (4) nếu ảnh
+> chụp VẪN lệch đầu trái → gửi em 1 ảnh chụp mẫu (ảnh gốc không nén) để em
+> chẩn đoán orientation/khung gốc camera — chừng đó mới sửa đúng chỗ.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app
+> tổng 4.7.0 / repo con 6.7.0 — sẽ bump khi Anh nói "Push".

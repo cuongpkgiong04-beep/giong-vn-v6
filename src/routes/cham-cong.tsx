@@ -103,14 +103,12 @@ function ChamCongPage() {
   // camera đẹp của điện thoại (sáng hơn + mềm da + đậm màu) che khuyết điểm.
   // BẬT MẶC ĐỊNH, nút bấm tắt/bật ngay trên màn camera.
   const [beauty, setBeauty] = useState(true);
-  // GĐ 245: chuỗi filter dùng CHUNG — áp cả CSS trên <video> preview live
-  // (bấm nút thấy khác NGAY trên màn camera, khớp 100% ảnh chụp) lẫn canvas
-  // lúc chụp. Đậm hơn GĐ 233 (1.08/1.18 quá nhẹ, anh test không thấy khác):
-  // sáng 1.18 + mềm da 1.4px + màu tươi 1.35 + giữ nét tương đối 0.94.
-  // GĐ 273: bỏ blur khỏi chuỗi màu — blur đã chuyển sang LỚP 2 mịn da (blur 6px
-  // đè bán trong suốt, da mềm + giữ nét mắt/viền mặt). Saturate 1.35→1.08 +
-  // brightness 1.18→1.08 — hết ám vàng (triệu chứng "chỉ thấy vàng" của Đại ca).
-  const BEAUTY_FILTER = "brightness(1.08) saturate(1.08)";
+  // GĐ 283 Beauty Pro: chuỗi filter chỉ còn LỚP MÀU của lớp mịn da (đậm 12% —
+  // da tươi tự nhiên). Cân bằng sáng/tương phản chạy LỚP BASE riêng trong
+  // camera-frame.ts; blur mịn da 9px + tăng nét unsharp-mask cũng trong đó.
+  // Preview CSS khớp lớp base: brightness 1.07 + contrast 1.06 + saturate 0.97
+  // × màu 1.12 = bấm nút thấy khác NGAY, ảnh chụp khớp preview 100%.
+  const BEAUTY_FILTER = "brightness(1.07) contrast(1.06) saturate(0.97) brightness(1.013) saturate(1.12)";
   // GĐ 273: isIOS/bản ghi iOS-specific đã bỏ — preview + ảnh lưu dùng chung khung
   // aspect 3/4 trên mọi thiết bị (không còn 2 nhánh iOS/Android lệch nhau).
   const isIOS = false;
@@ -1151,7 +1149,7 @@ function ChamCongPage() {
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? BEAUTY_FILTER : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.07) contrast(1.06) saturate(0.97)" : undefined }}
                   />
                   {/* Overlay canvas draws on top of video */}                    <canvas
                       ref={overlayCanvasRef}

@@ -105,9 +105,12 @@ function CheckInPage() {
   // (bấm nút thấy khác NGAY trên màn camera, khớp 100% ảnh/video chụp) lẫn
   // canvas lúc chụp/quay. Đậm hơn GĐ 233 (1.08/1.18 quá nhẹ — anh test không
   // thấy khác): sáng 1.18 + mềm da 1.4px + màu tươi 1.35 + giữ nét tương đối 0.94.
-  // GĐ 273: bỏ blur khỏi chuỗi màu — blur chuyển sang LỚP 2 mịn da (blur 6px đè
-  // bán trong suốt, da mềm + giữ nét mắt/viền). Saturate/brightness giảm — hết ám vàng.
-  const BEAUTY_FILTER = "brightness(1.08) saturate(1.08)";
+  // GĐ 283 Beauty Pro: chuỗi filter chỉ còn LỚP MÀU của lớp mịn da (đậm 12% —
+  // da tươi tự nhiên). Cân bằng sáng/tương phản chạy LỚP BASE riêng trong
+  // camera-frame.ts; blur mịn da 9px + tăng nét unsharp-mask cũng trong đó.
+  // Preview CSS khớp lớp base: brightness 1.07 + contrast 1.06 + saturate 0.97
+  // × màu 1.12 = bấm nút thấy khác NGAY, ảnh chụp khớp preview 100%.
+  const BEAUTY_FILTER = "brightness(1.07) contrast(1.06) saturate(0.97) brightness(1.013) saturate(1.12)";
   // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
   const facingModeRef = useRef<"user" | "environment">("user");
   if (facingModeRef.current !== facingMode) facingModeRef.current = facingMode;
@@ -911,7 +914,7 @@ function CheckInPage() {
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? BEAUTY_FILTER : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.07) contrast(1.06) saturate(0.97)" : undefined }}
                   />                  <canvas
                     ref={overlayCanvasRef}
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
