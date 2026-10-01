@@ -11539,5 +11539,40 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.7.0 / repo con 6.7.0).
 
-*Cập nhật: 2026-10-01 (GĐ 288 — Sidebar bậc 3 MIA phân cấp; app tổng 4.7.0 / repo con 6.7.0)*
+### GĐ 289: Push lần 3 — Restart Agent + bump 4.8.0/6.8.0 + push cả 2 repo (2026-10-01)
+
+| Commit | Thay đổi |
+|---|---|
+| `2266ab9` (app tổng) | chore: bump version 4.7.0 → 4.8.0 (push GĐ 287/288) |
+| `96f6278` (repo con) | chore: bump version 6.7.0 → 6.8.0 (push C.136-C.140) |
+
+> **Lệnh của Đại ca (01/10):** "Restart Agent, Push" — em chạy trọn quy trình ĐA AGENT (GĐ 242/249):
+>
+> 1. **Restart agent (GĐ 266):** check rảnh qua tunnel (pyodbc local login fail
+>    18456 — dùng đường fallback `/query`, contract `{text, params}`, URL Gist +
+>    x-api-token) → 0 job running/pending → xóa `__pycache__` etl → `sc stop/start`
+>    20:57 → log mới sạch (poll OK, 0 lỗi 401). Agent tự spawn Task_02 catch-up
+>    ngày 01/10 (đúng thiết kế GĐ 250) — chạy nền song song, không cản push.
+> 2. **Rà trùng lặp:** stack GĐ 283-288 (C.136-C.140) đều của em — không xung đột
+>    agent khác; file modified/untracked (`update-tunnel-local.bat`, attachments/,
+>    screenshots/, log) KHÔNG add.
+> 3. **Bump version (checklist GĐ 138):** 4.8.0 + 6.8.0 — không thành phần nào
+>    ≥ 10; 1 script node đường dẫn tuyệt đối + grep đối chiếu 4 chỗ khớp.
+> 4. **PREFLIGHT PASS (GĐ 243)** trước push (tunnel 200 + login 200) → push cả 2
+>    repo → Vercel Ready 2/2 → **ghim domain app tổng** (`ggqvxrdmf`) → preflight
+>    `--verify` PASS (bundle **4.8.0** + login 200) → repo con domain chính bundle
+>    **6.8.0** (auto-alias tự nắm).
+>
+> **LESSON — Contract `/query` là `{text, params}` (GĐ 96 lặp lần N — 2026-10-01):**
+> Script check job gửi `{sql, params}` → 400 "body phải là {text, params}" — bắt
+> ngay nhờ server trả lỗi tường minh. Mọi probe tunnel từ giờ ghi nhớ: endpoint
+> `/query` nhận `text` (không phải `sql`), placeholder $N PostgreSQL-style.
+>
+> **Version:** app tổng **4.8.0** · repo con **6.8.0** (2 nơi mỗi app khớp).
+>
+> **Tiêu chí kiểm chứng (PASS hết):** service GIONG_SMED_Agent RUNNING bản mới;
+> Task_02 ngày 01/10 tự spawn; Vercel 2 project Ready; domain chính 2 app serve
+> bundle đúng version; PREFLIGHT 3/3 PASS.
+
+*Cập nhật: 2026-10-01 (GĐ 289 — Push lần 3; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
