@@ -11807,5 +11807,15 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
 
-*Cập nhật lần cuối: 2026-10-02 (GĐ 295 — fix 3 bug verify sau merge TASK-001; app tổng 4.8.0 / repo con 6.8.0)*
+### GĐ 296: Hệ sinh thái — BC_Sao kê ngân hàng TPB hoàn chỉnh (repo con C.146) (2026-10-02)
+
+> **Yêu cầu của Đại ca (02/10):** Triển khai "BC_Sao kê ngân hàng TPB" — làm giống TCB và VCB. Claim GĐ 296/C.146 qua registry (`b9fb681`). Quy trình 5 bước GĐ 198 (phiên 6) — anh chốt **PA-1 cả 3 điểm**: lấy mẫu bằng chạy lại tool 42 (kỳ 08→12/09 — đối chứng C.138 khớp từng đồng); Tổng hợp THEO NGÀY như TCB; 2 lá menu như TCB.
+>
+> **Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.146.** Tóm tắt: ETL `bank_tpb_import.py` mới (2 bảng tường minh `bank_tpb_tx` + `bank_tpb_balance`, nạp đè theo kỳ + superset-elimination, đọc file non-read_only — dimension TPB metadata sai là bẫy mới) → builder `bank-tpb-chitiet` (9 cột) + `bank-tpb-tonghop` (theo ngày) → 2 trang `/m/bc-bank-tpb` + `/m/bc-bank-tpb-th` → phân quyền 3 điểm (nhóm banhang-bank) → catalog app tổng +1 lá TPB-th (TPB chi tiết đổi nhãn — chip Phân quyền tự sinh).
+>
+> **✅ Verify repo con (đo thật):** ETL nạp 47 GD — kỳ 08→12 = 15 GD khớp đối chứng C.138 từng đồng; builder qua đường production: TỔNG Vào 1.007.800.000 / Ra 1.060.667.000 / 15 GD; check nguồn kỳ rỗng missing đúng; tsc 0 lỗi; vite build OK; routeTree sinh lại. App tổng chỉ catalog +1 lá — không đụng code khác.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật lần cuối: 2026-10-02 (GĐ 296 — BC_Sao kê TPB hoàn chỉnh; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*

@@ -112,7 +112,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-bank-vcb-th", label: "BC_Sao kê VCB - Tổng hợp theo TT" },
       { to: "/m/bc-bank-tcb", label: "BC_Sao kê TCB - Chi tiết" }, // C.130 — đổi nhãn + thêm lá tổng hợp
   { to: "/m/bc-bank-tcb-th", label: "BC_Sao kê TCB - Tổng hợp theo ngày" },
-      { to: "/m/bc-bank-tpb", label: "BC_Sao kê ngân hàng TPB" },
+      { to: "/m/bc-bank-tpb", label: "BC_Sao kê TPB - Chi tiết" }, // C.146 — đổi nhãn + thêm lá tổng hợp (chuẩn TCB)
+      { to: "/m/bc-bank-tpb-th", label: "BC_Sao kê TPB - Tổng hợp theo ngày" },
       { to: "/m/bc-bank-vtb", label: "BC_Sao kê ngân hàng VTB" },
     ],
   },
