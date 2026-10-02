@@ -11927,3 +11927,14 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật lần cuối: 2026-10-02 (GĐ 300 — đối chứng manual Mua vào; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+> **▶️ GĐ 300 (bổ sung — PA-1 ĐÃ TRIỂN KHAI, cùng ngày):** Đại ca chốt PA-1 → đã sửa
+> `agent/etl/mia_hddt_import.py` (repo con) 2 điểm: (1) fill `tthue = round(thtien ×
+> tsuat_norm)` khi rỗng/0 + helper `_tsuat_norm()` ('0.05'/'5%'/'5' → 0.05);
+> (2) dòng "Chiết khấu thương mại" ép `thtien` (và tthue) ÂM — chuẩn MISA. Re-import
+> sau khi xóa import_log MUA VÀO (5 file, 1401 dòng). **Verify per-đồng PASS:**
+> CT thtien = **5.244.180.687** khớp manual 100% (hết lệch +53.999.994); CT tthue =
+> 266.468.689 ≈ manual + residual 1.399.789 (4 dòng vắc xin nguồn lệch tỷ lệ — dự
+> đoán trúng); **TQ KHÔNG ĐỔI** 385 HĐ / 5.481.247.927. Agent đã restart khi rảnh
+> (GĐ 266 — chờ Task_02 BKCCN xong) → log mới sạch. Chi tiết kỹ thuật ở repo con
+> **GĐ C.152**. Version giữ nguyên 4.8.0 / 6.8.0 — KHÔNG push.
