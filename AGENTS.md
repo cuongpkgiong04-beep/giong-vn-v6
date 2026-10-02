@@ -12075,3 +12075,29 @@ tổng 4.7.0 / repo con 6.7.0.
 > **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) — task_runner bản mới (pause + hủy nhanh + retry 2) có hiệu lực sau restart.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.9.0).
+
+---
+
+### GĐ 304: Hệ sinh thái — Báo cáo tkgvvxdt mất data kỳ 2018→30/09 — builder chọn nhầm snapshot rút gọn, KHÔNG mất data (repo con C.156) (2026-10-02)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `81b1b4c`) | fix(báo cáo): C.156 — `_snapshot_date` chọn snapshot NHIỀU DỮ LIỆU NHẤT (đếm dòng) thay MAX(report_date) |
+| (app tổng) | docs(agents): GĐ 304 — không đổi code |
+
+> **BUG REPORT của Đại ca (02/10, kèm ảnh):** Báo cáo Marketing "Thống kê gói và Vắc xin đặt trước" kỳ 01/01/2018→30/09/2026 chỉ còn **2 dòng**; lần trước chạy 2018→28/09 rất nhiều dữ liệu. Câu hỏi mấu chốt: 29-30/09 có data mới không? Có ghi đè lên data cũ không — nếu ghi đè là SAI.
+
+> **Kết quả điều tra (chi tiết đầy đủ ở AGENTS.md repo con GĐ C.156):**
+> 1. **29-30/09 KHÔNG có data mới** — job download tkgvvxdt cuối là 28/09 17:24 (kỳ 22→28). Job 16:08 hôm nay là job BÁO CÁO, không tải file.
+> 2. **KHÔNG ghi bổ sung, KHÔNG ghi đè — data NGUYÊN VẸN:** snapshot lịch sử `2018-01-01` vẫn đủ **721 dòng** trong `stg_14GVVXDT` (nguyên tắc NT2 GĐ 287 được tôn trọng).
+> 3. **ROOT CAUSE — lỗi builder (code em viết):** DB có 2 snapshot lồng nhau — `2018-01-01` (721 dòng, file gộp lịch sử) + `2026-09-22` (17 dòng, file RÚT GỌN của job 22→28/09). Builder chọn "MỚI NHẤT trong kỳ" theo giả định sai *mới nhất = đầy đủ nhất* → kỳ 2018→30/09 chọn nhầm snapshot 17 dòng → chỉ còn 2 dịch vụ.
+> 4. **Vì sao lần trước đầy đủ?** Anh chạy 10:36 sáng 28/09 — TRƯỚC khi snapshot ngắn nạp (17:33 chiều) → builder chọn snapshot 721 dòng.
+
+> **Fix (PA-1 anh chốt):** builder chọn snapshot **NHIỀU DỮ LIỆU NHẤT** (`GROUP BY report_date ORDER BY SUM(CASE WHEN col2 <> '' THEN 1 ELSE 0 END) DESC`). Verify kỳ 2018→30/09 = **64 dịch vụ / 19 trung tâm / matrix 64×18**; kỳ 22→28 vẫn đúng 2 dòng. Agent restart 01:56 nạp builder mới (chờ queue Task_02 xong — GĐ 266; dọn 1 job ma `blth` — lesson GĐ 265).
+
+> **⚠️ Việc cho Đại ca:** bấm dòng lịch sử cũ hoặc tạo job báo cáo MỚI kỳ 2018→30/09 → bảng đủ 64 dịch vụ. Muốn đủ data 26-30/09: tạo job download "Thống kê gói và VX đặt trước" kỳ 01/01/2018→30/09/2026 → file gộp mới nạp đè ĐÚNG snapshot (không mất gì).
+
+> **LESSON LEARNED — Snapshot MỚI NHẤT ≠ gộp ĐẦY ĐỦ nhất (2026-10-02):** Với nguồn file GỘP KỲ có nhiều lượt tải khác độ bao phủ, chọn snapshot theo MAX(report_date) là giả định nguy hiểm — file rút gọn kỳ ngắn nạp sau sẽ đứng "mới hơn" dù ít data hơn. Chọn theo SỐ LƯỢNG DỮ LIỆU (đếm dòng) — đúng bản chất "file gộp = đầy đủ nhất". Checklist: bảng có nhiều snapshot → probe số dòng từng mốc trước khi viết logic chọn.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng 4.8.0 / repo con 6.9.0.
+
