@@ -12053,3 +12053,25 @@ tổng 4.7.0 / repo con 6.7.0.
 > **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) — task_runner bản mới (3 slot + 20 phân hệ + retryPartial) có hiệu lực sau restart.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.9.0).
+
+
+---
+
+### GĐ 305 — Nhiệm vụ định kỳ app con: TẠM DỪNG LỊCH toàn cục + Hủy nhanh job + Retry 2 (2026-10-03, repo con C.157)
+
+> **Câu hỏi của Đại ca (03/10, 2 câu):** (1) Có cơ chế tạm dừng không — để restart Agent test mà không đợi hết Job? (2) "Số lần tự lấy lại khi lỗi (1–5, hiện 3)" có phải chạy cả nhiệm vụ 3 lần — nếu đúng giảm còn 1? **Tư vấn của em:** retry là số lần thử tối đa **MỖI BƯỚC** (`for attempt in range(1, retry_max + 1)`) — KHÔNG phải chạy cả nhiệm vụ 3 lần; mỗi bước bình thường chỉ chạy 1 lần; "chạy nhiều quá" là do Task_01 backfill ~28 bước download (tool 5-21 phút/bước) + 28 báo cáo, và Task_02 3 slot/ngày (GĐ 302 anh chốt). **Đại ca chốt PA-1 + Retry 2** (giữ tính năng vá file thiếu GĐ C.154).
+
+> **Triển khai (repo con — 4 file):**
+> 1. **⏸ Tạm dừng lịch toàn cục:** cờ `kv_settings.task_schedule_paused` ('1'/'0') — web nút ⏸/▶ trên trang NHIỆM VỤ (Admin, `setTaskSchedulePaused` UPSERT qua SELECT-then-UPDATE/INSERT); agent `_schedule_paused()` đọc mỗi vòng 30s → paused: KHÔNG spawn slot mới + KHÔNG claim nhiệm vụ mới (log 1 lần khi đổi trạng thái — không spam). Nhiệm vụ đang running vẫn chạy tiếp — muốn dừng ngay bấm thêm Hủy.
+> 2. **Hủy nhanh:** `_wait_job_done(job_id, tid)` — mỗi poll check task bị hủy → `_cancel_job_now()` UPDATE `smed_pull_jobs.status='cancelRequested'` → web agent heartbeat kill tool **≤30s** (GĐ C.18) thay vì đợi job 5-21 phút chạy hết. Banner vàng nhắc "Nhớ bấm Tiếp tục sau khi xong".
+> 3. **Retry 3→2** (default code + UI + label rõ nghĩa: "Số lần thử tối đa MỖI BƯỚC khi lỗi — không phải số lần chạy cả nhiệm vụ; bước lỗi tự bù ở slot kế").
+
+> **LESSON LEARNED — db.query trả MẢNG, không phải {rows, rowCount} (2026-10-03):** wrapper `sqlx()` app con trả mảng trực tiếp (`rows[0]`), KHÔNG có `rowCount` — TS bắt 2 lỗi ngay (TS2339) trước khi commit. Xác định INSERT/UPDATE xảy ra chưa: SELECT trước rồi UPDATE/INSERT, đừng đọc rowCount. (Ngược lesson GĐ C.141 — `.query()` API Server thì trả {rows}; 2 lớp wrapper khác nhau, đừng trộn.)
+
+> **LESSON LEARNED — time.sleep(30) trong module test treo (2026-10-03):** stub test import task_runner rồi gọi `_wait_job_done` với mock — giữa polls `time.sleep(TASK_JOB_WAIT_SEC)` sleep 30s thật → test timeout. Fix: `tr.TASK_JOB_WAIT_SEC = 0` ngay sau import. Kèm lesson GĐ 302 lặp lần 2: kỳ vọng `cancelled_jobs == [job]` sai — job bị cancel ở MỌI poll trước khi status phản ánh → list 2 phần tử giống nhau; check đúng là `len >= 1 and all(== job)`.
+
+> **✅ Verify:** tsc EXIT 0; py_compile OK; stub test 10/10 PASS (retry=2 · paused 4 trạng thái · cancel_job SQL + param đúng · hủy nhanh return False + gọi cancel · bình thường không cancel); kv_settings schema verify thật qua tunnel (k/v/updated_at nvarchar/datetime2).
+
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) — task_runner bản mới (pause + hủy nhanh + retry 2) có hiệu lực sau restart.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.9.0).
