@@ -11880,3 +11880,50 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật lần cuối: 2026-10-02 (GĐ 299 — fix tgtcthue HĐ bán hàng mua vào PA-3; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 300: Đối chứng file manual Mua vào (TQ + CT) — TQ khớp TỪNG ĐỒNG 100%; CT lệch do NGUỒN API MIA, công thức cứu 99,3% (chờ PA) (2026-10-02)
+
+> **Nhiệm vụ của Đại ca (02/10):** "Anh gửi file manual (mua vào) vào attachments/ Em đối chứng cho anh" — 2 file
+> `0108321182 - Mua vào - [Tổng quan|Chi tiết] - 2026-09-01_2026-09-30.xlsx` (MISA UI tải tay 12:06). Claim GĐ 300/C.151.
+> Script đối chứng chuẩn: `giong-apps/apps/banhang/scripts/probe-mia-muavao-manual.py` (dùng lại được cho bán ra/kỳ sau).
+
+> **KẾT QUẢ 1 — Báo cáo Tổng quan mua vào: KHỚP TỪNG ĐỒNG 100% (6/6 chỉ tiêu):**
+>
+> | Chỉ tiêu | Manual | App (DB superset) | |
+> |---|---|---|---|
+> | Số HĐ | 385 | 385 | ✅ |
+> | Tổng tiền chưa thuế | 5.216.185.359 | 5.216.185.359 | ✅ |
+> | Tổng tiền thuế | 265.068.900 | 265.068.900 | ✅ |
+> | Chiết khấu thương mại | 175.463.880 | 175.463.880 | ✅ |
+> | Tổng tiền phí | 0 | 0 | ✅ |
+> | Tổng thanh toán | 5.481.247.927 | 5.481.247.927 | ✅ |
+>
+> Spot-check HD C26MYY/227 (1.126.000 / TT 1.119.668) + C26MYY/2009 (1.220.000) — khớp từng ô (kết quả fix GĐ 299 hoạt động đúng).
+
+> **KẾT QUẢ 2 — Báo cáo Chi tiết mua vào: KHỚP cấu trúc (595 dòng / 385 HĐ giống hệt), LỆCH 2 nhóm do NGUỒN API MIA — KHÔNG phải lỗi ETL (file tool 43 ↔ DB khớp từng đồng 100%):**
+> 1. **Tiền thuế từng dòng (482/533 dòng có thuế suất):** API MIA trả `tsuat` (0.05/0.08/0.1) nhưng KHÔNG trả `tthue` → DB tổng thuế 4.138.007 vs manual 265.068.900 (thiếu 260.930.890). 51 dòng còn lại API có trả tthue. Probe trực tiếp API (login + listing + detail) xác nhận + phát hiện API biến động (detail C26MKT/12188 trả 6 dòng lúc tool chạy 01/10, giờ trả items rỗng ổn định).
+> 2. **Dòng "Chiết khấu thương mại" (18 HĐ C26TQM):** API mất dấu âm — manual −1.311.428…, tool +1.311.428… → DB thtien 5.298.180.681 vs manual 5.244.180.687 (lệch +53.999.994 = 2×18×|CK|). TQ cấp HĐ của các HĐ này khớp (tgtcthue +2.178.686) — chỉ dòng CT lệch. CKTM dòng + Tổng thanh toán (phân bổ dòng đầu) KHỚP.
+
+> **CƠ HỘI SỬA ĐÃ KIỂM CHỨNG TRÊN SỐ LIỆU:**
+> - **Công thức `tthue = thtien × tsuat` khớp 562/566 dòng có thuế trong manual (99,3%)** — kiểm chứng trên cả 51 dòng tool CÓ sẵn tthue (51/51) lẫn 566 dòng manual. Chỉ 4 HĐ vắc xin 5% lệch (BEXSERO/VARILRIX/SHINGRIX — thuế suất thực tế khác 5% ghi trên HĐ, diff ~1,4 triệu).
+> - Dòng CK âm: quy tắc tên `ten_hh` bắt đầu "Chiết khấu thương mại" → ép âm (chuẩn MISA).
+
+> **3 PA ĐÃ TRÌNH — CHỜ ĐẠI CA CHỐT (chưa sửa code):**
+> - **PA-1 (khuyến nghị):** Sửa ETL mua vào — (a) tthue dòng = round(thtien × tsuat, 2) khi tthue rỗng + tsuat > 0; (b) dòng ten_hh "Chiết khấu thương mại" → ép thtien âm (tthue dòng âm theo cùng tỷ lệ); (c) xóa import_log MIAHDT mua vào + re-import. Dự đoán: thtien CT khớp manual 100%; tthue Subtotal ≈ 264 triệu (lệch ≤4 dòng đặc biệt ~1,4tr); TQ không đổi.
+> - **PA-2:** Chỉ fix dấu CK (chắc chắn 100%) — tthue giữ nguồn API + ghi chú trang. Dự đoán: tthue Subtotal vẫn thiếu 260.930.890 so manual.
+> - **PA-3:** Không sửa — ghi chú nguồn trên trang CT. Dự đoán: Subtotal CT lệch manual vẫn hiện.
+
+> **LESSON LEARNED — Đối chứng 3 tầng mới tìm ra chỗ đứng của lỗi (2026-10-02):** Manual (MISA UI) ↔ file tool (API MIA) ↔ DB (ETL parse): file tool ↔ DB khớp 100% chứng minh ETL trung thành nguồn; manual ↔ file tool lệch chứng minh lệch nằm ở NGUỒN. Nếu chỉ so manual ↔ DB sẽ không biết sửa ETL hay sửa nguồn. Với nguồn ngoài tự do (API nhà nước), phân biệt "tool parse sai" (sửa được) và "API không trả data" (chỉ bù bằng công thức/quy tắc nghiệp vụ) là bước bắt buộc trước khi hứa sửa.
+>
+> **LESSON LEARNED — tsuat dạng số 0.05 trong API vs "5%" trong file MISA UI (2026-10-02):** Cùng ý nghĩa, 2 dạng — mọi parser phải normalize (% → /100, số >1 → /100) trước khi dùng công thức. Công thức thuế `tthue = thtien × tsuat` chỉ dùng được sau khi normalize; kiểm chứng trên dòng CÓ tthue sẵn trước khi backfill (không đoán mờ công thức MISA).
+>
+> **LESSON LEARNED — python -c inline với chuỗi chứa BACKTICK = bash command substitution phá nội dung (2026-10-02):** Append entry AGENTS.md qua `python -c "..."` — các backtick trong chuỗi bị bash EXEC THỰC (0108321182... command not found) → nội dung file mất từ khóa trong backtick. File ghi được bằng tool write_file thì KHÔNG qua bash → an toàn. Quy tắc: nội dung chứa backtick KHÔNG BAO GIỜ truyền qua bash inline (python -c / heredoc không quote) — dùng file .py trung gian hoặc write_file.
+
+> **⚠️ Việc còn mở:** (1) Chờ Đại ca chốt PA 1/2/3; (2) BÁN RA chưa đối chứng — cùng 2 vấn đề có khả năng xảy ra (API bán ra trả tthue từng dòng? GĐ C.125 probe sco-query có 6.632 HĐ) — chờ file manual bán ra hoặc anh chốt làm luôn; (3) Version giữ nguyên 4.8.0 / 6.8.0 (KHÔNG bump — chờ lệnh Push).
+
+**Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật lần cuối: 2026-10-02 (GĐ 300 — đối chứng manual Mua vào; app tổng 4.8.0 / repo con 6.8.0)*
+*Người cập nhật: Trợ lý Freebuff*
