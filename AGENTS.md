@@ -12029,3 +12029,27 @@ tổng 4.7.0 / repo con 6.7.0.
 
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
 4.8.0 / repo con 6.9.0.
+
+
+---
+
+### GĐ 302 — Nhiệm vụ định kỳ app con nâng cấp: Task_02 3 slot/ngày + 20 phân hệ + 28 báo cáo + retryPartial (2026-10-02, repo con C.154 `3256737`)
+
+> **Yêu cầu của Đại ca (02/10, 4 lựa chọn đã chốt qua quy trình 5 bước GĐ 198 — phiên 7):** (1) Task_02 chạy 3 slot/ngày **17:25 / 19:00 / 23:00** (tối đa 5 slot, sửa trên web) — mỗi slot GIỐNG nhau; (2) phân hệ MỚI (3 BANK + 4 MIA) mặc định **BẬT HẾT** — trừ 2 MISA (`bkct`/`bkth-hdgtgt` loại mặc định, tool lỗi chờ anh bật tay); (3) download hết → chạy hết báo cáo (**28 queryKeys**); (4) retry download TỪ LẦN 2 gửi `retryPartial: "1"` — vá file thiếu theo cơ chế GĐ C.83, không tải lại toàn bộ.
+
+> **Triển khai (5 file repo con):**
+> 1. **task_runner.py:** `TASK_DAILY_TIMES = ["17:25","19:00","23:00"]` (config.dailyTimes override, max 5); spawn TỪNG SLOT — task name `"Task_02 · <slot>"` + guard NOT EXISTS theo (name + ngày) → **catch-up tự nhiên** khi service restart giữa ngày (đến giờ nào chưa có task hôm nay → spawn đúng slot đó); `TASK_REPORTS_UNIVERSE` 20 + `_TASK_DEFAULT_EXCLUDE` {bkct, bkth-hdgtgt} → default 18; `TASK_QUERY_KEYS_ALL` 28; retry attempt >= 2 thêm `retryPartial: "1"`; **`TASK_TABLES_NEW`** (bank-vcb→dbo.bank_vcb_tx|tx_date, bank-tcb→bank_tcb_tx|tx_date, bank-tpb→bank_tpb_tx|tx_date, mia-*→mia_hddt_hd|period_from) + `_staging_months_custom()` + `_build_task_steps` xử lý new_tbl.
+> 2. **api_server.py:** /task/create-job INSERT thêm cột `retry_partial` ("1"/"0").
+> 3. **-tasks.ts:** 20 download reports + 28 query keys; `TaskConfigInput.dailyTimes`; `updateScheduledTask` sanitize dailyTimes (regex HH:MM, max 5, fallback default); seed INSERT mặc định 3 slot.
+> 4. **tasks-page.tsx:** dialog sửa Task_02 mảng input time + nút Bỏ/+ Thêm slot (max 5); label "Báo cáo SQL (28)"; note retry lần 2+ chỉ vá file thiếu; backward-compat `dailyTime` cũ.
+> 5. **/m/tasks.tsx:** desc "Task_02 tự chạy 3 lần/ngày (17:25 · 19:00 · 23:00)".
+
+> **LESSON LEARNED — Skip-tháng phải theo BẢNG NGUỒN của từng phân hệ (2026-10-02):** `_staging_months` cũ chỉ quét stg_* — BANK/MIA nằm bảng tường minh (`bank_*_tx`, `mia_hddt_hd`) nên nếu chỉ nhìn stg_* sẽ tải lại tháng ĐÃ CÓ mãi mãi. Thêm TASK_TABLES_NEW map phân hệ → (bảng, cột ngày) để skip đúng. KẾT HỢP với data nạp đè theo ngày (GĐ 287 dedupe): 3 slot chạy trùng không nhân đôi data.
+
+> **LESSON LEARNED — Kỳ vọng test sai ≠ code sai (2026-10-02):** lần đầu slot-logic test FAIL vì kịch bản kỳ vọng sai (23:05 mà 19:00 chưa spawn → due phải là ['19:00','23:00'] — catch-up ĐÚNG, code đúng); phải mock spawn-set KHỚP từng kịch bản. Mock datetime đúng cách: `class FakeDT(real_dt.datetime): @classmethod now(cls)` — SimpleNamespace strftime fake gây rối. Kèm lesson heredoc bash: ký tự `·` (U+00B7) trong heredoc có thể hỏng byte — string test build bằng escape, nội dung chứa ký tự đặc biệt ghi qua python script/file, KHÔNG qua bash inline (tái diễn GĐ 300). *Bổ sung phiên này: append entry qua python script chạy với cwd SAI → tạo nhầm file AGENTS.md con — đã cat-gộp về đúng chỗ + xóa; script ghi file PHẢI dùng path tuyệt đối hoặc kiểm tra cwd.*
+
+> **✅ Verify:** tsc EXIT 0; py_compile task_runner + api_server OK; stub test PASS (kế hoạch 28 bước: 18 download + 28 báo cáo, retryPartial đúng attempt 2, 0 MISA); slot-logic test PASS (19:00 + 17:25 đã spawn → due ['19:00']; 23:05 + 17:25+19:00 đã spawn → due ['23:00']); commit repo con `3256737` sạch (KHÔNG add `gvvxdt_report.py` của agent khác GĐ 304 — `git diff --cached --stat` xác nhận đúng 6 file).
+
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) — task_runner bản mới (3 slot + 20 phân hệ + retryPartial) có hiệu lực sau restart.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.9.0).
