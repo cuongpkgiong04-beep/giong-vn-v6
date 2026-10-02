@@ -11786,3 +11786,26 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật: 2026-10-02 (GĐ 294 — TASK-001 code done; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff (vai Coder PIPELINE)*
+
+---
+
+### GĐ 295: Verify sau merge TASK-001 — fix 3 bug: KPI 500 do comment SQL chứa $N + banner oan TCB + banner oan 4 trang MIA (2026-10-02)
+
+> **Bối cảnh:** Đại ca test local sau merge TASK-001 — giao 3 bug + 1 lỗ hổng watchdog. Em claim GĐ 295/C.145 qua registry (commit `6449842`). Chi tiết kỹ thuật đầy đủ ở AGENTS.md repo con GĐ C.145; đây là bản tóm tắt + phần liên quan app tổng.
+>
+> **BUG 3 — 7 hộp KPI Tổng quan app con 500 ("54 markers, 58 params"):** comment SQL trong template `-overview.ts` (file của repo con) chứa token `$3→$4…` → translator API Server thay `$N` thành `?` CẢ TRONG COMMENT → marker/params lệch → 500 hàng loạt cả 7 hộp. **Fix 2 tầng:** (1) `api_server.py` thêm `_strip_sql_comments` (state machine bỏ comment ngoài string literal, xử lý escape `''`) gọi đầu `translate_sql`; (2) comment trong template viết lại không còn token $N. Verify repro qua tunnel thật: HTTP 200 + data khớp đối chứng C.143; E2E UI local: **7/7 KPI HIỆN + 0 HTTP lỗi**.
+>
+> **BUG 1 + BUG 2 — banner oan "chưa có dữ liệu kỳ này":** TCB (code "BANKTCB" + snap-style thiếu) ĐÃ FIX; audit tổng thể tìm thêm **4 trang MIA** bị oan cùng dạng — `code()` trả "MIAHDDT" (mã không tồn tại; import_log ghi 4 mã riêng MIAHDTQ*/MIAHDCT* × mua/bán) → map reportKey→mã + client truyền keys song song + sửa 2 chỗ tiêu thụ thiếu rk (map ngược UNION + fallback tuần tự). **Verify E2E 5 trang: 5/5 sạch banner.**
+>
+> **Watchdog `_tunnel_alive`:** HTTP 5xx → chết (trước đây coi mọi HTTPError là sống → tunnel 530 không bao giờ restart). Đã chứng minh thật: tunnel marvel 530 → fail 3/3 → tự tạo tunnel mới **anna-planner-kai-employed** (health 200, Gist 200, Vercel 200). `.env.local` 2 app đã cập nhật.
+>
+> **Phần app tổng:** KHÔNG đổi code — chỉ bump môi trường local (`.env.local` = anna URL; dev server :3000 restart nhận env) + script `scripts/debug-overview-kpi.mjs` vẫn dùng được (Giữ). lesson chính ghi ở repo con C.145 (comment SQL không phải vùng an toàn; map-theo-key phải soi mọi đường tiêu thụ; mã nguồn dữ liệu phải tra import_log thật).
+>
+> **⚠️ SỰ CỐ nhỏ trong phiên (self-audit bắt được ngay):** rm tmp scripts bằng danh sách tường minh nhưng `find -name "*tmp*"` gợi ý thêm → rm `scripts/probe-sidebar-tmp.mjs` là file TRACKED của agent khác (GĐ 274 lesson lặp lại) → khôi phục `git checkout --` ngay. Quy tắc: file tmp CHỈ xóa khi (a) mình vừa tạo, hoặc (b) đã grep `git log -- <file>` xác nhận untracked/chính mình.
+>
+> **Tiêu chí kiểm chứng (đã PASS hết):** 7/7 KPI; 5/5 trang sạch banner oan; typecheck 0 lỗi; tunnel watchdog tự hồi phục; script tạm đã dọn; db.ts log tạm đã xóa (diff = 0).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật lần cuối: 2026-10-02 (GĐ 295 — fix 3 bug verify sau merge TASK-001; app tổng 4.8.0 / repo con 6.8.0)*
+*Người cập nhật: Trợ lý Freebuff*
