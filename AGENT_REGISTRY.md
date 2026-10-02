@@ -21,7 +21,7 @@
 
 | Số | Agent | Nhiệm vụ | Phạm vi file dự kiến | Trạng thái | Thời điểm claim | Hoàn tất |
 |---|---|---|---|---|---|---|
-| GĐ 293 / C.143 (Trợ lý Freebuff) | Trợ lý Freebuff | Kiểm tra KPI XUẤT VẮC XIN = 0 (ảnh 02/10 07:43) + đối chứng TẤT CẢ 7 hộp KPI Tổng quan với data thật GiondDB | giong-apps/apps/banhang/src/routes/api/-overview.ts (nếu cần fix) + AGENTS.md (2 repo) | 🔒 | 02/10 | — |
+| GĐ 293 / C.143 (Trợ lý Freebuff) | Trợ lý Freebuff | Kiểm tra KPI XUẤT VẮC XIN = 0 (ảnh 02/10 07:43) + đối chứng TẤT CẢ 7 hộp KPI Tổng quan với data thật GiondDB | giong-apps/apps/banhang/src/routes/api/-overview.ts (nếu cần fix) + AGENTS.md (2 repo) | ✅ | 02/10 | C.143 ecd6f61 (repo con) + GĐ 293 (app tổng) |
 | GĐ 290 (Trợ lý Freebuff) | Trợ lý Freebuff | Dựng `PIPELINE/` — hệ điều hành đội 4 Agent (Planner/Coder/Tester/Reviewer) + worktree `giong-vn-v6-pipeline` nhánh `pipeline-work` | PIPELINE/** + AGENT_REGISTRY.md + AGENTS.md — KHÔNG đụng code app | ✅ | 02/10 | b9108e8 (claim) + commit PIPELINE (phiên này) |
 | GĐ 292 / C.142 (Trợ lý Freebuff) | Trợ lý Freebuff | Điều tra "7 hộp KPI Tổng quan biến mất" — kết luận KHÔNG phải bug C.141 (tunnel chết ngầm + cửa sổ fallback hở) + script chuẩn debug-overview-kpi.mjs | AGENTS.md (2 repo) + AGENT_REGISTRY.md + scripts/debug-overview-kpi.mjs — KHÔNG đụng code | ✅ | 02/10 | 3f42846 (app tổng) + 3c30c1f (repo con) |
 | GĐ 291 / C.141 (Trợ lý Freebuff) | Trợ lý Freebuff | Fix KPI Xuất VX = 0 đầu tháng (WHERE BETWEEN monthStart AND pTo đảo ngược) + PA-C tăng tốc loadOverviewKpi ~5s → ~2s | giong-apps/apps/banhang/src/routes/api/-overview.ts + AGENTS.md (2 repo) | ✅ | 02/10 | 8b1d155 + 22e2857 (repo con) + GĐ 291 (app tổng) |
