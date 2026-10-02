@@ -11859,3 +11859,24 @@ tổng 4.7.0 / repo con 6.7.0.
 > **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) — builder mới có hiệu lực qua agent sau restart (đang test local đã thấy qua pyodbc trực tiếp).
 >
 > **Tiêu chí kiểm chứng:** Mở 2 trang tổng hợp: dòng đầu "Số dư đầu kỳ" + cột Số dư cuối + dòng cuối "Số dư cuối kỳ"; các dòng dư cột tiền trống; SUBTOTAL không cộng Số dư + nhãn ở cột Ngày; bảng chi tiết SUBTOTAL không cộng TK đối ứng; kỳ TCB tháng 9 không còn trùng ngày 29/09; version giữ nguyên 4.8.0 / 6.8.0 (KHÔNG bump — chờ lệnh Push).
+
+---
+
+### GĐ 299: Mua vào — "Tổng tiền chưa thuế" thiếu cho HĐ BÁN HÀNG (PA-3: fix ETL + re-import) (2026-10-02)
+
+> **BUG REPORT của Đại ca (02/10, kèm 2 ảnh Excel manual từ cổng thuế):** (1) Báo cáo "Mua vào - Tổng quan (MiaTool)" chưa lấy hết cột "Tổng tiền chưa thuế" cho loại hóa đơn **"HÓA ĐƠN BÁN HÀNG"** (mẫu số 2) — loại này trên cổng KHÔNG có dòng tổng chưa thuế như "HÓA ĐƠN GIÁ TRỊ GIA TĂNG" → phải lấy chi tiết từng hàng hóa cộng lại; (2) Bán ra - Tổng quan cùng hiện tượng; (3) Hỏi gửi file manual vào đâu để đối chứng.
+>
+> **Đã chạy quy trình 5 bước:** probe DB (HD C26MYY/227 tgtcthue=NULL nhưng sum chi tiết = 1.126.000 — khớp TỪNG ĐỒNG số manual anh ghi dòng 156 file Excel; 2009 = 1.220.000 khớp dòng 157) → trình 3 PA → anh chốt **PA-3 (sửa ETL + re-import) + CHỈ sửa mua vào**.
+>
+> **Kết quả (chi tiết kỹ thuật ở repo con GĐ C.150, commit `b89a894`):** ETL `mia_hddt_import.py` thêm backfill — khi nạp file TQ mua vào, đọc kèm file CT cùng kỳ, bù tgtcthue/tgtthue cho HĐ mẫu 2 (NULL/0 + chi tiết > 0); re-import 3 file; builder thật trả 385 HĐ với HD 227/2009 = số manual từng đồng. Service agent đã restart khi rảnh (GĐ 266).
+>
+> **Điểm 2 (bán ra):** DB bán ra ĐẦY ĐỦ (6.632/6.632 có tgtcthue, đối chứng GĐ 270 từng đồng; 92 HĐ = 0 là BCG 0 đồng thật) — số thiếu anh thấy có thể nằm ở file Excel tool download (không phải báo cáo app). Chờ file manual bán ra để đối chứng → quyết định có backfill bán ra không.
+>
+> **Điểm 3 — trả lời:** file manual anh copy vào **`attachments/`** (gốc app tổng, gitignore — không commit), tên gợi ý `mia-manual-muavao-<kỳ>.xlsx` / `mia-manual-banra-<kỳ>.xlsx`.
+>
+> **Tiêu chí kiểm chứng (đã PASS):** Báo cáo Mua vào - Tổng quan kỳ 01→30/09: HD C26MYY/227 = 1.126.000, 2009 = 1.220.000; Subtotal mua vào tăng đúng ~2,35 triệu; 2 HĐ còn lại = 0 đồng thật; py_compile + builder thật OK.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật lần cuối: 2026-10-02 (GĐ 299 — fix tgtcthue HĐ bán hàng mua vào PA-3; app tổng 4.8.0 / repo con 6.8.0)*
+*Người cập nhật: Trợ lý Freebuff*
