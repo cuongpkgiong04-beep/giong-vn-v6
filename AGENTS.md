@@ -11998,3 +11998,34 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** repo con **6.9.0** (LIVE production) · app tổng giữ **4.8.0**
 > (không push — theo lệnh Đại ca).
+
+---
+
+### GĐ 303 (Trợ lý Freebuff): PA-1 lượt 2 — ETL MIA hấp thụ thuế dòng cuối theo MIA Tool gốc, CT khớp manual 100% (2026-10-02)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con) | fix(etl): C.155 — `fill_tthue_mia_tool` 3 tầng (had-keep / lastline-absorb / formula) + cột tthue DECIMAL(19,2) + chọn TQ kỳ rộng nhất; re-import → CT tthue 265.068.900 = TQ = manual, 0 HĐ lệch |
+| (app tổng) | docs(agents): GĐ 303 — không đổi code |
+
+> **Tiếp GĐ 300/C.152 (residual 1.399.789 còn sót):** Đại ca chốt PA-1 lượt 2 —
+> sửa tầng ETL theo ĐÚNG logic 3 tầng MIA Tool gốc đã decompile
+> (`invoice_detail_excel_row_builder.pyzblob`): tthue rỗng + dòng CUỐI HĐ →
+> `tgtthue_HĐ (file TQ) − lũy kế`; dòng giữa → giữ công thức C.152. Chi tiết kỹ
+> thuật + 3 lesson (dòng-cuối hấp thụ là kỹ thuật chuẩn "plug" của tool xuất
+> chi tiết; schema DECIMAL(19,0) nuốt cents ngầm → ALTER 19,2; chọn file TQ
+> tham chiếu phải kỳ RỘNG NHẤT khi DB có kỳ lồng) — đầy đủ ở **AGENTS.md repo
+> con GĐ C.155**.
+>
+> **✅ Verify (ĐÃ PASS):** CT tthue = 265.068.900 = TQ = manual từng đồng;
+> 0 HĐ lệch HĐ-level; 4 HĐ K26THB = 535.226/414.100/631.102/586.703 khớp manual;
+> TQ + thien không đổi; unit test fill 4/4 PASS. Re-import 3 vòng (mỗi vòng xóa
+> import_log MIA + chạy ETL + query đối chứng) — hash-gap workflow chuẩn.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (job dattruoc
+> đang chạy lúc ghi entry — làm NGAY sau khi xong) để service nạp ETL mới.
+>
+> **App tổng không đổi code** — chỉ ghi lịch sử.
+
+**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
+4.8.0 / repo con 6.9.0.
