@@ -11727,3 +11727,31 @@ tổng 4.7.0 / repo con 6.7.0.
 > **Tiêu chí kiểm chứng:** 7/7 KPI hiện trên :3100 (verify 3 lần: env đúng ·
 > env chết + fallback Gist · env đúng lần cuối); 0 HTTP ≥ 400; version giữ nguyên
 > 4.8.0 (không bump — chờ lệnh Push).
+
+---
+
+### GĐ 293: KPI Xuất VX "Tháng này" = 0 khi kỳ chọn nằm trước đầu tháng + đối chứng 7/7 hộp KPI Tổng quan (2026-10-02, C.143 ecd6f61)
+
+> **BUG REPORT của Đại ca (02/10, ảnh 07:43):** Hộp XUẤT VẮC XIN dòng "Tháng này"
+> hiện `0~0|0` trong khi dòng "Hôm qua" có số.
+>
+> **ROOT CAUSE:** `xuatVaxStats` (repo con) phần "tháng này" dùng `$3→$2`
+> (monthStart→pTo) — pTo của kỳ chọn 01/10 → monthStart→pTo rỗng/đảo ngược →
+> 12 SUM NULL → 0~0|0. Biến thể 2 của C.141.
+>
+> **Fix (repo con ecd6f61):** phần "tháng này" đổi `$3→$4` (monthStart→TODAY) —
+> đồng bộ 4 hộp còn lại. Dòng "tháng này" không phụ thuộc kỳ chọn nữa.
+>
+> **✅ Đối chứng 7/7 hộp KPI với data thật GiondDB (tunnel, Hôm qua 01/10):**
+> Xuất VX 84.188.626~165+18 · Thu tiền 107.500.000 · HĐ GTGT 139 tờ ·
+> Lượt tiêm 165 (= SL xuất kho 165 — 2 nguồn khớp) · Nhập VX 308.644.985~386 ·
+> Tồn 29.842 (snapshot 01/10) · HSD 24.284/2.692/2.866 (= 29.842 khớp Tồn).
+> Script verify tạm (curl payload JSON) đã dọn sau khi xong.
+>
+> **Tiêu chí kiểm chứng:** Kỳ bất kỳ trong tháng → Xuất VX dòng "Tháng này" số
+> thật; 7 hộp đối chứng khớp; tsc 0 lỗi.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật: 2026-10-02 (GĐ 293 — fix Xuất VX tháng này + đối chứng 7/7 KPI; app tổng 4.8.0 / repo con 6.8.0)*
+*Người cập nhật: Trợ lý Freebuff*
