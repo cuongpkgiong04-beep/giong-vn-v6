@@ -11938,3 +11938,63 @@ tổng 4.7.0 / repo con 6.7.0.
 > đoán trúng); **TQ KHÔNG ĐỔI** 385 HĐ / 5.481.247.927. Agent đã restart khi rảnh
 > (GĐ 266 — chờ Task_02 BKCCN xong) → log mới sạch. Chi tiết kỹ thuật ở repo con
 > **GĐ C.152**. Version giữ nguyên 4.8.0 / 6.8.0 — KHÔNG push.
+
+---
+
+### GĐ 301: Push app con theo lệnh Đại ca (CHỈ app con) — bump 6.9.0 + hotfix CVE TanStack Start (2026-10-02)
+
+| Commit | Thay đổi |
+|---|---|
+| (repo con `2c2f2ff`) | chore: bump version 6.8.0 → 6.9.0 — push đợt 20 commit C.141→C.152 |
+| (repo con `f7d9a3d`) | fix(deps): @tanstack/react-start 1.168.53 → 1.168.60 — bản vá CVE XSS bị Vercel chặn deploy (PA-1) |
+| (app tổng — docs local, KHÔNG push) | docs(agents): GĐ 301 + registry |
+
+> **Lệnh của Đại ca (02/10):** "Tạm thời chỉ Push app con lên — hiện tại chỉ điều
+> chỉnh app con, không liên quan app tổng. Khi nào yêu cầu gì thêm mới Push cả
+> hai. 1. Kiểm tra job rảnh chưa? Nếu rảnh Restart Agent + Push app con.
+> 2. Tổng hợp lại những thay đổi sau khi Push."
+>
+> **Quy trình đã chạy (trọn bộ ĐA AGENT):**
+> 1. **Check job rảnh:** 0 job running/pending/waitdownload (query tunnel
+>    `anna-planner-kai-employed`); Task daily hôm nay done 18:37→20:13.
+> 2. **Restart GIONG_SMED_Agent:** xóa `__pycache__` (lesson GĐ 168) → stop/start
+>    → PID mới, log 22:14 sạch (Task_02 catch-up tự spawn chạy nền — bình thường
+>    sau restart, GĐ 250).
+> 3. **Rà trùng lặp:** nhánh agent-cli + pipeline-work (repo con) 0 commit riêng;
+>    không file modified của agent khác (chỉ untracked phụ phẩm — không add).
+> 4. **Bump + push:** 6.8.0 → 6.9.0 (checklist GĐ 138 ✓ — 6/9/0 không thành phần
+>    nào ≥ 10) + push `96f6278..2c2f2ff`.
+> 5. **Deployment lần 1 `● Error` sau 1s** — Vercel chặn: "Vulnerable TanStack
+>    Start package detected (@tanstack/react-start@1.168.53)". Tính năng kiểm tra
+>    CVE mới của Vercel — lần push GĐ 289 cùng package vẫn qua được.
+> 6. **PA-1 Đại ca chốt:** nâng @tanstack/react-start **1.168.60** (bản vá cùng
+>    dòng 1.168.x) → npm install leo workspace root → lockfile ROOT cập nhật →
+>    push `f7d9a3d` → **Ready 18s**.
+> 7. **Verify:** bundle domain chính = **6.9.0** (3 match, hết 6.8.0);
+>    /api/units trả 20 đơn vị data thật; tunnel health 200.
+>
+> **⚠️ CẢNH BÁO cho lần Push app tổng sau:** app tổng cũng dùng
+> `@tanstack/react-start` 1.168.x — Vercel sẽ chặn Y HỆT với cùng thông báo.
+> Trước khi push app tổng phải nâng tương tự: `npm install
+> @tanstack/react-start@1.168.60` (tại gốc giong-vn-v6) + commit package.json +
+> package-lock.json — hoặc kiểm tra trước bằng một deployment thử.
+>
+> **LESSON LEARNED — Vercel "Vulnerable package detection" chặn deployment
+> (2026-10-02):** Vercel bật kiểm tra CVE mới — deployment `● Error` sau ~1s
+> (không có build log chi tiết, chỉ 1 dòng thông báo trong `inspect --logs`).
+> "Push lần trước Ready" KHÔNG đảm bảo lần này qua — chính sách bảo mật của
+> Vercel thay đổi theo thời gian. Dấu hiệu: Error sau 1-2s + dòng "Vulnerable
+> ... package detected". 2 đường thoát: (a) nâng bản vá (đúng chuẩn — PA-1 đã
+> chọn); (b) env `DANGEROUSLY_DEPLOY_VULNERABLE_TANSTACK_START_XSS=1` (at your
+> own risk).
+>
+> **LESSON LEARNED — npm install trong package con của monorepo leo workspace
+> root (2026-10-02):** chạy `npm install <pkg>@version` trong
+> `giong-apps/apps/banhang` → npm tự leo lên `giong-apps/package.json`
+> (workspaces apps/*) → cập nhật **lockfile ROOT** + node_modules hoisting ở
+> root; **lockfile con `apps/banhang/package-lock.json` KHÔNG được npm đụng**
+> (stale từ 5.9.4 — nhưng KHÔNG phải nguồn Vercel dùng, build vẫn Ready từ đó
+> tới nay). Muốn sửa lockfile con phải dùng `--workspaces=false` (lesson C.44).
+>
+> **Version:** repo con **6.9.0** (LIVE production) · app tổng giữ **4.8.0**
+> (không push — theo lệnh Đại ca).
