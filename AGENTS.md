@@ -11755,3 +11755,34 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật: 2026-10-02 (GĐ 293 — fix Xuất VX tháng này + đối chứng 7/7 KPI; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 294: PIPELINE TASK-001 — Coder hoàn thành: +2 key TCB vào SQL_SOURCES_BY_QUERY (2026-10-02, repo con ba9b807 nhánh pipeline-work)
+
+> **Bối cảnh:** Anh duyệt plan TASK-001 (hộp "Tải dữ liệu mới nhất" thiếu trên
+> 2 báo cáo TCB) → em kích hoạt vai **Coder** PIPELINE (GĐ 290) — lần đầu quy
+> trình Planner → Coder chạy trọn vòng.
+>
+> **Kết quả Coder (repo con `ba9b807`, nhánh `pipeline-work`):** thêm 2 entry
+> `bank-tcb-chitiet` / `bank-tcb-tonghop` vào `SQL_SOURCES_BY_QUERY` (-smed.ts,
+> +6 dòng) — reportKey `bank-tcb` + table `bank_tcb_tx` + label chứa folder
+> `OUTPUT\16.BANK_TCB`, đối xứng 100% với VCB. 2 trang TCB tự hiện checkbox +
+> mốc "nạp lúc HH:MM" + nhánh chuỗi C.50. tsc 0 lỗi.
+>
+> **⚠️ Sự cố xử lý:** phiên Coder tối 01/10 từng commit `eedc272` nhưng GHI
+> NHẦM SỐ GĐ 292/C.142 (đã dùng cho việc điều tra KPI) — em revert
+> (`23e4e03`) + commit lại đúng số GĐ 294/C.144. Lịch sử chỉ đi tới (GĐ 242).
+>
+> **Lesson:** khi chèn code vào file CRLF bằng script, tìm MỐC THEO DÒNG
+> (split + findIndex trên dòng entry) thay vì indexOf chuỗi — anchor chuỗi
+> trùng nhiều vị trí gây chèn sai chỗ 2 lần liên tiếp.
+>
+> **Trạng thái TASK-001:** Brief ✅ → Plan ✅ → **Coder ✅ (ba9b807)** → Tester
+> ⬜ (chờ anh kích hoạt — chạy 6 tiêu chí plan.md mục 6) → Reviewer ⬜.
+> Chi tiết: `PIPELINE/TASKS/TASK-001_tcb-refresh-checkbox/code-report.md`.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật: 2026-10-02 (GĐ 294 — TASK-001 code done; app tổng 4.8.0 / repo con 6.8.0)*
+*Người cập nhật: Trợ lý Freebuff (vai Coder PIPELINE)*
