@@ -3,11 +3,11 @@
 > **Đại ca chỉ cần nhìn file này để theo dõi.** Mỗi agent khi xong phần mình
 > PHẢI cập nhật dòng task tương ứng. Task mới nhất lên đầu.
 
-Cập nhật lúc: 02/10/2026 — GĐ 290 (Trợ lý Freebuff — dựng hệ)
+Cập nhật lúc: 02/10/2026 — TASK-001 code done (Coder — Trợ lý Freebuff)
 
 | Task | Tóm tắt | Brief | Planner | Coder | Tester | Reviewer | Kết luận cuối |
 |---|---|---|---|---|---|---|---|
-| TASK-001 | TCB 2 báo cáo thiếu hộp "Tải dữ liệu mới nhất" — root cause: `SQL_SOURCES_BY_QUERY` thiếu 2 key TCB | ✅ | ✅ plan done (`plan.md` — fix 2 dòng `-smed.ts`) | ⬜ | ⬜ | ⬜ | chờ duyệt plan |
+| TASK-001 | TCB 2 báo cáo thiếu hộp "Tải dữ liệu mới nhất" — root cause: `SQL_SOURCES_BY_QUERY` thiếu 2 key TCB | ✅ | ✅ plan done (`plan.md` — fix 2 dòng `-smed.ts`) | ✅ **ba9b807** (GĐ 294/C.144 — +2 key TCB, tsc 0 lỗi, `code-report.md`) | ⬜ | ⬜ | chờ kích hoạt Tester |
 | *(task kế tiếp — chờ Đại ca giao việc qua Planner)* | | | | | | | |
 
 ## Chú giải giai đoạn

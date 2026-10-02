@@ -1,12 +1,14 @@
 {
   "task": "TASK-001",
   "title": "TCB 2 báo cáo thiếu hộp Tải dữ liệu mới nhất trước khi chạy",
-  "current_stage": "plan done",
-  "owner": "planner (Trợ lý Freebuff)",
-  "next_action": "Đại ca duyệt plan.md → dán STARTERS/CODER.txt vào phiên Coder",
+  "current_stage": "code done",
+  "owner": "tester (kích hoạt bởi Đại ca)",
+  "next_action": "Dán STARTERS/TESTER.txt vào phiên Tester — chạy 6 tiêu chí plan.md mục 6",
   "updated_at": "2026-10-02",
   "history": [
     { "stage": "brief", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" },
-    { "stage": "plan done — root cause: SQL_SOURCES_BY_QUERY thiếu 2 key TCB (web-side); agent-side đã có", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" }
+    { "stage": "plan done — root cause: SQL_SOURCES_BY_QUERY thiếu 2 key TCB (web-side); agent-side đã có", "by": "planner (Trợ lý Freebuff)", "at": "2026-10-02" },
+    { "stage": "Đại ca duyệt plan — kích hoạt Coder", "by": "Đại ca", "at": "2026-10-02" },
+    { "stage": "code done — commit ba9b807 (revert eedc272 sai số, commit lại GĐ 294/C.144) — tsc 0 lỗi", "by": "coder (Trợ lý Freebuff)", "at": "2026-10-02" }
   ]
 }
