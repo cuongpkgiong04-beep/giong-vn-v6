@@ -11835,5 +11835,27 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
 
-*Cập nhật lần cuối: 2026-10-02 (GĐ 297 — nghiệp vụ freshness PA-1; app tổng 4.8.0 / repo con 6.8.0)*
+*Cập nhật lần cuối: 2026-10-02 (GĐ 298 — Số dư đầu/cuối kỳ + cột Số dư 2 báo cáo TCB/TPB; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 298: BC_Sao kê TCB + TPB Tổng hợp — Số dư đầu kỳ + cột Số dư + Số dư cuối kỳ; Subtotal không cộng Số dư + TK đối ứng (2026-10-02)
+
+> **Yêu cầu của Đại ca (02/10, PA-1 → PA-2' sau khi đối chứng):** 2 báo cáo "BC_Sao kê TCB - Tổng hợp theo ngày" + "BC_Sao kê TPB - Tổng hợp theo ngày": (1) dòng ĐẦU bảng = Số dư đầu kỳ; (2) thêm cột **Số dư** ở cuối ghi số dư đầu kỳ + số dư THEO TỪNG NGÀY; (3) dòng CUỐI bảng = Số dư cuối kỳ. Lưu ý: Subtotal KHÔNG cộng cột Số dư; bảng CHI TIẾT cũng không cộng cột TK đối ứng. Chi tiết đầy đủ ở **AGENTS.md repo con GĐ C.149**.
+>
+> **Đã chốt qua 2 vòng hỏi:** (V1) PA-1 cumulative → (V2, sau khi đối chứng bằng chứng DB) **PA-2': Số dư ngày N = cột balance của giao dịch CUỐI cùng ngày đó** (số ngân hàng ghi từng lệnh) — vì TCB ghi nợ dạng SỐ ÂM + DB TCB thiếu GD so meta file → cumulative lệch sổ; TPB là bằng chứng sống: ngày 10/09 số dư thật 261.342.817 (tiền nạp tự động KHÔNG nằm trong định mức truy vấn TPB GĐ 279) — cumulative sai 260tr, balance GD cuối đúng. 2 dòng dư đầu/cuối: cột tiền + STT để TRỐNG.
+>
+> **Fix kèm (phát hiện khi đối chứng):** NOT EXISTS superset-elimination cho 4 builder TCB/TPB (chi tiết + tổng hợp) — TCB DB có kỳ T9 (01→30/09, 326 GD) + kỳ đơn 29/09 (9 GD) LỒNG nhau → trước đây kỳ tháng 9 trả TRÙNG ngày 29/09 trong tổng hợp (pattern MIA GĐ 283). Verify sau fix: ngày 29/09 CHỈ 1 dòng, TCB chi tiết 326 dòng (không còn 335).
+>
+> **Triển khai (6 file):**
+> 1. **sql_reports.py:** `bank_tcb_tonghop` + `bank_tpb_tonghop` — query balance GD cuối từng ngày (ROW_NUMBER partition tx_date order id desc, cùng guard NOT EXISTS) + opening từ bảng balance (kỳ RỘNG NHẤT chứa kỳ yêu cầu) + prepend dòng "Số dư đầu kỳ" + append dòng "Số dư cuối kỳ" + cột "Số dư" cuối bảng; meta moneyCols thêm "Số dư"; tổng meta tính từ raw THÔ (2 dòng dư cột tiền TRỐNG — sum qua rows là TypeError). `bank_tcb_chitiet` + `bank_tpb_chitiet` — chỉ thêm NOT EXISTS (không đổi cột).
+> 2. **4 trang web (tcb/tpb × chi tiết/tổng hợp):** tổng hợp truyền `subtotalExcludeCols={["Số dư"]}` + `subtotalLabelCol="Ngày"` (nhãn SUBTOTAL về cột Ngày — mặc định idx 1 trùng cột STT/Ngày); chi tiết truyền `subtotalExcludeCols={["TK đối ứng"]}`. Web đã có sẵn cơ chế C.72b — không đụng khung bảng dùng chung.
+>
+> **Verify (bằng chứng thật qua đường production — lesson C.123):** TCB TH 26 rows = 24 ngày riêng + 2 dòng dư; số dư 30/09 = 43.634.496 = balance GD cuối 30/09 KHỚP từng đồng; TPB TH: đầu kỳ 55.342.817 = opening meta ✓, ngày 11/09 dư 72.289.817 = balance GD cuối = dòng cuối kỳ ✓; TPB chi tiết 15 dòng (khớp đối chứng C.138); py_compile + tsc 0 lỗi; script tạm đã dọn.
+>
+> **⚠️ Giới hạn đã báo anh:** meta closing TCB (5.837.992) ≠ balance GD cuối 30/09 (43.634.496) — DB TCB T9 thiếu ~15 GD so meta file (lỗi tải, ngoài phạm vi) → dùng PA-2' đúng kể cả thiếu GD vì là số ngân hàng ghi. DB TCB đủ GD sẽ tự khớp closing.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) — builder mới có hiệu lực qua agent sau restart (đang test local đã thấy qua pyodbc trực tiếp).
+>
+> **Tiêu chí kiểm chứng:** Mở 2 trang tổng hợp: dòng đầu "Số dư đầu kỳ" + cột Số dư cuối + dòng cuối "Số dư cuối kỳ"; các dòng dư cột tiền trống; SUBTOTAL không cộng Số dư + nhãn ở cột Ngày; bảng chi tiết SUBTOTAL không cộng TK đối ứng; kỳ TCB tháng 9 không còn trùng ngày 29/09; version giữ nguyên 4.8.0 / 6.8.0 (KHÔNG bump — chờ lệnh Push).
