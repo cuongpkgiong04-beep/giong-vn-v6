@@ -11817,5 +11817,23 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
 
-*Cập nhật lần cuối: 2026-10-02 (GĐ 296 — BC_Sao kê TPB hoàn chỉnh; app tổng 4.8.0 / repo con 6.8.0)*
+---
+
+### GĐ 297: Nghiệp vụ freshness PA-1 — "nạp lúc" CHỈ khi kỳ có data thật (nguồn file gộp kỳ) (2026-10-02)
+
+> **Yêu cầu của Đại ca (02/10, kèm 2 ảnh TCB + VCB):** Phần "Tải dữ liệu mới nhất trước khi chạy" phải theo nghiệp vụ — khoảng thời gian CHƯA có dữ liệu download về → báo "chưa có dữ liệu kỳ này"; ĐÃ có dữ liệu → mới ghi nhận "nạp lúc ...". Ảnh chỉ ra TCB kỳ 02/10 (chưa tải) đang hiện sai "nạp lúc 2026-10-01"; VCB kỳ 02/10 vàng là ĐÚNG.
+>
+> **Đã chạy quy trình 5 bước (vòng hỏi 1 lần):** phân tích (probe import_log + INFORMATION_SCHEMA) → trình 3 PA → anh chốt **PA-1: check DÒNG THẬT trong bảng** (không sửa ETL/backfill).
+>
+> **ROOT CAUSE:** Nguồn FILE GỘP KỲ (TCB/TPB/MIA/GDTVX) dùng snapshot-style — lọc report_code bỏ lọc kỳ → kỳ ngoài file vẫn "nạp lúc". import_log.report_date của nguồn này chỉ là KỲ FROM lượt tải.
+>
+> **Fix (repo con — 1 file `-smed.ts`, 2 hàm):** `hasRows(t, base)` — EXISTS dòng theo cột ngày (`bank_*_tx.tx_date` · `mia_hddt_*.ntao` try_convert 103 · `stg_10gdtvx_f*.ngay_dang_ky`); nhánh snap thành `case when exists(...) then max(imported_at) end` + đồng bộ 3 params cả 2 nhánh + guard regex tên bảng. `checkReportFreshness` cùng logic. Chi tiết + lesson ở AGENTS.md repo con GĐ C.148.
+>
+> **✅ Verify:** SQL 2 chiều PASS (TCB 02/10 → NULL; 01→30/09 → mốc 2026-10-01); E2E UI 3 trang × 2 kỳ **6/6 PASS** (kỳ có data → "nạp lúc", kỳ chưa có → vàng); tsc 0 lỗi; script tạm đã xóa.
+>
+> **Tiêu chí kiểm chứng:** TCB/TPB + 4 MIA + GDTVX: kỳ chưa tải → vàng "chưa có dữ liệu kỳ này"; kỳ đã tải → xanh "nạp lúc"; VCB + stg_* không đổi; banner "Có dữ liệu mới hơn" không hiện oan.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — app tổng 4.8.0 / repo con 6.8.0).
+
+*Cập nhật lần cuối: 2026-10-02 (GĐ 297 — nghiệp vụ freshness PA-1; app tổng 4.8.0 / repo con 6.8.0)*
 *Người cập nhật: Trợ lý Freebuff*
