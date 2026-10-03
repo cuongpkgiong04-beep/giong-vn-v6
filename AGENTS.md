@@ -12232,3 +12232,63 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **4.9.0** / repo con **7.0.0**.
 
+
+### GĐ 310 (Trợ lý Freebuff): Điều tra vì sao Chi tiết MIA lâu 9 tiếng — MiaTool "<4 phút" là ẢO GIÁC CACHE + PA-1 cache-first (2026-10-03)
+
+> **Yêu cầu của Đại ca (03/10, claim GĐ 310/C.162 qua registry):** Download
+> Bảng kê CHI TIẾT bán ra (tool 43 app con) lâu (job T9 = 9 tiếng) trong khi
+> Tổng hợp chỉ 2p05s, mà phần mềm MIA TOOL 2026 < 4 phút cho CÙNG kỳ T9/2026
+> (6.632 HĐ bán ra — anh xác nhận). Điều tra bản cài `C:\Program Files\MIA
+> TOOL 2026\`, tìm root cause + cơ chế → trình PA (CHƯA sửa trước khi chốt).
+> Chi tiết kỹ thuật đầy đủ ở **AGENTS.md repo con GĐ C.162**.
+
+> **ROOT CAUSE (decompile + SQLite userData máy anh — bằng chứng, không đoán):**
+> 1. **PyInstaller extract** PYZ (212 module) — đọc pyc 3.11 bằng
+>    `marshal.loads(data[16:])` (py -3.13; `dis.dis()` lỗi cross-version —
+>    chỉ đọc co_consts/co_names; chạy python phải cd NGOÀI PYZ dir).
+> 2. **crawl_config:** detail delay 0.5s, 429 backoff 1.5s→cap 40s (không phải
+>    30-120s), profile fast_balanced/safe qua env.
+> 3. **source-control.sqlite3 (AppData\Roaming\MIA WT\offline-runtime):** job
+>    02/10 crawl ĐẦY ĐỦ 2 chiều T9 = **3h19m** (10.038 HĐ); máy anh chỉ
+>    1 account → SequentialWorkerSupervisor chạy 1 worker (code có
+>    MAX_DESKTOP_WORKERS=10 nhưng KHÔNG dùng — thiếu proxy/account).
+> 4. **invoices.sqlite3 105MB:** invoice_detail_items 10.038 (3.406 mua vào +
+>    6.632 bán ra — khớp số anh xuất) + checkpoint từng HĐ.
+>
+> **KẾT LUẬN:** "< 4 phút" = **đọc SQLite cache** (crawl xong từ đêm trước);
+> crawl thật của MiaTool ~3h19m. Tool 43 mình 9 tiếng = 19 lần 429 đợi
+> 30-120s + chết là CHẠY LẠI TỪ ĐẦU (không checkpoint). MiaTool không nhanh
+> hơn — nó "nhớ" công đã làm.
+>
+> **PA-1 anh chốt → sửa tool 43 (repo con):** (1) cache SQLite
+> `agent/cache_/mia_detail_cache.sqlite3` (WAL); (2) CACHE-FIRST — HĐ đã fetch
+> đọc cache, chạy lại chỉ fetch HĐ mới; (3) CHECKPOINT từng HĐ — commit ngay
+> sau fetch, chết/hủy không mất công; (4) adaptive backoff 429 1.5×2^i cap 40s
+> + delay 0.25→0.5s. Unit test 4/4 PASS (cache-first + resume + 0 API call khi
+> cache đầy đủ).
+>
+> **Đối chứng TỪNG ĐỒNG với file MiaTool anh đặt `attachments/`** (quy tắc
+> GĐ 227): Mua vào Chi tiết T9 — MiaTool 595 dòng / 385 HĐ / 5.481.247.927đ
+> ≡ GiondDB (ETL tool 43) 595 / 385 / 5.481.247.927 ✓. Dữ liệu KHÔNG đổi —
+> chỉ tốc độ + khả năng resume.
+>
+> **App tổng KHÔNG đổi code** — chỉ ghi lịch sử.
+>
+> **LESSON LEARNED — So tốc độ 2 hệ thống phải TÁCH BỆNH cache và crawl
+> (2026-10-03):** Con số "< 4 phút" user thấy là thời gian ĐỌC cache, không
+> phải thời gian CRAWL — job thật trong SQLite control DB chứng minh crawl
+> cùng dữ liệu mất 3h19m. Trước khi kết luận "đối thủ có cơ chế nhanh", phải
+> tìm được thời gian crawl THẬT (job log, checkpoint table, cache fingerprint);
+> cần chỉ là cache + checkpoint thì không xây proxy-pool/phối hợp phức tạp.
+>
+> **LESSON LEARNED — Code có cơ chế ≠ cơ chế đang chạy (2026-10-03):**
+> mia_source_backend có sẵn MAX_DESKTOP_WORKERS=10 nhưng data máy anh chỉ
+> 1 account → 1 worker 'direct'. Suy luận kiến trúc từ code phải đối chiếu
+> data runtime (account/job/worker slot trong SQLite) trước khi trình phương án.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent KHI AGENT RẢNH (GĐ 266) để
+> nạp tool 43 mới. Test: chạy lại cùng kỳ Chi tiết MIA → log "cache N / fetch
+> 0" + xong <5 phút.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **4.9.0** / repo con **7.0.0**.
