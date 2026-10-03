@@ -12162,5 +12162,21 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **4.9.0** / repo con **7.0.0**.
 
-*Cập nhật lần cuối: 2026-10-03 (GĐ 307 — tkgvvxdt data 29-30/09 + Task_02 snapshot; app tổng 4.9.0 / repo con 7.0.0)*
+---
+
+### GĐ 308 (Trợ lý Freebuff): PA-1 MIA — chuẩn gốc 17 cột + người mua thật + Subtotal đúng; tải lại data T9 (2026-10-03)
+
+> **Tiếp GĐ 307:** ĐH chốt **PA-1 + 2 câu phụ** (CT bán ra dùng data T9 cũ; Subtotal exclude cột định danh) → em thực thi trọn bộ — code nằm **repo con C.160 (commit `4c6f4b7`, 7 files)**: tool 43 TQ 17 cột chuẩn gốc + CT người mua thật (map `nmten/nmmst/nmdchi` thay copy người bán + fallback `nmtnmua` cho HĐ bán lẻ máy tiền); ETL mở rộng schema (+4 cột HD + nmdchi HH — ALTER in-place); builder TQ 17 cột + CT thêm Địa chỉ người mua; 4 trang web `subtotalExcludeCols`. App tổng không đổi code.
+>
+> **Tải lại data T9 (vận hành):** hủy job ma `blth` (restart 11:16 làm kẹt — GĐ 265) → restart agent 11:49 nạp bản mới → dọn data cũ (8 file + import_log MIA + truncate 2 bảng) → tạo lại 4 job T9 **qua UI Playwright** (lần 1 tạo 11:53; 2 job bán ra bị hủy bởi user lúc 12:00:46 — tạo lại 12:10).
+>
+> **Verify (builder cục bộ qua GiondDB — cùng code agent):** TQ mua vào 17 cột × 386 HĐ = **5.481.355.958** (đối chứng GĐ 283 +1 HĐ hậu kỳ 108.031đ — nguồn bổ sung, không phải bug) · CT mua vào 596 dòng = TQ **từng đồng** (first-row allocation) · TQ bán ra 17 cột × 6.632 HĐ = **6.718.191.700 KHỚP TỪNG ĐỒNG GĐ 270**, người mua = khách lẻ thật · **CT bán ra chạy qua đêm** (claim 12:12, ~6-10h) — sáng 04/10 đối chứng web.
+>
+> **LESSON — Cột người mua trên Cổng HĐĐT có 3 dạng nguồn (2026-10-03):** HĐ thường đủ ở `nmten/nmmst/nmdchi`; HĐ máy tính tiền bán lẻ `nmten` rỗng — người mua nằm **`nmtnmua`** (chỉ tên); file CT tool cũ COPY người bán là bug map `nb*` thay `nm*`. Khi map cột xuất file: đối chiếu TÊN NGHĨA cột với dữ liệu thật (hai cột giống nhau 100% dòng là dấu hiệu cảnh báo).
+>
+> **LESSON — INSERT job qua tunnel `/query` bất ổn; đường UI Playwright là chuẩn (2026-10-03):** INSERT tay qua `/query` dính chuỗi 500/timeout/parse body. Script Playwright login → SSO → điền form → bấm CTA tạo job 100% cả 2 lần — dùng cho mọi lần tạo job hàng loạt.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **4.9.0** / repo con **7.0.0**.
+
+*Cập nhật lần cuối: 2026-10-03 (GĐ 308 — PA-1 MIA chuẩn gốc 17 cột + tải lại T9; app tổng 4.9.0 / repo con 7.0.0)*
 *Người cập nhật: Trợ lý Freebuff*
