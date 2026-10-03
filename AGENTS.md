@@ -12180,3 +12180,55 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật lần cuối: 2026-10-03 (GĐ 308 — PA-1 MIA chuẩn gốc 17 cột + tải lại T9; app tổng 4.9.0 / repo con 7.0.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+### GĐ 309 (Trợ lý Freebuff): Task_02 slot 23:00 chạy sang ngày mới không ra dữ liệu — PA-4 ĐH chốt: pin kỳ theo ngày spawn + guard chống dồn catch-up (2026-10-03)
+
+> **Yêu cầu của Đại ca (03/10):** Nghiên cứu sự cố slot 23:00 Task_02 ("chuẩn kết
+> ngày") — thời gian chuyển sang ngày tiếp theo sẽ không ra dữ liệu, lịch sử
+> 02/10 chứng minh. Xem xét có nên xóa slot 23:00 không. **Đã chạy quy trình 5
+> bước (phiên 6):** trình 4 PA kèm dự đoán → Đại ca chốt **PA-4 (gộp)**.
+>
+> **Bằng chứng đêm 02/10 (DB thật):** 23:49:30 catch-up spawn CẢ 3 slot 1 nhịp
+> → hàng đợi 1-slot; slot 23:00 claim **03:56 SÁNG 03/10** → xong 05:53, chỉ
+> **32/48 bước OK (16 lỗi)**; kỳ download RẼ 02/10 → 03/10 tại job 01:55 đêm;
+> 16 lỗi = VCB kỳ 03/10 fail 3 lần (tool báo From='03/09/2026' mong
+> '03/10/2026') + 14 báo cáo needsData (kỳ 03/10 3h sáng chưa đủ nguồn). Hậu
+> quả: sáng 03/10 slot ngày phải tải lại kỳ 03/10, data đầy đủ chờ tới 11:12
+> trưa — slot 23:00 KHÔNG chốt được ngày 02/10.
+>
+> **ROOT CAUSE 3 lớp:** (1) kỳ pin theo GIỜ CHẠY (`datetime.now()` lúc dựng kế
+> hoạch trong `_run_task`/`_build_task_steps`) — chờ hàng đợi qua nửa đêm là kỳ
+> = ngày MỚI, trong khi `config.date` = ngày spawn ĐÃ lưu sẵn không ai dùng;
+> (2) catch-up dồn 3 slot × ~1.8h × hàng đợi 1-slot = slot kết ngày thành tiên
+> chạy 3-5h sáng; (3) slot 23:00 chạy toàn bộ như slot ngày.
+>
+> **FIX PA-4 (repo con `4e5dee2` — chi tiết đầy đủ ở AGENTS.md repo con C.161):**
+> 1. **Pin kỳ theo ngày spawn:** `run_date = config.date` (fallback giờ chạy
+>    khi thiếu — task cũ/bấm Chạy ngay); dùng cho nhánh daily của
+>    `_build_task_steps` + kỳ báo cáo giai đoạn 2 → slot 23:00 chờ qua nửa đêm
+>    vẫn tải/chốt đúng NGÀY SPAWN.
+> 2. **Guard chống dồn 2 đầu (mốc 07:00 đồng bộ):** `_daily_slots_today`
+>    (task_runner.py) — slot spawn 00:00→06:59 = catch-up giữa đêm → KHÔNG đưa
+>    vào hàng đợi (ngày mai spawn lại); `_task_claim_impl` (api_server.py) —
+>    task daily spawn 00:00→06:59 cùng ngày KHÔNG claim trước 07:00; task spawn
+>    hôm qua (kể cả 23:49) claim NGAY để bù kỳ hôm qua. Slot spawn 23:00→24:00
+>    GIỮ (kết ngày CÓ NGHĨA). Task_01 backfill không chặn.
+>
+> **Verify:** py_compile OK 2 file; mô phỏng guard catch-up 4/4 + claim guard
+> 5/5 + pin kỳ 2/2 PASS. **App tổng không đổi code** — chỉ ghi lịch sử.
+>
+> **⚠️ VIỆC CẦN LÀM:** restart GIONG_SMED_Agent + GIONG_API_Server KHI AGENT
+> RẢNH (GĐ 266) — trước restart slot 23:00 tối nay vẫn chạy cơ chế cũ.
+>
+> **LESSON LEARNED — Kỳ dữ liệu phải PIN tại thời điểm NGHIỆP VỤ, không tính
+> lúc THỰC THI (2026-10-03):** chờ hàng đợi là trạng thái bình thường — mọi thứ
+> tính "ngay lúc chạy" (kỳ, nhãn) đều có thể rớt sang ngày mới; config.date có
+> sẵn phải được tiêu thụ. **Catch-up phải có biên độ** (mốc 07:00 đồng bộ 2 đầu
+> spawn + claim) — mở rộng lesson C.18 "trạng thái dở dang phải có chốt thời gian".
+>
+> **Tiêu chí kiểm chứng (tối nay sau restart):** slot 23:00 spawn đúng giờ, kỳ
+> = ngày hôm nay; chờ qua nửa đêm → sáng claim 07:00+ vẫn đúng kỳ hôm qua; hết
+> 14 needsData dải; slot 17:25/19:00 như cũ.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **4.9.0** / repo con **7.0.0**.
+
