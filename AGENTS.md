@@ -12101,3 +12101,28 @@ tổng 4.7.0 / repo con 6.7.0.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng 4.8.0 / repo con 6.9.0.
 
+---
+
+### GĐ 306: "Push" — đợt GĐ 296-305 + bump 4.9.0/7.0.0 + SỰ CỐ Vercel chặn CVE TanStack Start (GĐ 301 tái phát trên app tổng) (2026-10-03)
+
+| Commit | Thay đổi |
+|---|---|
+| `1f3bd4c` | chore: bump version 4.8.0 → **4.9.0** (app tổng) · repo con 6.9.0 → **7.0.0** (`03b8b0d` — minor 9 đầy → nhớ major, checklist GĐ 138 ✓) |
+| `4fe4378` | fix(deps): hotfix CVE TanStack Start 1.168.49 → **1.168.60** — Vercel chặn deployment (XSS) |
+
+> **Lệnh "Push" của Đại ca (03/10) — quy trình ĐA AGENT trọn vẹn:**
+> 1. **Rà trùng lặp:** 43 commit app tổng (GĐ 296-305) + 6 commit repo con (C.148-C.157) author 100% `@gmail.com` ✓; remote 0 diverge; file modified của session khác (`update-tunnel-local.bat`, `D attachments/*.zip`) KHÔNG đụng.
+> 2. **Bump:** 4.9.0 / 7.0.0 (1 script node 4 chỗ, đường dẫn tuyệt đối — GĐ 141; grep đối chiếu khớp).
+> 3. **PREFLIGHT PASS** → push cả 2 repo qua SSH (github-beep).
+>
+> **⚠️ SỰ CỐ bắt được ngay sau push — deployment app tổng ERROR (repo con OK):**
+> `errorMsg: Vulnerable TanStack Start package detected (@tanstack/react-start@1.168.49)... set DANGEROUSLY_DEPLOY_VULNERABLE_TANSTACK_START_XSS=1` — Vercel CHẶN deployment trước khi build.
+> **ROOT CAUSE:** GĐ 301 hotfix CVE này CHO REPO CON (1.168.60, deploy OK) nhưng **app tổng không đồng bộ** — vẫn `^1.168.0` resolve 1.168.49. Cảnh báo GĐ 301 "app tổng sẽ bị chặn y hệt" chính xác 100%.
+> **Fix:** package.json `^1.168.0` → `^1.168.60` + `npm install --package-lock-only` (lockfile 1.168.60) → commit `4fe4378` → deploy READY.
+> **Verify:** ghim domain `giong-vn-v6-lwjwgdfrk` → bundle domain chính chứa **4.9.0** ✓ · app con bundle **7.0.0** ✓ · PREFLIGHT --verify PASS (tunnel anna-planner-kai-employed + login 200 + bundle khớp).
+
+> **LESSON LEARNED — Hotfix bảo mật phải áp CẢ 2 repo CÙNG LÚC (2026-10-03):**
+> 2 app cùng stack (TanStack Start) — fix CVE ở 1 repo mà quên repo kia = bom hẹn giờ: Vercel chặn deployment NGAY khi lần đầu push repo sót. GĐ 301 có cảnh báo trong AGENTS.md nhưng cảnh báo CHỮ không tự sửa package.json. **Quy tắc từ giờ:** mỗi lần Vercel/GitHub/ dependency scanner chặn bản vá bảo mật → grep CẢ 2 repo cùng một dependency và sửa đồng loạt trong đợt hotfix đó (checklist: `grep -l '@tanstack' */package.json package.json`). Dấu hiệu nhận biết: deployment ERROR + không build log + `vercel inspect` — soi `errorMessage` qua REST API `/v13/deployments/<id>` (bài học GĐ 264 tái dụng).
+
+> **Version:** app tổng **4.9.0** · repo con **7.0.0** — ĐÃ LIVE production (ghim domain app tổng theo quy tắc GĐ 124; auto-alias repo con tự nắm).
+
