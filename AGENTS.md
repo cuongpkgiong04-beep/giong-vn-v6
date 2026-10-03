@@ -12126,3 +12126,41 @@ tổng 4.7.0 / repo con 6.7.0.
 
 > **Version:** app tổng **4.9.0** · repo con **7.0.0** — ĐÃ LIVE production (ghim domain app tổng theo quy tắc GĐ 124; auto-alias repo con tự nắm).
 
+
+---
+
+### GĐ 307 (Trợ lý Freebuff): tkgvvxdt — bổ sung data 29-30/09 (PA-1 file gộp) + Task_02 tự tải snapshot gộp kỳ (2026-10-03, repo con C.159)
+
+> **Tiếp GĐ 304 (builder chọn đúng snapshot):** nay bổ sung data 29-30/09 theo PA-1
+> (file gộp nạp đè) + đưa nguồn snapshot vào Task định kỳ. Chi tiết kỹ thuật đầy đủ ở
+> **AGENTS.md repo con GĐ C.159**.
+>
+> **1. Data 29-30/09 đã vào DB:** job download tkgvvxdt kỳ 01/01/2018→30/09/2026 →
+> done 09:02 → agent TỰ ETL 09:03 → snapshot 2018-01-01 giờ **718 dòng** (gộp
+> 2018→30/09). Verify qua đường production thật (job sqlreport mới): **64 dịch vụ**
+> (trước fix 2 dòng) · TỔNG mũi **35.035** · tiền **31.801.190.152đ** · chưa tiêm
+> 1.223 — data 29-30/09 đã vào.
+>
+> **2. Task_02 tự tải snapshot gộp kỳ (repo con):** tkgvvxdt CHƯA từng có trong danh
+> sách download của Task (chỉ có báo cáo SQL) → các job sqlreport kỳ mới vĩnh viễn
+> needsData. Fix: +tkgvvvxdt vào TASK_REPORTS_UNIVERSE (21 phân hệ) + set
+> SNAPSHOT_REPORTS — backfill KHÔNG chia tháng (1 bước gộp, skip khi job done bao
+> trùm) + daily kỳ **01/01/2018→hôm nay** (kỳ 1 ngày chỉ ra file rút gọn 17 dòng).
+>
+> **3. Verify:** py_compile + tsc 0 lỗi; stub test 7/7 PASS; job sqlreport thật
+> 64 dịch vụ; restart agent 09:22 (rảnh — nguyên tắc GĐ 266) nạp bản mới.
+>
+> **⚠️ Lịch Task đang TẠM DỪNG** (cờ anh bật từ GĐ 305): Task_02 chỉ chạy khi bấm
+> nút ⏵ Tiếp tục trên trang NHIỆM VỤ app con.
+>
+> **LESSON LEARNED — Nguồn snapshot gộp kỳ phải tự tải TRONG Task, không chỉ builder
+> đúng (2026-10-03):** Builder C.156 chọn đúng snapshot nhưng Task không bao giờ tải
+> nguồn → job sqlreport kỳ mới vĩnh viễn needsData (kỳ 1 ngày không chứa snapshot date
+> gộp). Nhắc lại quy trình 3 bước GĐ 278: DOWNLOAD → ETL → BÁO CÁO — Task định kỳ phải
+> có đủ cả 3 mắt xích cho TỪNG phân hệ; phân hệ có trong danh sách báo cáo SQL mà
+> thiếu trong danh sách DOWNLOAD là hở chuỗi âm thầm.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **4.9.0** / repo con **7.0.0**.
+
+*Cập nhật lần cuối: 2026-10-03 (GĐ 307 — tkgvvxdt data 29-30/09 + Task_02 snapshot; app tổng 4.9.0 / repo con 7.0.0)*
+*Người cập nhật: Trợ lý Freebuff*
