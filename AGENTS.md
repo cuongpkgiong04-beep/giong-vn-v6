@@ -12594,6 +12594,35 @@ tổng 4.7.0 / repo con 6.7.0.
 > 5. Docs entry này + registry ✅ (commit phiên này).
 >
 > **Push:** app tổng `main` 21 commit (GĐ 307-316) → `origin/main`; repo con
-> `main` 12 commit (C.157-C.166) → `origin/face381`. Vercel auto-deploy cả 2.
+> `main` 13 commit (C.157-C.166 bổ sung) → `origin/main`. Vercel auto-deploy cả 2.
 >
-> **Version:** app tổng **5.0.0** / repo con **8.0.0** — ĐÃ PUSH (lệnh Push của Đại ca).
+> **3 SỰ CỐ TRONG PHIÊN (đã xử lý xong — verify PROD từng đồng):**
+>
+> 1. **Push sai refspec repo con lần 1:** `git push origin face381:main` —
+>    `face381` là HASH commit C.164 chứ không phải branch → remote chỉ nhận tới
+>    C.164, thiếu 2 commit bump/docs (status hiện `[ahead 2]` nên phát hiện).
+>    **Fix:** push lại đúng `main:main`. **Quy tắc:** push repo con LUÔN dùng
+>    `main:main` — hash/branch khác dễ nhầm vì branch remote tên `face381`
+>    nhưng branch local làm việc là `main`.
+> 2. **Bump sót DEFAULT_VERSION app con:** app con có DEFAULT_VERSION RIÊNG tại
+>    `apps/banhang/src/components/app-shell.tsx` (dòng 21) — AGENTS.md mục
+>    "Nơi tăng version" chỉ ghi `apps/<tên>/package.json` là THIẾU. Production
+>    trả 7.0.0 dù package.json 8.0.0 (SSR render từ DEFAULT_VERSION). Tiền lệ
+>    đúng nằm ở GĐ 306: "app-shell.tsx ×2 app". **Fix:** bump 7.0.0 → 8.0.0 +
+>    push `93637ea`. **Quy tắc bump 4 NƠI từ giờ:** app tổng = package.json +
+>    package-lock.json (2 chỗ) + app-shell.tsx; app con = apps/banhang/package.json
+>    + apps/banhang/src/components/app-shell.tsx.
+> 3. **Domain production app tổng bị GHIM deployment cũ:** sau rollback hotfix
+>    CVE GĐ 306, `giong-vn-v6.vercel.app` thành alias TĨNH khóa deployment
+>    03/10 (`ihcloizld`) — deployment mới push xong Ready 29s nhưng CHỈ nhận
+>    alias `git-main`, domain KHÔNG tự dồn (khác app con vẫn auto). Verify:
+>    `vercel inspect <domain>` thấy `created 2d ago` ≠ deployment mới +
+>    `vercel alias ls` thấy domain ghim deployment cũ. **Fix:**
+>    `vercel promote <url-deployment-moi>` → domain cập nhật ngay.
+>    **Quy tắc verify push:** KHÔNG chỉ nhìn `vercel ls` Ready — phải curl
+>    domain production kiểm tra version thật (SSR `VERSION <!-- -->x.y.z`).
+>
+> **✅ Verify cuối (curl domain production):** app tổng `giong-vn-v6.vercel.app`
+> = **VERSION 5.0.0** · app con `giong-banhang.vercel.app` = **VERSION 8.0.0**.
+>
+> **Version:** app tổng **5.0.0** / repo con **8.0.0** — ĐÃ PUSH + ĐÃ LIVE production.
