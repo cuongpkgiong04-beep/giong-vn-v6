@@ -12431,3 +12431,29 @@ tổng 4.7.0 / repo con 6.7.0.
 > + switch OK + 2 dev server mở; dọn về localhost sau verify. Lỗi `timeout: invalid
 > time interval '/t'` chỉ xảy ra khi chạy bat từ Git Bash (GNU timeout đè Windows
 > timeout.exe) — anh bấm đúp từ Explorer dùng cmd thuần, không bị.
+
+---
+
+### GĐ 313: Hệ sinh thái — Nhiệm vụ app con: Task_02 chỉ download + Task_03 chỉ báo cáo + "Ngày lấy dữ liệu" (repo con C.164) (2026-10-05)
+
+> **Yêu cầu của Đại ca (05/10):** (1) Task_02 17:25 CHỈ download (không chạy báo
+> cáo); (2) Tạo Task_03 chỉ chạy báo cáo khi ĐÃ có dữ liệu — rà lại trước, thiếu
+> → không chạy + cảnh báo chưa đủ dữ liệu; (3) dòng tổng kết task thêm
+> "Ngày lấy dữ liệu: …". Chi tiết đầy đủ ở **AGENTS.md repo con GĐ C.164**.
+
+> **Đã chốt qua vòng hỏi:** Task_03 tự spawn SAU MỖI slot Task_02 (3 lần/ngày) ·
+> kỳ báo cáo = hôm nay (pin config.date GĐ C.161).
+
+> **Tóm tắt:** Task_02 dừng sau giai đoạn download + tự spawn Task_03; Task_03
+> (kind 'report') rà nguồn staging qua `check_source_data` (map C.45 lazy-import —
+> không trùng 2 nơi) TRƯỚC từng báo cáo — thiếu → BỎ + ghi "chưa đủ dữ liệu
+> nguồn: <tên>" trong kết quả, đủ 28 thiếu → done + cảnh báo cần Task_02 trước.
+> Web: dòng "Ngày lấy dữ liệu" (config.date), chip Task_03, dialog ẩn download,
+> nút seed hiện khi thiếu task chuẩn nào.
+
+> **✅ Verify:** py_compile + tsc + build OK · stub test 4/4 (check thật: 05/10
+> Chủ nhật missing đúng dtdt+blth; 01/10 đủ nguồn) · commit `face381`.
+
+> **⚠️ Restart agent khi rảnh** (phiên này job của anh đang chạy — chưa restart).
+> Version KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT): app tổng **4.9.0** /
+> repo con **7.0.0**.
