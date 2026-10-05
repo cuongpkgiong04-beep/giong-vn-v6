@@ -12626,3 +12626,26 @@ tổng 4.7.0 / repo con 6.7.0.
 > = **VERSION 5.0.0** · app con `giong-banhang.vercel.app` = **VERSION 8.0.0**.
 >
 > **Version:** app tổng **5.0.0** / repo con **8.0.0** — ĐÃ PUSH + ĐÃ LIVE production.
+
+---
+
+### GĐ 317 (Trợ lý Freebuff): Gỡ mục "Báo cáo chạy" khỏi dialog sửa Task_02 app con (2026-10-05)
+
+> **Duyệt của Đại ca (05/10):** Sau phiên kiểm tra phần tạo nhiệm vụ app con
+> (E2E 11/11 PASS, không có lỗi), em đề xuất gỡ mục "Báo cáo chạy" khỏi dialog
+> sửa Task_02 — từ GĐ C.164 Task_02 CHỈ download, tick báo cáo vô nghĩa. Anh
+> duyệt → claim GĐ 317/C.167 qua registry (`14609f3`).
+>
+> **Nội dung (code nằm repo con `tasks-page.tsx`, +7/-3):** (1) khối "Báo cáo
+> chạy" thêm `editTask.kind !== "daily"` — Task_02 ẩn, Task_01/Task_03 giữ
+> nguyên; (2) `saveConfig` nhánh daily KHÔNG gửi `queryKeys` (tránh ghi đè
+> config vô nghĩa); (3) sửa chú thích slot giờ còn nói "chạy báo cáo GIỐNG
+> nhau" (sót C.154). Chi tiết + verify 6/7 PASS (bước Task_03 không test được
+> vì DB chưa có task 'report' — bù bằng logic cùng nhánh Task_01) ở
+> **AGENTS.md repo con GĐ C.167**.
+>
+> **App tổng KHÔNG đổi code** — chỉ ghi lịch sử. Version KHÔNG bump (chờ lệnh
+> Push — quy tắc ĐA AGENT): app tổng 5.0.0 / repo con 8.0.0.
+
+*Cập nhật lần cuối: 2026-10-05 (GĐ 317 — gỡ mục báo cáo khỏi dialog Task_02; app tổng 5.0.0 / repo con 8.0.0)*
+*Người cập nhật: Trợ lý Freebuff*
