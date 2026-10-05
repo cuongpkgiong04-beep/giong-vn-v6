@@ -12321,3 +12321,105 @@ tổng 4.7.0 / repo con 6.7.0.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
 > **4.9.0** / repo con **7.0.0**.
+
+---
+
+### GĐ 312 (Trợ lý Freebuff): Đăng nhập Local trên MỌI máy — máy chủ + máy trạm LAN + máy ngoài LAN (2026-10-05)
+
+> **Yêu cầu của Đại ca (05/10):** "Kiểm tra cho anh để anh có thể đăng nhập được Local
+> trên tất cả các máy bao gồm: Máy chủ và máy trạm trong mạng LAN, và máy ngoài mạng LAN."
+> **Đã chốt qua vòng hỏi (3 điểm):** PA-1 làm đủ 3 chế độ (khen dùng khi cần test ngoài
+> LAN) · IP tĩnh máy chủ `192.168.1.250` (đã/rồi sẽ đặt trong router) · mở Windows
+> Firewall port 3000/3100 làm luôn.
+
+> **Kiến trúc 3 chế độ (1 script switch — cùng 1 bộ .env.local):**
+>
+> | Chế độ | Ai dùng | URL mở | Cookie | Env thêm |
+> |---|---|---|---|---|
+> | **localhost** (mặc định) | Chỉ máy chủ | `http://localhost:3000` (+3100) | `__Host-` + Secure (chuẩn) | — |
+> | **lan** | Máy trạm trong LAN | `http://192.168.1.250:3000` | **tên thường** + **không Secure** (HTTP qua IP không nhận Secure/prefix) | `LOCAL_EXTRA_ORIGINS` + `LOCAL_COOKIE_MODE=lan` |
+> | **public** | Máy NGOÀI LAN | `https://<ngẫu-nhiên>.trycloudflare.com` | `__Host-` + Secure (HTTPS) | `BETTER_AUTH_URL` + `LOCAL_EXTRA_ORIGINS` + spawn 2 Quick Tunnel |
+>
+> **Triển khai (5 file code + 3 file tooling):**
+> 1. `src/lib/auth/server.ts` — đọc `LOCAL_EXTRA_ORIGINS` (dấu phẩy; thiếu scheme tự
+>    thêm cả http/https) → thêm vào CẢ `trustedOrigins` (POST credentialed) lẫn
+>    `allowedHosts` (dynamic baseURL theo Host header); đọc `LOCAL_COOKIE_MODE=lan`
+>    → cookie bỏ prefix `__Host-` (prefix BẮT BUỘC Secure) + tắt Secure. Localhost
+>    không set → phiên cũ KHÔNG ảnh hưởng (0 thay đổi hành vi mặc định).
+> 2. `scripts/switch-local-env.py` — switch 3 mode cho CẢ 2 .env.local (app tổng +
+>    app con): ghi/đmel key mode + **backup `.env.local.bak-312` mỗi lần chạy**
+>    (giữ secrets TUNNEL/API_TOKEN không đụng); mode `public --start-tunnel` spawn
+>    2 Quick Tunnel + in URL. App con: lan/public ghi `APP_URL` + `MAIN_APP_URL`
+>    theo IP/tunnel (SSO + cookie `bh_session` tự đúng — cờ Secure theo scheme
+>    GĐ 228a đã có sẵn).
+> 3. `start-local.bat` — viết lại đa chế độ: `start-local.bat [localhost|lan|public]`
+>    (mặc định localhost) — switch env trước → mở 2 cửa sổ dev → hướng dẫn URL mở
+>    đúng mode. **`start-firewall-local.bat`** (mới, chạy 1 lần với Admin): mở
+>    inbound port 3000/3100 cho phạm vi LAN (LocalSubnet) — tên rule
+>    `GIONG Local App 3000/3100`.
+> 4. `vite.config.ts` ×2 — `allowedHosts: [".trycloudflare.com"]`: Vite 8 chặn
+>    Host lạ (DNS-rebinding guard) → qua Quick Tunnel 403 "Blocked request" TRƯỚC
+>    khi tới app; suffix `.trycloudflare.com` cho phép mọi URL tunnel ngẫu nhiên mà
+>    không mở rộng quá mức. LAN IP + localhost Vite cho phép mặc định.
+>
+> **✅ Verify 3 chế độ (sign-in POST thật + soi Set-Cookie):**
+> | Kịch bản | Kết quả |
+> |---|---|
+> | localhost sign-in | **200** + cookie `__Host-` Secure ✓ |
+> | Origin IP trên mode localhost | 403 — **đúng thiết kế** (localhost không trust LAN) |
+> | lan: sign-in Origin `192.168.1.250:3000` | **200** + cookie **`grok-auth.session_token` Secure=False HttpOnly=True** (browser HTTP nhận được) |
+> | public: sign-in qua `https://…trycloudflare.com` | **200** + cookie `__Host-` Secure=True ✓ |
+> | public: app con qua tunnel riêng | 200 ✓ |
+> | typecheck | 0 lỗi ✓ |
+>
+> **LESSON LEARNED — cùng mã 403, 2 tầng khác nhau: Better Auth "Invalid origin" vs
+> Vite "Blocked request" (2026-10-05):** Verify mode public lần đầu 403 — soi body
+> thấy "Blocked request. This host … is not allowed. To allow this host, ad" — đây
+> là DNS-rebinding guard của VITE DEV SERVER (chặn theo Host header), KHÔNG phải
+> origin check của Better Auth ("Invalid origin: …"). Hai lớp chặn độc lập cùng
+> nằm trước logic app: Vite allowedHosts (mọi request) → Better Auth trustedOrigins
+> (POST credentialed). Sửa 1 lớp mà chưa verify lại = tưởng chưa fix. Quy tắc: lỗi
+> 403 local khi đổi hostname — ĐỌC BODY lỗi để biết chặn ở TẦNG nào trước khi sửa.
+>
+> **LESSON LEARNED — Cookie `__Host-` prefix = ràng buộc kép Secure+HTTPS+host-chính-
+> xác (2026-10-05):** prefix `__Host-` yêu cầu cờ Secure + đường HTTPS (trừ localhost
+> — trình duyệt coi là secure context) + không Domain attr. HTTP qua IP LAN KHÔNG
+> nhận được cookie này → phiên không giữ. Chế độ LAN phải đổi TÊN cookie (bỏ prefix)
+> + tắt Secure — không thể "giữ prefix mà bỏ Secure". Đổi tên cookie → user đăng
+> nhập lại lần đầu (thông báo trong output script).
+>
+> **LESSON LEARNED — Tunnel URL trong .env.local chết ngầm = tái diễn thường xuyên,
+> update-tunnel-local.bat là bước đầu khi 500 (2026-10-05):** GĐ 228 đã gặp; lần
+> này tunnel `anna-planner-kai-employed` DNS ENOTFOUND (Cloudflare thu hồi) → mọi
+> sign-in 500 "fetch failed". Đọc Gist lấy URL `device-signs-kai-ruth` → chạy OK.
+> Chuẩn 3 bước khi login local 500: (1) curl /health URL tunnel trong .env.local —
+> 000/ENOTFOUND = tunnel chết; (2) `update-tunnel-local.bat` (lấy Gist); (3) restart
+> dev (Vite đọc env lúc khởi động — GĐ 228o).
+>
+> **LESSON LEARNED — match chuỗi con khi kill process phải tính số-cổng-đè-số (2026-
+> 10-05):** dọn tunnel bằng điều kiện `'localhost:30' in cmdline` — SOÓT tunnel
+> `localhost:3100` vì chuỗi '3100' không chứa '30' sau dấu ':'. Lọc theo tiền tố
+> chuỗi phải liệt kê đúng biến thể (':3000' và ':3100') hoặc match theo regex
+> `localhost:3[01]00`. Đã dọn nốt PID sót.
+>
+> **Hướng dẫn Đại ca sử dụng (3 tình huống):**
+> 1. **Chỉ dùng trên máy chủ:** `start-local.bat` (không tham số) → mở
+>    `http://localhost:3000`.
+> 2. **Máy trạm trong LAN:** máy chủ chạy `start-local.bat lan` (+ `start-firewall-local.bat`
+>    1 lần đầu tiên, Run as Administrator, IP 192.168.1.250 phải tĩnh trong router)
+>    → máy trạm mở `http://192.168.1.250:3000` — **đăng nhập lại lần đầu** (cookie
+>    đổi định dạng).
+> 3. **Máy ngoài LAN:** máy chủ chạy `start-local.bat public` (cần internet) → màn
+>    hình in 2 URL tunnel → mở URL đó trên BẤT KỲ máy nào. **URL đổi mỗi lần chạy
+>    lại** (Quick Tunnel free) — gửi lại URL mới cho người dùng.
+> - **Lỗi dữ liệu khi local** (fetch failed/500): chạy `update-tunnel-local.bat`
+>   → đóng 2 cửa sổ app → chạy lại `start-local.bat <mode>`.
+
+> **Tiêu chí kiểm chứng:** `start-local.bat localhost` → máy chủ đăng nhập được;
+> `start-local.bat lan` → máy trạm mở IP 192.168.1.250 đăng nhập được (đã mở
+> firewall); `start-local.bat public` → URL https mở được từ máy ngoài; switch qua
+> lại 3 chế độ không vỡ secrets; phiên cũ localhost không bị ảnh hưởng; typecheck
+> 0 lỗi.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
+> **4.9.0** / repo con **7.0.0**.

@@ -171,6 +171,11 @@ export default defineConfig(({ command, isPreview }) => ({
     host: "0.0.0.0",
     port: 3000,
     strictPort: true,
+    // GĐ 312 (đăng nhập Local đa máy): máy ngoài LAN vào qua Quick Tunnel —
+    // URL đổi MỖI lần chạy nên không liệt kê tĩnh được. Cho phép suffix
+    // `.trycloudflare.com` (chỉ domain tunnel của Cloudflare, không mở tất cả).
+    // LAN IP + localhost đã được Vite cho phép mặc định.
+    allowedHosts: [".trycloudflare.com"],
     watch: {
       ignored: ["**/.vercel/**"],
     },

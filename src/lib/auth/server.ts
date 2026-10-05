@@ -101,12 +101,44 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://localhost:3000",
   "http://[::1]:3000",
 ];
+
+// GĐ 312 (đăng nhập Local đa máy): origin/host BỔ SUNG qua .env.local —
+// `LOCAL_EXTRA_ORIGINS` danh sách cách nhau dấu phẩy, VD:
+//   LAN    : http://192.168.1.250:3000            (máy trạm trong mạng LAN)
+//   public : https://xxx.trycloudflare.com        (máy ngoài LAN qua Quick Tunnel)
+// Được thêm vào CẢ `trustedOrigins` (origin đầy đủ cho POST credentialed) lẫn
+// `allowedHosts` (dynamic baseURL resolve theo Host header). Thiếu entry đây,
+// máy trạm LAN bị Better Auth chặn "Invalid origin" khi đăng nhập.
+const localExtraOriginsRaw = env("LOCAL_EXTRA_ORIGINS")?.split(",") ?? [];
+const localExtraOriginList = localExtraOriginsRaw.flatMap((raw) => {
+  const origin = raw.trim();
+  if (!origin) return [];
+  if (/^https?:\/\//i.test(origin)) return [origin];
+  // Thiếu scheme → thêm cả http/https (origin đầy đủ cho trustedOrigins).
+  return [`http://${origin}`, `https://${origin}`];
+});
+const localExtraHosts = localExtraOriginsRaw.flatMap((raw) => {
+  const origin = raw.trim();
+  if (!origin) return [];
+  try {
+    return [new URL(/^https?:\/\//i.test(origin) ? origin : `http://${origin}`).host];
+  } catch {
+    return [origin];
+  }
+});
+
+// GĐ 312: chế độ LAN — browser mở http://<IP>:3000 KHÔNG phải secure context →
+// từ chối cookie Secure; prefix `__Host-` lại BẮT BUỘC Secure → khi chạy LAN
+// phải đổi tên cookie không-prefix + tắt Secure. Localhost (máy chủ) giữ nguyên
+// 100% (không set LOCAL_COOKIE_MODE) → phiên cũ không bị ảnh hưởng.
+const lanCookieMode = env("LOCAL_COOKIE_MODE") === "lan";
+const cookiePrefix = lanCookieMode ? "" : "__Host-";
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password
   // (not only the preview wildcard). Prefer 127.0.0.1 to match the browser URL
   // used by the preview and avoid redirect mismatches with localhost-only
   // registrations.
-  allowedHosts: [...previewAllowedHosts, "127.0.0.1", "localhost", "[::1]"],
+  allowedHosts: [...previewAllowedHosts, "127.0.0.1", "localhost", "[::1]", ...localExtraHosts],
   // `auto` → trust both http:// and https:// expansions of allowedHosts
   // (preview is https; local dev is http).
   protocol: "auto" as const,
@@ -120,6 +152,7 @@ const trustedOrigins: string[] = explicitBaseURL
       explicitBaseURL,
       // Also trust the Vercel deployment URL pattern
       ...LOCAL_DEV_ORIGINS,
+      ...localExtraOriginList,
     ]
   : [
       // Host wildcards (matched against Origin's host)
@@ -127,6 +160,7 @@ const trustedOrigins: string[] = explicitBaseURL
       // Full-origin wildcards (matched against Origin)
       ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
       ...LOCAL_DEV_ORIGINS,
+      ...localExtraOriginList,
     ];
 
 const databaseUrl = env("DATABASE_URL");
@@ -148,7 +182,9 @@ const database =
       : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
 
 /** Session token cookie name — also read by the live-preview popup completion page. */
-export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
+// GĐ 312: prefix theo chế độ — `__Host-` (mặc định/localhost/public-HTTPS) hoặc
+// rỗng (LAN HTTP — prefix bắt buộc Secure nên không dùng được).
+export const SESSION_TOKEN_COOKIE = `${cookiePrefix}grok-auth.session_token`;
 
 const directGoogleProviderOptions = authConfigured
   ? {
@@ -208,12 +244,13 @@ export const auth = betterAuth({
   // `http://localhost`, so local dev still works.)
   advanced: {
     useSecureCookies: false,
-    defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
+    // GĐ 312: LAN HTTP không thể Secure — chỉ localhost/public-HTTPS giữ Secure.
+    defaultCookieAttributes: { secure: !lanCookieMode, sameSite: "lax", path: "/" },
     cookies: {
       session_token: { name: SESSION_TOKEN_COOKIE },
-      session_data: { name: "__Host-grok-auth.session_data" },
-      account_data: { name: "__Host-grok-auth.account_data" },
-      dont_remember: { name: "__Host-grok-auth.dont_remember" },
+      session_data: { name: `${cookiePrefix}grok-auth.session_data` },
+      account_data: { name: `${cookiePrefix}grok-auth.account_data` },
+      dont_remember: { name: `${cookiePrefix}grok-auth.dont_remember` },
     },
   },
 
