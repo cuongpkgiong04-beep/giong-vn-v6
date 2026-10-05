@@ -679,5 +679,26 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (không đổi code — chỉ restart service). App tổng
 > 5.1.0 / repo con 8.0.1.
 
-*Cập nhật lần cuối: 2026-10-05 (GĐ 321 — restart GIONG_SMED_Agent PID 5852; app tổng 5.1.0 / repo con 8.0.1)*
+---
+
+### GĐ 322 / C.169 (Trợ lý Freebuff): Fix tool VCB chọn ngày sai tháng — panel lịch mở tháng kỳ cũ (2026-10-06)
+
+> **Lỗi của Đại ca (ảnh màn hình 21:49):** job VCB kỳ 05/10→05/10 fail 3 lần — ô "Từ ngày" nhận **'05/09/2026' ≠ mong '05/10/2026'** đủ 3 lần retry.
+>
+> **Chẩn đoán (đối chiếu TCB đang tốt):** panel lịch Digibiz mở theo THÁNG KỲ CŨ trong ô (grid 6 tuần vẫn visible ô '5' tháng 09) → tool cũ click text '5' `.first` trúng ô other-month; retry chỉ lặp lại đúng cách cũ → fail. Tool VCB thiếu 2 cơ chế TCB có (C.128): verify input sau click + điều hướng prev/next tháng.
+>
+> **Đại ca chốt PA-1 + PA-2** (trong 4 lựa chọn; từ chối soi DOM trước vì tốn 1 ngày chạy thật).
+>
+> **Đã làm (chỉ `_pick_date` trong `40_vcb_saoke.py`, +135/−34):**
+> 1. **PA-2 — khớp ô theo label:** ưu tiên phần tử aria-label/title chứa "tháng <m> " (space-anchored — 'tháng 1' không khớp 'tháng 10/11/12') + text đúng số ngày; fallback text visible (C.111b) giữ nguyên.
+> 2. **PA-1 — verify + điều hướng:** sau click verify giá trị input đích; chưa đúng → bấm nút prev/next tháng (class mat-calendar + aria EN/VN), hướng theo chênh (y,m,d) so tuple, tối đa 13 lượt ≈ 1 năm; không thấy nút điều hướng → đóng-mở lại panel (attempt sau); attempt cuối fail → dump debug `_dbg_shot` + `_dbg_dump_deep` để soi selector thật.
+> 3. **Test unit mới** `40_vcb_saoke.test.py` — FakePage mô phỏng panel sai tháng (không cần mạng/UI).
+>
+> **Verify:** py_compile OK · unit 6/6 PASS (kịch bản lỗi thật: panel T09 mong T10 → nav next 1 lần → đúng '05/10/2026'; cả hướng prev + lệch nhiều tháng + _daterange). **Không restart service:** tool BANK chạy qua subprocess riêng mỗi job (`sp.Popen` trong 40_web_agent.py) → fix có hiệu lực NGAY job tiếp theo.
+>
+> **Tiêu chí kiểm chứng:** job VCB kế tiếp (bấm "Thử chạy lại" trên web hoặc slot Task_02 17:25) chọn đúng ngày dù panel mở sai tháng; nếu vẫn fail → đọc dump debug trong log tool (body[:1200] + ảnh LOG/vcb_shots/) để soi selector nút điều hướng thật rồi vá thêm.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.1.0** / repo con **8.0.1**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 322/C.169 — fix tool VCB chọn ngày sai tháng; app tổng 5.1.0 / repo con 8.0.1)*
 *Người cập nhật: Trợ lý Freebuff*
