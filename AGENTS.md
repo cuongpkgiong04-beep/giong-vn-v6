@@ -12561,3 +12561,39 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
 > **4.9.0** / repo con **7.0.0**. KHÔNG push.
+
+
+---
+
+### GĐ 316 (Trợ lý Freebuff): PA-1 Push đợt GĐ 307-315 / C.157-C.165 — bump app tổng 5.0.0 + repo con 8.0.0 (2026-10-05)
+
+> **Lệnh của Đại ca (05/10, thread mới):** "Push" — em trình 3 PA, anh chốt **PA-1**:
+> push gọn cả 2 repo, KHÔNG kèm 2 file bat dở dang (`start-local.bat` +
+> `update-tunnel-local.bat` + `scripts/update-tunnel-env.py` giữ nguyên trạng thái,
+> việc GĐ 313 của phiên khác — không nhận diện).
+>
+> **Rà trùng lặp trước push (nguyên tắc 3):** SẠCH — worktree `agent-cli` (333a980)
+> + `pipeline-work` (5bab206) không có commit riêng, `git merge-base --is-ancestor`
+> xác nhận đã gộp hết vào main; repo con branch agent-cli cũng đã gộp; 2 working
+> tree không có file modified của agent khác (chỉ untracked log/screenshot phiên cũ —
+> không đụng). Pull origin main trước phiên: Already up to date.
+>
+> **Thực hiện (app tổng — 3 commit):**
+> 1. `515bd50` chore(registry): claim GĐ 316 🔒 theo quy trình registry lock
+>    (số mới = max 315 + 1, không đụng code).
+> 2. `81a8204` chore(release): bump **4.9.0 → 5.0.0** — package.json +
+>    DEFAULT_VERSION (app-shell.tsx) + **package-lock.json 2 chỗ** (root +
+>    packages[""]) đồng bộ; checklist 3 bước: mỗi thành phần 1 chữ số ✅
+>    (minor 9 → nhớ major: 4.9.0 → 5.0.0, không tồn tại 4.10.0).
+> 3. Docs entry này + registry ✅ (commit phiên này).
+>
+> **Thực hiện (repo con — 2 commit):**
+> 4. `42690ff` chore(release): C.166 bump **7.0.0 → 8.0.0**
+>    (apps/banhang/package.json; lockfile workspace root KHÔNG mang version
+>    banhang — 0 chỗ cần đồng bộ).
+> 5. Docs entry này + registry ✅ (commit phiên này).
+>
+> **Push:** app tổng `main` 21 commit (GĐ 307-316) → `origin/main`; repo con
+> `main` 12 commit (C.157-C.166) → `origin/face381`. Vercel auto-deploy cả 2.
+>
+> **Version:** app tổng **5.0.0** / repo con **8.0.0** — ĐÃ PUSH (lệnh Push của Đại ca).
