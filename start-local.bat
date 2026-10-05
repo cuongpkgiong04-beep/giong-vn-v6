@@ -11,8 +11,9 @@ rem
 rem LẦN ĐẦU TIÊN: chạy 1 LẦN "start-firewall-local.bat" bằng chuột phải
 rem   → Run as Administrator (mở port 3000/3100 cho máy khác trong LAN).
 rem
-rem Sau khi đổi chế độ: ĐÓNG 2 cửa sổ app cũ rồi chạy lại file này
-rem (dev server chỉ đọc cấu hình lúc khởi động).
+rem Sau khi đổi chế độ: CHỈ CẦN chạy lại file này — bat TỰ ĐÓNG app cũ
+rem (chiếm port 3000/3100) trước khi khởi động (dev server chỉ đọc cấu
+rem hình lúc khởi động — GĐ 228o; tự đóng app cũ — GĐ 313).
 rem
 rem LƯU Ý: máy phải có internet (app đọc dữ liệu SQL Server công ty qua
 rem Cloudflare Tunnel). App báo lỗi dữ liệu → chạy update-tunnel-local.bat.
@@ -29,8 +30,13 @@ cd /d D:\DuLieuChung\CUONG_2026\giong-vn-v6
 echo.
 echo  ============================================================
 echo   GIONG VN — Che do: %MODE%
-echo   App tong : localhost:3000   (may khac: xem huong dan ben duoi)
-echo   App con  : localhost:3100
+if /i "%MODE%"=="lan" (
+  echo   App tong : http://192.168.1.250:3000   -- may TRAM mo URL nay
+  echo   App con  : http://192.168.1.250:3100
+) else (
+  echo   App tong : localhost:3000   -- may khac: xem huong dan ben duoi
+  echo   App con  : localhost:3100
+)
 echo  ============================================================
 echo.
 
@@ -42,6 +48,12 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+
+echo.
+echo   Dang dong app cu tren port 3000/3100 - neu co...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr /R /C:":3000 .*LISTENING"') do taskkill /F /PID %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr /R /C:":3100 .*LISTENING"') do taskkill /F /PID %%a >nul 2>&1
+timeout /t 2 /nobreak >nul
 
 start "GIONG VN - App tong (3000)" cmd /k "cd /d D:\DuLieuChung\CUONG_2026\giong-vn-v6 && npm run dev"
 timeout /t 3 /nobreak >nul
