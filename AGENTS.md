@@ -12516,3 +12516,48 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
 > **4.9.0** / repo con **7.0.0**. KHÔNG push.
+
+
+---
+
+### GĐ 315 (Trợ lý Freebuff): Nhóm DỰ ÁN thêm 2 module nội bộ — Biên bản họp + Zalo (khung placeholder, chỉ Admin) (2026-10-05)
+
+> **Yêu cầu của Đại ca (05/10):** Trong App tổng, nhóm **DỰ ÁN** đặt sau "Bán hàng"
+> thêm 2 module: **Biên bản họp** + **Zalo** — để anh triển khai tiếp nội dung sau
+> (khung placeholder trước, giống cách MIA GĐ 223 từng làm).
+>
+> **Triển khai (app tổng — 4 file):**
+> 1. **NAV (`app-shell.tsx`):** thêm 2 entry group "DỰ ÁN" ngay sau Bán hàng:
+>    `{ to: "/bien-ban-hop", label: "Biên bản họp", icon: NotebookPen }` +
+>    `{ to: "/zalo", label: "Zalo", icon: MessagesSquare }` — route **NỘI BỘ**
+>    (khác Bán hàng là external URL) → NavLink render `<Link>` thường, có trạng
+>    thái active khi đang mở trang.
+> 2. **visibleNav:** `PROJECT_INTERNAL_PATHS = ["/bien-ban-hop", "/zalo"]` +
+>    điều kiện `(isAdmin && PROJECT_INTERNAL_PATHS.includes(item.to))` —
+>    **CHỈ Admin thấy** (cùng pattern Bán hàng GĐ 107; user thường ẩn hoàn toàn).
+>    Desktop sidebar + hamburger mobile dùng chung visibleNav — nguyên tắc
+>    Desktop + Mobile song song.
+> 3. **2 route file-based mới:** `src/routes/bien-ban-hop.tsx` +
+>    `src/routes/zalo.tsx` — trang placeholder gọn (PageHeader + khung "đang
+>    triển khai"); `routeTree.gen.ts` sinh lại (+42 dòng — đúng 2 route mới,
+>    không side effect).
+> 4. **Guard user thường KHÔNG cần sửa:** 2 path không thuộc MODULE_DEFINITIONS
+>    → không có trong `allowedPaths` → `isRouteAllowed` default-deny đá về `/`
+>    khi gõ tay (2 điều kiện độc lập: menu ẩn + route chặn).
+>
+> **✅ Verify (probe E2E Playwright, dev :3000 — 4/4 PASS):** login → sidebar
+> nhóm DỰ ÁN có đủ 3 nút **Bán hàng → Biên bản họp → Zalo** đúng thứ tự kề nhau →
+> bấm từng nút mở đúng trang (header + khung placeholder render đầy đủ);
+> typecheck SẠCH 0 lỗi. Chưa test được UI user thường (không có credential user
+> thường) — phần ẩn + gõ tay đá về dựa logic default-deny đã đối chiếu code.
+>
+> **LESSON LEARNED — Assert nội dung trang bằng `body.innerText.slice(0, N)` là
+> bom ngầm khi N nhỏ (2026-10-05):** probe đầu phiên cắt 300 ký tự đầu body —
+> chỉ đủ sidebar + header, nội dung `<main>` nằm SAU đó → chuỗi check luôn false
+> trong khi trang hoạt động chuẩn từ 2s. Sửa probe đọc `main.innerText` mới PASS.
+> **Quy tắc:** assert nội dung cụ thể → locator đúng element (`main`,
+> `[data-testid]`), KHÔNG cắt chuỗi body — "fail" có thể là lỗi PHÉP ĐO, không
+> phải lỗi trang (pattern GĐ 205 lần N).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
+> **4.9.0** / repo con **7.0.0**. KHÔNG push.

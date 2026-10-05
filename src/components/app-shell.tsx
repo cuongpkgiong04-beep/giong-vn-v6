@@ -12,6 +12,8 @@ import {
   MapPin,
   Menu,
   MessageSquare,
+  MessagesSquare,
+  NotebookPen,
   RefreshCw,
   Smartphone,
   ShieldCheck,
@@ -99,6 +101,11 @@ const NAV: NavItem[] = [
     icon: ShoppingCart,
     group: "DỰ ÁN",
   },
+  // GĐ 315: 2 module DỰ ÁN NỘI BỘ — khung placeholder, nội dung triển khai sau
+  // (yêu cầu Đại ca 2026-10-05). Route nội bộ + CHỈ Admin thấy
+  // (visibleNav lọc isAdmin — cùng pattern nhóm DỰ ÁN GĐ 107).
+  { to: "/bien-ban-hop", label: "Biên bản họp", icon: NotebookPen, group: "DỰ ÁN" },
+  { to: "/zalo", label: "Zalo", icon: MessagesSquare, group: "DỰ ÁN" },
   { to: "/admin/approvals", label: "Duyệt đăng ký", icon: ShieldCheck, group: "Quản trị" },
   { to: "/admin/permissions", label: "Phân quyền", icon: ShieldCheck, group: "Quản trị" },
   { to: "/bao-cao", label: "Báo cáo", icon: BarChart3, group: "Hệ thống" },
@@ -412,9 +419,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     const emp = s.employees.find((e) => e.id === s.currentUserId) ?? null;
     return isAdminRole(emp?.role) || getEffectiveModuleAccess(emp, "banhang");
   });
+  // GĐ 315: 2 module DỰ ÁN nội bộ mới — route nội bộ, CHỈ Admin thấy
+  // (không thuộc hệ thống phân quyền module — gộp điều kiện isAdmin như Bán hàng).
+  const PROJECT_INTERNAL_PATHS = ["/bien-ban-hop", "/zalo"];
   const visibleNav = useMemo(
-    () => NAV.filter((item) => allowedPaths.includes(item.to) || item.to === "/preview" || (item.to.startsWith("http") && hasBanhang)),
-    [allowedPaths, hasBanhang],
+    () =>
+      NAV.filter(
+        (item) =>
+          allowedPaths.includes(item.to) ||
+          item.to === "/preview" ||
+          (item.to.startsWith("http") && hasBanhang) ||
+          (isAdmin && PROJECT_INTERNAL_PATHS.includes(item.to)),
+      ),
+    [allowedPaths, hasBanhang, isAdmin],
   );
 
   const PUBLIC_ROUTES = ["/login", "/forgot-password"];

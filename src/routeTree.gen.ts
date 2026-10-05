@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BaoCaoRouteImport } from './routes/bao-cao'
+import { Route as BienBanHopRouteImport } from './routes/bien-ban-hop'
 import { Route as ChamCongRouteImport } from './routes/cham-cong'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as ChatRouteImport } from './routes/chat'
@@ -25,6 +26,7 @@ import { Route as NhanSuRouteImport } from './routes/nhan-su'
 import { Route as NhiemVuRouteImport } from './routes/nhiem-vu'
 import { Route as PreviewRouteImport } from './routes/preview'
 import { Route as TrungTamRouteImport } from './routes/trung-tam'
+import { Route as ZaloRouteImport } from './routes/zalo'
 import { Route as AdminApprovalsRouteImport } from './routes/admin/approvals'
 import { Route as AdminPermissionsRouteImport } from './routes/admin/permissions'
 import { Route as BaoCaoBangChamCongRouteImport } from './routes/bao-cao/bang-cham-cong'
@@ -43,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
 const BaoCaoRoute = BaoCaoRouteImport.update({
   id: '/bao-cao',
   path: '/bao-cao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BienBanHopRoute = BienBanHopRouteImport.update({
+  id: '/bien-ban-hop',
+  path: '/bien-ban-hop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChamCongRoute = ChamCongRouteImport.update({
@@ -115,6 +122,11 @@ const TrungTamRoute = TrungTamRouteImport.update({
   path: '/trung-tam',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZaloRoute = ZaloRouteImport.update({
+  id: '/zalo',
+  path: '/zalo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminApprovalsRoute = AdminApprovalsRouteImport.update({
   id: '/admin/approvals',
   path: '/admin/approvals',
@@ -164,6 +176,7 @@ const ApiCronBackupRoute = ApiCronBackupRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bao-cao': typeof BaoCaoRouteWithChildren
+  '/bien-ban-hop': typeof BienBanHopRoute
   '/cham-cong': typeof ChamCongRoute
   '/change-password': typeof ChangePasswordRoute
   '/chat': typeof ChatRoute
@@ -178,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/nhiem-vu': typeof NhiemVuRoute
   '/preview': typeof PreviewRoute
   '/trung-tam': typeof TrungTamRoute
+  '/zalo': typeof ZaloRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
@@ -191,6 +205,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bao-cao': typeof BaoCaoRouteWithChildren
+  '/bien-ban-hop': typeof BienBanHopRoute
   '/cham-cong': typeof ChamCongRoute
   '/change-password': typeof ChangePasswordRoute
   '/chat': typeof ChatRoute
@@ -205,6 +220,7 @@ export interface FileRoutesByTo {
   '/nhiem-vu': typeof NhiemVuRoute
   '/preview': typeof PreviewRoute
   '/trung-tam': typeof TrungTamRoute
+  '/zalo': typeof ZaloRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
@@ -219,6 +235,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bao-cao': typeof BaoCaoRouteWithChildren
+  '/bien-ban-hop': typeof BienBanHopRoute
   '/cham-cong': typeof ChamCongRoute
   '/change-password': typeof ChangePasswordRoute
   '/chat': typeof ChatRoute
@@ -233,6 +250,7 @@ export interface FileRoutesById {
   '/nhiem-vu': typeof NhiemVuRoute
   '/preview': typeof PreviewRoute
   '/trung-tam': typeof TrungTamRoute
+  '/zalo': typeof ZaloRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/bao-cao/bang-cham-cong': typeof BaoCaoBangChamCongRoute
@@ -248,6 +266,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bao-cao'
+    | '/bien-ban-hop'
     | '/cham-cong'
     | '/change-password'
     | '/chat'
@@ -262,6 +281,7 @@ export interface FileRouteTypes {
     | '/nhiem-vu'
     | '/preview'
     | '/trung-tam'
+    | '/zalo'
     | '/admin/approvals'
     | '/admin/permissions'
     | '/bao-cao/bang-cham-cong'
@@ -275,6 +295,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bao-cao'
+    | '/bien-ban-hop'
     | '/cham-cong'
     | '/change-password'
     | '/chat'
@@ -289,6 +310,7 @@ export interface FileRouteTypes {
     | '/nhiem-vu'
     | '/preview'
     | '/trung-tam'
+    | '/zalo'
     | '/admin/approvals'
     | '/admin/permissions'
     | '/bao-cao/bang-cham-cong'
@@ -302,6 +324,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bao-cao'
+    | '/bien-ban-hop'
     | '/cham-cong'
     | '/change-password'
     | '/chat'
@@ -316,6 +339,7 @@ export interface FileRouteTypes {
     | '/nhiem-vu'
     | '/preview'
     | '/trung-tam'
+    | '/zalo'
     | '/admin/approvals'
     | '/admin/permissions'
     | '/bao-cao/bang-cham-cong'
@@ -330,6 +354,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BaoCaoRoute: typeof BaoCaoRouteWithChildren
+  BienBanHopRoute: typeof BienBanHopRoute
   ChamCongRoute: typeof ChamCongRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   ChatRoute: typeof ChatRoute
@@ -344,6 +369,7 @@ export interface RootRouteChildren {
   NhiemVuRoute: typeof NhiemVuRoute
   PreviewRoute: typeof PreviewRoute
   TrungTamRoute: typeof TrungTamRoute
+  ZaloRoute: typeof ZaloRoute
   AdminApprovalsRoute: typeof AdminApprovalsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -364,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/bao-cao'
       fullPath: '/bao-cao'
       preLoaderRoute: typeof BaoCaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bien-ban-hop': {
+      id: '/bien-ban-hop'
+      path: '/bien-ban-hop'
+      fullPath: '/bien-ban-hop'
+      preLoaderRoute: typeof BienBanHopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cham-cong': {
@@ -464,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrungTamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zalo': {
+      id: '/zalo'
+      path: '/zalo'
+      fullPath: '/zalo'
+      preLoaderRoute: typeof ZaloRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/approvals': {
       id: '/admin/approvals'
       path: '/admin/approvals'
@@ -552,6 +592,7 @@ const BaoCaoRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BaoCaoRoute: BaoCaoRouteWithChildren,
+  BienBanHopRoute: BienBanHopRoute,
   ChamCongRoute: ChamCongRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   ChatRoute: ChatRoute,
@@ -566,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
   NhiemVuRoute: NhiemVuRoute,
   PreviewRoute: PreviewRoute,
   TrungTamRoute: TrungTamRoute,
+  ZaloRoute: ZaloRoute,
   AdminApprovalsRoute: AdminApprovalsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
