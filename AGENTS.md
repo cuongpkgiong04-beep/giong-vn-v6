@@ -647,5 +647,37 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** app tổng **5.1.0** / repo con **8.0.1** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-05 (GĐ 320 — Push 5.1.0 / 8.0.1 LIVE production)*
+---
+
+### GĐ 321 (Trợ lý Freebuff): Restart GIONG_SMED_Agent — nạp bản C.163/C.164/C.167 (2026-10-05)
+
+> **Lệnh của Đại ca (05/10, 23:44):** "Restart Agent bây giờ" — nạp task_runner +
+> api_server bản mới sau đợt push GĐ 320 (C.163 nút ⏸/▶ pause + hủy nhanh ·
+> C.164 Task_02 chỉ download + Task_03 báo cáo · C.167 fix dialog Task_02).
+>
+> **Check agent rảnh TRƯỚC khi restart (đúng quy trình GĐ 266/301):** log agent
+> (web_agent_051026_171632.log) 30 phút cuối = 0 job mới ("… chưa có job mới"),
+> 3 slot Task hôm nay (17:25/19:00/23:00) đã qua và log ghi "BỎ, chờ slot ngày
+> mai" → RẢNH an toàn, restart 23:50 không cắt job nào.
+>
+> **Restart (đủ 3 bước chuẩn):** (1) xóa `__pycache__` 3 thư mục agent/
+> api_server/etl (lesson GĐ 168 — Python dùng bytecode cũ nếu không xóa);
+> (2) `sc stop GIONG_SMED_Agent` → STOPPED; (3) `sc start` → **RUNNING PID mới
+> 5852** (cũ 4380).
+>
+> **✅ Verify (bằng chứng thật sau restart):** log mới
+> `web_agent_051026_235114.log` — agent poll Vercel mỗi 20s, "… chưa có job mới"
+> (đường kéo việc sống), task runner bật với 3 slot 17:25/19:00/23:00, slot
+> catch-up giữa đêm BỎ đúng thiết kế GĐ C.161 (không dồn catch-up); API
+> `:8777/health` 200 — `tunnel_ok:true` (Quick Tunnel
+> `competitions-detect-cork-whether`), db GiongDB OK, 1123 jobs trong kho.
+>
+> **Tiêu chí kiểm chứng:** anh tạo job trên web → agent claim trong ~20s; nút
+> ⏸/▶ tạm dừng lịch trên trang Nhiệm vụ có hiệu lực với agent bản mới; Task_02
+> slot mai 17:25 chạy đúng (chỉ download, Task_03 follow).
+>
+> **Version:** KHÔNG bump (không đổi code — chỉ restart service). App tổng
+> 5.1.0 / repo con 8.0.1.
+
+*Cập nhật lần cuối: 2026-10-05 (GĐ 321 — restart GIONG_SMED_Agent PID 5852; app tổng 5.1.0 / repo con 8.0.1)*
 *Người cập nhật: Trợ lý Freebuff*
