@@ -12423,3 +12423,11 @@ tổng 4.7.0 / repo con 6.7.0.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
 > **4.9.0** / repo con **7.0.0**.
+
+> **▶️ GĐ 312 (bổ sung — bấm đúp không cần gõ lệnh):** Đại ca phản hồi "không tìm thấy
+> file `start-local.bat lan` để bấm đúp" — "lan" là THAM SỐ gõ kèm lệnh, không phải tên
+> file. Tạo 2 wrapper bấm đúp: **`start-local-lan.bat`** + **`start-local-public.bat`**
+> (gọi `call "%~dp0start-local.bat" <mode>`). Verify: bấm đúp lan → banner "Che do: lan"
+> + switch OK + 2 dev server mở; dọn về localhost sau verify. Lỗi `timeout: invalid
+> time interval '/t'` chỉ xảy ra khi chạy bat từ Git Bash (GNU timeout đè Windows
+> timeout.exe) — anh bấm đúp từ Explorer dùng cmd thuần, không bị.
