@@ -617,5 +617,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
 > App tổng **5.0.0** / repo con **8.0.0**.
 
-*Cập nhật lần cuối: 2026-10-05 (GĐ 319 — tách AGENTS.md + quy tắc cảnh báo context; app tổng 5.0.0 / repo con 8.0.0)*
+---
+
+### GĐ 320 (Trợ lý Freebuff): PA-1 Push đợt GĐ 317-319 / C.167 — bump 5.1.0 / 8.0.1 + LIVE production (2026-10-05)
+
+> **Lệnh "Push" của Đại ca (05/10, sau GĐ 319).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = RỖNG cả 2 repo; registry KHÔNG có
+> 🔒 nào khác đang dở; `git status` không có file modified của agent khác (chỉ
+> untracked + 1 file deleted `attachments/…zip` của phiên trước — không đụng).
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):**
+> - **App tổng 5.0.0 → 5.1.0** (minor — GĐ 318 có tính năng bat tự đóng app cũ +
+>   tách script tunnel): package.json + package-lock.json (2 chỗ root) +
+>   DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ, grep sạch `5.0.0`.
+> - **Repo con 8.0.0 → 8.0.1** (patch — fix C.167 gỡ mục "Báo cáo chạy" Task_02):
+>   package.json + DEFAULT_VERSION — đủ 2 chỗ.
+> - Checklist GĐ 138 ✓ (không thành phần nào ≥ 10).
+>
+> **Push:**
+> - App tổng `5f77ace..19944d6` — 8 commit: GĐ 317 (claim+docs) · GĐ 318
+>   (claim+code+docs) · GĐ 319 (claim+tách AGENTS.md+docs) · GĐ 320 (claim+bump).
+> - Repo con `93637ea..09a20c0` — 2 commit: C.167 (fix Task_02) + C.168 (bump).
+>
+> **✅ Verify production (curl domain — không chỉ nhìn Ready):**
+> - App tổng `giong-vn-v6.vercel.app` = **VERSION 5.1.0** — domain KHÔNG bị ghim
+>   deployment cũ (khác sự cố GĐ 306, không cần promote).
+> - App con `giong-banhang.vercel.app` = **VERSION 8.0.1** + `/api/units` trả data
+>   thật (20 trung tâm).
+>
+> **Version:** app tổng **5.1.0** / repo con **8.0.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-05 (GĐ 320 — Push 5.1.0 / 8.0.1 LIVE production)*
 *Người cập nhật: Trợ lý Freebuff*
