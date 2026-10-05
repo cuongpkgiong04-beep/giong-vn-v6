@@ -12292,3 +12292,32 @@ tổng 4.7.0 / repo con 6.7.0.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **4.9.0** / repo con **7.0.0**.
+
+---
+
+### GĐ 311: Hệ sinh thái — Báo cáo công nợ đặt trước: 3 bảng mới từ f1/f3/f4 (repo con C.163) (2026-10-05)
+
+> **Yêu cầu của Đại ca (05/10):** Trong BÁO CÁO MARKETING / Báo cáo công nợ đặt trước
+> thêm 3 bảng dựa trên số liệu f1/f3/f4 — làm giống các bảng trước, thead + Subtotal
+> cố định. Chi tiết đầy đủ ở **AGENTS.md repo con GĐ C.163**.
+
+> **Đã chốt qua vòng hỏi (4 điểm):** Ngày kê khai = f3.ngay_nhap · Bảng 3 gồm cả mũi
+> lẻ f1 ('ĐT_VắcXin') · f4 dòng rỗng BỎ (đếm đúng chữ 'Chưa tiêm') · 3 bảng dưới cùng.
+>
+> **3 bảng:** (1) **Tổng số gói/đặt trước theo trung tâm_CN** — 19 TT tên đầy đủ dbo.centers,
+> gói còn nợ (f3 'Sử dụng tốt') + mũi còn nợ (f4 'Chưa tiêm' + f1 'Sử dụng tốt') + tiền còn nợ;
+> (2) **Ma trận chưa tiêm theo trung tâm và dịch vụ_CN** — 42 cột (19 cặp mũi|tiền xen kẽ);
+> (3) **Tổng hợp Thống kê Gói và đặt trước** — 16 cột chi tiết từng mũi (31.716 dòng).
+>
+> **Khung bảng:** ReportResultTable có sẵn thead sticky + tfoot Subtotal sticky bottom —
+> không sửa khung; trang chỉ thêm order.
+
+> **✅ Đối chứng từng đồng:** tiền còn nợ 921.406.350đ = f4 775.346.350 + f1 146.060.000
+> (SQL thẳng ✓); Bảng 1↔2 chéo khớp (1.249 mũi); Bảng 3 đủ 4 trạng thái.
+
+> **⚠️ Phát hiện phụ:** params non-ASCII (chuỗi có dấu tiếng Việt) truyền qua tunnel
+> `/query` trả 0 dòng dù data DB đúng chuẩn — builder pyodbc trực tiếp không bị.
+> Đối chứng sau này: GROUP BY rồi lọc client, không truyền param có dấu qua tunnel.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
+> **4.9.0** / repo con **7.0.0**.
