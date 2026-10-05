@@ -700,5 +700,24 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.1.0** / repo con **8.0.1**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 322/C.169 — fix tool VCB chọn ngày sai tháng; app tổng 5.1.0 / repo con 8.0.1)*
+---
+
+### GĐ 323 / C.169b (Trợ lý Freebuff): VCB vẫn lỗi sau C.169 — panel mat-datepicker ĐÓNG khi chọn ô (2026-10-06)
+
+> **Đại ca báo "Vẫn lỗi" (ảnh 00:46):** tool ĐÃ chạy bản C.169 (chuỗi lỗi mới xuất hiện) nhưng vẫn '05/09/2026' ≠ mong + thêm nhãn **"không có nút điều hướng tháng"**.
+>
+> **Chẩn đoán từ bằng chứng thật (không đoán):** (1) dump DOM lộ `mat-datepicker-1-backdrop` → panel là **Angular Material Datepicker chuẩn**; (2) log C.169: click ô tháng khác **ĂN** (input nhận '05/09/2026') nhưng **ĐÓNG panel ngay** (mat-datepicker mặc định) → `_nav_month` tìm nút khi panel KHÔNG CÒN → "không có nút điều hướng". Selector C.169 đoán theo dấu hiệu Angular là đúng hướng, chỉ gãy tại điểm panel đã đóng.
+>
+> **Fix C.169b — 3 mũi (trong khung PA-1+PA-2 đã chốt, chỉ `_pick_date`):**
+> 1. `_nav_month` **CHỦ ĐỘNG MỞ LẠI panel** (click ô input) trước khi tìm nút — mat-datepicker mở lại theo tháng giá trị input hiện tại → từ tháng đó bấm next/prev tới mục tiêu; 2 lượt tìm (panel mở sẵn + sau mở lại).
+> 2. **Đường gõ tay** `_try_typing`: input Angular Material nhận fill 'dd/mm/yyyy' + Enter (backdrop TRANSPARENT — input vẫn focusable); **verify chặt** giá trị đích — ăn là xong nhanh nhất; fail → dọn ô + rơi về đường panel.
+> 3. `_dump_overlay`: attempt cuối fail → mở lại panel + dump DOM `.cdk-overlay-container`/`.mat-datepicker-content` ĐANG MỞ — soi class ô ngày + nút điều hướng thật, hết đoán mò.
+>
+> **Verify:** py_compile OK · unit **8/8 PASS** — mock `FakeCell.click` **ĐÓNG panel** đúng hành vi thật (đường mở-lại-panel chạy xuyên suốt test nhiều bước: T04→T10 nav 6 lần đều qua mở lại panel); typing ăn ngay; typing fail rơi về panel vẫn ăn. Không cần restart service (tool chạy subprocess riêng mỗi job).
+>
+> **Tiêu chí kiểm chứng:** job VCB kế tiếp — log ưu tiên thấy "gõ tay ăn (C.169b)" (nhanh nhất) hoặc "nav N" với **KHÔNG** còn nhãn "không có nút điều hướng tháng"; nếu vẫn fail → đọc `[debug] pick_date_Từ ngày` dump overlay trong log tool để vá đúng class thật (đường này chắc chắn có dữ liệu DOM panel).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.0** / repo con **8.0.1**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 323/C.169b — fix vòng 2 panel mat-datepicker đóng khi chọn; app tổng 5.1.0 / repo con 8.0.1)*
 *Người cập nhật: Trợ lý Freebuff*
