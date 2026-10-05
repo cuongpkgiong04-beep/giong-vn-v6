@@ -12457,3 +12457,62 @@ tổng 4.7.0 / repo con 6.7.0.
 > **⚠️ Restart agent khi rảnh** (phiên này job của anh đang chạy — chưa restart).
 > Version KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT): app tổng **4.9.0** /
 > repo con **7.0.0**.
+
+---
+
+### GĐ 314 (Trợ lý Freebuff): App con local "không cho đăng nhập từ Bán hàng" — ROOT CAUSE cache pre-bundle Vite stale (2026-10-05)
+
+> **BUG REPORT của Đại ca (05/10):** Đăng nhập được app tổng `localhost:3000` rồi,
+> NHƯNG bấm nút "Bán hàng" → app con không cho đăng nhập. Yêu cầu kiểm tra lại.
+>
+> **Điều tra 4 bước (bằng chứng, không đoán):**
+> 1. **Env đúng:** `.env.local` cả 2 app = mode localhost chuẩn (`APP_URL=localhost:3100`,
+>    `VITE_APP_CON_URL=localhost:3100`, không LOCAL_COOKIE_MODE) — loại nghi env GĐ 312.
+> 2. **Script chuẩn 228a = 5/6:** login OK · tab mở đúng :3100 · cookie `bh_session` tồn tại
+>    (secure=false) · `/api/auth/me` **trả user đầy đủ** (SuperAdmin + mods) — riêng bước 6
+>    UI vẫn hiện **"Chưa đăng nhập"**. Nghịch lý: API OK mà UI không nhận.
+> 3. **Probe network trên CHÍNH tab app con:** UI **KHÔNG BAO GIỜ gọi** `/api/auth/me`
+>    (0 network call) → `user` kẹt null mãi → không phải race thời gian. Reload vẫn vậy.
+> 4. **Bắt `pageerror`:** `SyntaxError: The requested module '/node_modules/.vite/deps/
+>    @tanstack_router-core_ssr_client.js?v=10260792' does not provide an export named
+>    'createDefaultSeroval...'` — **bundle client app con chết ngay lúc load module** →
+>    React hydration KHÔNG chạy → `useEffect` fetch phiên không bao giờ thực thi.
+>
+> **ROOT CAUSE — cache pre-bundle Vite STALE sau khi npm nâng package:**
+> - npm tree: `@tanstack/react-start` = **1.168.60** (hotfix CVE GĐ 301/306) +
+>   `@tanstack/router-core` = **1.171.34** (kéo bởi `react-router ^1.170.0`).
+> - File cache `.vite/deps/@tanstack_router-core_ssr_client.js` **0 match**
+>   `createDefaultSerovalPlugins` — cache tạo từ bản router-core CŨ (chưa có export),
+>   trong khi node_modules mới **CÓ export** (grep `dist/esm/ssr/client.js` thấy đủ).
+> - Lockfile production GIỐNG hệt local → production build không qua cache pre-bundle
+>   → chỉ **dev local** bị. npm nâng package KHÔNG tự invalidate cache `.vite` một cách
+>   đáng tin (Vite giữ cache theo query hash cũ `?v=10260792`).
+>
+> **Fix (vận hành — KHÔNG sửa code repo):** kill dev server :3100 (PID 28724) →
+> `rm -rf giong-apps/apps/banhang/node_modules/.vite` → start lại dev → Vite re-optimize
+> → **script chuẩn 228a = 6/6 PASS**: UI hiện "Phạm Kiên Cường · SuperAdmin · VP",
+> phiên giữ qua reload, console SẠCH. (Bước đo "sau 1s" fail duy nhất của probe tạm là
+> đo quá sớm — fetch phiên client-side cần vài trăm ms, không phải lỗi.)
+>
+> **LESSON LEARNED — Cache pre-bundle Vite không tự sống lại sau npm install đổi version
+> (2026-10-05):** npm nâng dependency (kể cả qua `npm install <pkg>@version` leo workspace
+> root — lesson GĐ 301) nhưng `node_modules/.vite/deps` pre-bundle theo version cũ vẫn
+> được phục vụ → lỗi "module does not provide an export named X" ở RUNTIME browser dù
+> source có đủ export. **Quy tắc từ giờ:** sau mỗi lần `npm install` đổi version package
+> lớn (TanStack/Vite/React) mà dev server có hiện tượng lạ → XÓA `node_modules/.vite`
+> (cả root lẫn app) + restart dev TRƯỚC khi debug sâu. Dấu hiệu nhận biết: đường lỗi
+> `/node_modules/.vite/deps/...` trong message + export có thật trong node_modules.
+>
+> **LESSON LEARNED — "UI không nhận phiên" + fetch me thủ công OK + 0 network call từ UI
+> = page JS chết TRƯỚC hydration (2026-10-05):** 3 dấu hiệu cùng lúc thì lỗi nằm ở tầng
+> bundle/mô-đun, KHÔNG phải auth/cookie. Bắt `console` + `pageerror` trong tab app con
+> là bước rẻ nhất phân biệt — đừng soi tiếp luồng cookie/token khi JS chưa chạy được.
+> Kèm quy tắc đo Playwright: listener network phải gắn TRÊN TAB MỞ ĐÚNG (child page),
+> gắn nhầm tab gốc → kết luận "UI không gọi API" sai (probe đầu của phiên này).
+>
+> **Tiêu chí kiểm chứng (ĐÃ PASS):** `node scripts/test-sso-local-228a.mjs` = **6/6 PASS**;
+> login app tổng :3000 → nút Bán hàng → tab :3100 có phiên tên + role + đơn vị;
+> reload app con giữ phiên; console tab app con sạch. Script probe tạm đã dọn.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện tại: app tổng
+> **4.9.0** / repo con **7.0.0**. KHÔNG push.
