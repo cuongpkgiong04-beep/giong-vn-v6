@@ -12649,3 +12649,25 @@ tổng 4.7.0 / repo con 6.7.0.
 
 *Cập nhật lần cuối: 2026-10-05 (GĐ 317 — gỡ mục báo cáo khỏi dialog Task_02; app tổng 5.0.0 / repo con 8.0.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 318 (Trợ lý Freebuff): Gom việc dở GĐ 313 — bat tự đóng app cũ + tách script tunnel (2026-10-05)
+
+> **Yêu cầu của Đại ca (05/10):** "Còn việc gì dang dở của Agent khác không? Gom lại xử lý luôn một thể." Claim GĐ 318 qua registry (`67a7c4b` 🔒) — số mới = max 317 + 1.
+
+> **Rà toàn hệ thống trước khi làm:** commit riêng chưa merge của worktree agent-cli + pipeline-work = RỖNG cả 2 repo (`git log main..branch`); repo con sạch (chỉ untracked LOG/screenshot tạm); `user.email` đúng `@gmail.com`. Việc dở duy nhất = khối GĐ 313 của phiên khác trong working tree app tổng: `start-local.bat` + `update-tunnel-local.bat` (modified) + `scripts/update-tunnel-env.py` (untracked — file python mà bat mới gọi, nội dung hoàn chỉnh từ 01/10).
+
+> **Nội dung gom (1 commit — PA-1 anh chốt qua vòng hỏi, zip deleted KHÔNG đưa vào):**
+> 1. **start-local.bat:** tự `taskkill` app cũ chiếm port 3000/3100 trước khi khởi động (hết phải "ĐÓNG 2 cửa sổ app cũ rồi chạy lại" — giải quyết đúng phản hồi của anh ở GĐ 313) + banner in đúng URL theo mode (`lan` → `http://192.168.1.250:3000`).
+> 2. **update-tunnel-local.bat:** thay inline python 1 dòng khổng lồ (gây lỗi encoding — lesson C.300: nội dung chứa ký tự đặc biệt KHÔNG truyền qua bash/inline) bằng gọi `python -X utf8 scripts\update-tunnel-env.py` + block báo lỗi rõ khi fail.
+> 3. **scripts/update-tunnel-env.py:** track hóa (trước untracked) — đọc Gist giong-tunnel-gist → ghi TUNNEL_API_BASE_URL cả 2 .env.local, exit 1 khi fail để bat hiện lỗi.
+
+> **Verify (bằng chứng thật):** script exit 0, ghi đúng key (git diff .env.local = 0 — chỉ đúng dòng TUNNEL); chạy `cmd //c start-local.bat` mode mặc định localhost → bat tự kill app cũ → dev 2 app sống lại → `:3000` = 200 SSR `VERSION 5.0.0` + `:3100` = 200 `/api/units` trả 20 đơn vị data thật. Typecheck không đụng (bat/py không nằm trong tsconfig).
+
+> **Tiêu chí kiểm chứng:** anh bấm đúp `start-local.bat` bất kể app cũ đang mở — 2 cửa sổ app mới tự mở, không "cannot bind port"; `start-local.bat lan` (hoặc wrapper nếu làm sau) — máy trạm mở `http://192.168.1.250:3000` được; app báo lỗi dữ liệu → bấm đúp `update-tunnel-local.bat` — hiện "URL moi tu Gist" + "Da cap nhat" thay vì im lặng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.0.0** / repo con **8.0.0**.
+
+*Cập nhật lần cuối: 2026-10-05 (GĐ 318 — gom việc dở GĐ 313 bat+py; app tổng 5.0.0 / repo con 8.0.0)*
+*Người cập nhật: Trợ lý Freebuff*
