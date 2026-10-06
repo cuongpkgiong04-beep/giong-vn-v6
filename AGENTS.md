@@ -905,5 +905,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con
 > **8.0.3**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 329 — điều tra chênh 1 mũi/1.045.000: nguồn SMED đổi, C.173 vô tội; +2 endpoint debug agent-side; app tổng 5.1.2)*
+---
+
+### GĐ 330 / C.175 (Trợ lý Freebuff): Báo cáo công nợ đặt trước — Bảng 3 thêm cột Trung tâm + Ngày tiêm; +2 bảng công nợ mũi gói / đặt trước (2026-10-06)
+
+> **Yêu cầu của Đại ca (06/10):** Bảng 3 "Tổng hợp Thống kê Gói và đặt trước"
+> thêm cột 'Trung tâm' (mã viết tắt, bên phải STT) + 'Ngày tiêm' (ngày trả
+> mũi, bên phải 'Trạng thái tiêm'); thêm 2 bảng ĐẶT DƯỚI CÙNG — "Bảng tổng
+> hợp công nợ mũi khách hàng gói" + "Bảng tổng hợp công nợ mũi khách hàng
+> đặt trước" (đại ca chốt phạm vi qua hỏi-đáp: CHỈ mũi còn nợ).
+
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.175, code `3f05db3`):**
+> builder `_iso2dmy` + map ngày trả mũi f2 theo (TT, mãTC, dịch vụ chuẩn hóa);
+> tk-goi 18 cột; sheet cn-goi 15 cột (SL đã ĐK mọi trạng thái · đơn giá từng
+> mũi KHÔNG cộng Subtotal — nguyên tắc 3 · SL còn nợ × đơn giá); sheet cn-dt
+> 9 cột (f1 'Sử dụng tốt'); client order 2 bảng dưới cùng + isQuantity +
+> subtotalExcludeCols; unit test T9-T12.
+
+> **Verify:** py_compile · unit **27/27 PASS** · tsc 0 lỗi · E2E local
+> **11/11 PASS** (Bảng 1 giữ nguyên 8 cột C.173; Bảng 3 18 cột — 200/200 dòng
+> trang 1 có mã TT; cn-goi/cn-dt đúng cột + dưới cùng). Job thật sau restart
+> (`BFE8A3C8`): 25.479 dòng có Ngày tiêm · cn-goi 247 nhóm · cn-dt 104 nhóm.
+
+> **Vận hành:** restart GIONG_SMED_Agent 17:02 (chờ job BKCCN 19/19 của Đại
+> ca xong mới restart — không cắt); tunnel URL đổi lần 3 → gist tự ghi +
+> update-tunnel-env.py; E2E bài học: nút 'Chạy báo cáo' selector chung nhiều
+> module — script verify qua result job done mới nhất, không bấm tạo job.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con
+> **8.0.3**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 330/C.175 — Bảng 3 +Trung tâm/Ngày tiêm + 2 bảng công nợ mũi; E2E 11/11; app tổng 5.1.2)*
 *Người cập nhật: Trợ lý Freebuff*
