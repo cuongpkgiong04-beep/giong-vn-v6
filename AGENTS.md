@@ -754,5 +754,30 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.0** / repo con **8.0.1**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 324/C.170 — fix Báo cáo công nợ đặt trước PA-3; app tổng 5.1.0 / repo con 8.0.1)*
+---
+
+### GĐ 325 (Trợ lý Freebuff): PA-1 Push đợt GĐ 324/C.170 — bump 5.1.1 / 8.0.2 + LIVE production (2026-10-06)
+
+> **Lệnh "Push" của Đại ca (06/10, sau GĐ 324).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = RỖNG cả 2 repo; registry 0 🔒 dở;
+> status sạch (chỉ file attachments deleted của phiên trước — không đụng).
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.1.0 → 5.1.1**
+> (patch) — package.json + package-lock.json (2 chỗ root) + DEFAULT_VERSION
+> app-shell.tsx; repo con **8.0.1 → 8.0.2** (patch — fix C.169/C.169b/C.170) —
+> package.json + DEFAULT_VERSION app-shell.tsx. Checklist GĐ 138 ✓ (không thành
+> phần nào ≥ 10; grep xác nhận hết sót version cũ).
+
+> **Push:** app tổng `2ac799a..3ee82e7` (GĐ 322/323 claim+docs, GĐ 324
+> claim+docs, GĐ 325 claim+bump) · repo con `681fd27..3bdbfab` (C.169, C.169b,
+> C.170 `3f4fe94`, C.171 bump `3bdbfab`).
+
+> **✅ Verify production:** curl app tổng = **5.1.1** · app con = **8.0.2**; E2E
+> Playwright trên production (`scripts/gd324-verify-prod.mjs`) **7/7 PASS**:
+> login → SSO → /m/bc-congno-dattruoc → **Lịch sử 20 job (trước fix = 0)** →
+> TỔNG HỢP render → tk-goi "Trang 1/32" → bấm Trang sau → "Trang 2/32".
+
+> **Version:** app tổng **5.1.1** / repo con **8.0.2** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 325 — Push 5.1.1 / 8.0.2 LIVE + fix bccn xác nhận production; app tổng 5.1.1 / repo con 8.0.2)*
 *Người cập nhật: Trợ lý Freebuff*
