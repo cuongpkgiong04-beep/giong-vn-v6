@@ -866,5 +866,44 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **5.1.2** / repo con **8.0.3** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 328 — Push 5.1.2 / 8.0.3 + E2E prod 8/8; tính năng mới nhất: C.173 tách 2 cột mũi còn nợ + cột Kiểm tra)*
+---
+
+### GĐ 329 (Trợ lý Freebuff): Điều tra chênh lệch 2 job bccn cùng kỳ 1.251→1.252 mũi — nguồn SMED đổi, C.173 vô tội (2026-10-06)
+
+> **Yêu cầu của Đại ca (06/10):** cùng kỳ 01/01/2018→30/09/2026, job 00:44 ra
+> 1.251 mũi / 927.106.350 nhưng job 13:33 ra 1.252 mũi / 928.151.350 (chênh
+> 1 mũi / 1.045.000) — vì sao?
+
+> **Chẩn đoán (chuỗi bằng chứng thật — chi tiết đầy đủ ở AGENTS.md repo con
+> C.173b):** so sheet tt-cn 2 job qua endpoint `POST /jobs/sheet` (GĐ 329 thêm
+> vào api_server) — snapshotFolder GIỐNG HỆT (11 folder), **chỉ Sài Đồng
+> lệch 111→112 mũi / 83.787.700→84.832.700** đúng chênh; ds-le SĐ +453 dòng
+> = khách đăng ký mới 04/10/2026 (Infanrix Hexa, Lê Phương Nhi, mã
+> `101604120260766`, 1.045.000, 'Sử dụng tốt'); job download 01:48 tải 76
+> file folder `2026-10-02` → ETL nạp đè; **job 10:33 chạy builder C.172 CŨ
+> đã ra 1.252/928.151.350** → chênh có từ trước C.173; mở file nguồn
+> `SĐ_…014134_1791225738.xlsx` (openpyxl) CÓ đúng dòng mã này; GiondDB mã ở
+> folder 2026-10-02, src_file khớp.
+
+> **KẾT LUẬN:** chênh lệch do **DỮ LIỆU NGUỒN ĐỔI** (khách SĐ đăng ký mới
+> 04/10/2026, tải về 01:41-01:48 sáng 06/10) — mọi job sau 01:48 ra số mới;
+> báo cáo là SNAPSHOT toàn bộ, KHÔNG khóa kỳ — đúng thiết kế; **C.173
+> KHÔNG liên quan** (unit test đã chứng minh tổng không đổi).
+
+> **Phụ (công cụ debug agent-side — commit repo con `6e8675f`):**
+> `api_server.py` +`POST /jobs/sheet` (đọc 1 sheet result, không kéo
+> result_full) +`POST /db/query` (SELECT chỉ-đọc ≤500 dòng) — chỉ Agent
+> token; probe `scripts/gd329-probe-chenhlech.py` (so 2 job + verify nguồn).
+> Lưu ý vận hành: process api_server không restart theo sc stop/start (nssm
+> giữ process cũ — phải taskkill python.exe); **gist tunnel tự ghi URL mới
+> `lasting-ladies-juan-republic…` (14:54)** — đã chạy
+> `scripts/update-tunnel-env.py` đồng bộ `.env.local` 2 app.
+
+> **Verify:** probe chạy lại khớp chuỗi bằng chứng (chỉ SĐ lệch; mã trong DB
+> folder 2026-10-02) · py_compile OK · endpoint live (health tunnel_ok).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con
+> **8.0.3**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 329 — điều tra chênh 1 mũi/1.045.000: nguồn SMED đổi, C.173 vô tội; +2 endpoint debug agent-side; app tổng 5.1.2)*
 *Người cập nhật: Trợ lý Freebuff*
