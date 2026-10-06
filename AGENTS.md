@@ -719,5 +719,40 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.0** / repo con **8.0.1**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 323/C.169b — fix vòng 2 panel mat-datepicker đóng khi chọn; app tổng 5.1.0 / repo con 8.0.1)*
+---
+
+### GĐ 324 / C.170 (Trợ lý Freebuff): Fix "Báo cáo công nợ đặt trước không chạy được" — PA-3 (2026-10-06)
+
+> **Yêu cầu của Đại ca (06/10):** tiếp việc dở của session trước — kiểm tra và
+> khắc phục Báo cáo công nợ đặt trước không chạy được.
+
+> **Chẩn đoán (probe thật, chuỗi bằng chứng — chi tiết đầy đủ ở AGENTS.md repo
+> con C.170):** 20 job `bccn-dattruoc` done trong DB nhưng web "Lịch sử chạy báo
+> cáo (0)" — call `loadSmedJobs` FILTERED bị **"The operation was aborted due to
+> timeout"** trên Vercel (bắt response thật probe v7); BROAD vẫn nhanh. Gốc:
+> sau C.163 sheet `tk-goi` 31.720 dòng làm result ~10-30MB → `result::text LIKE`
+> từng dòng + kéo nguyên result job done mới nhất → vượt ~10s → abort.
+
+> **Phát hiện quan trọng:** `smed_pull_jobs` nằm ở **GiondDB (SQL Server qua
+> tunnel api_server)** — jsonpath Postgres KHÔNG chạy trên ODBC ("Incorrect
+> syntax near '>'") — toàn bộ phân trang viết bằng T-SQL.
+
+> **Đã làm PA-3 (Đại ca chốt):** (1) `loadSmedJobs` filtered làm gọn như broad +
+> `result_meta` nạp riêng chỉ cho needsData/waitdownload; (2) `loadReportResult`
+> thêm nhánh phân trang `{jobId, sheetKey, page, pageSize}` — slice TRONG SQL
+> Server (OPENJSON ordinal + STRING_AGG — đo 1.5s/trang) + nhánh full CẮT sheet
+> > 1000 dòng ngay trong SQL (JSON_MODIFY) gắn `total/truncated`; (3) SubSheets
+> trang bccn tự tải trang 1 + pager ‹ › + ghi chú Subtotal theo trang.
+
+> **Verify:** tsc 0 lỗi · E2E local **8/8 PASS** — lịch sử **20 job** (trước = 0)
+> · TỔNG HỢP render · tk-goi "Trang 1/32" → bấm Trang sau → "Trang 2/32". Phụ:
+> tunnel env local đã chết → chạy `scripts/update-tunnel-env.py` (GĐ 318) nạp
+> tunnel mới `vatican-blair-dial-experimental` → login local hoạt động lại.
+
+> **Tiêu chí kiểm chứng (production sau Push):** trang bccn hiện lịch sử (hết
+> "(0)") + phân trang chuyển trang nhanh, không còn timeout.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.0** / repo con **8.0.1**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 324/C.170 — fix Báo cáo công nợ đặt trước PA-3; app tổng 5.1.0 / repo con 8.0.1)*
 *Người cập nhật: Trợ lý Freebuff*
