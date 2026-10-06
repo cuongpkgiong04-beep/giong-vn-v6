@@ -19,6 +19,8 @@
 
 > Quy ước trạng thái: 🔒 đang làm · ✅ xong (kèm commit hash) · ❌ hủy (kèm lý do)
 
+> 💡 GĐ 327/C.173 nhánh repo con = **C.173** (cùng phiên).
+
 | Số | Agent | Nhiệm vụ | Phạm vi file dự kiến | Trạng thái | Thời điểm claim | Hoàn tất |
 |---|---|---|---|---|---|---|
 | GĐ 327 / C.173 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Bảng 1 'Tổng số gói / đặt trước theo trung tâm_CN' thêm 2 cột GIỮA: 'Số mũi trong gói còn nợ' (f4 'Chưa tiêm') + 'Số mũi đặt trước còn nợ' (f1 VXĐT 'Sử dụng tốt') — Tổng mũi = cộng 2 cột; PA-3 chốt: thêm cột 'Kiểm tra' đếm lại từ nguồn độc lập (Bảng 3 chi tiết tk-goi 'Trạng thái tiêm' = 'Chưa tiêm') so với tổng → ✓/✗ | giong-apps/apps/banhang/agent/etl/sql_reports.py (b1_rows + meta tt-cn) + giong-apps/apps/banhang/src/routes/m/bc-congno-dattruoc.tsx (QUANTITY_COL_EXTRAS) + AGENTS.md (2 repo) + AGENT_REGISTRY.md | 🔒 | 06/10 (phiên này) | |
