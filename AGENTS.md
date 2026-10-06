@@ -802,5 +802,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.1** / repo con **8.0.2**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 326/C.172 — cột số lượng mũi/gói dạng số + Subtotal; app tổng 5.1.1 / repo con 8.0.2)*
+---
+
+### GĐ 327 / C.173 (Trợ lý Freebuff): Bảng 1 công nợ đặt trước — tách 2 cột mũi còn nợ + cột Kiểm tra nguồn độc lập (PA-3) (2026-10-06)
+
+> **Yêu cầu của Đại ca (06/10, ảnh 10:47):** Bảng 1 'Tổng số gói / đặt trước
+> theo trung tâm_CN' thêm 2 cột GIỮA cột 'Tổng số gói còn nợ' và cột 'Tổng
+> số mũi còn nợ': 'Số mũi trong gói còn nợ' (f4 'Chưa tiêm') + 'Số mũi đặt
+> trước còn nợ' (f1 VXĐT 'Sử dụng tốt'). Đại ca hỏi: 'Tổng số mũi còn nợ'
+> có = tổng 2 cột mới? Có cột kiểm tra không?
+
+> **Trả lời — ĐÚNG tuyệt đối** (Tổng tính bằng chính phép cộng 2 thành phần
+> đó trong builder). ĐH chốt **PA-3** (trong 3 PA): thêm cột 'Kiểm tra' đếm
+> lại từ nguồn ĐỘC LẬP (Bảng 3 chi tiết tk-goi 'Trạng thái tiêm' = 'Chưa
+> tiêm') so với tổng → '✓ N' / '✗ lệch a/b'.
+
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.173):** (1) builder
+> `sql_reports.py` Bảng 1 tách 2 cột + cột Kiểm tra + moneyCols 5 cột số;
+> (2) client `bc-congno-dattruoc.tsx` QUANTITY_COL_EXTRAS thêm 2 cột mới;
+> (3) restart GIONG_SMED_Agent (rảnh — log 30 phút 0 job, slot 17:25 chưa
+> tới) → RUNNING, log `web_agent_061026_113548`. Code repo con `19f489e`.
+
+> **Verify 4 lớp:** py_compile OK · unit test mới offline **24 check PASS**
+> (`sql_reports_bccn.test.py`) · tsc 0 lỗi · builder chạy trên GiondDB thật:
+> **1.133 + 119 = 1.252** (tổng không đổi vs C.172), tiền 928.151.350, Kiểm
+> tra ✓ 19/19 · **E2E UI local 10/10 PASS** (BẢNG 1 8 cột đúng thứ tự; BH
+> 14 gói | 41 + 11 = 52 | 34.967.400 | '✓ 52' khớp ảnh Đại ca; SUBTOTAL
+> 257 · 1.133 · 119 · 1.252 · 928.151.350). Lesson: innerText header chứa
+> NBSP (U+00A0) — assertion phải normalize trước so chuỗi.
+
+> **Tiêu chí kiểm chứng (sau Push):** trang bccn với job MỚI → Bảng 1 8 cột
+> (2 cột mới dạng số + Subtotal; cột Kiểm tra '✓ N' toàn trung tâm). Job cũ
+> đã lưu result không có 2 cột mới — chỉ hiện khi chạy lại báo cáo.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.1.1** / repo con **8.0.2**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 327/C.173 — tách 2 cột mũi còn nợ + cột Kiểm tra nguồn độc lập PA-3; app tổng 5.1.1 / repo con 8.0.2)*
 *Người cập nhật: Trợ lý Freebuff*
