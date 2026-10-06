@@ -779,5 +779,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **5.1.1** / repo con **8.0.2** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 325 — Push 5.1.1 / 8.0.2 LIVE + fix bccn xác nhận production; app tổng 5.1.1 / repo con 8.0.2)*
+---
+
+### GĐ 326 / C.172 (Trợ lý Freebuff): Báo cáo công nợ đặt trước — cột số lượng mũi/gói dạng số + Subtotal (2026-10-06)
+
+> **Yêu cầu của Đại ca (06/10, 3 ảnh 09:49):** Bảng 1 + Bảng 2 trang bccn — các
+> cột SỐ LƯỢNG mũi/gói đang căn trái kiểu text + dòng SUBTOTAL rỗng (chỉ cột
+> tiền có). Chốt PA-3: client + builder.
+
+> **Chẩn đoán:** builder chỉ liệt kê cột tiền vào `moneyCols` → khung bảng ép
+> cột mũi về text + Subtotal rỗng. Chi tiết đầy đủ ở AGENTS.md repo con C.172.
+
+> **Đã làm:** (1) client SubSheets `isQuantityColumn()` bổ sung cột mũi/gói còn
+> nợ vào nhóm số — hiệu lực NGAY mọi job cũ; (2) builder `sql_reports.py`
+> moneyCols `tt-cn`/`mt-cn` đầy đủ; (3) restart GIONG_SMED_Agent (rảnh — nạp
+> builder mới, log web_agent_061026_102058, tunnel_ok).
+
+> **Verify:** py_compile OK · tsc 0 lỗi · E2E local **9/9 PASS** (job mới kỳ
+> 06/10: Bảng 1 SUBTOTAL 257 gói · 1.252 mũi · 928.151.350; Bảng 2 BH mũi 52 —
+> khớp ảnh Đại ca) · SQL đối chứng result mới có moneyCols đủ (job cũ chỉ cột
+> tiền). Code repo con `2476ed3`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.1** / repo con **8.0.2**.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 326/C.172 — cột số lượng mũi/gói dạng số + Subtotal; app tổng 5.1.1 / repo con 8.0.2)*
 *Người cập nhật: Trợ lý Freebuff*
