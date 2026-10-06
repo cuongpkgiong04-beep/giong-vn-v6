@@ -838,5 +838,33 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.1.1** / repo con **8.0.2**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 327/C.173 — tách 2 cột mũi còn nợ + cột Kiểm tra nguồn độc lập PA-3; app tổng 5.1.1 / repo con 8.0.2)*
+---
+
+### GĐ 328 (Trợ lý Freebuff): PA-1 Push đợt GĐ 327/C.173 — bump 5.1.2 / 8.0.3 + LIVE production (2026-10-06)
+
+> **Lệnh "Push" của Đại ca (06/10, sau GĐ 327).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = RỖNG cả 2 repo; registry KHÔNG
+> có 🔒 nào khác đang dở; status sạch (chỉ `attachments/*.zip` deleted của
+> phiên trước — không đụng).
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.1.1 →
+> 5.1.2** (patch) — package.json + package-lock.json (2 chỗ root) +
+> DEFAULT_VERSION app-shell.tsx; repo con **8.0.2 → 8.0.3** (patch — fix
+> C.173) — package.json + DEFAULT_VERSION app-shell.tsx. Checklist GĐ 138 ✓
+> (5.1.2/8.0.3 mọi thành phần 1 chữ số; sót 5.1.1 chỉ là lru-cache/readdirp —
+> thư viện ngoài trùng số trúng, giữ nguyên).
+
+> **Push:** app tổng `3ee82e7..e7c69c7` (GĐ 327 claim+docs+unlock, GĐ 328
+> claim+bump) · repo con `3bdbfab..49c346a` (C.173 code+docs, C.174 bump).
+
+> **✅ Verify production (curl + E2E thật):** curl app tổng = **5.1.2** ·
+> app con = **8.0.3** (domain không ghim deployment cũ). E2E prod mới
+> (`gd328-verify-prod.mjs`) **8/8 PASS**: login → SSO → trang bccn → tạo job
+> mới kỳ 06/10 → BẢNG 1 **8 cột đúng thứ tự** · BH 14 gói · **41 + 11 = 52** ·
+> 34.967.400 · '✓ 52' · SUBTOTAL **257 · 1.133 · 119 · 1.252 · 928.151.350**
+> khớp từng đồng · cột Kiểm tra ✓ 19/19 (không ✗).
+
+> **Version:** app tổng **5.1.2** / repo con **8.0.3** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-06 (GĐ 328 — Push 5.1.2 / 8.0.3 + E2E prod 8/8; tính năng mới nhất: C.173 tách 2 cột mũi còn nợ + cột Kiểm tra)*
 *Người cập nhật: Trợ lý Freebuff*
