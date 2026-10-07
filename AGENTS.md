@@ -957,5 +957,19 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con **8.0.3**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 332/C.177 — PA-1 khôi phục GDTVX hoàn tất; app tổng 5.1.2)*
+### GĐ 333 (Trợ lý Freebuff): PA-1 Push đợt GĐ 329-332 / C.173b-C.177 — bump 5.2.0 / 8.1.0 + LIVE production (2026-10-07)
+
+> **Lệnh "Push" của Đại ca (07/10, sau GĐ 332).** Rà trùng lặp theo nguyên tắc 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry KHÔNG có 🔒 nào khác đang dở; status chỉ có untracked + file deleted của phiên trước — không đụng.
+
+> **Bổ sung entry AGENTS.md app tổng GĐ 331/332** (phiên trước chỉ ghi registry + repo con, thiếu entry app tổng) — commit `120d484`.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.1.2 → 5.2.0** (minor — C.175/GĐ 330 feature Bảng 3 + 2 bảng công nợ mới) — package.json + package-lock.json (2 chỗ root) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ (còn "5.1.2" chỉ là safe-buffer 5.1.2 / isbot ^5.1.22 thư viện ngoài trùng số trúng — giữ nguyên, lesson GĐ 328); repo con **8.0.3 → 8.1.0** (minor — C.175 + C.177) — package.json + DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓ (không thành phần nào ≥ 10).
+
+> **Push:** app tổng `f5173db..7e3cd56` (GĐ 329 claim+docs · GĐ 330 claim+docs · GĐ 331/332 entry bổ sung · GĐ 333 claim+bump) · repo con `2f3f620..4658e97` (C.175 code+docs · C.176 docs+probe · C.177 code+docs · C.178 bump).
+
+> **✅ Verify production (Playwright — `scripts/gd333-verify-prod.mjs`):** app tổng `giong-vn-v6.vercel.app` = **VERSION 5.2.0** · app con `giong-banhang.vercel.app` = **VERSION 8.1.0** — cả 2 ✅ OK, không ghim deployment cũ (khác sự cố GĐ 306).
+
+> **Version:** app tổng **5.2.0** / repo con **8.1.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 333 — Push 5.2.0/8.1.0 LIVE; Playwright prod OK)*
 *Người cập nhật: Trợ lý Freebuff*
