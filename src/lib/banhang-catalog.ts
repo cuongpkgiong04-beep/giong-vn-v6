@@ -55,6 +55,13 @@ export const BH_GROUPS: BhGroup[] = [
       // compat (user có quyền MISA thấy luôn; tinh chỉnh lá sau khi có nội dung).
       { to: "/m/nhap-dieu-chuyen", label: "Điều chuyển nội bộ Vắc Xin (NHẬP DỮ LIỆU)" },
       { to: "/m/nhap-loyty", label: "Chương trình LOYALTY (NHẬP DỮ LIỆU)" },
+      // GĐ 336 (07/10): nhóm DANH MỤC mới trong NHẬP DỮ LIỆU — gán quyền nhóm
+      // MISA để backward-compat (user có quyền MISA thấy luôn — như 2 mục trên).
+      { to: "/m/danh-muc-vac-xin", label: "Danh mục Vắc Xin (DANH MỤC)" },
+      { to: "/m/danh-muc-nha-cung-cap", label: "Danh mục Nhà cung cấp (DANH MỤC)" },
+      { to: "/m/danh-muc-trung-tam", label: "Danh mục Trung tâm (DANH MỤC)" },
+      { to: "/m/danh-muc-khach-hang", label: "Danh mục Khách hàng (DANH MỤC)" },
+      { to: "/m/danh-muc-khac", label: "Danh mục khác (DANH MỤC)" },
     ],
   },
   {

@@ -1029,5 +1029,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.2.0** / repo con **8.1.0**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 334 — nút Tải Excel toàn bộ 35.864 dòng bccn PA-1; app tổng 5.2.0 / repo con 8.1.0)*
+---
+
+### GĐ 336 (Trợ lý Freebuff): Sidebar app con — nhóm "DANH MỤC" đứng đầu NHẬP DỮ LIỆU + 5 module bảng đọc GiondDB (PA-2) (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10):** (1) nhóm "DANH MỤC" ngang bậc KHO HÀNG /
+> MUA HÀNG trong NHẬP DỮ LIỆU; (2) 5 bậc con 1-5 (Vắc Xin / Nhà cung cấp /
+> Trung tâm / Khách hàng / Khác). Chốt: DANH MỤC ĐỨNG ĐẦU nhóm + **PA-2**
+> (khung + bảng ĐỌC data thật — không chỉ placeholder). Chi tiết đầy đủ ở
+> AGENTS.md repo con C.181.
+
+> **Nguồn data GiondDB (probe trước khi code):** `vaccines` 52 dòng ·
+> NCC = bên bán hóa đơn GTGT mua vào `mia_hddt_hd` gộp theo MST (hiện 1
+> NCC — CTCP Gióng VN, 386 HĐ) · `centers` 20 dòng · khách hàng
+> `stg_10gdtvx_f1_dangky` gộp mã tra cứu (3.143). Mục "Khác" placeholder
+> khung — chờ Đại ca chốt nguồn.
+
+> **Đã làm app tổng:** `src/lib/banhang-catalog.ts` +5 lá nhóm
+> `banhang-misa` (5 module Danh mục — backward-compat như GĐ 223).
+> Repo con: server function `-danh-muc.ts` + component `danh-muc-module`
+> (tìm kiếm + phân trang + 4 nguyên tắc định dạng) + 5 route `/m/danh-muc-*`
+> + nav.ts node "DANH MỤC" icon Library đứng đầu children NHẬP DỮ LIỆU.
+
+> **Verify:** tsc EXIT 0 cả 2 app · routeTree regen · **E2E SSO local
+> 9/9 PASS** (`giong-apps/apps/banhang/scripts/gd336-verify-e2e.mjs` —
+> login 3000 → SSO 3100: sidebar DANH MỤC → KHO HÀNG → MUA HÀNG đúng
+> thứ tự + 5 mục; 4 trang data: VX 52 · NCC 1 · TT 20 · KH 3.143 dòng).
+>
+> **Vận hành:** phiên GĐ 334/C.179 đã commit phần code nút Tải Excel giữa
+> phiên (worktree chung thấy qua git log) — không đụng file của nhau.
+
+> **Tiêu chí kiểm chứng (sau Push):** app con → NHẬP DỮ LIỆU thấy DANH MỤC
+> trên KHO HÀNG; 5 trang hiện đúng data; production cần tunnel GiondDB sống.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.2.0** / repo con **8.1.0**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 336 — nhóm DANH MỤC + 5 module bảng đọc, E2E 9/9 PASS; app tổng 5.2.0 / repo con 8.1.0)*
 *Người cập nhật: Trợ lý Freebuff*
