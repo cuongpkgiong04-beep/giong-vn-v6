@@ -1196,5 +1196,25 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.1** / repo con **8.2.1**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 341/C.185 — nhóm BÁN HÀNG cuối NHẬP DỮ LIỆU + 2 lá khung placeholder; app tổng 5.3.1 / repo con 8.2.1)*
+### GĐ 342 (Trợ lý Freebuff): Khảo sát Headroom — cài headroom-ai v0.40.0 + chuỗi 3 lớp cho Claude Code (PA-1a) + benchmark nén trên dữ liệu thật (PA-2) (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10):** đọc thư mục `D:\DuLieuChung\CUONG_2026\headroom-main` (repo headroomlabs-ai/headroom — Apache 2.0) — xem có áp dụng được gì cho giong-vn-v6.
+
+> **Kết luận khảo sát:** Headroom = lớp nén context cho AI agent (nén tool output/log/JSON trước khi vào context — 60-95%, CCR có xin lại bản gốc; proxy/wrap/MCP + memory đa agent + `headroom learn`). KHÔNG nhét vào code app (app không gọi LLM) — áp dụng cho **quy trình làm việc với agent local của Đại ca**, trúng bài toán tràn context GĐ 319. Freebuff (cloud) KHÔNG wrap được.
+
+> **ĐH chốt:** PA-1 + PA-2; sau đó chốt PA-1a chuỗi 3 lớp (Claude Code → Headroom 8787 → 9router 20128) + đồng ý sửa settings.json.
+
+> **PA-1 — đã làm:** (1) `uv tool install "headroom-ai[all]"` → v0.40.0, `headroom doctor` OK; (2) phát hiện Claude Code đang route 9router port 20128 (`sk_9router`, model ag/cx/*) — docs chính thức Claude Code xác nhận settings.json env THẮNG shell env → phải sửa settings.json; (3) backup `settings.json.gd342-bak` + đổi `ANTHROPIC_BASE_URL` 20128→8787; (4) script `scripts/gd342-headroom-proxy.bat` (set `ANTHROPIC_TARGET_API_URL=http://127.0.0.1:20128/v1` + chạy proxy 8787).
+> **Verify chuỗi:** proxy livez HTTP 200; routing đúng `/v1/messages → http://127.0.0.1:20128`; log test request: nhận request → `compression_first_stage` 5.97s (nén chạy) → `ConnectError` tới 20128 (9router đang TẮT lúc test) → chuỗi đúng thiết kế, chờ 9router mở là chạy thật.
+
+> **PA-2 — benchmark (`scripts/gd342-headroom-bench.py`, tokenizer gpt-4o, tool env uv):** AGENTS_ARCHIVE.md 874KB: 133.670→47.018 (**65%**) · JSON backup app 545KB: 241.680→35.447 (**85%**) · log dev gộp 62KB: 20.384→15.759 (**23%**) · mô phỏng tk-goi 35.864 dòng: 3.338.475→751.848 (**77%** — mẫu synthetic theo cấu trúc sheet thật).
+> **Lesson kỹ thuật:** `compress()` 0.40 CHỈ nén TOOL OUTPUT (`transforms_applied: router:protected:user_message` — message user được bảo vệ) — benchmark phải mô phỏng hội thoại tool-call (user → assistant tool_calls → tool result) mới thấy tiết kiệm; lỗi Windows console cp1252 → `sys.stdout.reconfigure(encoding="utf-8")`.
+
+> **Cách dùng của Đại ca:** mở 9router như thói quen → chạy `scripts\gd342-headroom-proxy.bat` (giữ cửa sổ mở) → mở Claude Code bình thường. Quay về 9router thuần: copy `settings.json.gd342-bak` đè lại `settings.json` (trong `C:\Users\Administrator\.claude\`) — KHÔNG cần gỡ headroom.
+
+> **Tiêu chí kiểm chứng:** sau khi Đại ca mở 9router + chạy .bat + mở claude → `headroom doctor` (khác shell mới: probe 8787) thấy proxy pass; `headroom dashboard`/`savings` hiện số token tiết kiệm sau vài lượt dùng.
+
+> **Version:** KHÔNG bump (không đụng code app — chỉ scripts công cụ + docs, chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.3.1** / repo con **8.2.1**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 342 — khảo sát Headroom: cài + chuỗi 3 lớp Claude Code + benchmark 65-85%; app tổng 5.3.1 / repo con 8.2.1)*
 *Người cập nhật: Trợ lý Freebuff*
