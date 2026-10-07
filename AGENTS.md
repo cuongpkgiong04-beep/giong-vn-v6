@@ -1322,6 +1322,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > | Nhiệm vụ mới cần hỏi-đáp chốt phương án (Bước 2+3) | `grilling` |
 > | Trước khi nói "Push" / anh yêu cầu rà lại đợt thay đổi | `code-review` |
 > | Việc lớn phải chia nhiều giai đoạn/chặng | `to-tickets` |
+> | **MỌI lần viết code** — `ponytail` MẶC ĐỊNH BẬT mức **full** (GĐ 349): bậc thang 7 rung YAGNI→reuse→stdlib→native→dep→1 dòng→min code; fix bug chạm GỐC qua caller; lười có chủ đích đánh dấu `ponytail:` — anh nói "bỏ lười" để tắt | `ponytail` |
 > | Chọn/kiểm tra loại chart dashboard (Recharts) — tra TRƯỚC khi vẽ | `ui-ux-pro-max` (`--domain chart`) |
 > | Form/table/dialog mới — dò UX + accessibility (contrast 4.5:1, focus, label) | `ui-ux-pro-max` (`--domain ux`) |
 > | Pattern hiệu năng React 19 (useMemo/useCallback/key/effect/context) | `ui-ux-pro-max` (`--stack react`) |
@@ -1443,5 +1444,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 348/C.189 — Báo cáo Danh sách lịch hẹn tiêm PA-1; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 349 (Trợ lý Freebuff): Cài skill Ponytail — "dev lười" MẶC ĐỊNH BẬT mức full khi viết code (PA-1) (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** đọc thư mục `D:\DuLieuChung\CUONG_2026> ponytail-main` (DietrichGebert/ponytail, MIT) — skill là 1 prompt ép giải
+> pháp lười nhất hoạt động được. Benchmark thật: giảm ~54% code, ~20% rẻ hơn,
+> ~27% nhanh hơn. ĐH chốt PA-1: cài skill + **MẶC ĐỊNH BẬT mức full** khi
+> viết code; anh nói "bỏ lười" để tắt.
+
+> **Nội dung chính:** bậc thang 7 rung trước khi viết code — (1) việc này cần
+> tồn tại? (YAGNI) → (2) codebase đã có? reuse → (3) stdlib → (4) native →
+> (5) dependency đã cài → (6) 1 dòng → (7) code tối thiểu. Fix bug = chạm GỐC
+> (grep MỌI caller, sửa 1 chỗ tất cả đi qua). Lười có chủ đích đánh dấu comment
+> `ponytail:` + ceiling/upgrade path. Logic không tầm thường để lại 1 check
+> nhỏ (assert/test_*.py — khớp quy tắc test tự động đang có). KHÔNG lười:
+> hiểu bài, validation, security, a11y, cái anh yêu cầu rõ.
+
+> **Khớp quy tắc hiện hành:** Minimal Change Policy + Surgical (GĐ cũ) —
+> Ponytail bổ sung bậc thang CÓ THỨ TỰ ưu tiên + fix-gốc qua caller. Tổng kết
+> nhiệm vụ vẫn theo quy trình 5 bước (Ponytail chỉ chỉnh cách CODE, không
+> chỉnh cách giao tiếp/báo cáo).
+
+> **Đã làm (docs-only, 0 đụng code app):** copy NGUYÊN VĂN
+> `skills/ponytail/SKILL.md` (120 dòng) vào `.agents/skills/ponytail/` — md5
+> khớp nguồn (`421e4091…`) · bảng nạp skill GĐ 345 thêm dòng "MỌI lần viết
+> code — ponytail mặc định BẬT mức full".
+
+> **Tiêu chí kiểm chứng:** phiên sau viết code mới → tự đi bậc thang 7 rung
+> (trình phương án Bước 2+3 kèm "cách lười hơn là X"); fix bug → trình phương
+> án chạm gốc qua caller thay vì vá từng nơi; chỗ lười có ceiling → comment
+> `ponytail:`.
+
+> **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
+> App tổng **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 349 — cài skill Ponytail PA-1; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
