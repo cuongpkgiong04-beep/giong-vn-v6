@@ -1260,5 +1260,31 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.1** / repo con **8.2.1**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 343/C.186 — fix DTTHC mất 3 trung tâm HM/QO/TD — dedupe loại nhầm file bổ sung PA-1; app tổng 5.3.1 / repo con 8.2.1)*
+### GĐ 344 (Trợ lý Freebuff): PA-1 Push đợt GĐ 343/C.186 — bump 5.3.2 / 8.2.2 + LIVE production (2026-10-07)
+
+> **Lệnh "Push" của Đại ca (07/10, sau GĐ 343).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry KHÔNG
+> có 🔒 nào khác dở; status chỉ file deleted của phiên khác (không đụng); email
+> `cuongpk.giong04@gmail.com` ✓.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.3.1 → 5.3.2**
+> (patch — fix GĐ 343) — package.json + package-lock.json (5 chỗ) +
+> DEFAULT_VERSION app-shell.tsx; repo con **8.2.1 → 8.2.2** (patch — C.186 fix
+> DTTHC) — package.json + DEFAULT_VERSION. Checklist GĐ 138 ✓ (mọi thành phần 1
+> chữ số; grep 0 sót version cũ).
+>
+> **Push:** app tổng `3686d88..30a8068` (GĐ 343 claim+docs · GĐ 344 claim+bump) ·
+> repo con `b0eb50d..f14b751` (C.186 code+docs · C.187 bump).
+>
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **5.3.2** · app con `giong-banhang.vercel.app` =
+> **8.2.2** — cả 2 LIVE, không ghim deployment cũ.
+>
+> **Tiêu chí kiểm chứng nghiệp vụ:** web bc-cuoi-ngay chạy lại kỳ 07/10 (hoặc
+> kỳ ≥25/09) → đủ 19 trung tâm (HM/QO/TD hiện số khớp file SMED); job DTTHC
+> mai không còn mất file 3 trung tâm.
+>
+> **Version:** app tổng **5.3.2** / repo con **8.2.2** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 344 — Push đợt GĐ 343/C.186; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
