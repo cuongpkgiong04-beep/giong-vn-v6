@@ -971,5 +971,30 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **5.2.0** / repo con **8.1.0** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 333 — Push 5.2.0/8.1.0 LIVE; Playwright prod OK)*
+---
+
+### GĐ 335 (Trợ lý Freebuff): Sửa chính tả "Chương trình LOYTY" → "Chương trình LOYALTY" — Sidebar app con + catalog (PA-3) (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10):** sửa tiêu đề thanh Sidebar app con "Chương
+> trình LOYTY" thành "Chương trình LOYALTY". Chốt PA-3 (trệt để): sửa cả
+> nhãn + mô tả repo con + catalog app tổng; URL /m/nhap-loyty giữ nguyên.
+
+> **Đã làm:** (1) repo con `apps/banhang/src/lib/nav.ts` — label "Chương
+> trình LOYTY" → LOYALTY + desc "Nhập dữ liệu chương trình LOYTY (…)" →
+> LOYALTY; (2) app tổng `src/lib/banhang-catalog.ts` — label "Chương trình
+> LOYTY (NHẬP DỮ LIỆU)" → LOYALTY. Chi tiết đầy đủ ở AGENTS.md repo con C.180.
+
+> **Verify:** tsc EXIT 0 cả 2 app (app tổng 5.2.0 · repo con 8.1.0) · grep
+> case-sensitive "LOYTY" = 0 match trong code hiển thị (còn sót duy nhất
+> ở docs lịch sử — không đụng). Phát hiện vân hành: repo con đang có file
+> `bc-congno-dattruoc.tsx` modified của phiên GĐ 334/C.179 dở — KHÔNG đụng.
+
+> **Tiêu chí kiểm chứng:** Sidebar app con nhóm NHẬP DỮ LIỆU|MUA HÀNG hiện
+> "Chương trình LOYALTY"; vào từ app tổng hiện "Chương trình LOYALTY (NHẬP
+> DỮ LIỆU)". Sau Push: kiểm tra trên Vercel.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.2.0** / repo con **8.1.0**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 335 — sửa chính tả LOYTY → LOYALTY, PA-3; app tổng 5.2.0 / repo con 8.1.0)*
 *Người cập nhật: Trợ lý Freebuff*

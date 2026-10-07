@@ -54,7 +54,7 @@ export const BH_GROUPS: BhGroup[] = [
       // GĐ 223: nhóm NHẬP DỮ LIỆU (bậc 1 mới) — gán quyền nhóm MISA để backward
       // compat (user có quyền MISA thấy luôn; tinh chỉnh lá sau khi có nội dung).
       { to: "/m/nhap-dieu-chuyen", label: "Điều chuyển nội bộ Vắc Xin (NHẬP DỮ LIỆU)" },
-      { to: "/m/nhap-loyty", label: "Chương trình LOYTY (NHẬP DỮ LIỆU)" },
+      { to: "/m/nhap-loyty", label: "Chương trình LOYALTY (NHẬP DỮ LIỆU)" },
     ],
   },
   {
