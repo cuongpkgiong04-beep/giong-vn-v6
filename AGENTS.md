@@ -1336,5 +1336,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT). App
 > tổng **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 345 — cài 5 skill mattpocock vào .agents/skills/ PA-4; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 346 / C.188 (Trợ lý Freebuff): Tool Lịch hẹn tiêm lấy TẤT CẢ loại vắc xin — bỏ lọc cứng BCG-TCDV + giữ mức TỔNG HỢP (PA-3) (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10, ảnh /m/mkt-hentiem):** DOWNLOAD "Lịch hẹn
+> tiêm" không lấy chi tiết 1 loại Vắc Xin nữa — bỏ qua phần chọn chi tiết,
+> lấy TẤT CẢ các loại Vắc xin.
+
+> **Chẩn đoán:** tool `19_smed_Lichhentiem.py` lọc cứng `BCG-TCDV` (env
+> mặc định + bước 5 LUÔN chọn dropdown Vaccine). ETL/web không lọc gì →
+> thiếu từ nguồn là mất trong DB kỳ đó. ĐH chốt PA-3 (switch ALL + test
+> thật) + "về cả Tổng hợp" (giữ mức Tổng hợp — bỏ chuyển Chi tiết).
+
+> **Đã làm (repo con `94f6339`, chi tiết đầy đủ ở AGENTS.md repo con
+> C.188):** (1) `SMED_VACCINE_FILTER` mặc định **ALL** — env cụ thể vẫn lọc
+> được; (2) skip dropdown Vaccine khi ALL (log VACCINE_FILTER_SKIP);
+> (3) bỏ khối chuyển 'Tổng hợp → Chi tiết'; (4) unit test offline mới
+> `19_smed_Lichhentiem.test.py` (FakePage — 8 check).
+
+> **Verify:** py_compile OK · unit **8/8 PASS exit 0** (fix thêm bug env
+> rỗng trả '' thay vì ALL) · **test thật 2 trung tâm đủ cả 2 nhánh SMED** —
+> TIÊN DU (tcgiongts) **1.289 dòng / 252 loại** · LONG BIÊN (tcgiong)
+> **1.389 dòng / 342 loại** vắc xin distinct (file CŨ cùng kỳ: 0 dòng —
+> filter BCG-TCDV + hết hạn đăng nhập). Tool chạy subprocess riêng mỗi job
+> → hiệu lực NGAY job kế tiếp, không cần restart service.
+
+> **Tiêu chí kiểm chứng:** job LHT kế tiếp từ web → 19/19 file đủ TẤT CẢ
+> loại vắc xin (dòng tăng mạnh); ETL nạp đủ vào GiondDB kỳ đó.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 346/C.188 — tool LHT lấy TẤT CẢ vắc xin PA-3; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
