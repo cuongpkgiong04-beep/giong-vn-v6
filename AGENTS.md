@@ -935,5 +935,27 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con
 > **8.0.3**.
 
-*Cập nhật lần cuối: 2026-10-06 (GĐ 330/C.175 — Bảng 3 +Trung tâm/Ngày tiêm + 2 bảng công nợ mũi; E2E 11/11; app tổng 5.1.2)*
+### GĐ 331 / C.176 (Trợ lý Freebuff): Điều tra Bảng 3 bccn mất dòng dịch vụ — KẾT LUẬN DB thiếu 11.088 dòng GDTVX, data còn trong backup (2026-10-06)
+
+> **Yêu cầu của Đại ca (06/10):** Bảng 3 công nợ đặt trước mất dòng dịch vụ — khách 'Trần Đình Bảo Khôi - 106092520250037' file nguồn 2 block ×29 dòng nhưng DB chỉ 25/23.
+
+> **Chẩn đoán (bộ probe gd331-*.py, code `231e163` — chi tiết đầy đủ ở AGENTS.md repo con C.176):** parser đủ; backup stg_10GDTVX_backup_228i đủ 3055; DB thiếu 316 (id gap = dòng bị XÓA sau insert, không phải lỗi parse); mở rộng toàn hệ: thiếu **11.088 dòng** GDTVX (f4 8744 / f2 2172 / f1 680 / f3 107; f4: 21/52 file mất một phần). Nguyên nhân: đợt nạp lại sau migration 228i (26/09) — data đầy đủ còn trong backup → chờ Đại ca chốt phương án khôi phục.
+
+> **Verify:** probe CHỈ ĐỌC, 0 đụng code app; py_compile OK. Entry repo con `2b27370` (sửa chỗ ghi entry — bỏ nhầm apps/banhang/AGENTS.md, ghi đúng AGENTS.md gốc repo con).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con **8.0.3**.
+
+---
+
+### GĐ 332 / C.177 (Trợ lý Freebuff): PA-1 khôi phục data GDTVX từ backup 228i — hoàn tất (2026-10-07)
+
+> **Đại ca chốt PA-1 (07/10):** khôi phục data thiếu 11.088 dòng GDTVX từ backup stg_10GDTVX_backup_228i (tiếp việc dở phiên 06/10 bị ngắt Internet).
+
+> **Đã làm (code repo con `51b7f47`):** script gd331-restore-pa1.py (INSERT-ONLY theo khóa src_file+row_num — chỉ chèn dòng thiếu, không đụng dòng có sẵn) + re-dedupe 228j + verify so backup trong transaction.
+
+> **Verify (bằng chứng thật):** chèn 4.659 dòng + re-dedupe xóa 11 hợp lệ (bản giữ folder mới đủ 11 dòng); verify sau khôi phục: f1/f2/f3 = **0 thiếu**, f4 còn thiếu 11 = đúng luật 228j (bản giữ folder mới đủ); file TS 106092520250037 đủ 29×2 block; py_compile OK.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.1.2** / repo con **8.0.3**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 332/C.177 — PA-1 khôi phục GDTVX hoàn tất; app tổng 5.1.2)*
 *Người cập nhật: Trợ lý Freebuff*
