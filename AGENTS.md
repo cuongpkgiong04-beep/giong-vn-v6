@@ -1414,5 +1414,34 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
 > App tổng **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 347 — cài skill ui-ux-pro-max PA-1; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 348 / C.189 (Trợ lý Freebuff): BÁO CÁO "Danh sách lịch hẹn tiêm" — builder ghép file 19 TT + job lht-report + trang /m/bc-lich-hen (PA-1) (2026-10-08)
+
+> **Yêu cầu của Đại ca (07/10, 4 điểm + ảnh file gốc TIÊN DU):** xây trong app
+> con Báo cáo "Danh sách lịch hẹn tiêm" — (1) ghép TẤT CẢ file download 19 TT
+> thành 1 dữ liệu; (2) cột đầu → "STT" + thêm cột "Trung tâm" bên phải STT
+> (mã viết tắt TD/BH/CĐ/TP...); (3) cột "Vắc xin" tách thêm cột "Thứ tự mũi
+> tiêm"; (4) nhiều vắc xin 1 lịch → THÊM DÒNG (cột khác chép dòng phía trên).
+> ĐH chốt PA-1 (builder + job riêng — snapshot từng lần tải) + STT XUYÊN SUỐT
+> + GIỮ TẤT CẢ dòng.
+
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.189, code `5248c56`):**
+> builder `gd348-build-lht-ds.py` (13 cột; tách theo phẩy + '- Mũi N' — gộp
+> cụm tên chứa phẩy; unit 21/21) · hook sau job hentiem + nhánh job
+> `lht-report` trong `40_web_agent.py` (folder khớp kỳ YYYY-MM-DD, fallback
+> mới nhất ≤ từ ngày) · web `-smed.ts` + SqlDataModule mở rộng + trang
+> `/m/bc-lich-hen` (phân trang C.170 + Tải Excel toàn bộ C.179) · restart
+> agent (log `web_agent_081026_022111`, tunnel_ok).
+
+> **Verify:** unit **21/21 PASS** · py_compile OK · **kỳ 01/10 thật: 19.989
+> dòng gốc → 28.067 dòng sau tách · 19/19 TT · 11.4s** (dòng 1
+> STT=1/PY/MMR-II/Mũi 2) · tsc EXIT 0. Result 10.4MB → phân trang/server-cut
+> C.170 phải bật (đã dùng đúng khung sẵn có).
+
+> **Tiêu chí kiểm chứng (sau Push):** trang /m/bc-lich-hen bấm "Chạy báo cáo"
+> kỳ có data → bảng 13 cột đúng; job download hentiem mới tự có ds-lht.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 348/C.189 — Báo cáo Danh sách lịch hẹn tiêm PA-1; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
