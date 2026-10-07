@@ -996,5 +996,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.2.0** / repo con **8.1.0**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 335 — sửa chính tả LOYTY → LOYALTY, PA-3; app tổng 5.2.0 / repo con 8.1.0)*
+### GĐ 334 / C.179 (Trợ lý Freebuff): Nút "Tải Excel toàn bộ" sheet lớn bccn — lấy đủ 35.864 dòng không phải xem 36 trang — PA-1 (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10, ảnh):** lấy toàn bộ bảng "Tổng hợp Thống kê Gói
+> và đặt trước" (tk-goi — 36 trang × 1.000 dòng = 35.864 dòng) mà không phải
+> tải từng trang trên app. ĐH chốt **PA-1** (trong PA-1/2/3: PA-2 script từ
+> DB, PA-3 chạy builder — bị loại vì data live không khớp snapshot job).
+
+> **Chẩn đoán:** nút "Tải Excel" của khung chỉ tải 1.000 dòng trang đang nạp
+> (GĐ 324 cắt sheet > 1.000 dòng server-side). Pattern có sẵn: C.44 TX-DS
+> nút "Tải Excel TOÀN BỘ" loop trang ghép mảng.
+
+> **Đã làm (code repo con `c27231c` — chi tiết ở AGENTS.md repo con C.179):
+> chỉ file `bc-congno-dattruoc.tsx` — (1) nút "Tải Excel toàn bộ (N dòng)"
+> trong pager MỌI sheet lớn: loop `loadReportResult` từng trang × 1.000 dòng,
+> ghép mảng, `downloadExcel` 1 file về Downloads; (2) SUBTOTAL tự build TRỪ
+> cột đơn giá (nguyên tắc 3 — `isUnitPriceCol` + exclude cn-goi); (3) script
+> E2E `gd334-verify-local.mjs`.
+
+> **Verify:** tsc 0 lỗi · E2E local: nút hiện đúng "Tải Excel toàn bộ (35.864
+> dòng)" → "Đang tải trang 1/36…" → file tải về đủ **35.864 dòng (STT
+> 1→35.864) + 18 cột đúng + ô 'Giá' SUBTOTAL RỖNG** ✓. Phụ: tunnel đổi URL
+> lần nữa (missouri-singh) — `update-tunnel-env.py`; lesson vận hành: taskkill
+> theo PID npm shim KHÔNG ăn — phải kill PID node THẬT giữ port (netstat -ano)
+> — server cũ sống âm thầm làm server mới fail EADDRINUSE → app fetch tunnel
+> chết (knee-supplies).
+
+> **Tiêu chí kiểm chứng (production sau Push):** trang bccn mở job có sheet
+> lớn → nút "Tải Excel toàn bộ (N dòng)" bấm 1 lần → file đủ N dòng về
+> Downloads (~30-90s), cột đơn giá không cộng SUBTOTAL.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.2.0** / repo con **8.1.0**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 334 — nút Tải Excel toàn bộ 35.864 dòng bccn PA-1; app tổng 5.2.0 / repo con 8.1.0)*
 *Người cập nhật: Trợ lý Freebuff*
