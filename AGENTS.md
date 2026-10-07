@@ -1094,5 +1094,40 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **5.3.0** / repo con **8.2.0** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 337 — Push đợt GĐ 334-336 / C.179-C.181 LIVE; app tổng 5.3.0 / repo con 8.2.0)*
+### GĐ 338 (Trợ lý Freebuff): PA-1 Fix logic công nợ đặt trước — cn-dt còn nợ khách đã TRẢ mũi + khóa L2 theo GIÁ (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10, 2 ảnh + chọn PA-1):** Bảng công nợ mũi khách
+> hàng đặt trước (cn-dt) còn nợ khách ĐÃ TRẢ mũi — Dương Trà My
+> 106081720140038 Vaxigrip Tetra nợ 1 mũi 350.000 nhưng f2 ghi Ngày trả mũi
+> 06/08/2026 → phải loại khỏi công nợ; kiểm tra tất cả trường hợp đã trả +
+> logic GÓI (cn-goi).
+
+> **Chẩn đoán (probe thật SQL f1/f2 mã này — chi tiết đầy đủ ở AGENTS.md
+> repo con C.182):** (1) BUG GỐC: f1 'Sử dụng tốt' = trạng thái CÒN HIỆU —
+> SMED không đổi khi trả mũi (dòng trả mũi ghi riêng f2) → 150 nhóm/222 mũi/
+> 307.915.000đ còn nợ trong đó ~134 mũi đã trả; (2) BUG KHÓA L1: khóa GĐ 330
+> (TT+mãTC+dịch vụ chuẩn hóa) SAI cho f1 — f2.ten_dich_vu của lượt trả
+> 06/08/2026 ghi dịch vụ ĐỢT TRƯỚC ('Influvac Tetra') khác tên mũi nợ
+> ('Vaxigrip Tetra 0.5ml') → trúng lượt cũ; (3) KHÓA ĐÚNG L2: theo GIÁ —
+> f2.gia_dat_truoc = f1.gia (350.000 = 350.000).
+
+> **Đã làm (PA-1 — code repo con `04e076a`):** ngay_tra2_map L2 theo giá →
+> cn-dt lọc + cột 'Kiểm tra nguồn' (✓/✗ từ f2 độc lập) · Bảng 1 'Số mũi đặt
+> trước còn nợ'+Tổng+tiền cùng L2 · tk-goi fix phụ 2 chỗ (dòng f1 lẻ không
+> f3 mất khỏi Bảng 3 từ 228i → pkg_f1 fallback; f1 có f2 trả → 'Đã tiêm' +
+> Ngày tiêm). Unit 46/46 PASS exit 0 + script gd338-verify-truth.py.
+
+> **Verify (đối chứng 1-1 cùng kỳ 01/01/2018→30/09/2026 với job cũ 518D513F):**
+> cn-dt **150→52 nhóm · 222→88 mũi · 307.915.000→116.730.000đ** (−191.185.000
+> = đúng tiền đã trả) · Bảng 1 gói **1.332 = 1.332** KHÔNG đụng (surgical) ·
+> Kiểm tra nguồn ✓ 52/✗ 0 · DTM biến mất + Bảng 3 'Đã tiêm' 06/08/2026 đúng ảnh.
+
+> **Tiêu chí kiểm chứng (sau Push):** trang bccn job MỚI → cn-dt hết khách đã
+> trả (Dương Trà My hết 350.000); Bảng 1 giảm khớp; job cũ là snapshot — chạy
+> lại báo cáo để thấy số mới.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.0** / repo con **8.2.0**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 338 — PA-1 fix công nợ đặt trước đã trả mũi + khóa L2 theo giá; app tổng 5.3.0 / repo con 8.2.0 — commit chờ push)*
 *Người cập nhật: Trợ lý Freebuff*
