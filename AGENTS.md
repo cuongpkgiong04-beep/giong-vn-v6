@@ -1509,5 +1509,19 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 350 — cài REA v5.0.0 PA-2; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 351 (Trợ lý Freebuff): Copy docs/ REA vào skill reverse-engineer-anything — PA-2 (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** đọc thư mục `D:\DuLieuChung\CUONG_2026\rea-main` — xem áp dụng được gì cho dự án. ĐH chốt PA-2: copy docs/ của REA vào skill để agent tra sâu khi cần.
+
+> **Kết quả khảo sát (đối chiếu thật):** `rea-main` = source repo gốc **morluto/rea v5.0.0** (MIT, 466 file) — đúng bản đã cài GĐ 350 (package npm `rea-agents@5.0.0` + MCP `.mcp.json`). SKILL.md + 5/5 references khớp nội dung 100% (byte khác duy nhất CRLF/LF — verify `tr -d '\r'`). Source thêm: `src/` engine (npm đủ dùng) · `bridge/` Ghidra/Hopper (chỉ khi phân tích binary) · submodules jadx/binwalk/unblob/wakaru (Android/firmware).
+
+> **Đã làm:** copy NGUYÊN VẸN `rea-main/docs/` → `.agents/skills/reverse-engineer-anything/docs/` (48 file: 39 MD workflow android · browser · native · JS · mcp-contracts + assets + error-contract.schema.json + product-catalog.json; bỏ desktop.ini rác Windows). Giờ agent có bài toán REA sâu (APK · firmware · browser observation · native investigation) tra ngay trong workspace, không cần folder ngoài repo. Phụ: unlock GĐ 350 trong registry (`c874a78`).
+
+> **Verify:** md5 TẤT CẢ 48 file GIỐNG byte-đôi-byte với nguồn (0 khác) · dung lượng 2.0MB · KHÔNG đụng code app (docs-only).
+
+> **Tiêu chí kiểm chứng:** khi cần tra workflow REA sâu — đọc `.agents/skills/reverse-engineer-anything/docs/<chủ đề>.md` trực tiếp; skill chính vẫn là SKILL.md + references như GĐ 350.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 351 — copy docs REA vào skill PA-2; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
