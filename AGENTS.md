@@ -1159,5 +1159,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **5.3.1** / repo con **8.2.1** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 340 — Push đợt GĐ 338/C.182 + GĐ 339/C.183 LIVE; app tổng 5.3.1 / repo con 8.2.1)*
+---
+
+### GĐ 341 / C.185 (Trợ lý Freebuff): Sidebar NHẬP DỮ LIỆU — nhóm "BÁN HÀNG" CUỐI nhóm + 2 lá khung placeholder "Bảng giá dịch vụ" / "Bảng TH GB-KM_GN-CK_LN" (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10):** (1) nhóm BÁN HÀNG ngang bậc DANH MỤC/KHO HÀNG/
+> MUA HÀNG trong NHẬP DỮ LIỆU, đặt CUỐI theo thứ tự DANH MỤC → KHO HÀNG → MUA
+> HÀNG → BÁN HÀNG; (2) 2 bậc con: "Bảng giá dịch vụ" + "Bảng TH GB-KM_GN-CK_LN".
+
+> **ĐH chốt PA-1** (khung placeholder / bảng đọc data / form nhập tay): khung
+> placeholder — probe GiondDB KHÔNG có bảng nguồn giá/khuyến mại/chiết khấu
+> (vaccines chỉ có ma_smed/ten_hang/dvt) → nội dung làm khi có nguồn/file mẫu.
+>
+> **⚠️ Số giai đoạn:** ban đầu claim GĐ 340/C.184 — sau phát hiện phiên khác
+> đã claim GĐ 340 trước (Push đợt C.182+C.183 — commit `896fdc9`, bump
+> `d12ab52`/`daced1c` + LIVE `3686d88`) → theo quy tắc GĐ 285 đổi số thành
+> **GĐ 341 / C.185** (commit local chưa push đã replay với số mới).
+>
+> **Đã làm:** repo con `4e09142` (code) + `7156d6d` (docs — chi tiết ở
+> AGENTS.md repo con C.185): nav.ts NHAP_BAN_HANG_LEAFS + node BÁN HÀNG
+> CUỐI NHẬP DỮ LIỆU (icon ShoppingCart) · 2 route placeholder
+> `/m/banhang-bang-gia-dich-vu` + `/m/banhang-th-gbkm-gnck-ln` · smed-auth
+> ROUTE_TO_GROUP 2 route → nhóm banhang-misa · script E2E
+> gd-c185-verify-banhang-nav.mjs. App tổng: catalog chip "(BÁN HÀNG)"
+> (commit `75d0e6e`).
+>
+> **Verify:** tsc EXIT 0 cả 2 app · E2E SSO local **6/6 PASS** — login →
+> SSO → thứ tự sidebar DANH MỤC→KHO HÀNG→MUA HÀNG→BÁN HÀNG (cuối) → 2 lá
+> hiện (SidebarNav tự sinh số 1-2) → cả 2 trang khung mở đúng URL. Bài học:
+> `:text("BÁN HÀNG")` trúng logo "GIONG BÁN HÀNG" — click theo textContent
+> trim; kiểm thứ tự bằng đoạn giữa MUA HÀNG→DOWNLOAD DỮ LIỆU.
+>
+> **Tiêu chí kiểm chứng (sau Push):** Sidebar app con → NHẬP DỮ LIỆU thấy 4
+> nhóm đúng thứ tự chốt; BÁN HÀNG có 2 lá mở khung placeholder.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.1** / repo con **8.2.1**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 341/C.185 — nhóm BÁN HÀNG cuối NHẬP DỮ LIỆU + 2 lá khung placeholder; app tổng 5.3.1 / repo con 8.2.1)*
 *Người cập nhật: Trợ lý Freebuff*
