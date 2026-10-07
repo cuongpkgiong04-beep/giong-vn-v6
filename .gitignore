@@ -25,3 +25,6 @@ page.html
 giong-apps/
 # Worktree Agent CLI (GĐ 233 — nhánh agent-cli, song song không chờ nhau)
 giong-apps-cli/
+
+# ui-ux-pro-max skill — rác runtime (GĐ 347)
+.agents/skills/ui-ux-pro-max/scripts/__pycache__/
