@@ -1129,5 +1129,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.0** / repo con **8.2.0**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 338 — PA-1 fix công nợ đặt trước đã trả mũi + khóa L2 theo giá; app tổng 5.3.0 / repo con 8.2.0 — commit chờ push)*
+### GĐ 340 (Trợ lý Freebuff): PA-1 Push đợt GĐ 338/C.182 + GĐ 339/C.183 — bump 5.3.1 / 8.2.1 + LIVE production (2026-10-07)
+
+> **Lệnh "Push" của Đại ca (07/10, sau GĐ 338).** Rà trùng lặp theo nguyên tắc
+> 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry
+> KHÔNG có 🔒 nào khác dở (GĐ 339/C.183 của phiên khác đã unlock ✅ — code
+> `a8cc43b` + docs, kèm đẩy trong đợt này); status sạch (chỉ untracked logs/
+> screenshots + 1 file deleted cũ — không đụng); email `cuongpk.giong04@gmail.com` ✓.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.3.0 →
+> 5.3.1** (patch — fix GĐ 338) — package.json + package-lock.json (2 chỗ
+> root) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ (sót "5.3.0" chỉ là
+> estraverse 5.3.0 thư viện ngoài trùng số trúng — giữ nguyên, lesson GĐ
+> 328); repo con **8.2.0 → 8.2.1** (patch — C.182 fix + C.183 feature nhỏ
+> dòng phụ Tổng mũi) — package.json + DEFAULT_VERSION — đủ 2 chỗ.
+> Checklist GĐ 138 ✓ (không thành phần nào ≥ 10).
+
+> **Push:** app tổng `eacd2aa..` (GĐ 338 docs + GĐ 340 claim+bump) · repo con
+> `425bb36..` (C.182 code+docs + C.183 code+docs + C.184 bump).
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = VERSION **5.3.1** · app con
+> `giong-banhang.vercel.app` = VERSION **8.2.1** — ✅ LIVE (kết quả chi tiết
+> ở lần chạy verify trong phiên).
+
+> **Tiêu chí kiểm chứng của Đại ca:** trang bccn job MỚI → cn-dt hết khách
+> đã trả (Dương Trà My hết 350.000) · Báo cáo bán hàng → dòng phụ "Tổng mũi"
+> dưới SUBTOTAL (24 + 34).
+
+> **Version:** app tổng **5.3.1** / repo con **8.2.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 340 — Push đợt GĐ 338/C.182 + GĐ 339/C.183 LIVE; app tổng 5.3.1 / repo con 8.2.1)*
 *Người cập nhật: Trợ lý Freebuff*
