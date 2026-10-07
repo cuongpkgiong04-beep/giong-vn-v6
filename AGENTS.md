@@ -1065,5 +1065,34 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.2.0** / repo con **8.1.0**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 336 — nhóm DANH MỤC + 5 module bảng đọc, E2E 9/9 PASS; app tổng 5.2.0 / repo con 8.1.0)*
+### GĐ 337 (Trợ lý Freebuff): PA-1 Push đợt GĐ 334-336 / C.179-C.181 — bump 5.3.0 / 8.2.0 + LIVE production (2026-10-07)
+
+> **Lệnh "Push" của Đại ca (07/10, sau GĐ 336).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry KHÔNG
+> có 🔒 nào khác đang dở; status sạch (chỉ untracked logs/screenshots + 1 file
+> deleted cũ — không đụng); email `cuongpk.giong04@gmail.com` ✓.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.2.0 → 5.3.0**
+> (minor — GĐ 336 feature nhóm DANH MỤC + 5 module · GĐ 335 fix chính tả) —
+> package.json + package-lock.json (2 chỗ root; dòng 4095/5349 =
+> @vitejs/plugin-react + eslint-plugin-react-hooks 5.2.0 thư viện ngoài trùng
+> số trúng — giữ nguyên, lesson GĐ 328) + DEFAULT_VERSION app-shell.tsx — đủ
+> 4 chỗ; repo con **8.1.0 → 8.2.0** (minor — C.181 feature DANH MỤC + C.179
+> feature Tải Excel toàn bộ + C.180 fix chính tả) — package.json +
+> DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓ (không thành phần nào ≥ 10).
+
+> **Push:** app tổng `a4b299b..708ac0a` (GĐ 334 docs+unlock · GĐ 335
+> claim+code+docs · GĐ 336 claim+code+docs · GĐ 337 claim+bump) · repo con
+> `4658e97..262ce8e` (C.180 fix LOYALTY · C.179 code+docs+fix script · C.181
+> DANH MỤC + bump).
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **VERSION 5.3.0** · app con
+> `giong-banhang.vercel.app` = **VERSION 8.2.0** — cả 2 ✅ OK, không ghim
+> deployment cũ (khác sự cố GĐ 306). Lesson nhỏ: curl domain Vercel trả HTML
+> nén binary → grep cần `--compressed` + `-a` mới bắt được chuỗi version.
+
+> **Version:** app tổng **5.3.0** / repo con **8.2.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 337 — Push đợt GĐ 334-336 / C.179-C.181 LIVE; app tổng 5.3.0 / repo con 8.2.0)*
 *Người cập nhật: Trợ lý Freebuff*
