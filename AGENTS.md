@@ -1216,5 +1216,49 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (không đụng code app — chỉ scripts công cụ + docs, chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.3.1** / repo con **8.2.1**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 342 — khảo sát Headroom: cài + chuỗi 3 lớp Claude Code + benchmark 65-85%; app tổng 5.3.1 / repo con 8.2.1)*
+### GĐ 343 / C.186 (Trợ lý Freebuff): Điều tra + fix DTTHC mất 3 trung tâm Hương Mạc / Quốc Oai / Tiên Du — dedupe đa-lượt loại nhầm file bổ sung — PA-1 (2026-10-07)
+
+> **Câu hỏi của Đại ca (07/10):** Báo cáo cuối ngày - Đối soát HĐ-XK chạy hôm nay
+> thiếu 3 trung tâm HM/QO/TD — quy trình download cần file gì + vì sao thiếu?
+>
+> **Chẩn đoán (probe thật `/db/query` GĐ 329 + file Excel gốc nguồn OUTPUT):**
+> báo cáo ghép 3 nguồn B=DTTHC (stg_3DTTHC) / C=BKX PX- (stg_6BKX) / E=BKCT ký
+> hiệu (stg_11BKCT) — ngày 07/10 C+E của 3 TT ĐỦ, thiếu chính xác B. Nghiệp vụ
+> SMED tải DTTHC từ 2 cổng: **tcgiongts** (header TCGIONGTS) = đúng 3 trung
+> tâm phụ QUỐC OAI/HƯƠNG MẠC/TIÊN DU + **tcgiong** = 16 TT chính (tool 20 chạy
+> 2 tài khoản Account_3/Account_16). File gốc 07/10 còn NGUYÊN trên OUTPUT
+> (file 17:29 = 3 TT 41 mũi; 17:30 = 16 TT 145 mũi) — BỔ SUNG nhau 19 TT, KHÔNG
+> phải 2 lượt nạp đè. import_log chứng minh cả 2 file nạp DB 17:30:35 nhưng stg chỉ
+> còn 17 dòng file 16-TT → **thủ phạm: dedupe đa-lượt GĐ 284/C.137** — nhóm
+> (report_date, center=NULL; DTTHC không cột center, tên TT nằm col2) giữ file
+> mtime MỚI nhất → xóa mất file TS từ **25/09** (13/13 ngày chỉ còn 1 file/ngày;
+> import_log 60 file bị ảnh hưởng). Chi tiết đầy đủ ở AGENTS.md repo con C.186.
+>
+> **PA-1 Đại ca chốt (hỏi-đáp 4 lựa chọn) — đã làm (app tổng docs-only):**
+> 1. `etl/etl_import.py` repo con — dedupe_multiload SKIP `stg_3dtthc` (2 file
+>    BỔ SUNG — khử trùng (ngày,TT) không đúng mô hình 2-file-nạp-đè); ETL
+>    service chạy subprocess riêng mỗi lần → hiệu lực NGAY, không restart.
+> 2. `scripts/gd343-clear-importlog-3dtthc.py` (repo con) — xóa 60 dòng
+>    import_log 3DTTHC từ 25/09 (file gốc còn nguyên → quét lại được).
+> 3. ETL `--only-dir 3.DTTHC` — nạp lại 28 file / 294 dòng / 0 lỗi.
+> 4. PHÁT HIỆN THÊM khi verify: folder tay tên '02-10-2026' không khớp
+>    %Y-%m-%d → ETL fallback THỜI ĐIỂM HIỆN TẠI — 2 file của ngày 04/10 bị nạp
+>    NHẦM 07/10 (trùng dư toàn 0 nên tổng không sai, cấu trúc bẩn). Script
+>    `gd343-fix-folder-tay.py`: DELETE 38 dòng 2 src_file + INSERT lại đúng
+>    report_date 04/10 (19 dòng) + import_log sửa đúng ngày.
+>
+> **Verify (đối chứng file gốc từng đơn vị):** đủ **19 TT × 13 ngày**
+> (25/09→07/10) — 04/10 chủ nhật 19 tên/0 mũi đúng file; 07/10 tổng B **186 =
+> 145(tcgiong) + 41(tcgiongts)** ✓. Chạy THẬT builder `dsxk_comparison
+> ("07/10/2026")`: **20 dòng** — Hương Mạc 11/5.280.000 · Quốc Oai 24/14.615.000
+> · Tiên Du 6/5.150.000 (khớp file gốc từng đơn vị) · TỔNG CỘNG 186/143.130.000
+> — hết thiếu.
+>
+> **Tiêu chí kiểm chứng:** web bc-cuoi-ngay chạy kỳ 07/10 (hoặc kỳ cũ ≥25/09)
+> → đủ 19 trung tâm; job DTTHC mai không còn mất file TS (dedupe đã skip).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.1** / repo con **8.2.1**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 343/C.186 — fix DTTHC mất 3 trung tâm HM/QO/TD — dedupe loại nhầm file bổ sung PA-1; app tổng 5.3.1 / repo con 8.2.1)*
 *Người cập nhật: Trợ lý Freebuff*
