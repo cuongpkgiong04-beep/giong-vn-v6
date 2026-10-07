@@ -1322,9 +1322,15 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > | Nhiệm vụ mới cần hỏi-đáp chốt phương án (Bước 2+3) | `grilling` |
 > | Trước khi nói "Push" / anh yêu cầu rà lại đợt thay đổi | `code-review` |
 > | Việc lớn phải chia nhiều giai đoạn/chặng | `to-tickets` |
+> | Chọn/kiểm tra loại chart dashboard (Recharts) — tra TRƯỚC khi vẽ | `ui-ux-pro-max` (`--domain chart`) |
+> | Form/table/dialog mới — dò UX + accessibility (contrast 4.5:1, focus, label) | `ui-ux-pro-max` (`--domain ux`) |
+> | Pattern hiệu năng React 19 (useMemo/useCallback/key/effect/context) | `ui-ux-pro-max` (`--stack react`) |
+> | Trang mới/landing/hero — chọn style + màu + font theo ngành | `ui-ux-pro-max` (`--domain style/color/typography` · `--design-system`) |
 >
 > Nạp đúng lúc bằng tool `skill` (đọc file theo yêu cầu) — KHÔNG nạp dồn mọi
-> skill cùng lúc (bảo vệ ngân sách context — quy tắc GĐ 319).
+> skill cùng lúc (bảo vệ ngân sách context — quy tắc GĐ 319). `ui-ux-pro-max`
+> KHÔNG nạp cả skill — chạy lệnh tra cứu điểm ở bảng trên:
+> `python .agents/skills/ui-ux-pro-max/scripts/search.py "<từ khóa>" --domain <domain> -n 3`.
 >
 > **Verify:** md5 5/5 khớp nguồn · tsc không cần (0 file code) · commit chain
 > docs-only: claim `537e3da` → skill + entry → unlock.
@@ -1366,5 +1372,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 346/C.188 — tool LHT lấy TẤT CẢ vắc xin PA-3; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 347 (Trợ lý Freebuff): Cài skill UI UX Pro Max v2.13.0 vào `.agents/skills/` — tri thức thiết kế tra cứu theo điểm (PA-1) (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10):** đọc thư mục
+> `D:\DuLieuChung\CUONG_2026\ui-ux-pro-max-skill-main` — xem áp dụng được gì
+> cho giong-vn-v6. Đây là bộ **cơ sở dữ liệu thiết kế + máy tra cứu Python**
+> (nextlevelbuilder/ui-ux-pro-max-skill, MIT): 79 phong cách UI · 192 bảng màu
+> · 74 cặp font · 119 UX guidelines · 25 loại chart · 192 quy tắc suy luận
+> theo ngành · 66 guideline React 19/shadcn kèm ví dụ Do/Don't.
+>
+> **Khác mattpocock skills (GĐ 345):** bộ này là CSV + engine tìm kiếm BM25
+> (`search.py`) — KHÔNG nạp nguyên skill vào context, CHỈ tra cứu điểm khi
+> cần (tiết kiệm token — đúng quy tắc GĐ 319).
+>
+> **Đối chiếu stack ta:** React 19 + Radix + Tailwind v4 + Recharts — trúng
+> trực tiếp `--stack react` (66 guideline, verify react 19.2.x) · `--domain
+> chart` (chọn loại chart theo dữ liệu) · `--domain ux` (accessibility
+> contrast 4.5:1, focus state, form labels...) · `--design-system` (trang
+> mới/landing). Design token hiện có (#1c6b58) GIỮ NGUYÊN — skill chỉ tra
+> khi làm UI mới, không đè convention + 4 nguyên tắc định dạng của Đại ca.
+>
+> **ĐH chốt PA-1** (cài full skill) + 4 tình huống dùng: chart · UX/a11y ·
+> hiệu năng React · trang mới/landing.
+>
+> **Đã làm (docs-only, 0 đụng code app):** copy `.claude/skills/ui-ux-pro-
+> max/` (SKILL.md + data 18 file + stacks 23 CSV + scripts + references —
+> 3.6MB) vào `.agents/skills/ui-ux-pro-max/`; bỏ desktop.ini rác; mở rộng
+> bảng quy tắc nạp skill GĐ 345 thêm 4 dòng; ghi lệnh tra cứu mẫu.
+>
+> **Verify (chạy thật engine, không chỉ nhìn file):** `--domain chart` query
+> "dashboard KPI overview" → Bullet Chart đúng ngữ cảnh KPI · `--domain ux`
+> query "form accessibility contrast focus" → Focus Appearance + Form Labels
+> đúng WCAG · `--stack react` query "useEffect useMemo rerender performance"
+> → guideline useMemo + context đúng react 19.2.x. `git check-ignore` —
+> `.agents/` không bị gitignore.
+>
+> **Tiêu chí kiểm chứng:** phiên sau làm chart/form/trang mới → em chạy
+> search.py tra trước khi code (bảng nạp skill mục GĐ 345); output guideline
+> kèm ví dụ Do/Don't ngay trong kết quả.
+>
+> **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
+> App tổng **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 347 — cài skill ui-ux-pro-max PA-1; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
