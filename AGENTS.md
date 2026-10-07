@@ -1286,5 +1286,55 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** app tổng **5.3.2** / repo con **8.2.2** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-07 (GĐ 344 — Push đợt GĐ 343/C.186; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 345 (Trợ lý Freebuff): Khảo sát skills-main (mattpocock/skills) — PA-4 cài 5 skill vào `.agents/skills/` + quy tắc nạp skill (2026-10-07)
+
+> **Yêu cầu của Đại ca (07/10):** đọc thư mục
+> `D:\DuLieuChung\CUONG_2026\skills-main` (repo mattpocock/skills v1.3.1, MIT) —
+> xem có áp dụng được gì cho giong-vn-v6. Đây là bộ **skill cho AI coding agent**
+> (~27 SKILL.md markdown thuần — hướng dẫn hành vi, KHÔNG phải code) chia
+> `engineering/` (tdd, diagnosing-bugs, code-review...) + `productivity/`
+> (grilling, handoff...).
+>
+> **Đối chiếu với dự án — 5 skill trúng bài toán thật:**
+>
+> | Skill | Trúng chỗ nào |
+> |---|---|
+> | **handoff** | Soạn doc bàn giao cuối phiên — tiếp việc dở bị ngắt (GĐ 331/332) + checkpoint context ~70% (GĐ 319) |
+> | **diagnosing-bugs** | 6 pha chẩn đoán: feedback loop TRƯỚC → tái hiện + minimize → 3-5 giả thuyết xếp hạng → đo 1 biến/lần → fix + regression test — chuẩn hóa cách em làm tự phát GĐ 329/331/343 |
+> | **grilling** | Hỏi theo VÒNG: mỗi vòng hỏi cả nhóm câu hỏi đã sẵn sàng + kèm đáp án đề xuất — nâng cấp Bước 2+3 quy trình 5 bước |
+> | **code-review** | Rà diff 2 trục song song (Standards + Spec) + 12 smell Fowler — dùng trước khi Push / rà trùng lặp |
+> | **to-tickets** | Chia việc lớn thành vertical slices + blocking edges, mỗi slice vừa 1 context window — khớp mục 4 GĐ 319 (phiên dài chia chặng) |
+>
+> **ĐH chốt PA-4** (trong 4 lựa chọn; từ chối PA-2 full bộ — loãng chồng chéo,
+> PA-3 chỉ chép tư tưởng — ngược quy tắc giữ AGENTS.md gọn GĐ 319) + đặt tại
+> **`.agents/skills/`** (chuẩn installer `npx skills` — Freebuff nạp trực tiếp).
+>
+> **Đã làm (docs-only, 0 đụng code app):** copy NGUYÊN VĂN 5 SKILL.md vào
+> `.agents/skills/<tên>/` — **md5 khớp 5/5 với nguồn** · `git check-ignore` xác
+> nhận `.agents/` không bị gitignore.
+>
+> **📌 QUY TẮC NẠP SKILL (hiệu lực GĐ 345 — áp dụng mọi Agent làm app tổng):**
+>
+> | Tình huống | Skill nạp |
+> |---|---|
+> | Anh nói "tiếp việc dở" / phiên ngắt giữa chừng / checkpoint context ~70% | `handoff` |
+> | Anh báo bug / lỗi / "sai số" / chậm — cần chẩn đoán | `diagnosing-bugs` |
+> | Nhiệm vụ mới cần hỏi-đáp chốt phương án (Bước 2+3) | `grilling` |
+> | Trước khi nói "Push" / anh yêu cầu rà lại đợt thay đổi | `code-review` |
+> | Việc lớn phải chia nhiều giai đoạn/chặng | `to-tickets` |
+>
+> Nạp đúng lúc bằng tool `skill` (đọc file theo yêu cầu) — KHÔNG nạp dồn mọi
+> skill cùng lúc (bảo vệ ngân sách context — quy tắc GĐ 319).
+>
+> **Verify:** md5 5/5 khớp nguồn · tsc không cần (0 file code) · commit chain
+> docs-only: claim `537e3da` → skill + entry → unlock.
+>
+> **Tiêu chí kiểm chứng:** phiên sau gặp 1 trong 5 tình huống bảng trên → em
+> nạp đúng skill và làm theo quy trình của nó (VD: báo bug → loop đỏ TRƯỚC khi
+> hypothesize; tiệp việc dở → đọc handoff doc vào việc ngay).
+>
+> **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT). App
+> tổng **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-07 (GĐ 345 — cài 5 skill mattpocock vào .agents/skills/ PA-4; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
