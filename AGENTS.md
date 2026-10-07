@@ -1477,5 +1477,37 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
 > App tổng **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 349 — cài skill Ponytail PA-1; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 350 (Trợ lý Freebuff): Cài REA "Reverse Engineer Anything" v5.0.0 — MCP + skill (PA-2) (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** đọc thư mục `D:\DuLieuChung\CUONG_2026> rea-main` (morluto/rea, MIT) — MCP + workflow reverse engineer đa nền tảng
+> (binary native qua Hopper/Ghidra/IDA · app JS/Electron · .NET · website —
+> không cần source, xuất Evidence). ĐH chốt PA-2: **cài đầy đủ**.
+
+> **Đã làm:**
+> 1. Skill workflow vào repo: `npx skills add morluto/rea --skill
+>    reverse-engineer-anything` → `.agents/skills/reverse-engineer-anything/`
+>    (SKILL.md 191 dòng + references — symlinked Claude Code).
+> 2. MCP project-level: `.mcp.json` đăng ký server `rea`
+>    (`npx -y rea-agents@5.0.0 mcp` — version PIN theo khuyến nghị README).
+>    Claude Code sẽ hiện "Pending approval" lần mở phiên đầu — anh duyệt 1 lần.
+> 3. `rea setup --all-detected` CLI không phát hiện agent nào trên máy (Freebuff
+>    không nằm trong list CLI của nó) — đăng ký MCP theo cách thủ công như trên
+>    (docs/README "Manual MCP configuration" — đúng cấu hình chuẩn v5.0.0).
+
+> **Verify (chạy thật):** `analyze-javascript-application` trên
+> `giong-apps/apps/banhang/src/lib` → Evidence ID + graph module (nodes
+> @tanstack/react-router...) — phân tích TĨNH chạy cục bộ KHÔNG cần
+> Hopper/Ghidra/IDA ✓ · Node v24.16.0 ≥ 22 ✓ · `doctor --skill`: skill:true.
+> Native binary (Hopper/Ghidra/IDA) CHƯA cấu hình engine — cái này chỉ cần
+> khi gặp bài toán binary thật (máy chưa có Ghidra/Hopper).
+
+> **Khi nào dùng:** thấy feature của app/web khác muốn hiểu để xây lại; app
+> JS/Electron cần soi không có source; SMED thay UI lớn cần hiểu bản đồ API
+> (đề xuất trước khi làm). KHÔNG dùng thường lệ — rung 1 Ponytail: chưa có
+> bài toán thật thì không đụng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 350 — cài REA v5.0.0 PA-2; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
