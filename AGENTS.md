@@ -1674,6 +1674,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.3** / repo con **8.2.3**.
 
+### GĐ 356 / C.193 (Trợ lý Freebuff): Fix trang /m/bc-lich-hen "Chưa tải được kết quả" — result SHEETS-ONLY bị guard loại im lặng (PA-1 client) (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10, ảnh):** trang /m/bc-lich-hen có job done 28.067
+> dòng nhưng khung hiện "Chưa tải được kết quả". ĐH chốt **PA-1** (sửa client
+> sql-data-module.tsx).
+>
+> **Chẩn đoán + đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.193, code
+> `f9fe841`):** builder C.189 đóng gói result **SHEETS-ONLY** — root KHÔNG có
+> columns/rows, 28K dòng gói trong meta.sheets; guard `!Array.isArray(rt.columns)`
+> bỏ result im lặng. Fix 1 file `sql-data-module.tsx`: guard nhận thêm hasSheets
+> + ẩn bảng generic root-trống khi sheetsOnly (bảng thật render qua render-prop
+> SubSheets của trang).
+>
+> **Verify:** tsc EXIT 0 · E2E local (bước 6 script `gd-c194-verify-gop-baocao.mjs`)
+> — /m/bc-lich-hen render, KHÔNG còn "Chưa tải được kết quả".
+>
+> **Tiêu chí kiểm chứng (sau Push):** prod /m/bc-lich-hen → mở job done →
+> bảng 13 cột render phân trang (Trang 1/29).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.3** / repo con **8.2.3**.
+
 ### GĐ 357 / C.194 (Trợ lý Freebuff): Gộp 5 báo cáo nhóm BÁO CÁO KẾ TOÁN — 5 trang gộp (TQ/TH TRÊN + CT DƯỚI) + xóa 7 trang cũ — nav 18→13 lá (PA-1) (2026-10-08)
 
 > **Yêu cầu của Đại ca (08/10):** nhóm BÁO CÁO KẾ TOÁN app con 18 lá rối —
@@ -1693,11 +1715,12 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > mới ("Bảng kê HĐ GTGT mua vào/bán ra (MiaTool)" + "Sao kê ngân hàng
 > VCB/TCB/TPB") + giữ VTB — khớp nav.ts repo con.
 >
-> **Verify:** tsc EXIT 0 repo con · grep toàn src 0 tham chiếu route cũ
-> (routeTree.gen regen sạch) · routes/m đúng 6 file MIA/BANK. ⚠️ Lưu ý:
-> AGENTS.md repo con + sql-data-module.tsx là việc C.193 của phiên khác
-> còn 🔒 — entry C.194 repo con ghi working tree, KHÔNG commit lẫn
-> (phiên sau commit khi unlock C.193).
+> **Verify (phiên tiếp — hoàn tất 08/10):** tsc EXIT 0 CẢ 2 app · grep toàn
+> src 0 tham chiếu route cũ (routeTree.gen regen sạch) · **E2E SSO local 6/6
+> PASS** (`scripts/gd-c194-verify-gop-baocao.mjs` — sidebar 5 lá gộp mới + 0 lá
+> cũ · /m/bc-mia-muavao + /m/bc-bank-vcb render đủ Phần 1+2 · bc-lich-hen hết
+> lỗi C.193). Lesson verify: h2 có CSS `uppercase` → innerText trả HOA —
+> assertion phải so "PHẦN 2" không phải "Phần 2".
 >
 > **Tiêu chí kiểm chứng (sau Push):** app con → BÁO CÁO KẾ TOÁN 13 lá;
 > trang gộp 2 nút chạy riêng; 7 route cũ 404.
@@ -1705,5 +1728,5 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.3** / repo con **8.2.3**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 357/C.194 — gộp 5 báo cáo KẾ TOÁN 5 trang gộp + xóa 7 trang cũ, nav 18→13 lá PA-1; app tổng 5.3.3 / repo con 8.2.3)*
+*Cập nhật lần cuối: 2026-10-08 (GĐ 356/C.193 fix bc-lich-hen sheets-only + GĐ 357/C.194 gộp 5 báo cáo KẾ TOÁN 5 trang gộp PA-1; app tổng 5.3.3 / repo con 8.2.3)*
 *Người cập nhật: Trợ lý Freebuff*
