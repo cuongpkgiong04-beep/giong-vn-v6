@@ -1791,5 +1791,33 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** app tổng **5.4.0** / repo con **8.3.0** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 359 — Push đợt GĐ 355-358/C.192-C.195, bump 5.4.0/8.3.0 LIVE; app tổng 5.4.0 / repo con 8.3.0)*
+### GĐ 360 / C.197 (Trợ lý Freebuff): Fix cột "Tiền thuế" Chi tiết MIA — hiển thị vi-VN + Subtotal sai ×100 + thứ tự 5 cột tiền (PA-1 khung web + builder) (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** Phần 2 "Chi tiết — từng dòng hàng hóa"
+> (bc-mia-muavao) — Tiền thuế hiện "48960.00" mà Subtotal
+> "26.507.690.200" — muốn "48.960,00" / "265.076.902"; tính toán giữ
+> nguyên. Cộng đổi chỗ: CKTM/Phí TRƯỚC Thanh toán.
+>
+> **Chẩn đoán:** gốc ở khung web — `computeSubtotal` parser vi-VN bỏ mọi
+> dấu chấm coi là nghìn → "48960.00" đọc thành 4.896.000 (×100). ĐH chốt
+> cả 2 PA-1: sửa khung + builder.
+>
+> **Đã làm (repo con `090a669` — chi tiết AGENTS.md repo con C.197):**
+> `report-result-table.tsx` DECIMAL_2_RE `/^-?\d+\.\d{2}$/` — fmtCell
+> render "48.960,00" + computeSubtotal cộng đúng → SUBTOTAL
+> "265.076.902"; builder mia_chitiet đổi chỗ [Tổng tiền thanh toán] sau
+> [Tổng tiền phí]. App tổng: chỉ docs + registry.
+>
+> **Verify:** node unit 10/10 PASS · py_compile OK · tsc EXIT 0 · restart
+> GIONG_SMED_Agent 17:57 (rảnh — log `web_agent_081026_175720` · health
+> tunnel_ok · 1.187 jobs).
+>
+> **Tiêu chí kiểm chứng:** mở lại job Chi tiết MIA CŨ — cột "48.960,00" ·
+> SUBTOTAL "265.076.902" (fix khung áp cả job cũ); job MỚI thứ tự 5 cột
+> Chưa thuế → Thuế → CKTM → Phí → Thanh toán.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.4.0** / repo con **8.3.0**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 360/C.197 — fix Tiền thuế vi-VN + Subtotal sai ×100 + thứ tự cột Chi tiết MIA; app tổng 5.4.0 / repo con 8.3.0)*
 *Người cập nhật: Trợ lý Freebuff*
