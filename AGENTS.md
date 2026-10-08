@@ -2015,5 +2015,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** app tổng **5.5.0** / repo con **8.4.0** — ĐÃ PUSH.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 367 — Push đợt GĐ 363-366/C.200-C.203, bump 5.5.0/8.4.0; GĐ 365/C.202 giữ 🔒 chờ ĐH duyệt 24 cặp map)*
+### GĐ 365-close / C.202c (Trợ lý Freebuff): ĐH chốt 24 cặp map — seed đủ 52/52 dòng bảng giá vào price_list — ĐÓNG GĐ 365 (2026-10-08)
+
+> **Anh hỏi “dở dang là gì? chốt luôn”** → em trình bảng 24 cặp Tên web ↔ Mã SMED
+> đề xuất (đối chiếu 52 mã thật bảng vaccines) → anh chốt **“Chốt tất cả 24
+cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng mã — theo
+> bảng giá web).
+>
+> **Đã làm (repo con `ac30244` — `agent/bang-gia/fill-and-seed.py`):** điền 24
+> cặp chốt vào `map-ten-smed.csv` (format “ma_smed — ten_hang” khớp tool tự map)
+> + **seed thẳng từ CSV đã duyệt** (tool cũ chạy lại sẽ tự map lại từ file gốc —
+> ghi đè mất map anh duyệt) → nạp đè `dbo.price_list` 52 dòng · src_hash = md5
+> ảnh web d6d42b92… (nút Refresh so hash khớp).
+>
+> **Verify:** price_list **52/52 dòng · 52/52 có ten_smed** · sample stt 1 “BCG →
+> BCG-TCDV — Vắc-xin phòng lao BCG Việt Nam” · assert chặn mã lạ + dòng chưa map.
+>
+> **Tiêu chí kiểm chứng:** trang /m/banhang-bang-gia-dich-vu (LIVE v8.4.0) → 52
+> dòng + cột “Tên Vắc Xin_SMED” đầy đủ; đổi ảnh web (hash khác d6d42b92…) →
+> Refresh báo cần seed lại.
+>
+> **Version:** KHÔNG bump (seed data + script agent — không đổi code app).
+> App tổng **5.5.0** / repo con **8.4.0**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 365-close/C.202c — ĐH chốt 24 cặp map, seed đủ 52/52 price_list — hết 🔒 dở dang; app tổng 5.5.0 / repo con 8.4.0)*
 *Người cập nhật: Trợ lý Freebuff*
