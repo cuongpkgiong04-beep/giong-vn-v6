@@ -113,19 +113,15 @@ export const BH_GROUPS: BhGroup[] = [
       // BÁO CÁO KẾ TOÁN — ĐỒNG BỘ nav.ts repo con.
       { to: "/m/bc-bkct", label: "Bảng kê chi tiết hóa đơn đã sử dụng" },
       { to: "/m/bc-bkth", label: "Bảng kê hóa đơn đã sử dụng" },
-      // GĐ 223: 2 báo cáo MiaTool — số 8 + 9 nhóm BÁO CÁO KẾ TOÁN (thứ tự khớp nav.ts).
-      { to: "/m/bc-mia-muavao-tongquan", label: "Bảng kê HĐ GTGT mua vào - Tổng quan (MiaTool)" },
-      { to: "/m/bc-mia-muavao-chitiet", label: "Bảng kê HĐ GTGT mua vào - Chi tiết (MiaTool)" },
-      { to: "/m/bc-mia-banra-tongquan", label: "Bảng kê HĐ GTGT bán ra - Tổng quan (MiaTool)" }, // C.123 — số 10
-      { to: "/m/bc-mia-banra-chitiet", label: "Bảng kê HĐ GTGT bán ra - Chi tiết (MiaTool)" }, // C.123 — số 11
-      // GĐ 257 (29/09/2026 — yêu cầu Đại ca): 4 báo cáo sao kê ngân hàng — số 10-13
-      // nhóm BÁO CÁO KẾ TOÁN (placeholder khung — nội dung SQL làm khi có file mẫu).
-      { to: "/m/bc-bank-vcb", label: "BC_Sao kê VCB - Chi tiết" },
-      { to: "/m/bc-bank-vcb-th", label: "BC_Sao kê VCB - Tổng hợp theo TT" },
-      { to: "/m/bc-bank-tcb", label: "BC_Sao kê TCB - Chi tiết" }, // C.130 — đổi nhãn + thêm lá tổng hợp
-  { to: "/m/bc-bank-tcb-th", label: "BC_Sao kê TCB - Tổng hợp theo ngày" },
-      { to: "/m/bc-bank-tpb", label: "BC_Sao kê TPB - Chi tiết" }, // C.146 — đổi nhãn + thêm lá tổng hợp (chuẩn TCB)
-      { to: "/m/bc-bank-tpb-th", label: "BC_Sao kê TPB - Tổng hợp theo ngày" },
+      // GĐ 357/C.194 (08/10 — yêu cầu Đại ca, PA-1 chốt): GỘP 2 trang TQ+CT thành
+      // 1 trang gộp mỗi báo cáo (TQ TRÊN + CT DƯỚI) — Mua vào + Bán ra; 4 lá cũ xóa.
+      { to: "/m/bc-mia-muavao", label: "Bảng kê HĐ GTGT mua vào (MiaTool)" },
+      { to: "/m/bc-mia-banra", label: "Bảng kê HĐ GTGT bán ra (MiaTool)" },
+      // GĐ 357/C.194: GỘP Chi tiết + Tổng hợp thành 1 trang gộp mỗi ngân hàng
+      // (Tổng hợp TRÊN + Chi tiết DƯỚI) — VCB/TCB/TPB; 3 lá -th cũ xóa; VTB giữ nguyên.
+      { to: "/m/bc-bank-vcb", label: "Sao kê ngân hàng VCB" },
+      { to: "/m/bc-bank-tcb", label: "Sao kê ngân hàng TCB" },
+      { to: "/m/bc-bank-tpb", label: "Sao kê ngân hàng TPB" },
       { to: "/m/bc-bank-vtb", label: "BC_Sao kê ngân hàng VTB" },
     ],
   },

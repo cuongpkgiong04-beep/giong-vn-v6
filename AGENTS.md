@@ -1674,5 +1674,36 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.3** / repo con **8.2.3**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 355/C.192 — +11 cột Chi tiết MIA + Thuế suất % + Tiền thuế khớp TQ PA-1; app tổng 5.3.3 / repo con 8.2.3)*
+### GĐ 357 / C.194 (Trợ lý Freebuff): Gộp 5 báo cáo nhóm BÁO CÁO KẾ TOÁN — 5 trang gộp (TQ/TH TRÊN + CT DƯỚI) + xóa 7 trang cũ — nav 18→13 lá (PA-1) (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** nhóm BÁO CÁO KẾ TOÁN app con 18 lá rối —
+> gộp các cặp TQ+CT thành 1 trang mỗi báo cáo. ĐH chốt **PA-1** (chỉ
+> frontend, tái dùng queryKey/builder cũ, 2 nút chạy riêng) + **xóa hẳn**
+> trang cũ.
+>
+> **Đã làm (repo con `ca32528` — chi tiết ở AGENTS.md repo con C.194):**
+> 5 trang gộp mới (bc-mia-muavao / bc-mia-banra MỚI + bc-bank-vcb/tcb/tpb
+> ghi đè — mỗi phần `<section>` badge "Phần 1/Phần 2", 2 SqlDataModule
+> queryKey riêng) · xóa hẳn 7 trang cũ (4 lá MIA + 3 lá bank -th; VTB giữ)
+> · nav.ts 18→13 lá tự đánh số lại (8 Mua vào, 9 Bán ra, 10 VCB, 11 TCB,
+> 12 TPB, 13 VTB) · -smed.ts SQL_QUERY_LEAF 10 queryKey → 5 route ·
+> smed-auth.ts ROUTE_TO_GROUP đồng bộ.
+>
+> **App tổng (commit này):** `banhang-catalog.ts` đồng bộ 10 lá cũ → 5 lá
+> mới ("Bảng kê HĐ GTGT mua vào/bán ra (MiaTool)" + "Sao kê ngân hàng
+> VCB/TCB/TPB") + giữ VTB — khớp nav.ts repo con.
+>
+> **Verify:** tsc EXIT 0 repo con · grep toàn src 0 tham chiếu route cũ
+> (routeTree.gen regen sạch) · routes/m đúng 6 file MIA/BANK. ⚠️ Lưu ý:
+> AGENTS.md repo con + sql-data-module.tsx là việc C.193 của phiên khác
+> còn 🔒 — entry C.194 repo con ghi working tree, KHÔNG commit lẫn
+> (phiên sau commit khi unlock C.193).
+>
+> **Tiêu chí kiểm chứng (sau Push):** app con → BÁO CÁO KẾ TOÁN 13 lá;
+> trang gộp 2 nút chạy riêng; 7 route cũ 404.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.3** / repo con **8.2.3**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 357/C.194 — gộp 5 báo cáo KẾ TOÁN 5 trang gộp + xóa 7 trang cũ, nav 18→13 lá PA-1; app tổng 5.3.3 / repo con 8.2.3)*
 *Người cập nhật: Trợ lý Freebuff*
