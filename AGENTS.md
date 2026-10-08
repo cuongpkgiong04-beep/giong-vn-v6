@@ -1936,3 +1936,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.4.0** / repo con **8.3.0**.
+
+### GĐ 362 / C.199 (Trợ lý Freebuff): Fix "Tổng tiền CKTM" Chi tiết MIA cộng sai gấp N lần — phân bổ dòng đầu HĐ — PA-1 (2026-10-08)
+
+> **Báo của Đại ca (08/10, 2 ảnh):** BÁO CÁO KẾ TOÁN → Bảng kê HĐ GTGT mua vào
+> (MiaTool) — 'Tổng tiền CKTM' Subtotal web 170.646.274 vs Excel MIA TOOL cột
+> Y = **175.463.880**; mọi dòng HĐ 6103 đều hiện 212.221 trong khi Excel chỉ
+> dòng đầu có giá trị. Đại ca chỉ: tham khảo MIA TOOL 2026 (vừa sửa chỗ lấy
+> dữ liệu này).
+
+> **Chẩn đoán (chi tiết đầy đủ ở AGENTS.md repo con C.199, code `4ffe903`):**
+> tccktmai trong file CT MIA là giá trị CẤP HÓA ĐƠN lặp trên MỌI dòng hàng hóa
+> (T9: 24/45 HĐ lặp) → builder lấy raw cộng dồn gấp N. Decompile mia-runtime
+> (PyInstaller → PYZ → pyc 3.11 → xdis disasm build_rows dòng 255): MIA TOOL
+> xuất CKTM CHỈ 1 dòng/HĐ — cùng cấu trúc 'Tổng tiền thanh toán' (C.135).
+> SQL đối chứng: first-row-sum = 175.463.880 = Excel Y từng đồng.
+
+> **ĐH chốt PA-1.** Đã làm: `mia_chitiet` CKTM + Phí bọc row_number()=1
+> (dòng sau TRỐNG như Excel) + `_MIA_MONEY` +2 cột → meta totals đúng.
+
+> **Verify:** builder thật T9 — HĐ 6103 chỉ dòng đầu 212.221 · meta CKTM =
+> **175.463.880 = Excel Y** · Thanh toán = 5.481.355.958 = Excel AB · Client
+> Subtotal tự khớp (bỏ ô rỗng). py_compile OK.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.4.0** / repo con
+> **8.3.0**.
