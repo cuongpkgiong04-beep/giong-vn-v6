@@ -1827,7 +1827,36 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.4.0** / repo con **8.3.0**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 360/C.197 — fix Tiền thuế vi-VN + Subtotal sai ×100 + thứ tự cột Chi tiết MIA; app tổng 5.4.0 / repo con 8.3.0)*
+### GĐ 362 (Trợ lý Freebuff): Push đợt GĐ 360/C.197-C.197b — bump 5.4.1 / 8.3.1 + LIVE production (2026-10-08)
+
+> **Lệnh "Push" của Đại ca (08/10, sau chạy thật T9).** Rà trùng lặp theo
+> nguyên tắc 3: nhánh khác RỘNG; registry 0 🔒 của mình (GĐ 361/C.198 của
+> phiên khác còn 🔒 — working tree repo con có file modified của họ:
+> `sql_reports.py` + `sql_reports_bccn.test.py` — KHÔNG add, KHÔNG đụng;
+> đợt push chỉ gồm các commit đã commit sẵn của mình) · app tổng còn file
+> deleted attachments cũ (không đụng) · email ✓.
+>
+> **Push:** app tổng `645952a..2b9a95a` (GĐ 360 docs fix Tiền thuế + docs
+> chạy thật T9 + bump) · repo con `04923c5..00a28f5` (C.197 code · C.197b
+> fix const `_MIA_HH_COLS` · C.199 bump). Repo con push đầu trước bump
+> `c41f689..04923c5`.
+>
+> **Bump version:** app tổng **5.4.0 → 5.4.1** (patch — fix C.197) —
+> package.json + package-lock.json (2 chỗ) + DEFAULT_VERSION — đủ 4 chỗ;
+> repo con **8.3.0 → 8.3.1** (patch) — package.json + DEFAULT_VERSION —
+> đủ 2 chỗ. Checklist GĐ 138 ✓ (0 sót version cũ).
+>
+> **✅ Verify production (curl --compressed):** app tổng = **5.4.1** · app
+> con = **8.3.1** — cả 2 LIVE, không ghim deployment cũ.
+>
+> **Tiêu chí kiểm chứng nghiệp vụ:** trang bc-mia-muavao Phần 2 Chi tiết —
+> cột Tiền thuế "48.960,00" (vi-VN 2 số lẻ) · SUBTOTAL "265.076.902" (hết
+> ×100 — áp cả job cũ); job MỚI thứ tự 5 cột Chưa thuế → Thuế → CKTM → Phí
+> → Thanh toán (đã đối chứng chạy thật T9: 596 dòng, GĐ 360).
+>
+> **Version:** app tổng **5.4.1** / repo con **8.3.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 362 — Push đợt GĐ 360/C.197-C.197b, bump 5.4.1/8.3.1 LIVE; app tổng 5.4.1 / repo con 8.3.1)*
 *Người cập nhật: Trợ lý Freebuff*
 
 ### GĐ 361 / C.198 (Trợ lý Freebuff): Điều tra + fix BÁO CÁO MARKETING — Công nợ đặt trước: 2 bug logic — tẩy oan mũi cùng giá + gộp mất gói trùng tên — PA-3 (2026-10-08)
