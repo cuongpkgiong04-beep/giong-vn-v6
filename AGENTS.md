@@ -1812,6 +1812,14 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > GIONG_SMED_Agent 17:57 (rảnh — log `web_agent_081026_175720` · health
 > tunnel_ok · 1.187 jobs).
 >
+> **C.197b — CHẠY THẬT T9/2026 (yêu cầu Đại ca):** lần 1 JSON vẫn thứ tự
+> CŨ — gốc: `_rows` trả `columns` từ CONST `_MIA_HH_COLS` (không phải
+> cur.description) — sửa SELECT chưa đủ. Sửa CẢ const + chạy lại qua
+> schtasks SYSTEM (`scripts/gd360-run-mia-t9.py`): **596 dòng · thứ tự 5
+> cột [14,15,16,17,18] ĐÚNG · TỔNG Tiền thuế 265.076.902 khớp từng đồng**
+> · sample '48960.00' → render "48.960,00". Restart agent lần 2 (RUNNING,
+> health tunnel_ok). Commit repo con bổ sung `04923c5`.
+>
 > **Tiêu chí kiểm chứng:** mở lại job Chi tiết MIA CŨ — cột "48.960,00" ·
 > SUBTOTAL "265.076.902" (fix khung áp cả job cũ); job MỚI thứ tự 5 cột
 > Chưa thuế → Thuế → CKTM → Phí → Thanh toán.
