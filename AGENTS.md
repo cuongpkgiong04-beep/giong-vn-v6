@@ -1859,6 +1859,45 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 *Cập nhật lần cuối: 2026-10-08 (GĐ 362 — Push đợt GĐ 360/C.197-C.197b, bump 5.4.1/8.3.1 LIVE; app tổng 5.4.1 / repo con 8.3.1)*
 *Người cập nhật: Trợ lý Freebuff*
 
+### GĐ 364 / C.201 (Trợ lý Freebuff): Sidebar app con — thống nhất cỡ chữ phân cấp NGƯỢC: bậc lớn TO NHẤT, giảm dần vào sâu — PA-A 14/13/12/12 (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** thanh Sidebar app con — cỡ chữ bậc 1
+> (NHẬP DỮ LIỆU / DOWNLOAD DỮ LIỆU / BÁO CÁO / UPLOAD-MISA) đang NHỎ hơn
+> bậc 2 (DANH MỤC / KHO HÀNG...) → kiểm tra + thống nhất nguyên tắc cỡ chữ
+> Sidebar: "Cỡ chữ bậc bé nhất là to nhất, giảm dần cho các bậc tiếp theo"
+> (bậc CAO/NGOÀI to nhất — giảm dần vào các bậc con sâu). ĐH hỏi-đáp chốt
+> **PA-A (trong 3 thang): 14 / 13 / 12 / 12**.
+
+> **Chẩn đoán (đo từ code app-shell.tsx repo con):** nhãn ĐIỀU HÀNH (bậc 0
+> gốc) = 11px NHỎ NHẤT dù là bậc cao nhất (NGƯỢC nguyên tắc); heading bậc 1
+> = 13px + tracking 0.16em (trông mảnh nên anh cảm giác nhỏ); heading bậc 2
+> = 11.5px; bậc 3 (MUA VÀO/BÁN RA) = 10.5px; LÁ (TỔNG QUAN + mọi mục tích)
+> = 13px TO HƠN cả heading bậc 1 → lệch phân cấp đúng như anh thấy.
+
+> **Đã làm (1 file — `apps/banhang/src/components/app-shell.tsx`, code repo
+> con `e79ecfe`):** 5 điểm class `text-[Npx]`:
+> 1. Nhãn ĐIỀU HÀNH: 11px → **14px** (TO NHẤT thang);
+> 2. NavLink lá (TỔNG QUAN/NHIỆM VỤ + mọi mục tích desktop): 13px → **12px**
+>    (mobile drawer giữ 16px riêng);
+> 3. Heading bậc 2 (DANH MỤC/KHO HÀNG...): 11.5px → **12px**;
+> 4. Heading bậc 3 thường + collapsed (MUA VÀO/BÁN RA): 10.5px → **12px** =
+>    ngang bậc 2/lá — GIỮ ITALIC làm dấu phân bậc thay cỡ chữ (bậc sâu hơn
+>    không được nhỏ hơn con);
+> 5. Heading bậc 1 (NHẬP DỮ LIỆU/DOWNLOAD/BÁO CÁO/UPLOAD): **13px giữ nguyên**.
+>    Padding + min-h KHÔNG đụng (nhịp icon giữ nguyên); KHÔNG đụng nav/quyền.
+
+> **Verify:** tsc app banhang **EXIT 0** · `vite build` **EXIT 0** · dev
+> server 3100 trả HTTP 200 (port đã có dev server phiên khác chạy — dùng
+> luôn, không bật thêm).
+
+> **Tiêu chí kiểm chứng (sau Push):** Sidebar app con — ĐIỀU HÀNH to nhất;
+> NHẬP DỮ LIỆU/DOWNLOAD/BÁO CÁO/UPLOAD 13px; DANH MỤC/KHO HÀNG... 12px;
+> TỔNG QUAN + mục lá 12px (không còn lá to hơn heading); MUA VÀO/BÁN RA 12px
+> nghiêng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.4.1** / repo con **8.3.1**.
+
 ### GĐ 361 / C.198 (Trợ lý Freebuff): Điều tra + fix BÁO CÁO MARKETING — Công nợ đặt trước: 2 bug logic — tẩy oan mũi cùng giá + gộp mất gói trùng tên — PA-3 (2026-10-08)
 
 > **Yêu cầu của Đại ca (08/10):** kiểm tra phần Báo cáo công nợ đặt trước (nhóm
