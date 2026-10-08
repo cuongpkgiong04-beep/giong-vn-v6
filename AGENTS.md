@@ -1829,3 +1829,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 *Cập nhật lần cuối: 2026-10-08 (GĐ 360/C.197 — fix Tiền thuế vi-VN + Subtotal sai ×100 + thứ tự cột Chi tiết MIA; app tổng 5.4.0 / repo con 8.3.0)*
 *Người cập nhật: Trợ lý Freebuff*
+
+### GĐ 361 / C.198 (Trợ lý Freebuff): Điều tra + fix BÁO CÁO MARKETING — Công nợ đặt trước: 2 bug logic — tẩy oan mũi cùng giá + gộp mất gói trùng tên — PA-3 (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** kiểm tra phần Báo cáo công nợ đặt trước (nhóm
+> BÁO CÁO MARKETING) — logic + cách ETL cho vào DB trước khi tạo báo cáo; dữ
+> liệu vẫn chưa chính xác. ĐH chốt **PA-3: fix cả 2 bug**; triệu chứng anh thấy
+> (cn-dt/cn-goi + TỔNG HỢP + Bảng 1) khớp đúng 2 bug em bắt được.
+
+> **Chẩn đoán (probe `giong-apps/apps/banhang/scripts/gd361-probe-bccn-logic.py`
+> CHỈ-ĐỌC — chi tiết đầy đủ ở AGENTS.md repo con C.198):** ETL nạp DB
+> (`gdtvx_insert` nạp đè folder+TT+loại-file, dedupe 228j) KHÔNG mất data (đợt
+> 11.088 dòng GĐ 331/332 đã khôi phục). Lệch ở LOGIC BUILDER — 3 điểm:
+> (1) khóa "đã trả mũi" theo GIÁ tẩy oan — khách đặt N mũi cùng giá trả 1 lượt
+> → cả N bị coi ĐÃ TRẢ (**21 mũi / 31.855.000đ mất nợ oan**; 9.096 nhóm trả
+> nhiều ngày chỉ hiện 1 ngày đầu); (2) gói bị gộp mất — builder skip trùng
+> (mtc, ten_goi) (**225 gói mất toàn hệ**); (3) rủi ro ETL snapshot-folder
+> (folder mới tải thiếu → 228j xóa data cũ — ghi nhận theo dõi, chưa thấy).
+
+> **Đã làm (code repo con `26053a7` — chỉ sql_reports.py + test + probe):**
+> (1) map trả mũi thành HÀNG ĐỢI THEO LƯỢT + `_tra_pop` — mỗi mũi ghép 1 lượt,
+> hết lượt → còn nợ; f1 gán `_da_tra`/`_ngay_tra`, f4 'Đã tiêm' gán
+> `_ngay_tra`, Bảng 1/cn-dt/Bảng 3/cn-goi đọc cờ (hết tra map trùng khóa);
+> (2) `pkgs_list` + `f3_slots` ghép rec f4 thứ i cùng khóa vào dòng f3 thứ i —
+> goi_rows 1 dòng/f3, gói trùng tên đủ; (3) 'Kiểm tra nguồn' cn-dt →
+> '✓ N (+M đã trả)' cho khách trả 1 phần (✗ chỉ khi phép cộng lệch — guard).
+
+> **Verify:** py_compile OK · unit **54/54 PASS** (T14: 2 mũi cùng giá trả 1 →
+> còn nợ 1; T15: 2 gói cùng tên → đủ 2 dòng) · builder thật GiondDB kỳ
+> 2018→07/10: **Bảng 1 = 352 gói · 1.332 mũi gói · 109 đặt trước (88+21 khôi
+> phục tẩy oan) · 1.441 mũi · 1.071.284.600đ · Kiểm tra ✓ 19/19** · cn-dt 63
+> nhóm · ✗ 0 · ĐX·217370320260065 còn nợ 3 mũi/900.000 '✓ 3 (+1 đã trả)'.
+> Lesson: '1.332' GĐ 327/338 là 'SỐ MŨI trong gói còn nợ' (nhầm nhãn 'gói').
+
+> **Tiêu chí kiểm chứng (sau Push):** trang bccn job MỚI → Bảng 1 đặt trước
+> 109; ds-goi đủ gói trùng tên; cn-dt '✓ N (+M đã trả)'; 'Ngày tiêm' đúng ngày
+> từng lượt. Job cũ là snapshot — chạy lại để thấy số mới.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.4.0** / repo con **8.3.0**.
