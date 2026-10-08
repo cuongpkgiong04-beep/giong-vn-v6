@@ -1728,5 +1728,34 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.3** / repo con **8.2.3**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 356/C.193 fix bc-lich-hen sheets-only + GĐ 357/C.194 gộp 5 báo cáo KẾ TOÁN 5 trang gộp PA-1; app tổng 5.3.3 / repo con 8.2.3)*
+### GĐ 358 / C.195 (Trợ lý Freebuff): Sửa 4 module DANH MỤC — +cột STT · NCC +Địa chỉ bỏ Số hóa đơn · KH "Mã tiêm chủng" bỏ Số đăng ký · biểu tượng Sửa/Xóa/Thêm mới giao diện (PA-3) (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** 4 module DANH MỤC app con (GĐ 336/C.181):
+> +STT mọi bảng · Vắc xin 1 trang · NCC thêm Địa chỉ bỏ "Số hóa đơn" ·
+> Trung tâm thêm cột "Tên viết tắt" · KH đổi "Mã tra cứu"→"Mã tiêm chủng" +
+> Địa chỉ bỏ "Số đăng ký" · biểu tượng Sửa/Xóa/Thêm mới mọi bảng.
+>
+> **ĐH chốt (hỏi-đáp):** CRUD **PA-3** chỉ giao diện (GiondDB chỉ-đọc + ETL
+> nạp đè theo kỳ — nơi lưu chờ chốt) · Địa chỉ khách hàng **PA-2** chờ nguồn
+> (probe: f1_dangky không có cột dia_chi — THIẾU SÓT ghi AGENTS.md repo con)
+> · viết tắt TT **PA-1** "Trung tâm TC " + tên ngắn · 1 trang **PA-2** chỉ
+> Vắc xin.
+>
+> **Đã làm (repo con `a1ce312` — chi tiết AGENTS.md repo con C.195):**
+> danh-muc-module.tsx (STT + Pencil/Trash2 + nút Thêm mới + CrudDialog +
+> onePage) · 4 route columns · -danh-muc.ts SQL (nmdchi / "Trung tâm TC " /
+> bỏ COUNT). App tổng: chỉ docs + registry (catalog không đổi — nav giữ 5
+> lá DANH MỤC).
+>
+> **Verify:** tsc EXIT 0 · probe SQL thật GiondDB: NCC dia_chi = "Số 273
+> Nguyễn Văn Cừ…" · TT = "Trung tâm TC Bích Hòa" đúng ví dụ ĐH.
+>
+> **Tiêu chí kiểm chứng:** 4 trang danh mục hiện STT + icon Sửa/Xóa + nút
+> Thêm mới (dialog PA-3); Vắc xin 1 trang; NCC có Địa chỉ; KH nhãn "Mã tiêm
+> chủng".
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.3** / repo con **8.2.3**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 358/C.195 — sửa 4 module DANH MỤC: +STT · biểu tượng CRUD giao diện PA-3; app tổng 5.3.3 / repo con 8.2.3)*
 *Người cập nhật: Trợ lý Freebuff*
