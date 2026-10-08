@@ -1985,3 +1985,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.4.0** /
 > repo con **8.3.0**.
+
+### GĐ 367 (Trợ lý Freebuff): PA Push đợt GĐ 363-366 / C.200-C.203 — bump 5.5.0 / 8.4.0 + LIVE production (2026-10-08)
+
+> **Lệnh "Push" của Đại ca (08/10) sau khi em rà dở dang.** ĐH hỏi-đáp chốt: push
+> NGAY dù registry còn 1 🔒 (lesson GĐ 354) + bump MINOR 5.5.0 / 8.4.0.
+>
+> **Rà trùng lặp theo nguyên tắc 3:** pull CẢ 2 repo = up to date · nhánh
+> `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2** · status chỉ file
+> deleted cũ của phiên trước (attachments zip + script gd-c184 — không đụng) ·
+> email `cuongpk.giong04@gmail.com` ✓. Registry còn duy nhất 1 🔒: **GĐ 365/C.202
+> (Bảng giá dịch vụ)** — code khung + OCR draft đã commit đủ (`08d8b4b`,
+> `537564e`), đang DỪNG chờ ĐH duyệt 24 cặp map Tên SMED (`map-ten-smed.csv`) để
+> seed data — KHÔNG giao file với kiểm kê → ĐH chốt push kèm, GIỮ 🔒 đến khi seed.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.4.1 → 5.5.0**
+> (minor — C.202 feature trang Bảng giá dịch vụ + API + tool OCR) — package.json
+> + package-lock.json (2 chỗ root) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ
+> (sót "5.4.1" chỉ là asn1.js + fast-equals thư viện ngoài trùng số trúng — giữ
+> nguyên, lesson GĐ 328); repo con **8.3.1 → 8.4.0** (minor — C.200 fix lịch định
+> kỳ + C.201 sidebar + C.202 feature + C.203 kiểm kê) — package.json +
+> DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+>
+> **Nội dung đợt push:** app tổng — GĐ 363 claim fix lịch định kỳ · GĐ 364/C.201
+> sidebar cỡ chữ 14/13/12/12 · GĐ 365/C.202+C.202b khung Bảng giá + OCR draft 52
+> dòng · GĐ 366/C.203 kiểm kê +2 cột · GĐ 367 bump. Repo con — C.200 fix guard
+> catch-up lịch · C.201 sidebar · C.202/C.202b Bảng giá · C.203 kiểm kê +2 cột ·
+> C.204 bump.
+>
+> **Version:** app tổng **5.5.0** / repo con **8.4.0** — ĐÃ PUSH.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 367 — Push đợt GĐ 363-366/C.200-C.203, bump 5.5.0/8.4.0; GĐ 365/C.202 giữ 🔒 chờ ĐH duyệt 24 cặp map)*
+*Người cập nhật: Trợ lý Freebuff*
