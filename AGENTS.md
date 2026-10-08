@@ -1754,8 +1754,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > Thêm mới (dialog PA-3); Vắc xin 1 trang; NCC có Địa chỉ; KH nhãn "Mã tiêm
 > chủng".
 >
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
-> **5.3.3** / repo con **8.2.3**.
+> **Version:** ĐÃ PUSH (GĐ 359) — bump **5.4.0** / **8.3.0** + LIVE.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 358/C.195 — sửa 4 module DANH MỤC: +STT · biểu tượng CRUD giao diện PA-3; app tổng 5.3.3 / repo con 8.2.3)*
+### GĐ 359 (Trợ lý Freebuff): PA-1 Push đợt GĐ 355-358 / C.192-C.195 — bump 5.4.0 / 8.3.0 + LIVE production (2026-10-08)
+
+> **Lệnh "Push" của Đại ca (08/10, sau GĐ 358).** Rà trùng lặp theo nguyên
+> tắc 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG**; registry 0 🔒
+> dở; status chỉ file deleted cũ (attachments zip app tổng + script verify
+> gd-c184 repo con — của phiên trước, không đụng); email
+> `cuongpk.giong04@gmail.com` ✓.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.3.3 →
+> 5.4.0** (minor — GĐ 357 gộp 5 báo cáo KẾ TOÁN + GĐ 358 sửa 4 DANH MỤC +
+> GĐ 355/C.192 +11 cột CT MIA) — package.json + package-lock.json (dòng 3
+> + 9 — lesson: str_replace substring trúng 2 chỗ, sửa dòng 3 riêng theo
+> context "name") + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ; repo con
+> **8.2.3 → 8.3.0** (minor — C.194 gộp báo cáo + C.195 DANH MỤC + C.192) —
+> package.json + DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓ (5.4.0/
+> 8.3.0 mọi thành phần 1 chữ số; grep 0 sót version cũ).
+>
+> **Push:** app tổng `c847f35..12c1949` (GĐ 355 claim+docs · GĐ 356 claim ·
+> GĐ 357 claim+code+docs · GĐ 358 claim+docs · bump) · repo con
+> `54509d8..c41f689` (C.192 · C.193 code+docs · C.194 code+docs · C.195
+> code+docs · C.196 bump).
+>
+> **✅ Verify production (curl --compressed — không chỉ nhìn Ready):** app
+> tổng `giong-vn-v6.vercel.app` = **5.4.0** · app con
+> `giong-banhang.vercel.app` = **8.3.0** — cả 2 LIVE, không ghim deployment
+> cũ. Lesson nhỏ: pattern grep "VERSION x" không luôn khớp — grep số
+> version trần trong HTML là đủ.
+>
+> **Tiêu chí kiểm chứng nghiệp vụ:** app con — BÁO CÁO KẾ TOÁN 13 lá (8
+> Mua vào · 9 Bán ra · 10 VCB · 11 TCB · 12 TPB · 13 VTB) · 5 trang gộp 2
+> nút chạy riêng · 4 trang DANH MỤC có STT + icon Sửa/Xóa + Thêm mới ·
+> Vắc xin 1 trang · NCC có Địa chỉ · KH "Mã tiêm chủng".
+>
+> **Version:** app tổng **5.4.0** / repo con **8.3.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 359 — Push đợt GĐ 355-358/C.192-C.195, bump 5.4.0/8.3.0 LIVE; app tổng 5.4.0 / repo con 8.3.0)*
 *Người cập nhật: Trợ lý Freebuff*
