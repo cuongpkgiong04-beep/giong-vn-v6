@@ -1523,5 +1523,36 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 351 — copy docs REA vào skill PA-2; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 353 / C.190 (Trợ lý Freebuff): Fix "Mua vào - Chi tiết (MiaTool)" ngày tháng định dạng ngược — khung SmedPullModule chuẩn hóa hiển thị dd/mm/yyyy — PA-1 (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** kiểm tra phần app con "LẤY DỮ LIỆU TỪ MIA
+> TOOL — Mua vào - Chi tiết (MiaTool)": ngày tháng bị định dạng ngược; kiểu
+> đúng **dd/mm/yyyy**; xem TẤT CẢ các chỗ khác thống nhất định dạng này.
+> ĐH chốt **PA-1** (1 chỗ — render-only, không đụng payload web↔tool).
+
+> **Chẩn đoán (khai code — chi tiết đầy đủ ở AGENTS.md repo con C.190):**
+> thẻ job lịch sử khung dùng chung `SmedPullModule` hiển thị NGUYÊN chuỗi DB
+> `{j.dateFrom} → {j.dateTo}` — DB `smed_pull_jobs` chứa TRỘN định dạng:
+> khung SMED/MIA web tạo job tự gửi dd/mm/yyyy (qua `isoToDdmmyyyy` đầu
+> pipeline), nhưng luồng auto-download (`sql-data-module`) + luồng AI
+> (`chat.ts`) gửi ISO yyyy-mm-dd → job tạo từ luồng đó hiển thị YYYY-mm-dd.
+> Job MIA tạo tay có input `type=date` nghiêng về ISO → hiện "ngược".
+
+> **Đã làm (1 file — code repo con commit phiên này):**
+> `apps/banhang/src/components/smed-pull-module.tsx` — thêm `fmtJobDate()`
+> (chuẩn hóa render: ISO yyyy-mm-dd → dd/mm/yyyy · d/m/yyyy pad 2 chữ số ·
+> dd/mm/yyyy giữ nguyên · format lạ trả nguyên — không gây gãy), áp vào dòng
+> kỳ job trong lịch sử. KHÔNG đụng payload (tool đọc dateFrom/dateTo raw).
+
+> **Verify:** tsc app banhang **EXIT 0** · khung dùng chung áp cho MỌI module
+> DOWNLOAD (SMED/MISA/MIA/BANK) — mọi ngày job trên khung giờ luôn dd/mm/yyyy.
+
+> **Tiêu chí kiểm chứng:** web → DOWNLOAD DỮ LIỆU → Mua vào - Chi tiết
+> (MiaTool) → lịch sử job hiện kỳ dd/mm/yyyy kể cả job tạo từ luồng ISO;
+> format Excel file tool xuất KHÔNG đổi.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.2** / repo con **8.2.2**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 353/C.190 — fix ngày SmedPullModule PA-1; app tổng 5.3.2 / repo con 8.2.2)*
 *Người cập nhật: Trợ lý Freebuff*
