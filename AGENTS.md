@@ -1637,5 +1637,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (không đụng code app — chỉ .mcp.json + docs, chờ lệnh
 > Push — quy tắc ĐA AGENT). App tổng **5.3.3** / repo con **8.2.3**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 352 — deploy WeKnora + MCP PA-3; app tổng 5.3.3 / repo con 8.2.3)*
+### GĐ 355 / C.192 (Trợ lý Freebuff): Báo cáo "Mua vào - Chi tiết (MiaTool)" — +11 cột thiếu + Thuế suất % + Tiền thuế khớp Tổng quan từng đồng — PA-1 (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10, 3 ý):** (1) thiếu 11 cột (Tổng tiền CKTM ·
+> Tổng tiền phí · Trạng thái · KQT · Mã tra cứu · Ghi chú 1 · HTTT · Tính
+> chất · Ghi chú 2 · Số lô · Hạn dùng); (2) Thuế suất % + KHÔNG cộng
+> Subtotal; (3) Tiền thuế cộng 2 số thập phân, hiển thị không thập phân →
+> tổng CT = tổng TQ (T9: 265.076.902 vs 265.076.904 — lệch 2đ). Chốt PA-1.
+
+> **Chẩn đoán gốc lệch 2đ:** builder `mia_chitiet` put 'Tiền thuế' vào
+> `num_cols` → `_rows` làm tròn half-up TỪNG DÒNG trước khi cộng →
+> sum(round(line)) ≠ round(sum(line)). DB thật (probe /db/query GĐ 329):
+> sum(raw DECIMAL(19,2)) kỳ T9 = 265076902.0 = đúng số TQ.
+
+> **Đã làm (code repo con `828a4db` — chi tiết đầy đủ ở AGENTS.md repo con
+> C.192):** (1) ETL `mia_hddt_import.py` nạp +12 cột CT (c24-37 file CT 37
+> cột; CKTM/phí ép ÂM pattern C.152) + ALTER in-place + flag `--force`
+> (nạp lại file đã có hash khi thêm cột ETL); (2) builder `mia_chitiet`
+> SELECT +11 cột · Thuế suất SQL CASE '0.05'→'5%' (nguyên bỏ '.00') ·
+> 'Tiền thuế' LOẠI khỏi num_cols (Subtotal client cộng raw + làm tròn 1
+> lần cuối — KHÔNG đụng khung); (3) Vận hành: pyodbc local login 18456 (DB
+> chỉ cấp NT AUTHORITY\SYSTEM) → chạy ETL bằng `schtasks /ru SYSTEM` +
+> --force → nạp đè kỳ T9 (3 file 7.614 dòng) → dọn task.
+
+> **Verify (kỳ T9 thật):** 596 dòng × 28 cột · tổng Tiền thuế
+> **265.076.902 = TQ từng đồng** (hết lệch 2đ) · Thuế suất {'0%','8%','10%'}
+> Subtotal rỗng · cột mới: CKTM 91 (VD 212.221) · Trạng thái/KQT/Tính chất
+> 596/596 · Mã tra cứu 300 · HTTT 544 · Số lô/Hạn dùng 290 (VD AVAXIM
+> 'Y3G04D3' / 31/07/2027) · Tổng tiền phí/Ghi chú 1/Ghi chú 2 = 0 dòng
+> (cổng T9 không phát sinh — đúng data) · py_compile OK.
+
+> **Tiêu chí kiểm chứng (sau Push):** trang Chi tiết MIA chạy lại kỳ T9 →
+> 28 cột · Thuế suất '8%' Subtotal rỗng · SUBTOTAL Tiền thuế = 265.076.902.
+> mia-banra-chitiet dùng chung builder → tự hưởng +11 cột.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.3.3** / repo con **8.2.3**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 355/C.192 — +11 cột Chi tiết MIA + Thuế suất % + Tiền thuế khớp TQ PA-1; app tổng 5.3.3 / repo con 8.2.3)*
 *Người cập nhật: Trợ lý Freebuff*
