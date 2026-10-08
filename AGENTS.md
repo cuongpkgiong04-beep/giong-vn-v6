@@ -1961,3 +1961,27 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.4.0** / repo con
 > **8.3.0**.
+
+### GĐ 366 / C.203 (Trợ lý Freebuff): Báo cáo kiểm kê cuối kỳ — thêm cột "Tên vắc xin" + "ĐVT" sau Mã hàng — PA-1 (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** báo cáo kiểm kê chỉ có Mã hàng khó tra — ĐH chốt
+> **PA-1**: LEFT JOIN bảng `vaccines` (ma_smed → ten_hang/dvt) thêm 2 cột "Tên vắc
+> xin" + "ĐVT" ngay sau "Mã hàng", không đụng logic snapshot/kỳ.
+>
+> **Đã làm (repo con `3417e1f` — chỉ `agent/etl/sql_reports.py`):** map dict
+> vaccines (52 dòng) tra trong Python sau snapshot lô — không đụng SQL; không khớp
+> → rỗng (LEFT JOIN); bảng chưa seed → cột rỗng không gãy (try/except). Sửa đủ 3
+> chỗ: row dict + placeholder + **return columns const** (bẫy C.197b — lần 1
+> verify bắt được columns cũ).
+>
+> **Verify (bằng chứng thật — schtasks SYSTEM, script `gd366-verify-kiemke.py`):**
+> kỳ 09/2026: **1.205 lô còn tồn · 1.026 có tên+ĐVT** khớp vaccines (179 rỗng =
+> hàng ngoài danh mục — đúng LEFT JOIN) · 12 cột đúng thứ tự · sample 'Abhayrab
+> 0.5ml → Vắc-xin phòng bệnh dại (Ấn Độ) · Liều' · py_compile OK.
+>
+> **Tiêu chí kiểm chứng (sau Push):** trang /m/bc-kiem-ke chạy lại kỳ bất kỳ →
+> bảng chính 12 cột, Tên vắc xin + ĐVT sau Mã hàng; lô ngoài bảng vaccines → 2
+> cột rỗng, không mất dòng.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.4.0** /
+> repo con **8.3.0**.
