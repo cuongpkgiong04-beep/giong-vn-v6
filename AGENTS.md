@@ -1554,5 +1554,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.3.2** / repo con **8.2.2**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 353/C.190 — fix ngày SmedPullModule PA-1; app tổng 5.3.2 / repo con 8.2.2)*
+### GĐ 354 / C.191 (Trợ lý Freebuff): PA-1 Push đợt GĐ 353/C.190 — bump 5.3.3 / 8.2.3 + LIVE production (2026-10-08)
+
+> **Lệnh "Push" của Đại ca (08/10, sau GĐ 353).** Rà trùng lặp theo nguyên tắc 3:
+> `agent-cli` + `pipeline-work` = RỖNG cả 2 repo; status chỉ 1 file deleted của
+> phiên khác (không đụng). **⚠️ CẢNH BÁO: registry còn 1 🔒 dở (GĐ 352 WeKnora
+> — phiên khác, docs-only)** → hỏi Đại ca (3 lựa chọn) — anh chốt **PUSH NGAY**
+> vì code `f0a0c21` không đụng file nào của WeKnora; vùng giao nhau chỉ docs
+> (đã commit riêng từng file).
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.3.2 → 5.3.3**
+> (patch — fix GĐ 353) — package.json + package-lock.json (2 chỗ root) +
+> DEFAULT_VERSION app-shell.tsx; repo con **8.2.2 → 8.2.3** (patch — C.190) —
+> package.json + DEFAULT_VERSION app-shell.tsx. Checklist GĐ 138 ✓ (không
+> thành phần nào ≥ 10; package-lock repo con 5.9.4 legacy — không đụng, quy
+> tắc các lần push trước).
+
+> **Push:** app tổng `365edc5..23ad279` (GĐ 353 claim + docs C.190 unlock +
+> GĐ 354 bump) · repo con `f14b751..54509d8` (C.190 code+docs + C.191 bump).
+>
+> **✅ Verify production (curl --compressed + grep -aoE):** app tổng
+> `giong-vn-v6.vercel.app` — HTML chứa `VERSION 5.3.3` · app con
+> `giong-banhang.vercel.app` — `VERSION 8.2.3` · cả 2 **HTTP 200**. Chú ý kỹ
+> thuật: chuỗi version trong HTML tách bởi HTML comment (`VERSION <!--
+> -->5.3.3`) nên grep pattern `VERSION [0-9.]+` KHÔNG khớp — phải dùng
+> `5\.3\.[0-9]` trần.
+
+> **Tiêu chí kiểm chứng của Đại ca:** app con → DOWNLOAD DỮ LIỆU → Mua vào -
+> Chi tiết (MiaTool) → Lịch sử lấy dữ liệu — các job cũ hiện kỳ dạng
+> **dd/mm/yyyy** (trước YYYY-mm-dd); khung dùng chung → MỌI module DOWNLOAD
+> (SMED/MISA/MIA/BANK) đồng bộ dd/mm/yyyy; format Excel tool xuất không đổi.
+
+> **Version:** app tổng **5.3.3** / repo con **8.2.3** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 354/C.191 — Push đợt C.190; app tổng 5.3.3 / repo con 8.2.3)*
 *Người cập nhật: Trợ lý Freebuff*
