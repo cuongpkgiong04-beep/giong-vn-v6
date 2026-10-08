@@ -1587,5 +1587,55 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **5.3.3** / repo con **8.2.3** — ĐÃ PUSH + ĐÃ LIVE.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 354/C.191 — Push đợt C.190; app tổng 5.3.3 / repo con 8.2.3)*
+---
+
+### GĐ 352 (Trợ lý Freebuff): Khảo sát WeKnora-main + PA-3 deploy WeKnora bản chuẩn + MCP cho agent (2026-10-08)
+
+> **Yêu cầu của Đại ca (08/10):** đọc `D:\DuLieuChung\CUONG_2026\Github\WeKnora-main`
+> (Tencent/WeKnora v0.8.2, MIT — framework RAG/Agent/Wiki dùng LLM, backend Go +
+> frontend Vue). ĐH chốt **PA-3**: deploy WeKnora + nối MCP cho agent (hỏi-đáp
+> tài liệu nội bộ). Lựa chọn ĐH: cài Docker Desktop ngay · **bản CHUẨN** · LLM
+> **GLM (Zhipu)** — key sẽ cung cấp sau (cấu hình qua Settings → Models).
+
+> **Khảo sát:** WeKnora là hệ self-hosted độc lập — KHÔNG nhét vào code app
+> (app không gọi LLM; stack khác hẳn). Giá trị trúng: biến kho tài liệu nội bộ
+> (hướng dẫn sử dụng, quy trình SMED...) thành **hỏi-đáp có trích dẫn** + MCP
+> cho agent truy vấn knowledge base. Compose mặc định đã dùng
+> `RETRIEVE_DRIVER=postgres` + `STORAGE_TYPE=local` → KHÔNG cần qdrant/minio.
+
+> **Đã làm (0 đụng code app tổng/repo con):**
+> 1. **Cài lại Docker Desktop** (cài dang dở trước đó — `resources` trống, không
+>    có docker.exe): tải installer 635MB, `install --quiet --accept-license` →
+>    **v29.8.2 + Compose v5.5.1**, engine READY (4 CPU / 8GB WSL2).
+> 2. **Deploy WeKnora v0.8.2** tại thư mục gốc WeKnora-main: `.env` từ
+>    .env.example (JWT_SECRET + SYSTEM_AES_KEY random hex 32, version ghim
+>    v0.8.2, `FRONTEND_PORT=8180` tránh trùng 80) → pull images (~6GB) →
+>    `docker compose up -d` → **6 containers LIVE**: app (:8080, healthy) ·
+>    frontend (:8180, HTTP 200) · docreader · postgres · redis · **mcp (:8082,
+>    profile full riêng)**. WeKnora health `{"status":"ok"}`.
+> 3. **Account admin + API key:** đăng ký qua API `/auth/register`
+>    (cuongpk.giong04@gmail.com / Admin123!, owner workspace 10000) → tạo API
+>    key `agent-mcp` full-access (`POST /tenants/10000/api-keys`) → bật service
+>    `mcp` (WEKNORA_API_KEY + MCP_SERVER_AUTH_TOKEN random trong .env) →
+>    **verify MCP**: curl initialize → `weknora-server v1.1.1` trả capabilities.
+> 4. **Claude Code:** thêm server `weknora` (HTTP `http://localhost:8082/mcp`,
+>    Bearer token) vào `.mcp.json` cạnh `rea` — anh duyệt "Pending approval"
+>    1 lần ở phiên Claude Code đầu tiên.
+>
+> **Bảo mật:** secrets nằm trong `WeKnora-main/.env` (ngoài repo, không commit).
+> Dữ liệu WeKnora trong Docker volume `postgres-data` + `data-files`.
+>
+> **Còn dở (checkpoint phiên sau):** (1) Đại ca cung cấp API key GLM → cấu hình
+> chat model (GLM-4.x) + embedding (`embedding-3`) qua Settings → Models hoặc
+> API; (2) tạo knowledge base + nạp tài liệu nội bộ (hướng dẫn sử dụng, quy
+> trình...); (3) test hỏi-đáp RAG + test MCP tools từ Claude Code.
+>
+> **Tiêu chí kiểm chứng (khi có key):** web :8180 đăng nhập → upload tài liệu →
+> hỏi-đáp trả lời kèm trích dẫn; Claude Code gọi tool weknora (retrieve/chat)
+> được.
+>
+> **Version:** KHÔNG bump (không đụng code app — chỉ .mcp.json + docs, chờ lệnh
+> Push — quy tắc ĐA AGENT). App tổng **5.3.3** / repo con **8.2.3**.
+
+*Cập nhật lần cuối: 2026-10-08 (GĐ 352 — deploy WeKnora + MCP PA-3; app tổng 5.3.3 / repo con 8.2.3)*
 *Người cập nhật: Trợ lý Freebuff*

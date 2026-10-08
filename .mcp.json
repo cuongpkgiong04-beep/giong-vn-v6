@@ -9,6 +9,13 @@
         "mcp"
       ],
       "env": {}
+    },
+    "weknora": {
+      "type": "http",
+      "url": "http://localhost:8082/mcp",
+      "headers": {
+        "Authorization": "Bearer a968d894d70640d124a106faf315df9efdc1c5f61602fee4"
+      }
     }
   }
 }
