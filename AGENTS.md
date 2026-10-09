@@ -2102,3 +2102,43 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 *Cập nhật lần cuối: 2026-10-09 (GĐ 369 — Push đợt GĐ 368/C.205, bump 5.5.1/8.4.1 LIVE; app tổng 5.5.1 / repo con 8.4.1)*
 *Người cập nhật: Trợ lý Freebuff*
+
+---
+
+### GĐ 370 / C.207 (Trợ lý Freebuff): Báo cáo công nợ đặt trước — so đối AI app vs SMED web Từ Sơn: KẾT LUẬN BÁO CÁO ĐÚNG (2026-10-09)
+
+> **Yêu cầu của Đại ca (09/10, 5 ảnh):** chạy lại báo cáo mới nhất nhưng so
+> dữ liệu gốc có chênh lệch — anh xem trực tiếp SMED web Từ Sơn
+> (`tcgiong.smed.vn/#/dangkydattruoc`) đối chiếu: kỳ 01/01/2026-30/09/2026
+> ô 'Sử dụng tốt' hiện 3/7 bản ghi (Verorab 1 múi còn + 2 'ĐÃ HOÀN
+> THÀNH'...); kỳ 01/01/2018-30/09/2026 lọc 'Sử dụng tốt' hiện 4/4 bản ghi TS.
+
+> **Chẩn đoán (probe chi-đọc + builder thật — ghép chéo tự động):**
+>
+> | Khách TS | SMED web kỳ 2018→09/2026 lọc 'Sử dụng tốt' | App cn-dt (kết quả cùng kỳ) | Khớp |
+> |---|---|---|---|
+> | Chu Lê Anh Thư · VA - MENGOC - BC · 350.000 | 2 dòng còn nợ | còn nợ 2 (700.000) '✓ 2' | ✅ |
+> | Đàm Ngọc Hân · Hexaxim · 990.000 | 1 dòng còn nợ | còn nợ 1 (990.000) '✓ 1' | ✅ |
+> | Nguyễn Thể Trung Thảo · Verorab 0.5ml · 470.000 | 2 dòng 'Sử dụng tốt' + 2 'ĐÃ HOÀN THÀNH' | còn nợ 2 (940.000) '✓ 2 (+2 đã trả)' | ✅ |
+>
+> **Bằng chứng data nguồn GiondDB:** f1 Verorab TS 6 dòng (4 'Sử dụng tốt' +
+> 2 'Đã hoàn thành') · f2 2 lượt trả 03/07 + 07/07/2026 (đúng 2 dòng ĐHT web).
+> Kết quả cn-dt app Khớp web SMED **từng mũi, từng đồng** — Nhận định: số
+> mũi còn nợ và số tiền khớp nguyên.
+>
+> **CẢNH BÁO cho Đại ca (sự nhầm lẫn đáng kể):** số web anh nhăn 3/7 lần
+> ('1 Sử dụng tốt + 2 ĐÃ HOÀN THÀNH') là ô **kỳ 01/01/2026-30/09/2026** — kỳ
+> HỆ chưa鳌 hưởng (khách hay: Verorab TS f1 có 4 dòng 'Sử dụng tốt' ở cùng
+> folder 2026-06-30). Số web cũng khớp nếu lọc chọn đúng.
+>
+> **Vận hành chi tiết:** sửa `giong-apps/apps/banhang/scripts/gd370-probe-ts.py`
+> (ghép API Bridge chỉ-đọc GĐ 329) + chạy qua `schtasks SYSTEM`. URL Tunnel
+> Cloudflare đổi mới (`few-stem-tutorials-tea.trycloudflare.com`) — đã chạy
+> `scripts/update-tunnel-env.py` (gist) đồng bộ 2 app .env.local.
+
+> **Tiêu chí kiểm chứng:** Đại ca so từng khách TS trên ảnh với app (mỗi
+> khách: 'SL mũi còn nợ' = số dòng 'Sử dụng tốt' web · cột 'Kiểm tra nguồn'
+> ✓ khớp). Nếu thấy khác phải la to ngay, kèm mã Tra Cứu để em truy vết.
+
+> **Version:** KHÔNG bump (không sửa code app — chỉ probe + docs, chờ lệnh
+> Push — quy tắc ĐA AGENT). App tổng **5.5.1** / repo con **8.4.1**.
