@@ -2072,5 +2072,33 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.5.0** / repo con **8.4.0**.
 
-*Cập nhật lần cuối: 2026-10-09 (GĐ 368/C.205 — fix Task_03 date-format ISO — split đảo thứ tự spawn + fallback ISO builder; app tổng 5.5.0 / repo con 8.4.0)*
+### GĐ 369 / C.206 (Trợ lý Freebuff): PA Push đợt GĐ 368 / C.205 — bump 5.5.1 / 8.4.1 + LIVE production (2026-10-09)
+
+> **Lệnh "Push" của Đại ca (09/10, sau GĐ 368).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry 0 🔒
+> dở; status sạch (repo con chỉ 1 file deleted `gd-c184-verify…mjs` của phiên
+> cũ — không đụng); email `cuongpk.giong04@gmail.com` ✓.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.5.0 →
+> 5.5.1** (patch — fix GĐ 368) — package.json + package-lock.json (2 chỗ root,
+> dòng sót 5.5.0 = buffer ^5.5.0 thư viện ngoài trùng số trúng — giữ nguyên,
+> lesson GĐ 328) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ; repo con
+> **8.4.0 → 8.4.1** (patch — C.205) — package.json + DEFAULT_VERSION — đủ 2
+> chỗ (package-lock 5.9.4 legacy — không đụng, quy tắc GĐ 354). Checklist
+> GĐ 138 ✓ (mọi thành phần 1 chữ số).
+>
+> **Push:** app tổng `b8eaddb..a206e94` (GĐ 368 claim+docs+vòng đỏ+probe · GĐ
+> 369 claim+bump) · repo con `3abed04..009b2a3` (C.205 code+f147f94 docs+test ·
+> C.206 bump). tsc EXIT 0 cả 2 app trước push.
+>
+> **✅ Verify production:** curl `giong-vn-v6.vercel.app` = **5.5.1** ·
+> `giong-banhang.vercel.app` = **8.4.1** — LIVE, không ghim deployment cũ.
+>
+> **Tiêu chí kiểm chứng nghiệp vụ:** slot Task_02 17:25 mai → Task_03 spawn với
+> config.date DD/MM/YYYY → 28 báo cáo hết error; job lỗi 09/10 = snapshot —
+> bấm "Chạy lại" chạy lại ngay.
+>
+> **Version:** app tổng **5.5.1** / repo con **8.4.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+*Cập nhật lần cuối: 2026-10-09 (GĐ 369 — Push đợt GĐ 368/C.205, bump 5.5.1/8.4.1 LIVE; app tổng 5.5.1 / repo con 8.4.1)*
 *Người cập nhật: Trợ lý Freebuff*
