@@ -2206,3 +2206,35 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (không đổi code app — script + data DB — chờ lệnh
 > Push — quy tắc ĐA AGENT). App tổng **5.5.1** / repo con **8.4.1**.
+
+---
+
+### GĐ 370-D / C.207d (Trợ lý Freebuff): Ảnh web SMED TS Trung Thảo "còn nợ 1 470.000" → tải file SMED trực tiếp + nạp đè f1+f2 TS — web ghi NỢ CHƯA TRỪ lượt trả (2026-10-09, 17:xx)
+
+> **Ảnh Đại ca (17:36):** web SMED TS mã 106190120120030 (Trung Thảo ·
+> Verorab 0.5ml · 470.000) kỳ dài — 3/3 bản ghi: 1 **'SỬ DỤNG TỐT'** + 2
+> 'ĐÃ HOÀN THÀNH'. Anh hỏi: "web còn nợ 1, em nói hết nợ?"
+
+> **Chẩn đoán bằng file SMED tải trực tiếp (17:51, scripts/gd370-*.py repo con):**
+> file f1 TS mới nhất = 3 dòng (1 SDT + 2 ĐHT) GIỐNG HỆT ảnh web; f2 = 2
+> lượt trả Trung Thảo ngày **03/07 + 07/07/2026**. Nghĩa: 3 mũi đặt trước —
+> 2 đã tiêm ('Đã hoàn thành'), 1 mũi trạng thái vẫn 'Sử dụng tốt' nhưng
+> **đã có 2 lượt ghi trả mũi trong f2** — SMED web đếm NỢ theo TRẠNG THÁI
+> (đang còn 1 'Sử dụng tốt' = "còn nợ 1"), KHÔNG trừ lượt trả f2.
+
+> **Đã làm:** DELETE f1+f2 TS toàn folder + INSERT file 17:51 folder
+> 'gd370-tuson' (f1 633 dòng · f2 2.966 dòng). f3/f4 gói TS GIỮ nguyên (kỳ
+> dài tool chỉ tải được f1/f2 — công nợ GÓI không đụng).
+
+> **Verify builder thật:** cn-dt Trung Thảo **KHÔNG còn trong danh sách
+> nợ** — app trừ lượt trả f2 (logic C.182/C.198 đã ĐH duyệt GĐ 338/361 —
+> đúng nghiệp vụ "tiền đã thu"). Bảng 1 TS: 135 mũi còn nợ (3 đặt trước =
+> Hân 990k + Thư 2×350k) ✓.
+
+> **⚠️ KHÁC BIỆT QUY TẮC ĐẾM (đợi anh chốt):** web SMED = đếm trạng thái raw
+> ('Sử dụng tốt' = còn nợ dù f2 đã ghi trả); app = trừ lượt trả (đúng tiền
+> thực thu). Trung Thảo: web còn nợ 1 = 470.000 · app còn nợ 0. Nếu anh
+> muốn app ĐỒNG BỘ quy tắc đếm web → bỏ lọc đã-trả khỏi cn-dt (số sẽ cao
+> hơn vì gộp cả mũi đã trả tiền thật). Anh chốt hướng nào em làm.
+
+> **Version:** KHÔNG bump — app tổng **5.5.1** / repo con **8.4.1**.
