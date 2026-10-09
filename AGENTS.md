@@ -2142,3 +2142,33 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (không sửa code app — chỉ probe + docs, chờ lệnh
 > Push — quy tắc ĐA AGENT). App tổng **5.5.1** / repo con **8.4.1**.
+
+### GĐ 370-B (Trợ lý Freebuff): Sâu hơn theo chỉ thị "không được đoán" — TIÊN DU: xác nhận LỆCH THẬT 1 mũi — chờ ĐH chốt PA (2026-10-09, 16:2x)
+
+> **ĐH chỉ thị:** "kiểm tra lại sâu hơn vì dữ liệu không thể đoán thế được... em
+> có thể vào trang web SMED của Tiên Du kiểm tra công nợ cho rõ ràng hơn" (ảnh
+> TS Verorab: web còn nợ 1 'Sử dụng tốt').
+
+> **Đã làm (bằng chứng trực tiếp, KHÔNG đoán):** chạy tool 23 độc lập
+> (scripts/gd370-download-tiendu.py — headless, cổng tcgiongts, KHÔNG đụng
+> service) tải đủ 4/4 file TIÊN DU kỳ 01/01/2018-09/10/2026 lúc 16:17 +
+> builder thật dump cn-dt TD (gd370-run-bccn-td.py).
+>
+> **Chuỗi bằng chứng (Gardasil 9 · Đinh Thị Hà Phương · TD · 2.915.000):**
+> | Nguồn | Data | Còn nợ thực |
+> |---|---|---|
+> | File SMED tải 16:17 hôm nay | 2 dòng (1 SĐT + 1 ĐHT) | **1 mũi** |
+> | File trả mũi tải cùng lúc | 1 lượt trả 11/07/2026 | — |
+> | DB app (folder 2026-05-11) | 4 dòng (3 SĐT + 1 ĐHT) + f2 1 trả | 3−1 = 2 |
+> | App báo cáo hiện tại | còn nợ 2 — 5.830.000 '✓ 2 (+1 đã trả)' | **2 = SAI** |
+>
+> **Chân rễ (sửa kết luận GĐ 370 trước):** job download `dattruoc` gần nhất
+> CHƯA nạp file mới (ETL nạp đè) → builder tính trên snapshot cũ. Lệch đúng
+> 1 mũi/2.915.000đ ở TD; TS Verorab ('web còn nợ 1') cùng cơ chế — KẾT LUẬN
+> GĐ 370 "app đúng" chỉ đúng với số file trong DB, KHÔNG đúng với web realtime.
+>
+> **Chờ ĐH chốt:** PA-1 chạy lại job dattruoc + ETL đè + verify TD=1 mũi ·
+> PA-2 = PA-1 + giám sát expected_files 19/19 cảnh báo trên web · PA-3 chỉ
+> thêm cột "snapshot at" minh bạch. **KHÔNG sửa code chờ chốt.**
+>
+> **Version:** KHÔNG bump. App tổng **5.5.1** / repo con **8.4.1**.
