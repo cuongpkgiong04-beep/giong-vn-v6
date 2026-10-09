@@ -2172,3 +2172,37 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > thêm cột "snapshot at" minh bạch. **KHÔNG sửa code chờ chốt.**
 >
 > **Version:** KHÔNG bump. App tổng **5.5.1** / repo con **8.4.1**.
+
+### GĐ 370-C / C.207c (Trợ lý Freebuff): PA-1 thực thi — ETL nạp đè file mới Tiên Du vào GiondDB — BẢNG 1 TD còn nợ 1 mũi ✓ khớp web SMED (2026-10-09, chiều)
+
+> **ĐH chốt PA-1** (hỏi-đáp: PA-1 chạy lại + nạp đè · PA-2 + cảnh báo thiếu file · PA-3 cột minh bạch — không sửa code).
+
+> **Đã làm (không đổi code app — script + data):**
+> 1. **Quan sát:** job dattruoc tải ngày 09/10 wrote files vào
+>    `apps/banhang/OUTPUT/10.GDTVX/2026-10-08/` (76 file — DAY DIR theo `date_to`
+>    08/10) — khi 09:00 sáng 09/10 job loadSchedule chạy (chưa qua TB) → DB vẫn
+>    snapshot cũ 2026-10-05 → Tiên Du Hà Phương (ngày trả 11/07) lệch 1 mũi.
+> 2. **Script `scripts/gd370-push-tiendu.py` (repo con — push qua Tunnel API :8777
+>    cục bộ — x-api-token đúng .secrets/api_token.txt của api_server):**
+>    - DELETE TOÀN BỘ 4 bảng `stg_10gdtvx_f1..f4` CRITERIA `center='TD'` (309/
+>      1070/60/1151 dòng) — tránh dedupe _gdtvx_keep_latest lọc folder-thạng
+>      thái cho dữ liệu rename (khớp web SMED mà data casa không đổi).
+>    - Parse 4 file mới (OUTPUT/10.GDTVX/gd370-tiendu — 16:17, tool 23 TD cổng
+>      tcgiongts) bằng `etl_import.parse_file` + `INSERT folder='gd370-tiendu'`
+>      → f1 148 · f2 514 · f3 30 · f4 512 dòng.
+> 3. **Verify builder dùng `_gdtvx_load` (ding = folder mới nhất**: TT TD
+>    áp từ `time 16:17` không còn snapshot old folder — `dich_vu <> ''` +
+>    `ma_tc <> '' + ngay_dang_ky <> ''` f1.** Hà Phương f1 đơn giản còn 2 dòng
+>    (1 Sử dụng tốt + 1 Đã hoàn thành) — f2 1 lượt trả 11/07/2026 2915000.**
+> 4. **KẾT QUẢ đúng như web SMED Tiên Du realtime:**
+>    - **Bảng 1 (`tt-cn`) Tiên Du: 'Số mũi đặt trước còn nợ' = 1** (19 mũi
+>      trong gói + 1 đặt trước = tổng 20 — đã 2 trước khi nạp đè).
+>    - **`cn-dt` TD chỉ còn 1 khách:** Minh Anh MENGOC 330.000 (Hà Phương bị
+>      loại đúng 2.915.000 — f2 11/07 đã lọc).
+>    - Kiểm tra nguồn toàn 19: ✓ (không ✗ lệch).
+
+> **Tiêu chí kiểm chứng:** trang bccn kỳ dài → Bảng 1 Tiên Du còn nợ 1 đặt
+> trước; TD trên web job MỚI sau mai không lệch web.
+
+> **Version:** KHÔNG bump (không đổi code app — script + data DB — chờ lệnh
+> Push — quy tắc ĐA AGENT). App tổng **5.5.1** / repo con **8.4.1**.
