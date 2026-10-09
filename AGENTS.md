@@ -2038,5 +2038,39 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > **Version:** KHÔNG bump (seed data + script agent — không đổi code app).
 > App tổng **5.5.0** / repo con **8.4.0**.
 
-*Cập nhật lần cuối: 2026-10-08 (GĐ 365-close/C.202c — ĐH chốt 24 cặp map, seed đủ 52/52 price_list — hết 🔒 dở dang; app tổng 5.5.0 / repo con 8.4.0)*
+### GĐ 368 / C.205 (Trợ lý Freebuff): Fix Task_03 28 báo cáo fail `time data '2026/10/08' does not match format '%d/%m/%Y'` — PA-1 (2026-10-09)
+
+> **Lỗi của Đại ca (09/10, 7:31 ảnh):** Task_03 (tạo 01:54, chạy 03:28–03:56)
+> **0/28 bước OK** — mọi báo cáo fail cùng chuỗi `time data '2026/10/08' does not
+> match format '%d/%m/%Y'`. Yêu cầu: tìm hiểu lỗi và khắc phục.
+>
+> **Chẩn đoán (vòng đỏ + probe chứng thật):** (1) unit tái hiện ĐÚNG chuỗi lỗi
+> `_parse_date('2026/10/08')`; (2) DB: **80/80 job sqlreport Task_03 có
+> `date_from` ISO YYYY/MM/DD**; (3) log agent 21:52:42: spawn Task_02 · 17:25
+> ghi `date = 2026/10/08` (ISO) trong khi · 19:00 ghi `08/10/2026` (đúng);
+> (4) Task_03 spawn 01:54 ăn đúng ISO từ config Task_02 · 17:25 → cả 28 fail.
+>
+> **Bug GỐC — `task_runner._spawn_daily_task`:**
+> `d, m, y = today_iso.split("-")` — **THỨ TỰ ĐẢO** (ISO là y-m-d) →
+> ddmmyyyy = "2026/10/08". Nhánh fallback strftime DD/MM không bị → task spawn
+> sau (19:00) đúng, task 17:25 sai.
+>
+> **ĐH chốt PA-1. Đã làm 2 file (repo con `68b0525` + docs `f147f94`):**
+> 1. **GỐC:** `y, m, d = today_iso.split("-")` — config.date luôn DD/MM/YYYY.
+> 2. **`_parse_date` fallback ISO slash/dash** — chặn 2 luồng gửi ISO còn lại
+>    (chat AI GĐ 353 / auto-download); sai tháng 13/chuỗi lạ vẫn raise đúng luật.
+>
+> **Verify:** py_compile OK · unit **8/8 PASS exit 0** (`gd368-fix.test.py`)
+> · vòng đỏ XANH 4/4 · **builder chạy THẬT GiondDB với chuỗi ISO '2026/10/08**
+> qua schtasks SYSTEM (login 18456): revenue-by-day 1 dòng · xk-by-date 213
+> dòng — bản cũ raise ValueError ngay khối.
+>
+> **Tiêu chí kiểm chứng:** Task_03 spawn sau slot Task_02 kế (17:25 mai) → 28
+> báo cáo hết error, log spawn ghi kỳ DD/MM/YYYY; job lỗi 09/10 là snapshot —
+> bấm "Chạy lại" trên web để chạy lại.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.5.0** / repo con **8.4.0**.
+
+*Cập nhật lần cuối: 2026-10-09 (GĐ 368/C.205 — fix Task_03 date-format ISO — split đảo thứ tự spawn + fallback ISO builder; app tổng 5.5.0 / repo con 8.4.0)*
 *Người cập nhật: Trợ lý Freebuff*
