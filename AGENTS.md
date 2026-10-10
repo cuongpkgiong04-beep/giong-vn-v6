@@ -2499,3 +2499,38 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.6.1** / repo con **8.5.1**.
+
+### GĐ 379 / C.217 (Trợ lý Freebuff): PA Push đợt GĐ 377-378 / C.215-C.216 — bump 5.6.2 / 8.5.2 + LIVE production + restart agent nạp C.215 (2026-10-10)
+
+> **Lệnh "Push" của Đại ca (10/10, sau GĐ 378).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` = RỖNG cả 2 repo; registry KHÔNG có 🔒 dở mới (các 🔒 sót
+> đều GĐ cũ đã hoàn tất — dọn dịp khác); status còn `src/lib/permissions.ts`
+> modified (sót GĐ 315 — chờ ĐH OK riêng, KHÔNG đụng) + `attachments/*.zip`
+> deleted cũ + repo con `gd-c184-verify-banhang-nav.mjs` deleted cũ — không
+> add; email `cuongpk.giong04@gmail.com` ✓.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.6.1 →
+> 5.6.2** (patch — C.215 revert logic công nợ đặt trước + C.216 fix ETL TCB) —
+> package.json + package-lock.json (2 chỗ root) + DEFAULT_VERSION
+> app-shell.tsx — đủ 4 chỗ, grep 0 sót; repo con **8.5.1 → 8.5.2** (patch —
+> cùng nội dung) — package.json + DEFAULT_VERSION — đủ 2 chỗ, grep 0 sót.
+> Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+
+> **Push:** app tổng `aff105c..b6d0d9f` (GĐ 377 claim+entry+unlock · GĐ 378
+> claim+entry+unlock · GĐ 379 claim+bump) · repo con `82cfc16..55ae65c` (C.215
+> revert+docs · C.216 code+docs · C.217 bump).
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **5.6.2** · app con `giong-banhang.vercel.app` =
+> **8.5.2** — cả 2 LIVE. E2E prod `gd378-verify-prod.mjs` chạy lại sau push:
+> **7/7 PASS** — trang bc-bank-tcb kỳ 09/10 Hoàn thành + bảng
+> 13.000.000 / 13.538.070 đúng.
+
+> **Vận hành:** restart GIONG_SMED_Agent 18:30 nạp sql_reports bản C.215
+> (chờ job hentiem 19 file kỳ 10/10 của Đại ca xong 18:28 + rảnh 50s mới
+> restart — không cắt job) — xóa __pycache__ · sc stop → start · RUNNING PID
+> mới 29212 · log `web_agent_101026_183032` · health 200 (db OK · 1.371 jobs ·
+> `tunnel_ok` — tunnel đổi URL `unnecessary-programming-convicted-very…`) →
+> `scripts/update-tunnel-env.py` đã đồng bộ `.env.local` 2 app.
+
+> **Version:** app tổng **5.6.2** / repo con **8.5.2** — ĐÃ PUSH + ĐÃ LIVE.
