@@ -2270,3 +2270,25 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > GIONG_SMED_Agent lúc rảnh để guard mới ăn (taskkill PID python giữ
 > port — lesson GĐ 329). KHÔNG bump chờ lệnh Push. App tổng **5.5.1** /
 > repo con **8.4.1**.
+
+### GĐ 372 / C.209 (Trợ lý Freebuff): Điều tra tk-goi Trung Thảo 6 dòng app vs 3 dòng SMED web — builder thật ĐÚNG 3 dòng; 6 dòng = snapshot job cũ + trình 3 PA check file mới nhất (2026-10-10)
+
+> **Báo của Đại ca (10/10, 2 ảnh):** tk-goi có 6 dòng Trung Thảo
+> (106190120120030 · TS · Verorab) vs SMED web 3 dòng · chỉ thị: MỌI
+> báo cáo khởi tạo phải kiểm tra thời gian Download file mới nhất trước
+> khi ETL nạp DB.
+>
+> **Chẩn đoán:** DB f1 Verorab TS khớp web 3/3 (1 'Sử dụng tốt' + 2
+> 'Đã hoàn thành') — builder thật (schtasks SYSTEM,
+> `scripts/gd372-probe-trungthao.py` repo con) dump tk-goi **3 dòng
+> khớp từng dòng/trạng thái/ngày tiêm (03/07 + 07/07/2026)**. Root
+> cause 6 dòng = snapshot job cũ trước nạp đè TS 17:51 09/10 (C.207d)
+> — f1 lặp 2 folder ×3. Báo cáo là SNAPSHOT — bấm "Chạy lại" là khớp.
+>
+> **Việc mới (check file Download mới nhất):** trình 3 PA — PA-1 cảnh
+> báo minh bạch (timestamp + folder kèm result) · PA-2 + check khoảng
+> cách kỳ vs lần Download, cảnh báo trước khi chạy · PA-3 chặn hoặc
+> tự-download chain. **CHỜ ĐH chốt PA — chưa code.**
+>
+> **Version:** KHÔNG bump (điều tra — chờ lệnh Push). App tổng
+> **5.5.1** / repo con **8.4.1**.
