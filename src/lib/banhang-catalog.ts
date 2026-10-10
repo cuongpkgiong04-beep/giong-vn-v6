@@ -65,7 +65,10 @@ export const BH_GROUPS: BhGroup[] = [
       // GĐ 340 (07/10): nhóm BÁN HÀNG mới trong NHẬP DỮ LIỆU (cuối nhóm — chốt
       // thứ tự DANH MỤC → KHO HÀNG → MUA HÀNG → BÁN HÀNG) — gán quyền nhóm MISA
       // backward-compat như GĐ 336.
+      // GĐ 370 (10/10): thêm lá "Chương trình khuyến mãi" (số 2), đẩy
+      // "Bảng TH GB-KM_GN-CK_LN" thành số 3.
       { to: "/m/banhang-bang-gia-dich-vu", label: "Bảng giá dịch vụ (BÁN HÀNG)" },
+      { to: "/m/banhang-chuong-trinh-khuyen-mai", label: "Chương trình khuyến mãi (BÁN HÀNG)" },
       { to: "/m/banhang-th-gbkm-gnck-ln", label: "Bảng TH GB-KM_GN-CK_LN (BÁN HÀNG)" },
     ],
   },
