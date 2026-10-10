@@ -2604,3 +2604,33 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.6.2** / repo con **8.5.2**.
+
+### GĐ 382 / C.219 (Trợ lý Freebuff): Fix "Số dư cuối kỳ" Phần 1 sao kê TCB — builder lấy balance GD CŨ nhất do file TCB template sort GIẢM dần (2026-10-10)
+
+> **Yêu cầu của Đại ca (10/10 tối):** "Okay fix số dư cuối kỳ TCB" — tiếp phát
+> hiện kèm GĐ 378. Phần 1 Tổng hợp kỳ 09/10: "Số dư cuối kỳ" ra 8.259.537
+> trong khi meta file ghi "Số dư hiện tại" = 721.467. Số GĐ 381 bị phiên khác
+> claim trước (gỡ dòng "Tổng mũi") → theo quy tắc GĐ 285 lấy **GĐ 382 / C.219**.
+
+> **Chẩn đoán:** builder `bank_tcb_tonghop` (GĐ 298 PA-2') lấy balance GD
+> "cuối cùng trong ngày" qua `row_number() … order by x.id desc` — giả định id
+> tăng theo thời gian. Thực tế file TCB template sort thời gian GIẢM dần (mới
+> nhất TRƯỚC — verify 5/5 file có GD, kể cả kỳ tháng 9 + kỳ 10/10 mới tải) →
+> id nạp tăng theo thứ tự file: id NHỎ = GD mới nhất, id LỚN = cũ nhất →
+> order desc lấy nhầm GD cũ nhất (09/10: id 3 = SANOFI 08:14 = 8.259.537 thay
+> vì id 1 = TANAPHAR 10:59 = 721.467).
+
+> **Đã làm (chi tiết ở AGENTS.md repo con C.219, code commit này):** 1 chỗ
+> `bank_tcb_tonghop`: `order by x.id desc` → `order by x.id asc` + docstring/
+> comment GĐ 382. Giữ triết lý GĐ 298 (balance ngân hàng ghi sẵn — đúng kể cả
+> DB thiếu GD); bank_tcb_tx không có giờ phút (req_date là DATE) — nếu template
+> TCB tương lai sort tăng dần thì phải thêm req_datetime đầy đủ qua ETL.
+
+> **Verify (builder thật trên GiondDB):** kỳ 09/10 — Số dư ngày 09/10 =
+> **721.467** ✓ · "Số dư cuối kỳ" = **721.467** ✓ khớp meta từng đồng (trước:
+> 8.259.537) · đầu kỳ 1.259.537 giữ nguyên ✓ · kỳ tháng 9 (333 GD/24 ngày): 26
+> dòng hợp lệ, cuối kỳ = balance 30/09 ✓ · py_compile OK. Restart agent chờ
+> rảnh (đang chạy job 23:00 khi commit) — check khi verify.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.6.2** / repo con **8.5.2**.
