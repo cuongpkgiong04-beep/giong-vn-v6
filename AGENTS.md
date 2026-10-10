@@ -2432,3 +2432,25 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > **Lưu ý đối chiếu:** sau GĐ này công nợ đặt trước builder = số web SMED
 > (CAO HƠN bản C.198 — khách đã trả tại quầy quay lại nằm trong còn nợ
 > theo đúng quy tắc web).
+
+### GĐ 377 / C.215 (Trợ lý Freebuff): UNDO GĐ 376/C.213 — công nợ đặt trước SAI CƠ BẢN khi Đại ca kiểm chứng (2026-10-10)
+
+> **Báo cáo của Đại ca (10/10):** chạy job MỚI kiểm chứng tiêu chí "cn-dt +
+> Bảng 1 = web SMED" → **SAI CƠ BẢN** → lệnh "Em undo lại phần công nợ đặt
+> trước này nhé".
+>
+> **Đã làm (repo con `c0fce52` — `git revert 664a41e`, KHÔNG viết lại lịch
+> sử):** sql_reports.py + test trả NGUYÊN VĂN logic C.198 trước GĐ 376 —
+> cn-dt + Bảng 1 LOẠI mũi đã trả `_da_tra` (ghép lượt GĐ 361, khóa giá);
+> 'Kiểm tra nguồn'/'Kiểm tra' về công thức C.198; test T13/T14 về kỳ vọng
+> cũ. Chi tiết đầy đủ ở AGENTS.md repo con C.215.
+>
+> **Verify:** `git diff 7131256 HEAD` trên 2 file = **0 dòng** (khớp 100%
+> bản trước GĐ 376) · py_compile OK · unit PASS TOÀN BỘ.
+>
+> **Bài học GĐ 376:** quy tắc "web đếm RAW f1 'Sử dụng tốt'" không đúng số
+> liệu thật — đổi logic phải soi bằng chứng job thật chạy đủ 2 nguồn trước
+> khi chốt, không đổi theo mô tả suy đoán.
+>
+> **Version:** KHÔNG bump (chưa Push). ⚠️ Production 5.6.1 đang chạy logic
+> SAI → CẦN Push đợt revert + restart agent nạp bản cũ — chờ lệnh ĐH.
