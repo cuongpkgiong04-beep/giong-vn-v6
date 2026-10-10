@@ -2381,3 +2381,29 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > nạp → needsData nhờ tải mới; job chết → error chứ không kẹt Đang chạy.
 >
 > **Version:** KHÔNG bump — app tổng **5.6.0** / repo con **8.5.0** LIVE.
+
+### GĐ 375 / C.212 (Trợ lý Freebuff): PA-2 mở rộng freshness TẤT CẢ nguồn — builder 4 nhánh max-data thật + server đồng bộ (2026-10-10)
+
+> **Lệnh ĐH (10/10 — chốt PA-2 trong 3 PA).** Mở rộng freshness cho BWX/BKN/
+> MIA/TCB/TPB/VCB... cùng nguyên tắc C.209b, so mốc DATA THẬT (bằng chứng
+> probe: BKX/BKN/DTTDT max(report_date)=09/10 · MIA 09/10 · TCB 05/10 ·
+> TPB/VCB 09/10) — chuẩn hơn imported_at.
+>
+> **Đã làm (repo con `7131256` — 5 file):**
+> 1. `check_source_data` — 4 nhánh freshness TRƯỚC check staging: MIA/TCB/TPB
+>    `MAX(period_to) ≥ date_to` · VCB `MAX(tx_date)` · generic
+>    `MAX(report_date)` + guard GĐ 244 THỐNG NHẤT = lượt nạp mới nhất
+>    (max imported_at) ≥ max-data+1 (file nạp quá khứ không đủ miễn trừ —
+>    bắt được nhờ k1 FAIL lần 1) · GDTVX giữ C.209b.
+> 2. `-smed.ts` — `maxDataCol()` module-scope + `loadSourceFreshness` trả
+>    `'mốc|STALE'` (max-data < date_to, 2 vòng query đồng bộ) +
+>    `checkReportFreshness` banner đổi sang scalar max-data.
+> 3. Form 2 chỗ parse `|STALE` (sql-data-module + sql-report-module).
+>
+> **Verify:** py_compile OK · **8/8 PASS kịch bản thật GiondDB** (schtask
+> SYSTEM — BKX/VCB/MIA/TCB kỳ tương lai → missing=1 nhờ tải mới; kỳ đến
+> đúng max → 0 không hỏi oan) · unit **54/54 PASS** · **tsc EXIT 0** (fix
+> 4 lỗi TS: maxDataCol scope + raw null) · dọn verify tạm.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.6.0** / repo con
+> **8.5.0** — đã LIVE GĐ 373.
