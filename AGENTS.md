@@ -2327,3 +2327,35 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.5.1** / repo con **8.4.1**.
+
+### GĐ 373 / C.210 (Trợ lý Freebuff): PA Push đợt GĐ 370-372b / C.207-C.209b — bump 5.6.0 / 8.5.0 (2026-10-10)
+
+> **Lệnh "Push" của Đại ca (10/10, sau GĐ 372b).** Rà trùng lặp theo nguyên
+> tắc 3: pull CẢ 2 repo = up to date · `main..agent-cli` + `main..pipeline-
+> work` = **RỖNG cả 2 repo** · registry **KHÔNG có 🔒 nào dở** · email
+> `cuongpk.giong04@gmail.com` ✓.
+>
+> **CẢNH BÁO ĐH + chốt push kèm (pattern GĐ 367):** working tree còn 4 file
+> dở của phiên khác — **khung "Chương trình khuyến mãi" GĐ 370 (10/10)**:
+> app tổng `banhang-catalog.ts` (chip lá 2) + repo con `nav.ts`/`smed-
+> auth.ts`/`routeTree.gen.ts` + route placeholder — code HOÀN CHỈNH khớp
+> tài liệu, KHÔNG giao file với đợt này (file của GĐ 372b đã commit hết)
+> → ĐH lệnh push đợt → include theo pattern GĐ 367 (push nhánh dở hoàn
+> chỉnh). File deleted cũ (`attachments/*.zip`, `gd-c184-verify…mjs`) —
+> của phiên trước, không đụng.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.5.1 →
+> 5.6.0** (minor — GĐ 372bfeature freshness PA-2 + khung khuyến mãi GĐ 370
+> + GĐ 371 fix heartbeat) — package.json + package-lock.json (2 chỗ root)
+> + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ, grep 0 sót (sót "5.5.1"
+> chỉ thư viện ngoài trúng số — lesson GĐ 328); repo con **8.4.1 →
+> 8.5.0** (minor — C.209b PA-2 + khung khuyến mãi + C.208 fix heartbeat)
+> — package.json + DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓
+> (5.6.0/8.5.0 mọi thành phần 1 chữ số).
+>
+> **Nội dung đợt push:** GĐ 370 TD/TS nạp đè + điều tra khớp web · GĐ 371
+> fix job kẹt 'Đang chạy' · GĐ 372 điều tra tk-goi 3 dòng khớp SMED ·
+> GĐ 372b/C.209b PA-2 check file Download mới nhất (freshness GDTVX + 2
+> form cảnh báo) · khung khuyến mãi GĐ 370 (phiên khác) · bump.
+>
+> **Version:** app tổng **5.6.0** / repo con **8.5.0** — ĐÃ PUSH.
