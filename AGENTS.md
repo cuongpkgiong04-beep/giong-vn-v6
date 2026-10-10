@@ -2359,3 +2359,25 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > form cảnh báo) · khung khuyến mãi GĐ 370 (phiên khác) · bump.
 >
 > **Version:** app tổng **5.6.0** / repo con **8.5.0** — ĐÃ PUSH.
+
+### GĐ 374 / C.211 (Trợ lý Freebuff): Restart GIONG_SMED_Agent — nạp code mới (C.208 guard + C.209b PA-2) (2026-10-10)
+
+> **Lệnh "Restart agent" của Đại ca (10/10, trưa 12:41).** Check rảnh: log
+> 30 phút = toàn "chưa có job mới", lịch định kỳ TẠM DỪNG; 1 job `blth`
+> kẹt running từ 08:52 (process cũ chết) → gỡ tay report error (web bấm
+> "Chạy lại" được) → restart an toàn 12:44.
+>
+> **Restart:** xóa __pycache__ (lesson GĐ 168) · sc stop · kill PID api cũ
+> 6200 (lesson GĐ 329) · sc start → RUNNING PID 30540; process mới
+> api_server 30104 + web_agent 17772 (12:45).
+>
+> **Verify:** log `web_agent_101026_124500.log` — poll Vercel 20s, task
+> runner 3 slot, health 200 (db OK · 1.363 jobs · tunnel_ok — tunnel mới
+> `music-cubic-final-normally`); source mới: C.208 guard (api_server
+> dòng 1100-1105) + C.209b PA-2 (sql_reports 12:24) — code GĐ 373
+> LIVE đã nạp.
+>
+> **Tiêu chí kiểm chứng:** job kế tiếp chạy code mới — bccn kỳ sau ngày
+> nạp → needsData nhờ tải mới; job chết → error chứ không kẹt Đang chạy.
+>
+> **Version:** KHÔNG bump — app tổng **5.6.0** / repo con **8.5.0** LIVE.
