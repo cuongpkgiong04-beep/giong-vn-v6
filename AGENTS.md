@@ -2634,3 +2634,45 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.6.2** / repo con **8.5.2**.
+
+### GĐ 383 (Trợ lý Freebuff): PA Push đợt GĐ 380-382 / C.218-C.219 — bump 5.6.3 / 8.5.3 + LIVE production + dựng SSH máy DESKTOP-F6K8CBD (2026-10-10)
+
+> **Lệnh "Push" của Đại ca (10/10, sau GĐ 381/382).** Chạy trên máy DESKTOP-F6K8CBD
+> (user cuong) lần đầu — SSH dựng mới trước khi push (xem phụ dưới).
+
+> **Rà trùng lặp theo nguyên tắc 3:** `main..agent-cli` + `main..pipeline-work` =
+> RỖNG; registry cột trạng thái sạch (1 🔒 SÓT GĐ 363/C.200 từ 08/10 — việc đã
+> xong qua commit `68b0525`/`f147f94`, push từ đợt GĐ 367 — đã dọn ô thành ✅);
+> status chỉ `permissions.ts` modified (GĐ 315/379 chờ ĐH OK riêng) + 2 file
+> deleted cũ — KHÔNG add file của agent khác.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.6.2 → 5.6.3**
+> (patch — C.218 gỡ dòng phụ + C.219 fix builder TCB) — package.json +
+> package-lock.json (2 chỗ root) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ ·
+> repo con **8.5.2 → 8.5.3** (patch) — package.json + DEFAULT_VERSION — đủ 2
+> chỗ. Node script kiểm đếm match trước khi ghi (5 file, 6 chỗ, 0 sót version
+> cũ — grep xác nhận). Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+
+> **Push:** app tổng `b6d0d9f..3d552f6` (12 commit — GĐ 379 entry · GĐ 380
+> claim+docs · GĐ 381/C.218 claim+docs · GĐ 382/C.219 claim+docs+unlock · GĐ 383
+> claim+bump) · repo con `55ae65c..4c6cdfd` (6 commit — C.218 code+docs · C.219
+> code+docs · C.220 bump).
+
+> **✅ Verify production (curl --compressed):** app tổng
+> `giong-vn-v6.vercel.app` = **VERSION 5.6.3** · app con
+> `giong-banhang.vercel.app` = **VERSION 8.5.3** — cả 2 LIVE. Lesson: SSR HTML
+> render `VERSION <!-- -->5.6.3` (React tách text node bằng comment) → pattern
+> grep `VERSION [0-9.]` KHÔNG khớp — phải grep `5\.6\.3` rồi soi context.
+
+> **Phụ — dựng SSH máy DESKTOP-F6K8CBD (user cuong, ZCode máy cá nhân):** máy
+> ĐÃ có key `id_ed25519` (đã đăng ký GitHub tài khoản cuongpkgiong04-beep —
+> `ssh -T git@github.com` ra "Hi cuongpkgiong04-beep!") — chỉ thiếu alias:
+> thêm block `Host github-beep → HostName github.com + User git +
+> IdentityFile ~/.ssh/id_ed25519 + IdentitiesOnly yes` vào `~/.ssh/config`.
+> `ssh -T git@github-beep` ✓ · pull --ff-only cả 2 repo "Already up to date".
+
+> **Tiêu chí kiểm chứng:** trang bc-banhang production hết dòng "Tổng mũi"
+> dưới SUBTOTAL (job cũ cũng hết — render client-side); job bccn MỚI → "Số dư
+> cuối kỳ" TCB lấy GD mới nhất (C.219 — cần restart agent để nạp builder mới).
+
+> **Version:** app tổng **5.6.3** / repo con **8.5.3** — ĐÃ PUSH + ĐÃ LIVE.
