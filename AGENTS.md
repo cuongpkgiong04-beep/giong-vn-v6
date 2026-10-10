@@ -2454,3 +2454,48 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chưa Push). ⚠️ Production 5.6.1 đang chạy logic
 > SAI → CẦN Push đợt revert + restart agent nạp bản cũ — chờ lệnh ĐH.
+
+### GĐ 378 / C.216 (Trợ lý Freebuff): Fix "Sao kê ngân hàng TCB không đủ dữ liệu dù đã download" — ETL TCB nạp 0 giao dịch, parser hardcode header dòng 29 vs template thật dòng 21 (2026-10-10)
+
+> **Yêu cầu của Đại ca (10/10, 2 ảnh):** báo cáo "Sao kê ngân hàng TCB" hiển thị
+> "⚠ Chưa đủ dữ liệu" dù job download đã hoàn thành 1/1 file Excel kỳ 09/10 lúc
+> 13:34 (trang /m/bank-tcb) — kiểm tra và khắc phục.
+
+> **Chẩn đoán (chuỗi bằng chứng — skill diagnosing-bugs):** log agent 13:35:34
+> `ETL sau download: exit=0 — 1 file nạp (0 giao dịch), 5 skip` → ETL "thành
+> công" nhưng nạp 0 giao dịch. File XLSX kỳ 09/10 có THẬT 3 giao dịch (2 nguồn
+> độc lập khớp: đếm dòng ISO cột 2 bằng openpyxl = meta "Tổng lệnh ghi nợ 1 +
+> ghi có 2"). Gốc rễ: parser `bank_tcb_import.parse_saoke` hardcode giao dịch
+> từ `rows[28:]` (header dòng 29 — đo theo template kỳ T9) trong khi template
+> TCB thật đặt header ~DÒNG 21 → giao dịch dòng 22-28 rơi ngoài vùng quét.
+> Vòng đỏ `gd378-probe-tcb-parse.py` (so GD parse vs meta tổng lệnh + import_log
+> + DB): 5/6 file ĐỎ — T9: 326/333 · 29/09: 9/16 · 05/10: 36/43 · 08/10: 0/6 ·
+> 09/10: 0/3 = **30 giao dịch thiếu trong DB**; nguy hơn: file nạp thiếu vẫn
+> ghi hash import_log → auto-ETL sau skip vĩnh viễn (log "6070 skip").
+
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.216, code `5a9c60a` +
+> docs `15a4237`):** (1) parser TÌM header theo nhãn (cột 0 'Ngày KH thực hiện'
+> / cột 1 'Ngày giao dịch' trong 40 dòng đầu, fallback dòng 29) + meta quét
+> trước header; (2) unit `bank_tcb_import.test.py` 4 kịch bản (header 21/29/20
+> + 7 GD) — ĐỎ trước fix (T1+T4 fail 0 GD), XANH PASS 4/4 sau fix; (3) xóa 8
+> hash import_log BANKTCB + chạy ETL thật: `6 file nạp (401 giao dịch), 0 skip`.
+
+> **Verify (bằng chứng thật):** probe xanh 6/6 (parse = meta = log = DB từng
+> file) · tiền kỳ 09/10 khớp từng đồng: Nợ 13.538.070 · Có 13.000.000 · dư đầu
+> 1.259.537 · check nguồn `bank-tcb-tonghop` kỳ 09/10 missing RỖNG — ĐỦ DỮ
+> LIỆU · builder thật Phần 1 đúng số · **E2E production 7/7 PASS**
+> (`gd378-verify-prod.mjs`: login → SSO → /m/bc-bank-tcb → Chạy báo cáo kỳ
+> 09/10 → Hoàn thành, bảng hiện 13.000.000 / 13.538.070).
+
+> **Phát hiện kèm (KHÔNG sửa — chờ ĐH chốt):** "Số dư cuối kỳ" Phần 1 TCB ra
+> 8.259.537 (running balance dòng CUỐI file = GD cũ nhất 08:14) thay vì 721.467
+> (meta số dư hiện tại = GD mới nhất 10:59) — file TCB sort thời gian GIẢM dần
+> ngược giả định builder (VCB tăng dần). Thuộc `bank_tcb_tonghop` (C.130) —
+> khác phạm vi, hỏi ĐH có fix thêm không.
+
+> **Kỳ 10/10 chưa có data:** file sao kê TCB ngày 10/10 chưa download (OUTPUT
+> chỉ có tới 2026-10-09) — kỳ 10/10 cần bấm "Tải sao kê TCB" trước, rồi chạy
+> báo cáo (không phải bug).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.6.1** / repo con **8.5.1**.
