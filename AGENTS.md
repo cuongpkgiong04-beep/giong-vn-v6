@@ -2407,3 +2407,28 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **5.6.0** / repo con
 > **8.5.0** — đã LIVE GĐ 373.
+
+### GĐ 376 / C.213 (Trợ lý Freebuff): Đồng bộ quy tắc ĐẾM công nợ đặt trước kiểu WEB SMED + Push 5.6.1 / 8.5.1 + Restart agent (2026-10-10)
+
+> **Chốt của Đại ca (10/10) — trọn bộ 3 lệnh cùng lúc:** (1) builder đếm
+> công nợ đặt trước theo **QUY TẮC WEB SMED** — còn nợ = dòng f1 'Sử dụng
+> tốt' RAW, KHÔNG trừ lượt trả f2 (GĐ 338/C.182 + C.198 loại `_da_tra` →
+> số builder THẤP HƠN web SMED); (2) lệnh **"Push"** (bump 5.6.1 / 8.5.1 +
+> push 2 repo); (3) lệnh **"Restart agent"** (nạp C.212 freshness + bản
+> đếm web).
+>
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.213, code `664a41e`):**
+> `sql_reports.py` 2 chỗ — cn-dt nhóm = TẤT CẢ f1 'Sử dụng tốt' cùng khóa
+> + 'Kiểm tra nguồn' độc lập '(+M đã trả — web vẫn đếm)' · Bảng 1 'Số mũi
+> đặt trước còn nợ' + tiền đếm RAW + 'Kiểm tra' = tk 'Chưa tiêm' + f1 đã
+> trả. Lượt trả f2 vẫn ghép cho Bảng 3 'Đã tiêm' + 'Ngày tiêm' (GĐ 338
+> giữ nguyên).
+>
+> **Verify:** py_compile OK · unit builder PASS TOÀN BỘ (T13: KH đã trả
+> mũi 350.000 VẪN còn trong cn-dt — TA 2 dòng 500.000 · Bảng 1 = 2 ·
+> '✓ 2' · T14: cn-dt 2 · 600.000 · Bảng 3 phân đúng 'Đã tiêm'/'Chưa
+> tiêm'). Chi tiết verify Push + Restart ở entry Push bên dưới.
+>
+> **Lưu ý đối chiếu:** sau GĐ này công nợ đặt trước builder = số web SMED
+> (CAO HƠN bản C.198 — khách đã trả tại quầy quay lại nằm trong còn nợ
+> theo đúng quy tắc web).
