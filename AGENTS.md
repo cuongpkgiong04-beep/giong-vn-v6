@@ -2577,3 +2577,30 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (cấu hình máy — 0 đụng code app). App tổng
 > **5.6.2** / repo con **8.5.2**.
+
+### GĐ 381 / C.218 (Trợ lý Freebuff): Gỡ dòng phụ "Tổng mũi" dưới SUBTOTAL trang Báo cáo bán hàng (2026-10-10)
+
+> **Yêu cầu của Đại ca (10/10, ảnh /m/bc-banhang app con):** phần "Chạy báo cáo
+> bán hàng (DT) từ dữ liệu SQL (GiondDB)" — bỏ dòng "Tổng mũi" đi vì **sai số
+> liệu và không cần thiết** trên báo cáo này.
+
+> **Chẩn đoán:** dòng phụ đến từ 2 prop **opt-in** C.183 (GĐ 339) truyền tại
+> `bc-banhang.tsx` (`subtotalExtraSumCol="Mũi tiêm"` +
+> `subtotalExtraSumLabel="Tổng mũi"`) — khung `report-result-table` chỉ render
+> dòng này khi có truyền. Grep toàn app con: duy nhất trang này truyền 2 prop.
+> Đại ca đã chốt đích danh qua ảnh → thực hiện luôn (không hỏi lại).
+
+> **Đã làm (PA-1, code repo con `8e4f264`):** xóa 5 dòng (comment C.183 + 2
+> prop) trong `apps/banhang/src/routes/m/bc-banhang.tsx`. Khung chung
+> (`sql-data-module` / `report-result-table`) GIỮ NGUYÊN — không trang nào khác
+> bị ảnh hưởng; SUBTOTAL chính (đếm Giờ tiêm) không đổi.
+
+> **Verify:** tsc EXIT 0 (lesson vận hành: shim `tsc` .cmd chết ở UNC cwd —
+> "UNC paths are not supported" → chạy `node node_modules/typescript/bin/tsc
+> --noEmit` trực tiếp). Dòng phụ là render client-side → hiệu lực NGAY cả job cũ.
+
+> **Tiêu chí kiểm chứng:** trang Báo cáo bán hàng (mở job cũ hoặc chạy mới) —
+> dưới "SUBTOTAL (N dòng)" KHÔNG còn dòng "Tổng mũi"; các báo cáo khác không đổi.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.6.2** / repo con **8.5.2**.
