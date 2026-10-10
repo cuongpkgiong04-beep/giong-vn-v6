@@ -2238,3 +2238,35 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > hơn vì gộp cả mũi đã trả tiền thật). Anh chốt hướng nào em làm.
 
 > **Version:** KHÔNG bump — app tổng **5.5.1** / repo con **8.4.1**.
+
+### GĐ 371 / C.208 (Trợ lý Freebuff): Fix job LHT kẹt "Đang chạy" 100% — heartbeat đè done + wrap run_smed_task — PA-1 (2026-10-10)
+
+> **Yêu cầu của Đại ca (10/10, ảnh /m/mkt-hentiem):** job Lịch hẹn tiêm
+> (09/10) chạy 100% / 19 file Excel xong nhưng badge vẫn "Đang chạy" +
+> cảnh báo "Job lâu chưa có tín hiệu". 2 job kẹt: 16bb75cc (19:00) +
+> 155bc992 (20:53).
+
+> **Chẩn đoán (bằng chứng DB qua /db/query — không đoán):** cả 2 job
+> `finished_at = 19:09:44 / 21:02:41` (đúng thời điểm agent log "Job
+> xong — 19 file") nhưng `updated_at = 19:09:55 / 21:02:53` — ~10s sau
+> = heartbeat `'running'` cuối (nhịp 30s, in-flight khi report done
+> ghi xong) **ĐÈ status về 'running'** — api_server chỉ chặn running
+> đè `cancelRequested` (GĐ C.18), chưa chặn đè terminal states. Chi
+> tiết đầy đủ ở AGENTS.md repo con C.208.
+
+> **ĐH chốt PA-1.** Đã làm (repo con `e7e308b` + `ddd0035`):
+> 1. `40_web_agent.py` — wrap `run_smed_task` try/except riêng: exception
+>    → report error — job luôn kết thúc, hết kẹt running vĩnh viễn.
+> 2. `api_server.py` agent_report — guard: heartbeat `'running'` KHÔNG
+>    đè `done/error/completed/needsData/cancelRequested`.
+> 3. Gỡ kẹt 2 job 09/10 — POST `/agent/report` done tay → web badges
+>    về "Hoàn thành" (files 19/19).
+
+> **Verify:** py_compile OK · guard-test off-line 5/5 PASS · test thật
+> job dattruoc 33176105 — done giữ nguyên sau nhịp heartbeat kế ✓.
+> Claim `4d4fdc8` / unlock phiên này.
+>
+> **⚠️ Checkpoint:** api_server đang chạy code cũ — PHẢI restart
+> GIONG_SMED_Agent lúc rảnh để guard mới ăn (taskkill PID python giữ
+> port — lesson GĐ 329). KHÔNG bump chờ lệnh Push. App tổng **5.5.1** /
+> repo con **8.4.1**.
