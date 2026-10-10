@@ -2534,3 +2534,46 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > `scripts/update-tunnel-env.py` đã đồng bộ `.env.local` 2 app.
 
 > **Version:** app tổng **5.6.2** / repo con **8.5.2** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 380 (Trợ lý Freebuff): Sửa ZCode provider NVIDIA "Model request failed" — id model sai 1 ký tự (5-3 → 5.3) + rule map reasoning_effort (2026-10-10)
+
+> **Yêu cầu của Đại ca (10/10, 22:50 — ảnh ZCode Model settings):** provider
+> custom "Nvidiacuongpkgiong04" (NVIDIA integrate API) — nút kiểm kết nối báo
+> "Failed to connect … z-ai/glm-5-3-flash: Model request failed". Anh kèm gợi ý
+> từ lần sửa ở máy nhà: thêm `providerModelRules` ghi đè tham số — chỉ gửi
+> `reasoning_effort` (NVIDIA không nhận `reasoning`), copy nguyên xi rule chính
+> chủ ZCode cho opencode.ai.
+
+> **Chẩn đoán (probe thật NVIDIA API — key của anh, request nhỏ):**
+> (1) `GET /v1/models` 200 — key + mạng OK, danh sách có **`z-ai/glm-5.3-flash`**
+> (dấu CHẤM), KHÔNG có `z-ai/glm-5-3-flash` (dấu GẠCH) trong cấu hình → id sai
+> 1 ký tự → POST trả 404 "page not found" = đúng lỗi "Model request failed";
+> (2) POST id đúng + `reasoning_effort":"high"` → **200 model trả lời thật**;
+> (3) POST id đúng + `"reasoning":{"effort":"high"}` (dạng ZCode mặc định) →
+> **400 "Validation: Unsupported parameter(s): `reasoning`"** — khớp nguyên
+> gợi ý của anh.
+
+> **Đã làm:** backup `provider_config.json.bak-gd379` + sửa
+> `C:\Users\Administrator\.zcode\v2\provider_config.json`:
+> (1) `personalModelIds`/`modelOrder`/`modelId` `z-ai/glm-5-3-flash` →
+> `z-ai/glm-5.3-flash`;
+> (2) `optionSpecs` copy NGUYÊN VĂN rule chính chủ `opencode-go-chat`
+> (`glm-5.3-flash`, zcode-builtin.json): `reasoningLevel` values
+> low/high/max + map `{"reasoning_effort": reasoningLevel}` ·
+> `maxOutputTokens` max 131072 + map `{"max_tokens": maxOutputTokens}`;
+> (3) `properties` đồng bộ rule chính chủ (contextWindow 1M giữ của anh,
+> inputFormat text/image/video/pdf).
+
+> **Verify:** JSON parse OK · modelOrder/modelId đọc lại đúng
+> `z-ai/glm-5.3-flash` · optionSpecs map khớp rule chính chủ ký tự-đôi-ký-tự.
+> POST thật với bộ (id đúng + reasoning_effort + max_tokens) đã 200 (T4).
+
+> **Tiêu chí kiểm chứng (Đại ca):** ZCode → Model settings → bấm Refresh
+> (⟳) hoặc khởi động lại ZCode → model trong danh sách đổi thành
+> `z-ai/glm-5.3-flash` → bấm nút kiểm kết nối (chain) → ✅ không còn
+> "Model request failed". Máy nhà áp tương tự: sửa
+> `C:\Users\<user>\.zcode\v2\provider_config.json` (id + optionSpecs như
+> trên — hoặc đè bằng file đã sửa này, API key y hệt).
+
+> **Version:** KHÔNG bump (cấu hình máy — 0 đụng code app). App tổng
+> **5.6.2** / repo con **8.5.2**.
