@@ -2292,3 +2292,38 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (điều tra — chờ lệnh Push). App tổng
 > **5.5.1** / repo con **8.4.1**.
+
+### GĐ 372b / C.209b (Trợ lý Freebuff): PA-2 — check file Download mới nhất theo lượt tải GDTVX + form cảnh báo (ĐH chốt PA-2 10/10) (2026-10-10)
+
+> **ĐH chốt PA-2** (trong 3 PA): MỌI báo cáo khởi tạo kiểm tra thời gian
+> Download file mới nhất — file tải TRƯỚC kỳ kết thúc thì cảnh báo + needsData
+> nhờ tải lại trước khi tính (ETL nạp đè file mới).
+>
+> **Chẩn đoán verify lần 1:** code PA-2 đặt SAI trong `if n == 0:` (bloc
+> staging trống) → snapshot 6.316 dòng cũ khiến check không bao giờ chạy —
+> K1c dTo 15/10 missing = 0 thay vì 1. Fix: nhánh GDTVX freshness ĐỨNG
+> TRƯỚC check staging (pattern MIA/TCB/TPB), so mức NGÀY (file tải trong
+> ngày date_to coi như đủ — tránh needsData vô hạn kỳ kết thúc hôm nay).
+>
+> **Đã làm (3 file repo con `c36176c` + docs):**
+> 1. `check_source_data` — nhánh GDTVX freshness: import_log 10GDTVX lượt nạp
+>    gần nhất < NGÀY date_to → missing DUYỆT (needsData nhờ tải file mới);
+>    khôi phục bloc GĐ 244 fallback về gốc.
+> 2. `sql-data-module.tsx` — mốc nạp cũ hơn dateTo → chấm vàng + "⚠ trước kỳ
+>    — nên tải mới" + banner gợi ý tick "Tải dữ liệu mới nhất trước khi chạy".
+> 3. `sql-report-module.tsx` — thêm freshness + banner vàng "Tải lại dữ liệu
+>    từ DOWNLOAD DỮ LIỆU trước khi chạy".
+>
+> **Verify:** py_compile OK · **4/4 PASS kịch bản thật GiondDB** (k1 dTo
+> 15/10 missing=1 · k2 dTo 10/10 missing=0 cùng ngày tải · k3 dTo 01/10
+> missing=0 · k4 xk-by-date 0 — cờ chỉ GDTVX) · unit 54/54 PASS · tsc EXIT
+> 0 + vite build EXIT 0 · KHÔNG add nav.ts/smed-auth.ts/routeTree.gen.ts
+> (dở của phiên khác — GĐ 341).
+>
+> **Tiêu chí kiểm chứng (production sau Push):** trang bccn (và mọi báo cáo
+> qua SqlDataModule) chọn kỳ kết thúc SAU ngày nạp gần nhất → dòng nguồn
+> chấm vàng + builder needsData nhờ tải file mới; kỳ kết thúc trong ngày
+> nạp → chạy bình thường.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.5.1** / repo con **8.4.1**.
