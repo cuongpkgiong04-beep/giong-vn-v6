@@ -2754,10 +2754,16 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > chờ restart GIONG_SMED_Agent rảnh rồi chạy lại (Task_02 slot 23:00 đang
 > chạy — GĐ 330 không cắt job).
 
-> **Tiêu chí kiểm chứng (sau restart):** trang /m/bc-tiem-ho kỳ 04/03/2026 →
-> chi tiết cột "Trung tâm tiêm hộ" = TĐ + STT sau cột đó; tổng hợp SUBTOTAL
-> 3 cột số. Task_03 ngày mai tự chạy 29 báo cáo. Sau Push: production
-> nhắc restart agent server.
+> **Verify hoàn tất (11/10 đêm, sau restart agent 2 lần — lần 2 PID 33368):**
+> E2E `gd-c222-verify-tiemho.mjs` lần 8 **14/14 PASS** — job 4s · cột
+> "Trung tâm tiêm hộ"=TĐ · **STT=1** (sửa follow-up `f72a5b8`: đánh lại STT
+> 1→N xuyên suốt đúng tool 13 — đối chứng builder thật kỳ 04/03: 19 dòng
+> STT 1→19) · ngày dd/mm/yyyy · TỔNG HỢP SUBTOTAL 19 phiếu · 19 SL ·
+> 13.455.000 · 8 cặp. Bài học vận hành: restart có zombie python cũ còn
+> sống claim job trước (nssm giữ process con — GĐ 329) + E2E race đọc job
+> cũ. **Lịch agent vẫn ĐANG TẠM DỪNG (kv=1) + task ma 17:25 'running' — do
+> Đại ca/phiên khác thao tác 00:50, em không đụng.** Task_03 ngày mai tự
+> chạy 29 báo cáo. Sau Push: production nhắc restart agent server.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.6.3** / repo con **8.5.3**.
