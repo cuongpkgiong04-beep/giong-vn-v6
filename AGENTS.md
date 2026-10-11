@@ -2774,3 +2774,73 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > trong hint → thêm `"HTTP 500"` vào `_GDT_DOWN_KEYS` + mở rộng nhánh backoff
 > `(500, 502, 503, 504)` · unit **8/8 PASS**. Cổng GDT còn hỏng tối 11/10 —
 > job MIA bấm "Thử chạy lại" khi Cổng hồi phục.
+
+### GĐ 386 / C.223 (Trợ lý Freebuff): Lịch Nhiệm vụ app con — Task_02 CHỈ 1 slot 23:00 + Task_04 MỚI 17:15 (báo cáo nhanh Dashboard/Đối soát) + Task_03 điều kiện Task_02+Task_04 xong (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10, kèm lệnh "Phân tích và chạy cái này cho anh"):**
+> (1) Task_02 chỉ định chạy 1 lần 23:00 hàng ngày; (2) thêm Task_04 chạy các báo
+> cáo NHANH cuối ngày 17:15 = [mọi báo cáo để có số liệu trên Dashboard "Tổng
+> quan" gồm KPI + biểu đồ] + [mọi báo cáo để có số liệu trên "Báo cáo cuối ngày
+> - Đối soát HĐ-XK"]; (3) Task_03 khởi chạy khi Task_02 hoàn thành VÀ Task_04
+> lấy xong dữ liệu.
+
+> **Phân tích thiết kế (probe thật trước khi code):** Dashboard Tổng quan đọc
+> staging TRỰC TIẾP (-overview.ts: stg_2DTTDT/12BLTH/4BKCCN/5BKN/6BKX/7BCNXT/
+> 3DTTHC/11BKCT) — không đọc kết quả job báo cáo; "Báo cáo cuối ngày" = queryKey
+> `dsxk-comparison` (3 nguồn dtthc/xuatkho/bkct). → **Task_04 = download 8 phân
+> hệ phủ đúng các nguồn đó** (dtdt/blth/bkccn/nhapkho/xuatkho/xnkt/dtthc/
+> bkct-hdgtgt — "Task_04 lấy xong dữ liệu" trong yêu cầu (3) chính là đây) **rồi
+> chạy 14 báo cáo SQL có nguồn ⊆ 8 phân hệ** (gồm dsxk-comparison; bất biến đối
+> chiếu REPORT_SOURCE_TABLES — unit test khóa lại). **Task_03 gate theo MỐC THỜI
+> GIAN THẬT** (Task_02 mới nhất xong + Task_04 mới nhất xong) — KHÔNG theo ngày,
+> vì Task_02 23:00 hoàn tất qua nửa đêm là ca thường (10/10 23:00 → xong 01:30);
+> guard nhân đôi theo KỲ (`JSON_VALUE(config,'$.date')`) = 1 Task_03/kỳ, Task_04
+> chưa từng chạy → chỉ cần Task_02 (không chặn oan).
+
+> **Đã làm (code repo con `f61e25a` — 4 file: `task_runner.py` +`task_runner_quick.test.py`
+> mới · `-tasks.ts` · `tasks-page.tsx`; chi tiết đầy đủ ở AGENTS.md repo con C.223):**
+> default `TASK_DAILY_TIMES=["23:00"]` + `TASK_QUICK_*` (8 phân hệ/14 báo cáo) +
+> `_spawn_quick_task` (17:15, kind mới `quick`, guard 2 lớp theo ngày) +
+> `_maybe_spawn_task03` (điều kiện 2 mốc + guard kỳ JSON_VALUE) + xóa hook cũ
+> "spawn sau mỗi slot" + UI: seed Task_04, KIND quick, mô tả/chíp/dialog theo
+> lịch mới. **DB GiondDB (sống NGAY — config-driven):** Task_02 seed id `4462a100`
+> `dailyTimes ["23:00"]` (giữ nguyên 20 phân hệ/28 queryKeys) + INSERT seed
+> `Task_04` (kind quick, draft, 8+14 báo cáo, created_by "Cường (seed)") + dọn
+> **task ma `Task_02 · 17:25` 10/10** (treo 'running' 27% từ 10/10 18:28 — đặt
+> `cancel` kèm chú thích; phiên GĐ 385 cố ý không đụng, phiên này xử lý trong
+> phạm vi Nhiệm vụ).
+
+> **Restart GIONG_SMED_Agent (lệnh ĐH, qua SSH `cuongkm-server` — máy chủ
+> GIONGPC):** check rảnh (log poll 0 job; queue pending/running sạch sau dọn ma)
+> → xóa `__pycache__` (agent + etl) → `sc stop` (PID 24892 chết) → `sc start` →
+> **RUNNING PID 29768** — log `web_agent_121026_014750` xác nhận code mới:
+> "Task runner bật … **Task_02 tự chạy 23:00 + Task_04 17:15** hàng ngày" (bản cũ
+> ghi 17:25/19:00/23:00). **KHÔNG restart GIONG_API_Server** — code đang chạy =
+> mới nhất (api_server.py đổi lần cuối 10/10 08:50 < start 10/10 18:30), tunnel
+> giữ nguyên `unnecessary-programming-…` → không cần sync env/gist.
+
+> **Verify:** unit mới **38/38 PASS exit 0** (ma trận 8 kịch bản điều kiện spawn ·
+> cổng giờ 17:15 · guard kỳ · bất biến "nguồn 14 key ⊆ 8 phân hệ") · py_compile OK ·
+> tsc EXIT 0 · DB verify 2 chiều · /health 200 (db OK, 1.595 jobs, tunnel_ok).
+> **Lesson debug:** `/db/query` bọc `select top N * from (…) _q` → câu ORDER BY
+> KHÔNG kèm TOP bị 500 (thêm TOP là chạy); `JSON_VALUE`/`ISJSON` chạy tốt trên
+> GiondDB — dùng khóa guard kỳ.
+
+> **⚠️ Trạng thái sống:** **lịch đang TẠM DỪNG** (`task_schedule_paused=1` — Đại
+> ca/phiên khác bật 00:50, em KHÔNG tự bỏ) → Task_04 17:15 hôm nay + Task_02
+> 23:00 CHƯA spawn cho tới khi bấm **▶ Tiếp tục lịch** trên trang Nhiệm vụ
+> (unpause sau 17:15 vẫn spawn bù trong ngày — pin kỳ đúng ngày spawn GĐ C.161).
+> Web UI (-tasks.ts/tasks-page.tsx) chờ lệnh Push mới lên Vercel; agent + DB đã
+> chạy bản mới NGAY sau restart.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.6.3** /
+> repo con **8.5.3**.
+
+> **Bổ sung C.223b (repo con `bf38314`):** soát lại phát hiện bản seed
+> 'Task_04' (status `draft` — bản CẤU HÌNH) cũng khớp `name LIKE 'Task_04%'`
+> trong điều kiện `_maybe_spawn_task03` → seed "chưa chạy" có thể chặn nhầm
+> Task_03 ở góc cạnh hiếm. Vá: SQL truy vấn Task_04 thêm `AND status <> 'draft'`;
+> unit +1 check cấu trúc — **39/39 PASS**; restart lại agent nạp bản vá (xem
+> entry repo con C.223b). **Lesson đa agent:** file .md repo này commit dạng
+> **LF** (Windows autocrlf=true) — máy Linux append heredoc phải
+> `git -c core.autocrlf=input add` kẻo churn toàn file (CRLF).
