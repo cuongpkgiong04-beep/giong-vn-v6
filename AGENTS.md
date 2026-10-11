@@ -2720,3 +2720,44 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.6.3** / repo con **8.5.3**.
+
+### GĐ 385 / C.222 (Trợ lý Freebuff): "Báo cáo tiêm hộ" — builder nguồn stg_2DTTDT + Task_03 + trang /m/bc-tiem-ho (2026-10-11)
+
+> **Yêu cầu của Đại ca (11/10):** Xây dựng "Báo cáo tiêm hộ" từ tool
+> `13_MKT_TIEMHO.py` (anh copy vào agent). Anh đính chính: nguồn = dữ liệu
+> ĐÃ tải của "Thống kê DT theo đối tượng" (stg_2DTTDT) — tiếp nối Báo cáo
+> thu tiền; bỏ chỗ thừa của tool 13 (đổi tên file/làm sạch — đã có ETL +
+> builder tt-by-date), CHỈ thêm cột "Trung tâm tiêm hộ"; thêm BẢNG TỔNG HỢP
+> bên dưới bảng chi tiết; lịch đặt vào Task_03 (báo cáo, không download).
+> Em hỏi lại 3 điểm — ĐH chốt **1A** (chỉ dòng tiêm hộ: Thu ngân dạng
+> `TênNV_MãTT` — 8.650/136.063 dòng) · **2A** (tổng hợp theo cặp Trung tâm ×
+> TT tiêm hộ) · **3** (chuẩn hóa 19 mã: DX→ĐX/CD→CĐ/SD→SĐ/DY→ĐY; TĐ giữ —
+> trùng TD=Tiên Du).
+
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.222, code `5748166` +
+> docs `452d710`):** builder `tiem_ho()` trong `sql_reports.py` (nguồn dtdt,
+> cột mới chèn sau "Trung tâm" — đúng tool 13; meta.sheets."tong-hop") +
+> EMPTY_OK_KEYS +tiem-ho (lọc nghiệp vụ như xuat-huy C.65) · `task_runner.py`
+> TASK_QUERY_KEYS +tiem-ho (whitelist đối chiếu 29/29) · `-smed.ts` 3 map
+> (nguồn · nhóm banhang-marketing · leaf /m/bc-tiem-ho) · trang `bc-tiem-ho`
+> thay placeholder C.55 (SqlDataModule + SubSheets). Route + phân quyền +
+> catalog app tổng ĐÃ CÓ SẴN từ trước — 0 đụng app tổng code.
+
+> **⚠️ Multi-agent:** phiên GĐ 384 song song commit `-smed.ts` nguyên khối
+> (`0f2528c`, 23:49) kéo theo 4 dòng map tiem-ho của phiên này vào commit
+> GĐ 384 — lịch sử không viết lại (quy tắc 3 GĐ 242), entry C.222 mô tả thật.
+
+> **Verify:** py_compile OK · builder thật kỳ 2018→09/2026 **8.392 dòng /
+> 203 cặp / 7.293.198.300đ — SQL độc lập đối chứng KHỚP TỪNG ĐỒNG** · tsc
+> EXIT 0 · whitelist 29/29. E2E local `gd-c222-verify-tiemho.mjs`: job lỗi
+> đúng dự đoán khi service chưa nạp builder mới ("tiem-ho không hỗ trợ") →
+> chờ restart GIONG_SMED_Agent rảnh rồi chạy lại (Task_02 slot 23:00 đang
+> chạy — GĐ 330 không cắt job).
+
+> **Tiêu chí kiểm chứng (sau restart):** trang /m/bc-tiem-ho kỳ 04/03/2026 →
+> chi tiết cột "Trung tâm tiêm hộ" = TĐ + STT sau cột đó; tổng hợp SUBTOTAL
+> 3 cột số. Task_03 ngày mai tự chạy 29 báo cáo. Sau Push: production
+> nhắc restart agent server.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.6.3** / repo con **8.5.3**.
