@@ -2761,3 +2761,10 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.6.3** / repo con **8.5.3**.
+
+> **Bổ sung GĐ 384 — C.221b (`722e822`, docs repo con `4e06b1f`):** theo dõi
+> DB sau commit: job MIA 22:27 chạy tool MỚI (timeline 192s khớp backoff mới)
+> nhưng Cổng GDT sập LUÂN PHIÊN 504/500/timeout — HTTP 500 trả NGAY chưa nằm
+> trong hint → thêm `"HTTP 500"` vào `_GDT_DOWN_KEYS` + mở rộng nhánh backoff
+> `(500, 502, 503, 504)` · unit **8/8 PASS**. Cổng GDT còn hỏng tối 11/10 —
+> job MIA bấm "Thử chạy lại" khi Cổng hồi phục.
