@@ -2676,3 +2676,47 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > cuối kỳ" TCB lấy GD mới nhất (C.219 — cần restart agent để nạp builder mới).
 
 > **Version:** app tổng **5.6.3** / repo con **8.5.3** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 384 / C.221 (Trợ lý Freebuff): DOWNLOAD DỮ LIỆU — hết cảnh báo oan "thiếu file" MISA/MIA/Bank + MIA fail do Cổng GDT 504 (2026-10-11)
+
+> **Yêu cầu của Đại ca (11/10 tối, 7 ảnh):** (1) các bảng download ngoài SMED
+> KHÔNG theo chuẩn 19 file (MISA meInvoice 1 file · MIA Tool 1 file · Bank
+> 1 file/ngân hàng · "Thống kê DT tổng hợp Chuỗi" 2 file) → không được báo
+> "Chưa hoàn thành thiếu file", phải xác định ĐỦ = hoàn thành; (2) DOWNLOAD
+> DỮ LIỆU TỪ MIA TOOL đều lỗi — xem lại khắc phục.
+
+> **Chẩn đoán bằng chứng thật (không đoán):**
+> 1. **DB GiondDB qua tunnel `/db/query`:** 30 job download gần nhất (tạo
+>    11/10) `expected_files=19` TOÀN BỘ — kể cả bkth-hdgtgt. Map đúng GĐ 228c
+>    chỉ ăn khi tạo job TỪ TRANG download; job của ĐH do **Task-runner**
+>    (`agentCreateTaskJob` -tasks.ts) + **Tổng quan** (-overview.ts) tạo qua
+>    INSERT THIẾU cột expected_files → DEFAULT 19 → MISA/MIA/Bank/DT-Chuỗi
+>    bị so 19 → badge oan "Chưa hoàn thành — thiếu file" + "Tỷ lệ hoàn thành
+>    1/19 file — thiếu 18 file".
+> 2. **MIA:** curl độc lập từ máy ngoài: GET `/api/sco-query/invoices/sold`
+>    KHÔNG Authorization → 403 ngay 0.1s; CÓ Authorization → **HTTP 504 sau
+>    đúng 60s** — gateway Cổng HĐĐT Quốc gia không phản hồi (login + captcha
+>    vẫn sống). Lịch sử DB: MIA done lần cuối 09/10 19:39 (4/4 phân hệ) →
+>    11/10 cả 4 error "Read timed out (60s)" — client timeout 60s ngắt TRƯỚC
+>    khi gateway trả 504 → message mù mờ, ĐH tưởng tool hỏng.
+
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.221, code `0f2528c`):**
+> lib chung `smed-expected.ts` (map GĐ 228c + `isNonCenterReport`) — 3 chỗ
+> INSERT (-smed/-tasks/-overview) cùng 1 nguồn; UI fallback job cũ ef=19 sai
+> phân hệ + đơn vị "file" cho nhóm non-center + VCB hiện số thuần khi files
+> > chuẩn kỳ; tool MIA timeout GET ≥90s + retry 502/503/504 backoff 15/30/45s
+> + `_gdt_down_hint` message rõ "lỗi PHÍA CỔNG — chờ 5-15 phút bấm Thử chạy lại".
+
+> **Verify:** tsc EXIT 0 · `gd384-smed-expected.test.ts` **20/20 PASS** ·
+> `43_mia_hddt.test.py` **7/7 PASS** · py_compile OK. **Vận hành:** tool MIA
+> chạy subprocess mỗi job → fix hiệu lực NGAY job kế tiếp; phần web chờ Push.
+
+> **Tiêu chí kiểm chứng:** sau Push — trang MISA/MIA/TCB/TPB: job đủ file →
+> badge XANH "Hoàn thành" (job cũ 11/10 cũng hết vàng nhờ fallback); banner
+> "Đã export x/1 file"; job MIA bấm "Thử chạy lại" khi Cổng GDT hồi phục →
+> chạy bình thường, còn đang lỗi → message nói rõ lỗi phía Cổng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.6.3** / repo con **8.5.3**.
