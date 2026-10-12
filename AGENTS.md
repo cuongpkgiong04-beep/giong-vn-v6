@@ -3364,3 +3364,61 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.8.2** / repo con **8.7.2**.
+
+---
+
+### GĐ 400 (Trợ lý Freebuff): Chụp ảnh điểm danh + check-in — 4 điểm Đại ca chốt (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10, 4 điểm):** (1) bỏ độ trễ chụp — ấn nút là ghim
+> ảnh ngay, hiện phải giữ máy yên 1 lúc → ảnh mờ nhòe khi di chuyển;
+> (2) nút Làm đẹp cho ảnh sáng hơn + bớt ám vàng đèn; (3) người chụp vào GIỮA
+> khung hình (đang lệch trái); (4) chữ đóng dấu thu sát lề dưới-trái (đang
+> thưa quá, đè giữa mặt người).
+
+> **Chẩn đoán (đọc code 2 trang + camera-frame.ts):** (1) trang Chấm công
+> `capturePhoto` ĐỢI GPS chính xác cao (1-5s) + gọi API tra địa chỉ XONG mới
+> ghim ảnh; cả 2 trang pipeline beauty đọc video **4 lần** cho 4 lớp trong lúc
+> stream đang phát → người di chuyển thì 4 lớp lấy 4 frame khác nhau → nhòe
+> ghosting. (2) filter cũ quá nhẹ (brightness 1.07 / saturate 0.97) — lớp
+> smooth còn nhân đôi base (chuỗi BEAUTY_FILTER rò cả brightness/contrast).
+> (3) camera trước KHÔNG bật gương (mirror) preview lẫn ảnh lưu → người tự
+> canh theo "gương" trong đầu → ảnh lưu lệch trái. (4) chấm công dùng font
+> dấu TO GẤP RƯỠI check-in (giờ 96px, chữ nhỏ 48px) + lineGap 10 + gap 18
+> → khối dấu chiếm nửa dưới ảnh.
+
+> **ĐH chốt 4 PA đề xuất** (vòng hỏi-đáp 12/10): ghim ngay + GPS sẵn có ·
+> làm đẹp mức VỪA · mirror camera trước · thu gọn dấu ~40%.
+
+> **Đã làm (3 file code — chi tiết comment trong code):**
+> 1. **Bỏ độ trễ + hết nhòe:** `cham-cong.tsx` `capturePhoto` ghim ảnh NGAY
+>    theo frame hiển thị + dấu dùng GPS/địa chỉ đang hiển thị; GPS +
+>    reverseGeocode chạy NỀN cập nhật state cho lần sau (không chặn chụp).
+>    `camera-frame.ts` thêm **snapshot 1 frame** — đọc video đúng 1 lần rồi mọi
+>    lớp vẽ từ snapshot (hết 4-frame ghosting) + mirror áp 1 điểm duy nhất.
+> 2. **Làm đẹp mức VỪA:** base mới `brightness(1.15) contrast(1.08)
+>    saturate(0.82)` + lớp **WHITE BALANCE** (fillRect soft-light `#9ecbff`
+>    35% — làm lạnh ám vàng tự nhiên); BEAUTY_FILTER gỡ phần base rò vào (hết
+>    nhân đôi sáng); preview live khớp: video filter base + div mix-blend
+>    soft-light — bấm nút thấy khác NGAY.
+> 3. **Mirror camera trước:** option `mirror` trong drawCameraFrame (ảnh + video
+>    quay) + `scaleX(-1)` trên video preview — thấy gì ảnh ra nấy, người giữa
+>    preview = giữa ảnh; camera sau giữ nguyên.
+> 4. **Thu gọn dấu ~40%:** giờ 96/64→38, chữ nhỏ 48/32→21, lineGap 10→5,
+>    groupGap 18→8, lề 14→8 (cả 2 trang + khối vẽ overlay live) — khối dấu
+>    còn ~21% chiều cao ảnh, sát lề dưới-trái, nội dung (công ty/tên/địa chỉ/
+>    ngày giờ) KHÔNG cắt.
+
+> **Verify:** tsc EXIT 0 · **E2E local fake camera 10/10 PASS**
+> (`scripts/gd400-verify-camera.mjs`): login → check-in filter+mặt gương+soft-light
+> → bấm chụp **415ms** ghim ảnh (trước 1-5s) → ảnh JPEG đủ nội dung → tắt làm
+> đẹp sạch; chấm công Tan ca → camera mở → ghim **1518ms**. Trích ảnh lưu thật
+> (dataURL) xem trực tiếp: khối dấu gọn ~21% chiều cao, sát lề dưới-trái, đủ
+> 5 dòng nội dung — cả check-in lẫn chấm công.
+
+> **Tiêu chí kiểm chứng (sau Push):** trên điện thoại — bấm chụp là thấy ảnh
+> ngay (không cần giữ yên); ảnh sáng hơn + hết ám vàng; selfie người ở giữa
+> khung; dấu nhỏ nằm góc dưới-trái không đè mặt. Anh test trực tiếp trên Vercel
+> sau Push (không test được camera thật ở local — chỉ fake camera).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.8.2** / repo con **8.7.2**.
