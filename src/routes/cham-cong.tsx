@@ -106,9 +106,11 @@ function ChamCongPage() {
   // GĐ 283 Beauty Pro: chuỗi filter chỉ còn LỚP MÀU của lớp mịn da (đậm 12% —
   // da tươi tự nhiên). Cân bằng sáng/tương phản chạy LỚP BASE riêng trong
   // camera-frame.ts; blur mịn da 9px + tăng nét unsharp-mask cũng trong đó.
-  // Preview CSS khớp lớp base: brightness 1.07 + contrast 1.06 + saturate 0.97
-  // × màu 1.12 = bấm nút thấy khác NGAY, ảnh chụp khớp preview 100%.
-  const BEAUTY_FILTER = "brightness(1.07) contrast(1.06) saturate(0.97) brightness(1.013) saturate(1.12)";
+  // GĐ 400 (12/10): bỏ phần brightness/contrast/saturate rò vào chuỗi (lớp smooth
+  // trước đây nhân đôi base → quá sáng) — chỉ còn lớp màu mịn da. Base mới mức
+  // VỪA chốt: sáng 1.15 + bớt vàng 0.82 + white-balance soft-light #9ecbff —
+  // xem camera-frame.ts (preview live khớp: video filter base + div soft-light).
+  const BEAUTY_FILTER = "brightness(1.013) saturate(1.12)";
   // GĐ 273: isIOS/bản ghi iOS-specific đã bỏ — preview + ảnh lưu dùng chung khung
   // aspect 3/4 trên mọi thiết bị (không còn 2 nhánh iOS/Android lệch nhau).
   const isIOS = false;
@@ -361,9 +363,11 @@ function ChamCongPage() {
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    const bigTimeMaxWidth = Math.max(48, Math.min(Math.round(w * 0.16), 96));
-    const smFontMaxWidth = Math.max(20, Math.min(Math.round(w * 0.069), 48));
-    const groupGap = Math.round(18 * scale);
+    // GĐ 400 (12/10 — Đại ca): thu gọn khối dấu ~40% để hết đè lên mặt người —
+    // chữ giờ 96→38, chữ nhỏ 48→21, gap giữa cụm 18→8 (chỉnh thêm lineGap/margin ở 2 khối vẽ).
+    const bigTimeMaxWidth = Math.max(24, Math.min(Math.round(w * 0.055), 38));
+    const smFontMaxWidth = Math.max(12, Math.min(Math.round(w * 0.027), 21));
+    const groupGap = Math.round(8 * scale);
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
@@ -421,7 +425,8 @@ function ChamCongPage() {
     const { groups, groupGap, scale } = layout;
 
     ctx.textAlign = "left";
-    const lineGap = Math.round(10 * scale);
+    // GĐ 400: lineGap 10→5 + margin 14→8 — khối dấu khít nhau + sát lề dưới-trái
+    const lineGap = Math.round(5 * scale);
 
     // Đo chiều cao (bao gồm groupGap giữa các cụm)
     let totalH = 0;
@@ -433,7 +438,7 @@ function ChamCongPage() {
       if (gi < groups.length - 1) totalH += groupGap;
     }
 
-    const margin = Math.round(14 * scale);
+    const margin = Math.round(8 * scale);
     const boxBottom = crop.sh - margin;
     const boxLeft = margin;
     let y = boxBottom;
@@ -492,8 +497,6 @@ function ChamCongPage() {
     });
     const freshDate = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
     const freshWeekday = now.toLocaleDateString("vi-VN", { weekday: "long" });
-    const freshGps = gps;
-    const freshAddr = address;
 
     // Đợi video metadata load xong rồi mới stamp — đảm bảo canvas đúng kích thước thật
     function doStampWithGps(gpsVal: string, addrVal: string) {
@@ -515,27 +518,24 @@ function ChamCongPage() {
       }
     }
 
-    // Re-fetch GPS for fresh coordinates
+    // GĐ 400 (12/10 — Đại ca): GHIM ẢNH NGAY theo frame đang hiển thị — hết độ trễ
+    // 1-5s chờ GPS + API địa chỉ trước khi chụp (người phải giữ máy yên → ảnh mờ).
+    // Dấu đóng dùng GPS/địa chỉ ĐANG HIỂN THỊ trên màn hình (freshTime đã lấy lúc bấm).
+    doStampWithGps(gps, address);
+    setIsCapturing(false);
+
+    // GPS/địa chỉ vẫn tự cập nhật NỀN (không chặn chụp) — cho lần chụp sau
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude.toFixed(6);
         const lng = pos.coords.longitude.toFixed(6);
-        const freshGpsVal = `${lat}, ${lng}`;
-        setGps(freshGpsVal);
+        setGps(`${lat}, ${lng}`);
         setGpsCoords([pos.coords.latitude, pos.coords.longitude]);
-        // Resolve địa chỉ trước khi stamp
-        // Fix TS2322 (2026-09-10): validator yêu cầu number
         reverseGeocode({ data: { lat: Number(lat), lng: Number(lng) } })
-          .then((addr) => {
-            const resolvedAddr = addr || freshAddr;
-            if (addr) setAddress(addr);
-            doStampWithGps(freshGpsVal, resolvedAddr);
-          })
-          .catch(() => doStampWithGps(freshGpsVal, freshAddr));
+          .then((addr) => { if (addr) setAddress(addr); })
+          .catch(() => {});
       },
-      () => {
-        doStampWithGps(freshGps, freshAddr);
-      },
+      () => {},
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
     );
   }
@@ -561,7 +561,8 @@ function ChamCongPage() {
 
     // GĐ 273: vẽ frame crop + mịn da 2 lớp (lớp blur đè bán trong suốt — da mềm
     // nhưng mắt/viền nét). Filter tắt ngay sau khi vẽ ảnh — chữ dấu luôn nét.
-    drawCameraFrame(ctx, video, crop, { beauty, beautyFilter: BEAUTY_FILTER });
+    // GĐ 400: mirror camera trước — ảnh lưu lật gương khớp preview (thấy gì ảnh ra nấy).
+    drawCameraFrame(ctx, video, crop, { beauty, beautyFilter: BEAUTY_FILTER, mirror: facingMode === "user" });
     const w2 = crop.sw;
     const h2 = crop.sh;
 
@@ -570,7 +571,8 @@ function ChamCongPage() {
     const { groups, groupGap, scale } = layout;
 
     ctx.textAlign = "left";
-    const lineGap = Math.round(10 * scale);
+    // GĐ 400: lineGap 10→5 + margin 14→8 — khối dấu khít nhau + sát lề dưới-trái
+    const lineGap = Math.round(5 * scale);
 
     let totalH = 0;
     for (let gi = 0; gi < groups.length; gi++) {
@@ -581,7 +583,7 @@ function ChamCongPage() {
       if (gi < groups.length - 1) totalH += groupGap;
     }
 
-    const margin = Math.round(14 * scale);
+    const margin = Math.round(8 * scale);
     const boxBottom = h2 - margin;
     const boxLeft = margin;
     let y = boxBottom;
@@ -1149,8 +1151,17 @@ function ChamCongPage() {
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.07) contrast(1.06) saturate(0.97)" : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.15) contrast(1.08) saturate(0.82)" : undefined, transform: facingMode === "user" ? "scaleX(-1)" : undefined }}
                   />
+                  {/* GĐ 400: lớp white-balance soft-light — khớp pipeline canvas (base
+                      + fillRect soft-light #9ecbff 0.35): preview live thấy đúng độ
+                      sáng/bớt vàng của ảnh chụp trước khi bấm nút. */}
+                  {beauty && (
+                    <div
+                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{ zIndex: 5, mixBlendMode: "soft-light", background: "#9ecbff", opacity: 0.35 }}
+                    />
+                  )}
                   {/* Overlay canvas draws on top of video */}                    <canvas
                       ref={overlayCanvasRef}
                       className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"

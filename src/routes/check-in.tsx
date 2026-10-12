@@ -108,9 +108,12 @@ function CheckInPage() {
   // GĐ 283 Beauty Pro: chuỗi filter chỉ còn LỚP MÀU của lớp mịn da (đậm 12% —
   // da tươi tự nhiên). Cân bằng sáng/tương phản chạy LỚP BASE riêng trong
   // camera-frame.ts; blur mịn da 9px + tăng nét unsharp-mask cũng trong đó.
-  // Preview CSS khớp lớp base: brightness 1.07 + contrast 1.06 + saturate 0.97
-  // × màu 1.12 = bấm nút thấy khác NGAY, ảnh chụp khớp preview 100%.
-  const BEAUTY_FILTER = "brightness(1.07) contrast(1.06) saturate(0.97) brightness(1.013) saturate(1.12)";
+  // GĐ 400 (12/10): bỏ phần brightness/contrast/saturate rò vào chuỗi (đã chạy
+  // lớp BASE riêng — trước đây lớp smooth nhân đôi base → quá sáng): giờ chuỗi
+  // chỉ còn lớp màu mịn da. Base mới mức VỪA chốt: sáng 1.15 + bớt vàng 0.82
+  // + white-balance soft-light — xem camera-frame.ts (preview live khớp: video
+  // filter base + 1 lớp div soft-light xanh nhạt).
+  const BEAUTY_FILTER = "brightness(1.013) saturate(1.12)";
   // GĐ 81: ref đồng bộ facingMode — startCamera đọc ref thay cho state để khỏi stale closure
   const facingModeRef = useRef<"user" | "environment">("user");
   if (facingModeRef.current !== facingMode) facingModeRef.current = facingMode;
@@ -289,9 +292,11 @@ function CheckInPage() {
   function buildStampLayout(w: number, h: number, currentName: string, address: string, gps: string) {
     const scale = Math.max(1, w / 640);
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
-    const bigTimeMaxWidth = Math.max(36, Math.min(Math.round(w * 0.09), 64));
-    const smFontMaxWidth = Math.max(16, Math.min(Math.round(w * 0.04), 32));
-    const groupGap = Math.round(18 * scale);
+    // GĐ 400 (12/10 — Đại ca): thu gọn khối dấu ~40% để hết đè lên mặt người —
+    // chữ giờ 64→38, chữ nhỏ 32→21, gap giữa cụm 18→8 (chỉnh thêm lineGap/margin ở drawStampBlock).
+    const bigTimeMaxWidth = Math.max(24, Math.min(Math.round(w * 0.055), 38));
+    const smFontMaxWidth = Math.max(12, Math.min(Math.round(w * 0.027), 21));
+    const groupGap = Math.round(8 * scale);
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
@@ -348,7 +353,8 @@ function CheckInPage() {
   function drawStampBlock(ctx: CanvasRenderingContext2D, layout: ReturnType<typeof buildStampLayout>) {
     const { w, h, scale, groups, groupGap } = layout;
     ctx.textAlign = "left";
-    const lineGap = Math.round(10 * scale);
+    // GĐ 400: lineGap 10→5 + margin 14→8 — khối dấu khít nhau + sát lề dưới-trái
+    const lineGap = Math.round(5 * scale);
 
     let totalH = 0;
     let maxW = 0;
@@ -361,7 +367,7 @@ function CheckInPage() {
       if (gi < groups.length - 1) totalH += groupGap;
     }
 
-    const margin = Math.round(14 * scale);
+    const margin = Math.round(8 * scale);
     // GĐ 228f: một khối duy nhất — chữ NGANG, góc DƯỚI-TRÁI (bỏ nhánh xoay 90° GĐ 102
     // theo yêu cầu Đại ca: quay ngang stamp phải giống hệt quay dọc).
     const boxBottom = h - margin;
@@ -422,7 +428,8 @@ function CheckInPage() {
     }
 
     // GĐ 273: vẽ frame crop + mịn da 2 lớp. Filter tắt ngay sau khi vẽ ảnh — chữ dấu luôn nét.
-    drawCameraFrame(ctx, video, crop, { beauty, beautyFilter: BEAUTY_FILTER });
+    // GĐ 400: mirror camera trước — ảnh lưu lật gương khớp preview (thấy gì ảnh ra nấy).
+    drawCameraFrame(ctx, video, crop, { beauty, beautyFilter: BEAUTY_FILTER, mirror: facingMode === "user" });
     const w2 = crop.sw;
     const h2 = crop.sh;
 
@@ -463,7 +470,8 @@ function CheckInPage() {
     const ctx = rec.getContext("2d");
     if (!ctx) return;
     // GĐ 273: làm đẹp từng frame video (mịn da 2 lớp) — filter tắt trước khi vẽ overlay
-    drawCameraFrame(ctx, vid, crop, { beauty, beautyFilter: BEAUTY_FILTER });
+    // GĐ 400: mirror camera trước — video quay lật gương khớp preview
+    drawCameraFrame(ctx, vid, crop, { beauty, beautyFilter: BEAUTY_FILTER, mirror: facingMode === "user" });
     // Overlay canvas đang có stamp mới nhất (drawOverlay loop vẽ liên tục) —
     // composite thẳng overlay lên frame là chữ dấu khớp 100% với preview.
     // GĐ 273: overlay phải cùng khung đã crop — lệch thì vẽ stamp lại trên (sw/sh).
@@ -914,8 +922,18 @@ function CheckInPage() {
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.07) contrast(1.06) saturate(0.97)" : undefined }}
-                  />                  <canvas
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.15) contrast(1.08) saturate(0.82)" : undefined, transform: facingMode === "user" ? "scaleX(-1)" : undefined }}
+                  />
+                  {/* GĐ 400: lớp white-balance soft-light — khớp pipeline canvas (base
+                      + fillRect soft-light #9ecbff 0.35): preview live thấy đúng độ
+                      sáng/bớt vàng của ảnh chụp trước khi bấm nút. */}
+                  {beauty && (
+                    <div
+                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{ zIndex: 5, mixBlendMode: "soft-light", background: "#9ecbff", opacity: 0.35 }}
+                    />
+                  )}
+                  <canvas
                     ref={overlayCanvasRef}
                     className="absolute inset-0 w-full h-full rounded-2xl pointer-events-none"
                     style={{ zIndex: 10 }}

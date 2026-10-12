@@ -10,11 +10,20 @@
 //              tạm thời (mụn/vết thâm/nếp nhăn nhỏ chỉ MỜ ĐI — canvas thuần không
 //              xóa theo vị trí được), quầng mắt/nếp nhăn nhẹ bớt rõ.
 //      Lớp 2 — DETAIL: unsharp-mask (bản gốc nhòe nhẹ đè "overlay" bán
-//              trong suốt) → mắt/tóc/đường viền khuôn mặt TĂNG NÉT rõ rệt mà
+//              trong suốt) → mắt/tóc/đường viền khuôn mặt TĂNG NÉT rõ ràng mà
 //              KHÔNG thay đổi hình dạng — bù lại phần nét bị lớp smooth lấy đi
 //              → ảnh giống máy ảnh tốt chứ không phải ảnh AI.
 //    Toàn bộ pipeline KHÔNG đụng hình dạng/tỷ lệ khuôn mặt, không tạo mặt mới.
 //    Filter chỉ áp cho lớp ảnh — chữ đóng dấu vẽ SAU hàm này luôn nét.
+// 3) GĐ 400 (12/10 — yêu cầu Đại ca):
+//    a) Snapshot 1 frame — đọc video ĐÚNG 1 LẦN ở đầu hàm rồi mọi lớp vẽ từ
+//       snapshot. Trước đây 4 lần drawImage(video) trong lúc stream đang phát →
+//       người di chuyển thì 4 lớp lấy 4 frame khác nhau → ảnh mờ nhòe ghosting.
+//    b) mirror (camera trước): lật gương đồng bộ preview ↔ ảnh/video lưu —
+//       thấy gì ảnh ra nấy như camera điện thoại, người đứng giữa preview = giữa ảnh.
+//    c) BASE mức mới: sáng hơn + bớt ám vàng (brightness 1.15 + contrast 1.08 +
+//       saturate 0.82) + lớp WHITE BALANCE (soft-light xanh nhạt #9ecbff 35%)
+//       làm nhạt ánh vàng đèn phòng một cách tự nhiên, da không bị khô xám.
 
 export interface CameraCrop {
   sx: number;
@@ -64,14 +73,16 @@ export interface DrawFrameOptions {
   overlayAlpha?: number;
   /** Độ trong suốt lớp tăng nét (0-1). Mặc định 0.38. */
   detailAlpha?: number;
+  /** GĐ 400: lật gương camera trước — preview và ảnh/video lưu cùng hướng. */
+  mirror?: boolean;
 }
 
 /** Cân bằng ánh sáng toàn ảnh: lift vùng tối + kéo vùng cháy sáng về trung tính.
- *  Cách chạy: vẽ ảnh vào canvas nội bộ qua 2 filter chồng nhau rồi trả canvas —
- *  mọi pixel được xử lý thống nhất (khác CSS filter trên 1 element). */
+ *  Cách chạy: vẽ ảnh vào canvas nội bộ qua filter rồi trả canvas —
+ *  mọi pixel được xử lý thống nhất (khác CSS filter trên 1 element).
+ *  GĐ 400: nguồn vào là SNAPSHOT (canvas đã crop, đã mirror) — chỉ vẽ 1 pass. */
 function buildLightingLayer(
-  video: HTMLVideoElement,
-  crop: CameraCrop,
+  source: HTMLCanvasElement,
   lightingFilter: string,
   w: number,
   h: number,
@@ -81,26 +92,29 @@ function buildLightingLayer(
   layer.height = h;
   const lctx = layer.getContext("2d");
   if (!lctx) {
-    // Fallback: canvas rỗng (nếu nào tạo thất bại) — vẽ frame thuần thay vì trả canvas đen
+    // Fallback: canvas rỗng (nếu nào tạo thất bại) — vẽ snapshot thuần thay vì trả canvas đen
     const fb = document.createElement("canvas");
     fb.width = w;
     fb.height = h;
     const fctx = fb.getContext("2d");
     if (fctx) {
       fctx.filter = "none";
-      fctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, w, h);
+      fctx.drawImage(source, 0, 0, w, h);
     }
     return fb;
   }
   lctx.filter = lightingFilter;
-  lctx.drawImage(video, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, w, h);
+  lctx.drawImage(source, 0, 0, w, h);
   lctx.filter = "none";
   return layer;
 }
 
 /**
  * Vẽ frame camera lên canvas theo vùng crop + pipeline Beauty Pro khi beauty bật.
- * Lớp 0 BASE (cân bằng sáng/tương phản) → Lớp 1 SMOOTH (blur mịn da bán trong suốt)
+ * GĐ 400: đọc video ĐÚNG 1 LẦN thành snapshot — mọi lớp dùng chung 1 frame
+ * (hết nhòe khi người di chuyển) + mirror áp 1 điểm duy nhất ở snapshot.
+ * Lớp 0 BASE (cân bằng sáng/tương phản + bớt vàng) → WHITE BALANCE (soft-light
+ * xanh nhạt làm lạnh ám vàng) → Lớp 1 SMOOTH (blur mịn da bán trong suốt)
  * → Lớp 2 DETAIL (unsharp-mask tăng nét mắt/tóc/viền — bù nét lớp smooth lấy đi).
  * Kết quả: da sạch đều màu tự nhiên, chi tiết nét như máy ảnh tốt, không vẻ AI.
  * Filter tắt ngay sau khi vẽ ảnh — mọi thứ vẽ sau (chữ dấu) phải nét.
@@ -112,26 +126,51 @@ export function drawCameraFrame(
   opts: DrawFrameOptions,
 ): void {
   const { sx, sy, sw, sh } = crop;
+  const w = sw;
+  const h = sh;
+
+  // ── Snapshot: đọc video ĐÚNG 1 LẦN (mirror camera trước áp ngay tại đây) ──
+  const snap = document.createElement("canvas");
+  snap.width = w;
+  snap.height = h;
+  const sctx = snap.getContext("2d");
+  if (sctx) {
+    sctx.save();
+    if (opts.mirror) {
+      sctx.translate(w, 0);
+      sctx.scale(-1, 1);
+    }
+    sctx.filter = "none";
+    sctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
+    sctx.restore();
+  }
 
   // ── Lớp 1 — frame gốc nét (beauty TẮT: đúng như cũ, dừng sớm) ──
   ctx.filter = "none";
   ctx.globalAlpha = 1;
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+  ctx.drawImage(snap, 0, 0);
 
   if (!opts.beauty) return;
 
-  const w = sw;
-  const h = sh;
-
   // ── Lớp 0 — BASE: cân bằng ánh sáng + tương phản nhẹ (canvas nội bộ) ──
-  // brightness 1.07: lift vùng tối (quầng mắt/bóng mờ) không cháy sáng;
-  // contrast 1.06: tách người khỏi nền, ảnh "đặc" hơn kiểu máy ảnh;
-  // saturate 0.97: da trung tính tự nhiên — hết ám vàng GĐ 245.
-  const lightingFilter = "brightness(1.07) contrast(1.06) saturate(0.97)";
-  const base = buildLightingLayer(video, crop, lightingFilter, w, h);
+  // GĐ 400 mức VỪA (đại ca chốt 12/10): brightness 1.07→1.15 (sáng hơn),
+  // contrast 1.06→1.08, saturate 0.97→0.82 (vàng là màu bão hòa thấp của
+  // ánh đèn vàng — giảm saturation làm nhạt ám vàng, da trung tính hơn).
+  const lightingFilter = "brightness(1.15) contrast(1.08) saturate(0.82)";
+  const base = buildLightingLayer(snap, lightingFilter, w, h);
   ctx.filter = "none";
   ctx.globalAlpha = 1;
   ctx.drawImage(base, 0, 0);
+
+  // ── Lớp 0b — WHITE BALANCE: làm lạnh ám vàng (GĐ 400) ──
+  // soft-light với xanh dương nhạt #9ecbff 35% — đẩy nhiệt màu về trung tính
+  // kiểu chỉnh white-balance: vàng nhạt đi tự nhiên, không ám xanh, giữ tương phản.
+  ctx.save();
+  ctx.globalCompositeOperation = "soft-light";
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#9ecbff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
 
   // ── Lớp 1 — SMOOTH: mịn da bán trong suốt ──
   // blur 9px @1080p: mức "da sạch tự nhiên" — mụn/thâm/nếp nhăn nhỏ mờ rõ,
@@ -140,14 +179,14 @@ export function drawCameraFrame(
   ctx.save();
   ctx.globalAlpha = opts.overlayAlpha ?? 0.42;
   ctx.filter = `blur(${opts.blurPx ?? 9}px) ${opts.beautyFilter}`;
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
+  ctx.drawImage(snap, 0, 0);
   ctx.restore();
 
   // ── Lớp 2 — DETAIL: unsharp-mask tăng nét mắt/tóc/viền mặt ──
   // Bản gốc crop nhòe nhẹ (blur 1.5px) đè "overlay" alpha 0.38 — chỉ phần
   // VIỀN/CHI TIẾT tương phản cao (mắt, mi, tóc, viền mặt) được đẩy nét lên,
   // vùng da phẳng không đổi → giữ nguyên kết cấu da tự nhiên, không "AI".
-  const blurLayer = buildLightingLayer(video, crop, "blur(1.5px)", w, h);
+  const blurLayer = buildLightingLayer(snap, "blur(1.5px)", w, h);
   ctx.save();
   ctx.globalAlpha = opts.detailAlpha ?? 0.38;
   ctx.globalCompositeOperation = "overlay";
