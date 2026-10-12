@@ -3464,3 +3464,47 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > 2.925.000); (3) module Bảng TH GB-KM_GN-CK-LN hoạt động trên production.
 
 > **Version:** app tổng **5.8.3** / repo con **8.8.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+
+### GĐ 399 / C.236 (Trợ lý Freebuff): Fix "Bảng giá dịch vụ" app con — bảng chuẩn 52 dòng đọc lại từ ảnh gốc + cột Đơn giá ưu đãi + 2 cột giá đối chiếu Long Châu/VNVC — PA-1 (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10):** kiểm tra lại cách lấy dữ liệu Bảng giá dịch
+> vụ — (1) cột "Đơn giá ưu đãi (VNĐ)" [có trong bảng gốc] không được cho vào
+> báo giá; (2) tên Vắc xin_SMED bỏ phần diễn tả (chỉ "BCG-TCDV"); (3) nhiều
+> cột lệch dòng/double như Abrysvo; (4) thêm 2 cột "Giá bán Long Châu" +
+> "Giá bán VNVC" theo danh mục vắc xin bảng giá hiện tại.
+
+> **Chẩn đoán:** dữ liệu price_list do OCR C.202b đọc sai vùng giữa bảng —
+> Abrysvo DOUBLE (stt 33 thật là Nimenrix 1.700.000; stt 34 giá OCR
+> 53.350.000 thật 5.350.000), MẤT Menactra/Nimenrix/Prevenar 13 (stt 31/36
+> ghi sai tên), Bexsero nước Mỹ→Ý, ~40 ô lộn xộn + rác "|". ĐH chốt **PA-1**
+> (3 câu hỏi): cột ưu đãi HIỆN + CẤM dùng báo giá · bảng chuẩn trình duyệt
+> trước khi seed · tool scrape server định kỳ.
+
+> **Đã làm (repo con `f2a07bf` 9 file +1842/−188 · docs `f6adaa3`+`bdb0d4e`):**
+> bảng chuẩn 52 dòng × 8 cột đọc TRỰC TIẾP ảnh gốc (crop 2×, không OCR) —
+> ĐH duyệt trước khi seed → ALTER price_list + cột `gia_uu_dai` (8 dòng: tổng
+> 47.135.000) + sửa 5 dòng map ten_smed (22 MMR Ấn Độ · 31 MENACTRA · 33
+> Nimenrix · 36 PREVENAR 13 · 37 Vaxneuvance); tool `scrape-gia-ngoai.py`
+> (VNVC tĩnh 62 dòng + Long Châu 54 SP qua Playwright "Xem thêm") → 2 bảng
+> GiondDB + map 52 cặp → UPDATE `gia_vnvc` (47/52) / `gia_lchau` (36/52);
+> trang 10 cột + SMED chỉ mã + subtitle ngày lấy giá + chú thích "*chỉ tham
+> khảo — KHÔNG dùng trong báo giá".
+
+> **Verify:** tsc 0 · E2E SSO Windows 10/10 PASS (10 cột · 52 dòng · BCG
+> SMED="BCG-TCDV" + LC 80.000 · Abrysvo 5.350.000/LC 5.350.000/VNVC 5.458.000
+> · Nimenrix ưu đãi 1.650.000 · 8 dòng ưu đãi).
+
+> **⚠️ Giao nhau với phiên GĐ 398/C.235** (module Bảng TH GB-KM đọc price_list):
+> phiên đó đọc ten_smed — seed đè của em GIỮ NGUYÊN ten_smed + chỉ thêm cột
+> mới → không gãy; registry GĐ 402 của phiên đó ghi rõ đã thấy claim 399 và
+> tránh working tree của em. Commit claim `b7e9fae` theo push GĐ 402 lên
+> remote (docs-only, vô hại).
+
+> **Tiêu chí kiểm chứng (sau Push):** trang bảng giá hiện 10 cột đúng (không
+> còn Abrysvo double; có Menactra/Nimenrix/Prevenar 13; SMED chỉ mã; 8 dòng
+> ưu đãi; 2 cột giá đối chiếu kèm ngày lấy). Refresh giá ngoài: chạy
+> `python scrape-gia-ngoai.py --all --commit` trên máy server khi cần.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.8.3** / repo con **8.8.0** (đợt push GĐ 398-402 của phiên khác).
