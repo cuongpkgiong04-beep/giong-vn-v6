@@ -3542,8 +3542,12 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > · KPI "Lượt tiêm" 12/10 giờ = **235** · py_compile OK.
 
 > **Trạng thái vận hành:** PA-1 có hiệu lực NGAY (ETL chạy subprocess mỗi lần,
-> không cần restart); PA-2 cần **restart GIONG_SMED_Agent** — đang chờ Task_04
-> chạy xong để restart an toàn (không cắt job).
+> không cần restart); **PA-2 ĐÃ LIVE sau restart GIONG_SMED_Agent 00:55**
+> (log `web_agent_131026_005539` · `__pycache__` rỗng · auto-ETL vòng đầu
+> run #5162 sạch 0 lỗi) + unit test PA-2 `40_web_agent.test.py` **4/4 PASS**
+> (code cũ AttributeError — không có `job_active`). Test PA-1:
+> `agent/etl/etl_import.test.py` **7/7** (code cũ 3/7 đỏ — test bắt đúng bug).
+> Code `89f5d66` + test `dcbe2c7` (repo con).
 
 > **Tiêu chí kiểm chứng:** ngày tải nhiều đợt → DB vẫn đủ ngày (đối chiếu
 > `COUNT(*) = tổng dòng file gốc folder ngày`); log auto-ETL hiện "bỏ vòng —
