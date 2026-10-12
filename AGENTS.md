@@ -3553,5 +3553,30 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > `COUNT(*) = tổng dòng file gốc folder ngày`); log auto-ETL hiện "bỏ vòng —
 > agent ĐANG CHẠY JOB" khi có job.
 
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
-> **5.8.3** / repo con **8.8.0**.
+> **Version:** ĐÃ PUSH GĐ 404 — app tổng **5.8.4** / repo con **8.9.0** (xem
+> entry GĐ 404 bên dưới).
+
+### GĐ 404 / C.240 (Trợ lý Freebuff): PA Push đợt GĐ 403/C.239 + GĐ 399/C.236 — bump 5.8.4 / 8.9.0 + LIVE production (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10, sau GĐ 403).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry 0 🔒 dở;
+> phạm vi 2 phiên KHÔNG giao nhau (C.239 = etl_import + 40_web_agent; C.236 =
+> bang-gia) · status chỉ file deleted của phiên khác (không đụng) · email
+> `cuongpk.giong04@gmail.com` ✓.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.8.3 → 5.8.4**
+> (patch — fix ETL mất dữ liệu nhiều đợt GĐ 403) — 4 chỗ (package.json +
+> package-lock ×2 + DEFAULT_VERSION app-shell.tsx); repo con **8.8.0 → 8.9.0**
+> (minor — C.236 bảng chuẩn 52 dòng + cột ưu đãi + scrape giá ngoài; kèm C.239
+> fix ETL) — 2 chỗ (package.json + DEFAULT_VERSION). Checklist GĐ 138 ✓
+> (không thành phần nào ≥ 10; grep 0 sót sau bump).
+
+> **Push:** app tổng `7ef2dc0..4f865ad` (8 commit: GĐ 399 entry+unlock của
+> phiên C.236 · GĐ 403 claim/code/docs/unlock · GĐ 404 claim+bump) · repo con
+> `cf8e343..df6befc` (8 commit: C.236 code+docs · C.239 code+test+docs · C.240 bump).
+
+> **✅ Verify production (curl --compressed + grep -a — lesson GĐ 337):** app
+> tổng `giong-vn-v6.vercel.app` = **5.8.4** · repo con `giong-banhang.vercel.app`
+> = **8.9.0** — cả 2 LIVE ngay lần curl đầu tiên, không ghim deployment cũ.
+
+> **Version:** app tổng **5.8.4** / repo con **8.9.0** — ĐÃ PUSH + ĐÃ LIVE.
