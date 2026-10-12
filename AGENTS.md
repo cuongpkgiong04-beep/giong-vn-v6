@@ -2880,3 +2880,46 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > Task_04 xong.
 
 > **Version:** app tổng **5.7.0** / repo con **8.6.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 388 / C.225 (Trợ lý Freebuff): KPI Nhập Vắc Xin — Bảng 1 tách lô giá đích danh FIFO + cột "Đơn giá nhập"/"Thành tiền (đ)" + drill-down "Nhập Vắc xin tại các trung tâm chi tiết" (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10):** (1) Bảng con của hộp KPI Nhập Vắc Xin (Tổng
+> quan app con) thêm cột "Đơn giá nhập" sau Số lượng, trước cột "Tiền (đ)" +
+> đổi "Tiền (đ)" → "Thành tiền (đ)"; (2) bấm trực tiếp 1 dòng dữ liệu → bảng
+> "Nhập Vắc xin tại các trung tâm chi tiết": STT · Ngày nhập · Trung tâm
+> (viết tắt "BH", "CĐ"...) · Số lượng · Đơn giá nhập · Thành tiền (đ).
+>
+> **Hỏi-đáp chốt (AskUserQuestion 2 vòng):** probe stg_5BKN thật qua tunnel —
+> col10 đơn giá chưa VAT, col13 SAU VAT (col9 × col13 = col14); 1.936 nhóm
+> (ngày+vax) nhiều dòng, nhiều nhóm nhiều giá (Infanrix Hexa 02/10: 8 dòng/2
+> giá). ĐH chốt: KHÔNG gộp bình quân — "giá đích danh theo lô hạn sử dụng, 1
+> phiếu nhập 1 giá không lẫn, tính theo FIFO" → tách theo LÔ; Bảng 2 đơn giá
+> SAU VAT; TỔNG CỘNG Bảng 2 theo PA khuyên (câu bị bỏ qua — best judgment; ô
+> Đơn giá TỔNG CỘNG trống — nguyên tắc cột đơn giá không cộng Subtotal).
+>
+> **Đã làm (repo con — code `b262b8c` 2 file +180/−13 · docs `f7e4289`):**
+> 1. `-overview.ts` nhánh `box === "import"`: GROUP BY (report_date, col6,
+>    col8 lô, col13 giá) + ORDER BY report_date DESC, MIN(row_num) ASC (FIFO
+>    theo dòng file); 6 cột ["Ngày","Vắc xin","Lô","Số lượng","Đơn giá nhập",
+>    "Thành tiền (đ)"] + TỔNG CỘNG (SL+tiền; "Đơn giá nhập" = "" — tsc lần 1
+>    bắt TS2322 → type annotation `Record<string, string|number>[]`).
+> 2. serverFn MỚI `loadOverviewImportByCenter` + type `ImportCenterRow`: mỗi
+>    dòng staging = 1 phiếu nhập (không GROUP BY — giữ giá đích danh; ETL đã
+>    dedupe theo src_file+row_num), day dd/mm/yyyy→ISO, ORDER BY row_num ASC
+>    (FIFO), center MÃ 2 CHỮ ("BH", "CĐ"... — đúng yêu cầu viết tắt).
+> 3. `overview-dashboard.tsx`: state/effect/onClose drill-down (pattern GĐ
+>    230/238) + onClick dòng Bảng 1 (TỔNG CỘNG không bấm — như hộp stock) +
+>    render Bảng 2 6 cột + footer TỔNG CỘNG (formatQty/formatVnd #,##0 căn
+>    phải; ô Đơn giá TỔNG CỘNG trống).
+>
+> **Verify:** tsc EXIT 0 · SQL thật qua tunnel đối chứng 2 chiều: Bảng 1 —
+> Jevax 11/10 lô JM-010925 10×54.000=540.000; Gardasil 9 09/10 lô A003100
+> gộp TS+TD cùng giá 40×2.726.850=109.074.000 · drill-down Bảng 2 = TS 20 +
+> TD 20 × 2.726.850 = 54.537.000 — KHỚP từng đồng dòng Bảng 1.
+>
+> **Tiêu chí kiểm chứng (sau Push):** Tổng quan → bấm hộp KPI Nhập Vắc Xin →
+> Bảng 1 6 cột; bấm 1 dòng lô → Bảng 2 phiếu nhập theo trung tâm (mã 2 chữ),
+> Đơn giá × SL = Thành tiền từng dòng; nút Đóng thu lại.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.7.0** / repo con **8.6.0**.
