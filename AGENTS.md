@@ -2966,3 +2966,49 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.7.0** /
 > repo con **8.6.0**.
+
+---
+
+### GĐ 390 / C.227 (Trợ lý Freebuff): XÂY DỰNG LẠI "Báo cáo công nợ đặt trước" — xóa 6 sheet cũ, chỉ còn 5 bảng (cột giữ nguyên 100%) + khử trùng đa lượt khớp từng dòng (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10):** xây dựng lại Báo cáo công nợ đặt trước (BÁO
+> CÁO MARKETING) — xóa bỏ hết logic + bảng cũ, rà lại file dữ liệu đã download
+> để lấy tư duy, làm lại cẩn thận 5 bảng. **ĐH chốt (hỏi-đáp): PA-1** (khử
+> trùng khớp từng dòng + rank folder theo thời gian + làm lại logic 5 bảng) ·
+> **trang chỉ còn 5 bảng** · **'Ngày tiêm' giữ f2 làm chính**.
+>
+> **Tư duy từ 4 file nguồn SMED (mở file thật):** f1 đăng ký đặt trước lẻ (1
+> dòng = 1 mũi) · f2 thống kê trả mũi (1 dòng = 1 lượt trả) · f3 gói dịch vụ
+> (1 dòng = 1 gói) · f4 chi tiết gói đặt trước (block khách → từng mũi, ghi
+> chú 'Đã sử dụng ngày…'). File mẫu 10.GDTVX/2026-10-11 đủ 19 TT × 4 loại.
+>
+> **Bằng chứng rà soát (file + GiondDB):** 1.138 khóa f1 trùng ≥2 dòng TRONG
+> CÙNG folder (2.657 dòng — 2 mũi THẬT giống hệt, TS Nguyễn Quỳnh Anh 2×
+> Gardasil 9) → lọc theo (ngày đk, mãTC, vắc xin) thô sẽ MẤT mũi · 434 khóa
+> trùng xuyên ≥2 folder · lỗ hổng khóa cũ GĐ 228i gồm trang_thai → 1 mũi 2
+> lượt đổi trạng thái giữ CẢ 2 → trùng tk-goi · lỗ hổng rank so TÊN folder
+> ('gd370-*' nạp tay GĐ 370 > mọi '2026-*') · f4 2.897 dòng rác header block.
+>
+> **Đã làm (chi tiết đầy đủ ở AGENTS.md repo con C.227):**
+> 1. `agent/etl/sql_reports.py` repo con: `_folder_rank` + `_gdtvx_keep_newest`
+>    (khóa KHÔNG gồm trang_thai — folder thắng theo THỜI GIAN, giữ MỌI dòng
+>    folder thắng); parse_f4 lọc rác header; `bccn_dattruoc` XÓA TỔNG HỢP 22
+>    cột + TH_CongNo + DS_CN_Goi + DS_CN_Le + DS_CN_Theo_DT + TH Hết hạn, giữ
+>    5 bảng cột 100% (tk-goi · cn-goi · cn-dt · tt-cn · mt-cn), mt-cn bổ sung
+>    lọc mũi lẻ đã trả f2 (GĐ 361 bỏ sót), main = tt-cn.
+> 2. Client `bc-congno-dattruoc.tsx`: order 4 SubSheets + mô tả mới.
+> 3. Script verify `scripts/gd390-verify-bccn.py` (chỉ đọc).
+>
+> **Verify:** py_compile OK · unit **64/64 PASS** (thêm T16-T19) · tsc EXIT 0 ·
+> builder thật GiondDB kỳ 2018→11/10: tk-goi 35.782 dòng, 0 rác · **Tiên Du
+> còn nợ 1 mũi đặt trước — khớp web SMED GĐ 370-C** · 'Kiểm tra'/'Kiểm tra
+> nguồn' ✓ toàn bộ · cn-dt Tiên Du chỉ còn MENGOC 330.000 (đã trả loại đúng) ·
+> TS 2 mũi Gardasil giống hệt giữ đủ · nhóm trùng 10×GC FLU = 10 dòng thật
+> trong 1 folder. Code repo con `a31e2fd` (docs) + commit code trước đó.
+>
+> **Tiêu chí kiểm chứng (sau Push):** trang bccn job mới → 5 bảng đúng thứ tự
+> + cột không đổi; tk-goi hết trùng 2 lượt tải; Tiên Du/Tú Sơn hết ghim
+> snapshot 09/10; ma trận không đếm mũi đã trả.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.7.0** / repo con **8.6.0**.
