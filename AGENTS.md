@@ -3193,3 +3193,34 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.8.0** /
 > repo con **8.7.0** (bump GĐ 391 — phiên Push khác đã push đợt GĐ 389-390).
+
+### GĐ 395 / C.231 (Trợ lý Freebuff): PA Push đợt GĐ 394 / C.230 — bump 5.8.1 / 8.7.1 + LIVE production (2026-10-12)
+
+> **Lệnh "Push" của Đại ca (12/10, sau GĐ 394).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = RỖNG cả 2 repo; registry duy nhất
+> GĐ 392 🔒 của phiên khác (OCR — docs-only `.claude/commands/ocr` + `.ocr/`,
+> KHÔNG giao code app — commit `43173c5` đã nằm local main, push kèm — KHÔNG
+> trùng phạm vi với GĐ 389/394); file modified còn lại là của phiên khác — KHÔNG
+> đụng, không đi kèm push (chỉ đi commit).
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.8.0 → 5.8.1**
+> (patch — GĐ 394 điều chỉnh/fix nhỏ) — package.json + package-lock.json (dòng 3
+> + 9 root) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ, grep 0 sót 5.8.0; repo
+> con **8.7.0 → 8.7.1** (patch — C.230) — apps/banhang/package.json +
+> DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+>
+> **Push (qua SSH GIONGPC — same working tree, alias github-beep của Windows):**
+> app tổng `621cac3..342c378` — GĐ 394 claim + GĐ 392 tools (phiên khác) + GĐ
+> 393 skills + GĐ 395 claim + bump; repo con `79d70ab..ddcc047` — C.230 code +
+> docs + C.231 bump.
+>
+> **✅ Verify production (curl --compressed sau ~150s):** app tổng
+> `giong-vn-v6.vercel.app` = **5.8.1** (HTTP 200) · app con
+> `giong-banhang.vercel.app` = **8.7.1** (HTTP 200) — cả 2 LIVE, không ghim
+> deployment cũ.
+>
+> **Tiêu chí kiểm chứng của Đại ca (trên production):** hộp Lượt tiêm — cột VX
+> hẹp, Số tiền thấy ngay, cuộn tiêu đề/TỔNG dính; hộp Ngân hàng vàng nhạt →
+> bấm → 3 NH → bấm 1 NH → GD riêng NH + nút quay lại (kèm fix chi TCB âm → ABS).
+>
+> **Version:** app tổng **5.8.1** / repo con **8.7.1** — ĐÃ PUSH + ĐÃ LIVE.
