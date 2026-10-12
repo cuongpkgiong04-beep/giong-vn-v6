@@ -3508,3 +3508,46 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.8.3** / repo con **8.8.0** (đợt push GĐ 398-402 của phiên khác).
+
+### GĐ 403 / C.239 (Trợ lý Freebuff): Fix gốc ETL mất dữ liệu khi thư mục ngày nạp nhiều ĐỢT — PA-1 rebuild-ngày + PA-2 auto-ETL nhường job (2026-10-13)
+
+> **Yêu cầu của Đại ca (12/10 tối, 3 ảnh):** báo cáo bán hàng (DT) + KPI
+> "Lượt tiêm" trên Dashboard chỉ ra **11 mũi** dù đã download đủ 19/19 trung
+> tâm; "hôm qua chạy cũng bị như thế — phải chạy lấy dữ liệu thủ công và chạy
+> lại thủ công thì nhận dữ liệu?". Em điều tra bằng bằng chứng thật (DB +
+> log agent + file gốc, CHỈ ĐỌC) → trình 3 PA + dự đoán → **ĐH chốt PA-1 +
+> thêm PA-2**.
+
+> **Chẩn đoán (chuỗi bằng chứng — chi tiết đầy đủ ở AGENTS.md repo con C.239):**
+> KHÔNG phải lỗi download (file đủ 19/19 = 235 dòng trên đĩa). Gốc ở ETL —
+> **auto-ETL 60 phút chạy CHEN GIỮA lúc job BKCCN đang tải** → timeline 12/10:
+> job 17:22:38→17:43:50; auto-ETL 17:40:33 nạp 16/19 file = 224 dòng;
+> ETL-sau-job 17:43:55 **skip 16 file theo hash + wipe-theo-ngày xóa cả 224
+> dòng** → DB còn 11 dòng (3 file cuối) → KPI + báo cáo bán hàng = 11.
+> Đối chiếu cả tháng 10: chỉ 2 ngày lệch — **12/10 mất 224 · 04/10 mất 389**;
+> 11/10 từng bị tách đợt nhưng tải lại đủ 19 file → tự đúng (đúng như ĐH thấy:
+> "chạy lại thủ công thì nhận").
+
+> **Đã làm (repo con code `89f5d66`):** PA-1 `etl_import.py` — folder ngày có
+> ≥1 file mới → **rebuild CẢ folder** (nạp lại toàn bộ file, bỏ skip-theo-hash;
+> không INSERT trùng PK import_log) → mỗi lượt nạp luôn đủ ngày · PA-2
+> `40_web_agent.py` — cờ `job_active` + grace 90s: **auto-ETL bỏ vòng khi agent
+> đang chạy job** · unit test offline mới `etl_import.test.py` tái hiện kịch bản
+> 2 đợt **7/7 PASS** (code cũ 3/7 đỏ) · script `gd403-restore-etl-day.py` khôi
+> phục 1 ngày 1 phân hệ (mặc định xem trước, `--yes` mới ghi).
+
+> **Verify thật:** **04/10: 380→769 dòng** (xóa 57 dấu vân tay → agent tự chạy
+> ETL run #5132 → code mới rebuild đủ 19 file — PA-1 chạy thật end-to-end) ·
+> **12/10: 11→235 dòng** (Task_04 23:00 tải lại đủ 19 file → ETL nạp đủ 23:33)
+> · KPI "Lượt tiêm" 12/10 giờ = **235** · py_compile OK.
+
+> **Trạng thái vận hành:** PA-1 có hiệu lực NGAY (ETL chạy subprocess mỗi lần,
+> không cần restart); PA-2 cần **restart GIONG_SMED_Agent** — đang chờ Task_04
+> chạy xong để restart an toàn (không cắt job).
+
+> **Tiêu chí kiểm chứng:** ngày tải nhiều đợt → DB vẫn đủ ngày (đối chiếu
+> `COUNT(*) = tổng dòng file gốc folder ngày`); log auto-ETL hiện "bỏ vòng —
+> agent ĐANG CHẠY JOB" khi có job.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.8.3** / repo con **8.8.0**.
