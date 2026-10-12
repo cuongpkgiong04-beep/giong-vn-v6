@@ -3296,3 +3296,39 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > còn nợ (~293 triệu — tăng so bản cũ vì các mũi bị pop oan quay về đúng).
 >
 > **Version:** app tổng **5.8.2** / repo con **8.7.2** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 398 / C.235 (Trợ lý Freebuff): Xây dựng module "Bảng TH GB-KM_GN-CK-LN" — 16 cột (nhập tay giá/KM/CK + VX SMED/NCC tự động + LN gộp tính tự động) (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10):** xây module Bảng TH GB-KM_GN-CK-LN (lá 2 nhóm
+> BÁN HÀNG — placeholder GĐ 341) gồm 16 cột: STT · Tên Vắc xin (SMED) · NCC
+> nhập kho · nhóm **Giá Bán** 4 cột · nhóm **Giá Nhập** 5 cột (niêm yết + CK
+> nhập HĐ/tháng/quý/khác) · nhóm **Lợi nhuận gộp** 3 cột · Ghi chú. Chi tiết
+> đầy đủ ở entry C.235 AGENTS.md repo con (`0f0bc77`).
+>
+> **Nguồn (probe thật GiondDB):** Tên VX từ `price_list` (48 ten_smed DISTINCT
+> — seed 1 dòng/tên vào bảng mới) · NCC từ `stg_5BKN` DISTINCT col2 (10 NCC
+> nhập kho thật, lọc "Nhập tồn") · Giá bán/ưu đãi/KM/thưởng/giá nhập/CK —
+> GiondDB CHƯA có bảng nguồn (khớp GĐ 341) → **NHẬP TAY**. Hỏi-đáp AskUser
+> 3 câu không phản hồi → best judgment + ghi giả định rõ: CK nhập = % (đối
+> chứng phiếu nhập col11 2,5% khớp col10×(1−2,5%)×1,05 = col13 ✓); LN(CK) =
+> (Giá bán ưu đãi ?? Giá bán) + KM + Thưởng NV − Giá nhập × (1 − CK%/100) —
+> tiền/mũi, tính render không lưu, dễ đổi khi Anh chốt khác.
+>
+> **Đã làm:** repo con `2520773` (6 file +931/−7): bảng `dbo.th_gbkm_gnck_ln`
+> (tạo + seed 48 qua tunnel `/exec` — idempotent) · `db.ts` +`execSql` (POST
+> /exec — kênh GHI qua tunnel, serverFn app con dùng được) · API `-th-gbkm.ts`
+> (load/save/delete + validator + session guard) · trang
+> `/m/banhang-th-gbkm-gnck-ln` (header 2 hàng gộp rowspan/colspan · dialog
+> thêm/sửa/xóa · tìm kiếm · 4 nguyên tắc định dạng) · `lib/th-gbkm.ts` +
+> unit · script E2E `gd398-verify-e2e.mjs` (chạy máy Windows).
+>
+> **Verify:** tsc EXIT 0 · unit LN **12/12 PASS** · CRUD thật qua tunnel
+> INSERT→SELECT→UPDATE→DELETE khớp từng bước, bảng về đúng 48 dòng sạch ·
+> ⚠️ E2E UI local không chạy được trên máy Linux SMB (vite rolldown binding
+> Windows-only — node_modules dùng chung, không cài lại) — tiêu chí kiểm
+> chứng sau Push: trang hiện 48 dòng + thêm/sửa/xóa lưu GiondDB + LN tự tính.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.8.2** / repo con **8.7.2**.
