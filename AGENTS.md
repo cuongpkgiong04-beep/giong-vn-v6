@@ -3332,3 +3332,35 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.8.2** / repo con **8.7.2**.
+
+---
+
+### GĐ 401 / C.237 (Trợ lý Freebuff): Khử trùng bccn rank theo THỜI ĐIỂM TẢI trong tên file nguồn — PA-1 (bằng chứng Mai Sương) (2026-10-12)
+
+> **Hỏi của Đại ca (12/10, 3 ảnh — sau GĐ 396):** mã 101141719830143 (Thái
+> Thị Mai Sương · SĐ · Gardasil 9 2.925.000) — file nguồn tải 10/10 chỉ 2
+> dòng (1 'Sử dụng tốt' + 1 'Đã hoàn thành') nhưng tk-goi 3 dòng 'Sử dụng
+> tốt'/'Chưa tiêm' + cn-dt 3 mũi 8.775.000. **ĐH chốt PA-1.**
+>
+> **Chẩn đoán (probe DB):** cột `folder` trong DB = KỲ 'Từ ngày' của file —
+> KHÔNG phải thời gian tải. File kỳ ngắn '2026-05-17' (tải 03/07 + 17/09 —
+> CŨ, mỗi file 2 SĐT) thắng oan file kỳ dài '2026-02-01' (tải 10/10 —
+> MỚI, 1 SĐT + 1 ĐHT) khi rank so tên folder + cùng kỳ qua 2 lượt tải bị
+> nhân đôi → giữ 4 SĐT cũ, loại file mới. Quy mô: 438 khóa f1 (1.237 dòng)
+> + 2.055 khóa f2 (5.744 lượt trùng).
+>
+> **Đã làm (chi tiết ở AGENTS.md repo con C.237, code repo con
+> `15778e5`):** `_load_rank` parse timestamp `yyyymmddHHMMSS` trong tên
+> file nguồn (fallback _folder_rank); `_rank` = timestamp từng dòng;
+> keep_newest so trực tiếp; SELECT thêm src_file f1-f4.
+>
+> **Verify:** unit **73/73 PASS** (T21) · tsc 0 · builder thật: tk-goi Mai
+> Sương 2 dòng (1 'Chưa tiêm' + 1 'Đã tiêm' 27/09) · cn-dt 1 mũi
+> 2.925.000 '✓ 1' khớp file · cn-dt toàn hệ **196→106 mũi / 293.385.000→
+> 151.640.000** · Bảng 1 273 · 1.273 · 106 · 1.379 · 1.023.459.300 · 0 ✗.
+>
+> **Tiêu chí kiểm chứng (sau Push):** tk-goi/cn-dt khớp file nguồn mọi
+> khách trùng lượt tải; restart agent sau Push.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.8.2** / repo con **8.7.2**.
