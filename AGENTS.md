@@ -3224,3 +3224,38 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > bấm → 3 NH → bấm 1 NH → GD riêng NH + nút quay lại (kèm fix chi TCB âm → ABS).
 >
 > **Version:** app tổng **5.8.1** / repo con **8.7.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 396 / C.232 (Trợ lý Freebuff): Sửa logic ghép lượt trả bccn + tách 2 cột tk-goi — PA-1 (bằng chứng Trung Thảo) (2026-10-12)
+
+> **Báo của Đại ca (12/10 chiều, sau GĐ 390):** (1) cn-dt thiếu khách Nguyễn
+> Thế Trung Thảo (TS · 106190120120030) — còn 1 mũi Verorab 0.5ml chưa tiêm;
+> (2) tk-goi khách này 'Trạng thái Gói/Đặt trước' = 2 'Đã hoàn thành' + 1
+> 'Sử dụng tốt' nhưng 'Trạng thái tiêm' = cả 3 'Đã tiêm' — sai. Chốt: tách
+> thành 2 cột "Trạng thái gói" + "Trạng thái đặt trước"; quy tắc 'Đã tiêm'/
+> 'Đã hoàn thành' = hết nợ · 'Chưa tiêm'/'Sử dụng tốt' = còn nợ.
+>
+> **Chẩn đoán (probe DB thật):** 3 mũi Verorab giống hệt (1 SĐT + 2 ĐHT),
+> f2 chỉ 2 lượt trả → logic cũ 2 hàng đợi song song (L1 dịch vụ cho ĐHT +
+> L2 giá cho SĐT) CÙNG nhìn toàn bộ f2 → lượt trả "dùng 2 lần" → SĐT pop
+> oan lượt trả của mũi ĐHT → 'Đã tiêm' + mất khỏi cn-dt. Kèm thứ tự pop sai
+> (SĐT đứng trước ĐHT trong file — pop ngay trong vòng build).
+>
+> **ĐH chốt PA-1 — đã làm (chi tiết ở AGENTS.md repo con C.232, code
+> `2722a69`):** (1) tách hàng đợi f2 theo GHI CHÚ ('Gói dịch vụ' 28.197
+> lượt = mũi gói f4 · 'Đặt trước' 5.403 = mũi lẻ f1); (2) phân bổ 2 PHA mũi
+> lẻ — ĐHT pop trước lấy Ngày tiêm, SĐT chỉ nhận phần DƯ; (3) tk-goi 18→19
+> cột ('Trạng thái gói' + 'Trạng thái đặt trước' nguyên văn từng nguồn).
+>
+> **Verify:** unit **70/70 PASS** (T20 tái hiện TH Trung Thảo) · tsc 0 ·
+> builder thật GiondDB: tk-goi Trung Thảo 1 'Chưa tiêm' + 2 'Đã tiêm'
+> (03/07+07/07) · **cn-dt CÓ Trung Thảo 1 mũi Verorab 470.000 '✓ 1'** ·
+> cn-dt toàn hệ 109→196 mũi còn nợ (+87 pop oan quay về đúng) · 0 ✗ toàn
+> hệ · fix cũ giữ nguyên (Dương Trà My · GĐ 361).
+>
+> **Tiêu chí kiểm chứng (sau Push):** cn-dt hiện Trung Thảo 470.000; tk-goi
+> 2 cột trạng thái nguyên văn; công nợ tăng đúng phần mũi bị pop oan.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.8.1** / repo con **8.7.1**.
