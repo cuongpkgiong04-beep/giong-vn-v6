@@ -1327,6 +1327,12 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > | Form/table/dialog mới — dò UX + accessibility (contrast 4.5:1, focus, label) | `ui-ux-pro-max` (`--domain ux`) |
 > | Pattern hiệu năng React 19 (useMemo/useCallback/key/effect/context) | `ui-ux-pro-max` (`--stack react`) |
 > | Trang mới/landing/hero — chọn style + màu + font theo ngành | `ui-ux-pro-max` (`--domain style/color/typography` · `--design-system`) |
+> | Viết logic mới / fix bug — viết test tái hiện TRƯỚC khi sửa (Prove-It: test đỏ → fix → xanh), RED→GREEN→REFACTOR; test DAMP over DRY; khớp văn hóa `*.test.ts/.mjs` hiện có | `test-driven-development` (GĐ 393) |
+> | Phiên dài / tràn context / phải cắt bớt — bảng "cắt gì trước · giữ gì đến cùng", trim từ 75%, compress-before-drop, ranh giới phiên restart an toàn (bổ trợ quy tắc GĐ 319) | `context-engineering` (GĐ 393) |
+> | Chạm auth / upload / secrets / SQL / dependency mới — rà OWASP + hardening TRƯỚC khi báo xong | `security-and-hardening` (GĐ 393) |
+> | Cảm giác muốn TẮT check / skip test / bỏ qua verify để "xanh" → DỪNG — đọc bảng chống-lười của skill | `constraint-driven-development` (GĐ 393) |
+> | Tính năng / việc LỚN mới — viết khung PRD (mục tiêu · cấu trúc · ranh giới · test) TRƯỚC code (bổ trợ quy trình 5 bước GĐ 198) | `spec-driven-development` (GĐ 393) |
+> | Muốn đơn giản hóa / xóa code cũ — Chesterton's Fence: chưa hiểu tại sao có thì đừng xóa (bổ trợ `ponytail`) | `code-simplification` (GĐ 393) |
 >
 > Nạp đúng lúc bằng tool `skill` (đọc file theo yêu cầu) — KHÔNG nạp dồn mọi
 > skill cùng lúc (bảo vệ ngân sách context — quy tắc GĐ 319). `ui-ux-pro-max`
@@ -3054,3 +3060,55 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > trước; hộp KPI MARKETING app con (GĐ 389) + 5 bảng bccn (GĐ 390) cùng LIVE.
 
 > **Version:** app tổng **5.8.0** / repo con **8.7.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 393 (Trợ lý Freebuff): Cài 6 skill "agent-skills" (Addy Osmani) + 3 checklist — PA-1 Đại ca chốt (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10):** nghiên cứu thư mục
+> `D:\DuLieuChung\CUONG_2026\Github\agent-skills-main`
+> (addyosmani/agent-skills v0.6.12, MIT — 25 skill + 9 lệnh + 4 persona + 7
+> checklist theo vòng đời Define→Plan→Build→Verify→Review→Ship). ĐH chốt
+> **PA-1** (trong PA-1/2/3 — PA-2 full 25 skill bị loại vì chồng chéo ≥6 chỗ
+> với skill đã cài GĐ 345/347/349; PA-3 chỉ chép quy tắc bị loại vì mất
+> chi tiết how-to, lesson GĐ 345).
+
+> **Khảo sát → chọn lọc 6 skill trúng bài toán thật (12+ skill trùng đã loại):**
+> interview-me≈grilling · debugging≈diagnosing-bugs · code-review≈code-review
+> · planning≈to-tickets · frontend-ui≈ui-ux-pro-max · git-workflow/
+> documentation≈quy tắc AGENTS.md. Còn 6 skill ĐỘC QUYỀN trúng:
+> 1. **context-engineering** 🎯 — trúng trực tiếp tràn context 400K GĐ 319:
+>    trim từ 75%, bảng "cắt gì trước · giữ gì đến cùng", compress-before-drop,
+>    ranh giới phiên restart an toàn.
+> 2. **test-driven-development** — Prove-It (fix bug = test tái hiện TRƯỚC),
+>    RED→GREEN→REFACTOR, DAMP over DRY — chuẩn hóa `*.test.ts/.mjs`.
+> 3. **security-and-hardening** — OWASP Top 10, secrets, dependency audit.
+> 4. **constraint-driven-development** — chống agent TẮT check / skip test
+>    để "xanh" (bảng rationalizations + references/floor-guard.md).
+> 5. **spec-driven-development** — khung PRD việc lớn (bổ trợ quy trình 5
+>    bước GĐ 198).
+> 6. **code-simplification** — Chesterton's Fence (bổ trợ ponytail).
+
+> **Đã làm (docs-only, 0 đụng code app):** copy nguyên văn vào `.agents/` —
+> 6 skill `.agents/skills/<tên>/SKILL.md` (security + constraints kèm
+> references con) + 3 checklist chung `.agents/references/`
+> (testing-patterns · security-checklist · definition-of-done — đường dẫn
+> `../../references/` trong SKILL.md hoạt động đúng như repo nguồn).
+> Cập nhật **bảng QUY TẮC NẠP SKILL GĐ 345** thêm 6 dòng (đánh dấu GĐ 393).
+
+> **Verify:** md5 **11/11 khớp nguồn** (7 SKILL.md + 2 references con + 3
+> checklist) · tổng ~168KB · `git check-ignore` .agents/ không bị ignore ·
+> tsc không cần (0 file code app).
+
+> **⚠️ Nguồn sự thật skill duy nhất:** bảng QUY TẮC NẠP SKILL GĐ 345 (trên)
+> — skill chỉ Nạp đúng tình huống (tool `skill`), KHÔNG nạp dồn (quy tắc
+> GĐ 319). Phiên sau cài thêm từ repo nguồn này: check TRÙNG với 14 skill
+> hiện có trước (8 mattpocock + ponytail + ui-ux-pro-max + 6 Addy Osmani).
+
+> **Tiêu chí kiểm chứng:** phiên sau gặp 1 trong 6 tình huống mới của bảng
+> → nạp đúng skill và làm theo quy trình của nó (VD: báo bug → Prove-It
+> test tái hiện trước khi fix; phiên ~70% → trim theo bảng
+> context-engineering).
+
+> **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
+> App tổng **5.8.0** / repo con **8.7.0**.
