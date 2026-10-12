@@ -2923,3 +2923,46 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.7.0** / repo con **8.6.0**.
+
+### GĐ 389 / C.226 (Trợ lý Freebuff): Điều chỉnh 5 hộp KPI Tổng quan + thêm 2 hộp Ngân hàng + Marketing (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10, 6 mục):** (1) Tồn kho — sticky tiêu đề/tổng + cột
+> VX hẹp truncate + drill-down trung tâm có dòng cộng; (2) Thu tiền — thêm Tiền
+> mặt/Chuyển khoản; (3) Hóa đơn — mũi sau tờ + chi tiết mũi/TM/CK/Cộng tiền +
+> TỔNG CỘNG sticky; (4) Lượt tiêm — chi tiết Ngày/TT/Lượt/VX/Tiền; (5) HSD — cột
+> Tên VX hẹp còn 1/2; (6) 2 hộp mới "Ngân hàng" (vàng nhạt) + "MARKETING".
+>
+> **Hỏi-đáp chốt (4 câu — PA khuyên dùng):** TM/CK/Thẻ/rỗng → cột "Khác" · Lượt
+> tiêm nhóm Ngày+TT+VX 200 dòng + TỔNG · Ngân hàng số dư TẠI ngày cuối kỳ + chi
+> tiết 200 GD MỚI NHẤT + TỔNG Thu/Chi · Marketing 3 chỉ số + chi tiết theo TT.
+>
+> **Nguồn (probe thật):** DTTDT col15 + BKCT col11 (hình thức TT có sẵn); mũi HĐ =
+> SUM col17 BKCT; tiền lượt tiêm = col16 BKCCN; bank_vcb/tcb/tpb_tx (balance — VCB
+> không có bảng balance riêng); Marketing = f3 'Sử dụng tốt' + f4 'Chưa tiêm' + f1
+> 'Sử dụng tốt' trừ lượt trả f2 theo (TT, mãTC, GIÁ) — định nghĩa Bảng 1 bccn C.173.
+>
+> **Đã làm (repo con code `16826c8` 2 file +620/−62 · docs `6fe4a04`):** API —
+> KPI type + invoiceQty/bankBalances/marketing · bankBalanceStats + marketingStats
+> (CTE f1−f2) · 4 nhánh detail mới + 2 serverFn (loadOverviewBankDetail UNION 3
+> bank TOP 200 + tổng; loadOverviewMarketingDetail FULL JOIN f3×f4×f1-con) ·
+> DetailBox +bank +marketing + guard. Client — 2 tone (amber-light/pink) · hộp HĐ
+> "682 tờ|955 mũi" · 2 hộp mới · block riêng stock (VX truncate + sticky 2 đầu) +
+> invoice (7 cột sticky + tfoot tổng) · drill-down stock dòng CỘNG TỒN + sticky ·
+> HSD colgroup VX 50%→26% · thead sticky khung chung + "Nội dung" truncate.
+>
+> **2 bài học SQL GiondDB:** (1) literal chuỗi có dấu PHẢI N-prefix (N'Tiền Mặt'
+> → 62.329; không N → 0 — collation DB); (2) gia f4/f1 '1.000.000' chấm nghìn —
+> TRY_CONVERT = NULL → REPLACE bỏ chấm trước CONVERT + CẢ khóa ghép giá (khớp
+> _to_num builder). CTE WITH đầu statement OK qua ODBC app (WITH BAN AS hiện hữu).
+>
+> **Verify:** tsc EXIT 0 · TM/CK 11/10 khớp từng đồng (115.841.000 + 512.825.000 +
+> 3.770.000 = 632.436.000) · HĐ BH 76 tờ/88 mũi/68.150.000 ✓ · Bank VCB 197.941.583
+> · TCB 20.721.467 · TPB 750.617.210 · Marketing LIVE 412 gói/3.928 mũi/3.090.831.550
+> (khác Bảng 1 job 06/10 do data DB nạp file 10-12/10 mới hơn — hộp tính LIVE đúng
+> định nghĩa).
+>
+> **Tiêu chí kiểm chứng (sau Push):** 6 mục như yêu cầu + 2 hộp mới bấm được ra
+> chi tiết.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.7.0** /
+> repo con **8.6.0**.
