@@ -2844,3 +2844,39 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > entry repo con C.223b). **Lesson đa agent:** file .md repo này commit dạng
 > **LF** (Windows autocrlf=true) — máy Linux append heredoc phải
 > `git -c core.autocrlf=input add` kẻo churn toàn file (CRLF).
+
+### GĐ 387 / C.224 (Trợ lý Freebuff): PA Push đợt GĐ 384-386 / C.221-C.223 — bump 5.7.0 / 8.6.0 + LIVE production (2026-10-12)
+
+> **Lệnh "Push" của Đại ca (12/10, sau GĐ 385 Báo cáo tiêm hộ).** Rà trùng lặp
+> theo nguyên tắc 3: cả 2 repo "Already up to date"; `main..agent-cli` +
+> `main..pipeline-work` = **RỖNG cả 2 repo**; registry 0 🔒 dở (GĐ 386/C.223
+> đã unlock ✅ — code `f61e25a` + `bf38314`, restart agent PID 29768); status
+> chỉ file deleted cũ + `permissions.ts` (GĐ 315 dở — không đụng); email ✓.
+> Verify bất biến sau GĐ 386: TASK_QUERY_KEYS_ALL **29/29** khớp QUERY_KEYS
+> (tiem-ho còn nguyên sau Task_02 23:00-only + Task_04 mới).
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.6.3 →
+> 5.7.0** (minor — GĐ 384 lib smed-expected + GĐ 385 Báo cáo tiêm hộ) —
+> package.json + package-lock.json (2 chỗ root) + DEFAULT_VERSION
+> app-shell.tsx — đủ 4 chỗ; repo con **8.5.3 → 8.6.0** (minor — C.221b MIA
+> hint 500 + C.222 Báo cáo tiêm hộ + C.223 lịch Nhiệm vụ Task_04) —
+> package.json + DEFAULT_VERSION — đủ 2 chỗ. Checklist GĐ 138 ✓ (mọi thành
+> phần 1 chữ số; grep 0 sót version cũ).
+
+> **Push:** app tổng `d1e3cfd..b887b5c` (GĐ 384 claim+entry+unlock · GĐ 385
+> claim+entry · GĐ 386 claim+entry+unlock · GĐ 387 claim+bump) · repo con
+> `4c6cdfd..ecfc599` (C.221b code+docs · C.222 code+test+docs + STT fix ·
+> C.223 code+docs+C.223b · C.224 bump).
+
+> **✅ Verify production (curl --compressed):** app tổng
+> `giong-vn-v6.vercel.app` = **5.7.0** · app con `giong-banhang.vercel.app`
+> = **8.6.0** — cả 2 LIVE. (Lesson nhỏ: HTML mới tách "VERSION" khỏi số —
+> grep số version trực tiếp thay pattern liền cũ.)
+
+> **Tiêu chí kiểm chứng nghiệp vụ của Đại ca:** trang /m/bc-tiem-ho trên
+> production chạy kỳ có data → bảng chi tiết + bảng tổng hợp (E2E local
+> 14/14 PASS đã chứng minh builder + render); Task_02 23:00 + Task_04 17:15
+> lịch mới GĐ 386; Task_03 tự chạy 29 báo cáo (gồm tiem-ho) sau Task_02 +
+> Task_04 xong.
+
+> **Version:** app tổng **5.7.0** / repo con **8.6.0** — ĐÃ PUSH + ĐÃ LIVE.
