@@ -3063,6 +3063,62 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 ---
 
+### GĐ 392 (Trợ lý Freebuff): Cài thử Open Code Review (OCR) — multi-agent code review trước-Push — PA-1 Đại ca chốt (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10):** nghiên cứu thư mục
+> `D:\DuLieuChung\CUONG_2026\Github\open-code-review-main`
+> (spencermarx/open-code-review v2.5.0, Apache-2.0 — multi-agent code review:
+> Tech Lead orchestrate 8 pha, reviewer chạy SONG SONG qua sub-agents, tranh
+> luận AGREE/CHALLENGE/CONNECT/SURFACE, tổng hợp báo cáo; dashboard web;
+> 28 persona Fowler/Beck/Metz/Hejlsberg…; slash `/ocr:review` + `/ocr:map` +
+> `/ocr:post`). ĐH chốt **PA-1** (cài full + chạy review thử).
+
+> **Đã làm:** (1) `npm i -g @open-code-review/cli` → **2.5.0** (Node 24.16.0 ✓
+> yêu cầu ≥22.5, `node:sqlite` built-in — không native module); (2) **khởi động
+> chuỗi 3 lớp GĐ 342 cho claude headless** — 9router tray PID 14460 (port 20128,
+> HTTP 307) + headroom proxy PID 33544 (port 8787, mode cache) → `claude -p`
+> kết nối 9router OK (1 lần "OK" exit 0 qua model `main`); (3) `ocr init -t
+> claude --no-inject` trong app tổng → tạo `.ocr/` (config.yaml + skills 345K +
+> commands 65K + reviewers-meta + cli-config; gitignore nội bộ đã che
+> sessions/ + data/) + `.claude/commands/ocr/` 11 slash command; (4) cấu hình
+> `.ocr/config.yaml`: context dự án tiếng Việt (tech stack + 4 nguyên tắc định
+> dạng + quy tắc an toàn "KHÔNG sửa AGENTS.md trong review") · tắt openspec
+> (không dùng) · `models.default: main` (9router combo) · default_team
+> principal:2 + quality:2 (giữ mặc định OCR).
+
+> **Review thử BỊ CHẶN — quota 9router (blocker bên ngoài):** pipeline đến
+> 100% sẳn sàng (claude headless nạp slash `ocr:review` ✓ + quyền
+> bypassPermissions ✓ + stage `permissions.ts` 8 dòng GĐ 315 làm changeset
+> thử) nhưng model gọi LLM không ổn định: probe 8 lượt — `main` (combo)
+> flaky 2/3 lượt route sang `mimo-auto` → 400 "Unsupported model" ·
+> `ag/claude-sonnet-4-6` + `ag/claude-opus-4-6-thinking` + `ag/gpt-oss-120b`
+> → **429 quota cạn** (reset ~2 phút vẫn cạn ngay — cạn tổng) · `cx/*` → 400
+> "not supported when using Codex with a ChatGPT account" · `gemini/*` → 400
+> API key invalid. 3 lượt chạy `/ocr:review` headless đều chết ngay turn 1
+> (0 session OCR được tạo — state null). Review multi-agent cần NHIỀU call
+> liên tiếp (4 reviewer + discourse + synthesis) → không chạy nổi với
+> 9router trạng thái này.
+
+> **Hướng chạy tiếp (chờ Đại ca):** (A) khi quota antigravity hồi phục — anh
+> mở claude trong project gõ `/ocr:review` (dùng interactive là chính — công
+> cụ của anh); hoặc (B) bổ sung 1 provider key còn quota vào 9router → em
+> đổi `models.default` rồi chạy lại; hoặc (C) đặt OCR qua endpoint khác.
+> Khôi phục như cũ không cần — chuỗi 9router+headroom đang chạy nền, chỉ có
+> tác dụng cho claude (z-ai GLM của ZCode đi đường riêng, không liên quan).
+
+> **Verify:** `ocr doctor` — git ✓ claude ✓ gh ✓ node:sqlite 3.53.0 ✓;
+> config đọc OK; claude headless connect OK (bằng chứng "OK" exit 0);
+> commit `9cb321a` (claim) + commit này (config + docs + unlock).
+
+> **Tiêu chí kiểm chứng (khi model sống):** `/ocr:review` chạy trọn 8 pha →
+> `.ocr/sessions/{ngày}-{nhánh}/rounds/round-1/` có reviews/*.md (≥2 reviewer)
+> + discourse.md + final.md; dashboard `ocr dashboard` xem kết quả.
+
+> **Version:** KHÔNG bump (công cụ + docs-only — 0 đụng code app; chờ lệnh
+> Push — quy tắc ĐA AGENT). App tổng **5.8.0** / repo con **8.7.0**.
+
+---
+
 ### GĐ 393 (Trợ lý Freebuff): Cài 6 skill "agent-skills" (Addy Osmani) + 3 checklist — PA-1 Đại ca chốt (2026-10-12)
 
 > **Yêu cầu của Đại ca (12/10):** nghiên cứu thư mục
@@ -3112,3 +3168,28 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (docs-only — chờ lệnh Push — quy tắc ĐA AGENT).
 > App tổng **5.8.0** / repo con **8.7.0**.
+
+### GĐ 394 / C.230 (Trợ lý Freebuff): KPI Tổng quan — Lượt tiêm VX hẹp + sticky; Ngân hàng vàng nhạt + chi tiết 2 tầng (2026-10-12)
+
+> **Yêu cầu của Đại ca (12/10, tiếp GĐ 389):** (1) chi tiết LƯỢT TIÊM cột Vắc xin
+> quá rộng (Số tiền không thấy trong 1 khung) → hẹp ~50% + cố định tiêu đề/TỔNG
+> CỘNG; (2) NGÂN HÀNG giảm màu vàng đỡ chói + chi tiết 2 tầng (danh sách 3 NH →
+> bấm NH → chi tiết giao dịch).
+>
+> **Đã làm (repo con code `8dbd15a` 2 file +174/−46 · docs `411ba7e`):** Lượt
+> tiêm — block riêng table-fixed 14/10/11/35/30 (VX 35% ≈ nửa) + truncate/title +
+> thead/tfoot sticky + TỔNG (Lượt formatQty + Số tiền formatVnd) · Ngân hàng —
+> tone amber-200 · serverFn MỚI loadOverviewBankList + loadOverviewBankDetail
+> +param bank (filter WHERE $3, cả GD lẫn TỔNG) · state bankSelected + effect 2
+> tầng + nút "← Danh sách ngân hàng" + onClick dòng NH tầng 1 + reset onClose ·
+> **fix kèm: TCB debit lưu SỐ ÂM** (SUM -100.391.000; VCB/TPB dương) → ABS cho
+> cột Chi.
+>
+> **Verify:** tsc EXIT 0 · probe filter TCB kỳ 10-12/10 chỉ GD TCB ✓ · list 3 NH
+> khớp GĐ 389 (VCB 197.941.583 · TCB 20.721.467 · TPB 750.617.210).
+>
+> **Tiêu chí kiểm chứng (sau Push):** Lượt tiêm VX hẹp + Số tiền thấy ngay + cuộn
+> dính tiêu đề/TỔNG; Ngân hàng vàng nhạt → 3 NH → bấm 1 NH → GD → nút quay lại.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **5.8.0** /
+> repo con **8.7.0** (bump GĐ 391 — phiên Push khác đã push đợt GĐ 389-390).
