@@ -3012,3 +3012,45 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.7.0** / repo con **8.6.0**.
+
+---
+
+### GĐ 391 / C.229 (Trợ lý Freebuff): PA Push đợt GĐ 389-390 / C.226-C.227 — bump 5.8.0 / 8.7.0 + LIVE production + restart agent (2026-10-12)
+
+> **Lệnh "Push" của Đại ca (12/10, sau GĐ 390).** Rà trùng lặp theo nguyên tắc
+> 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry
+> KHÔNG có 🔒 dở (GĐ 389/C.226 của phiên khác đã unlock ✅ `16826c8`+`6fe4a04` —
+> phạm vi `-overview.ts` + `overview-dashboard.tsx` KHÔNG giao file nào với
+> GĐ 390/C.227: sql_reports.py + test + bc-congno-dattruoc.tsx + script
+> verify); status chỉ `permissions.ts` (GĐ 315 — phiên khác) + file deleted cũ
+> — KHÔNG đụng; email `cuongpk.giong04@gmail.com` ✓.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.7.0 →
+> 5.8.0** (minor — GĐ 390 feature xây dựng lại Báo cáo công nợ đặt trước) —
+> package.json + package-lock.json (2 chỗ) + DEFAULT_VERSION app-shell.tsx;
+> repo con **8.6.0 → 8.7.0** (minor — C.227) — package.json + DEFAULT_VERSION
+> app-shell.tsx. Checklist GĐ 138 ✓ (5.8.0/8.7.0 mọi thành phần 1 chữ số).
+
+> **Push:** app tổng `c8a9b5f..73324d1` (GĐ 390 claim+code+docs+unlock · GĐ
+> 391 bump) · repo con `ecfc599..79d70ab` (C.226 code+docs · C.227 code+docs
+> · C.228 bump).
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **VERSION 5.8.0** · app con
+> `giong-banhang.vercel.app` = **VERSION 8.7.0** — cả 2 LIVE, không ghim
+> deployment cũ (sót "1.9.4/1.69.9/1.67.9" = thư viện ngoài trùng số trúng —
+> lesson GĐ 328).
+
+> **✅ Restart GIONG_SMED_Agent (nạp builder bccn mới — web agent import
+> sql_reports lúc start):** agent rảnh khi restart (job mới nhất done 09:06,
+> slot lịch gần nhất Task_04 17:15 — cách ~3h45'); xóa `__pycache__` trước
+> stop (lesson GĐ 168) → sc stop STOPPED → sc start **RUNNING PID mới 28460**
+> (api_server giữ PID 27920 — nssm, đúng lesson GĐ 329). `/health` 200 —
+> `tunnel_ok:true` (Quick Tunnel `unnecessary-programming-convicted-very`),
+> db GiondDB OK, 1.575 jobs.
+
+> **Tiêu chí kiểm chứng:** trang bccn tạo job mới kỳ dài → 5 bảng (tk-goi →
+> cn-goi → cn-dt → tt-cn → mt-cn) cột giữ nguyên; Tiên Du còn nợ 1 mũi đặt
+> trước; hộp KPI MARKETING app con (GĐ 389) + 5 bảng bccn (GĐ 390) cùng LIVE.
+
+> **Version:** app tổng **5.8.0** / repo con **8.7.0** — ĐÃ PUSH + ĐÃ LIVE.
