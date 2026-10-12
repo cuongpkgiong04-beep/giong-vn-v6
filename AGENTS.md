@@ -3422,3 +3422,45 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.8.2** / repo con **8.7.2**.
+
+---
+
+### GĐ 402 (Trợ lý Freebuff): PA Push đợt GĐ 398-401 / C.235-C.237 — bump 5.8.3 / 8.8.0 + LIVE + restart agent (2026-10-12)
+
+> **Lệnh "Push" của Đại ca (12/10).** Rà trùng lặp theo nguyên tắc 3: 0 nhánh
+> chưa merge cả 2 repo (`main..agent-cli` + `main..pipeline-work` = RỖNG);
+> working tree chỉ có file của **GĐ 399/C.236 (🔒 phiên khác — Bảng giá dịch
+> vụ, 2 file repo con modified + đã xóa 1 script)** + `permissions.ts` (sót GĐ
+> 315) — KHÔNG giao phạm vi, KHÔNG đụng, KHÔNG add.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.8.2 → 5.8.3**
+> (patch — GĐ 400 camera điểm danh/check-in + GĐ 401 fix bccn rank) —
+> package.json + package-lock.json (2 chỗ) + DEFAULT_VERSION app-shell.tsx;
+> repo con **8.7.2 → 8.8.0** (minor — C.235 module MỚI Bảng TH GB-KM_GN-CK-LN +
+> C.237 fix bccn) — apps/banhang/package.json + DEFAULT_VERSION. Checklist GĐ
+> 138 ✓ (5.8.3 / 8.8.0 — không thành phần nào ≥ 10; grep 0 sót).
+
+> **Push:** app tổng `2b1c744..57a2e88` (GĐ 398 claim+docs · GĐ 399 claim · GĐ
+> 400 claim+code+docs · GĐ 401 claim+docs · GĐ 402 claim+bump) · repo con
+> `89fb8c5..cf8e343` (C.235 code+docs · C.237 code+docs · C.238 bump).
+
+> **⚠️ Sự cố + xử lý khi verify production:** app tổng curl = **5.8.3 LIVE**
+> ngay; repo con deployment mới ● **Error** — chẩn đoán qua Vercel API v13:
+> `errorCode = git_info_fail` ("Git information retrieval failed") — **lỗi hạ
+> tầng Vercel đọc Git, KHÔNG phải lỗi build code** (build local PASS vite build;
+> bước `db:migrate` fail trên DB localhost chỉ vì `_migrations` local thiếu
+> record 0008_expected_files_per_report.sql — T-SQL, file có từ 26/09, không
+> liên quan Vercel). Fix: `vercel redeploy` deployment lỗi → **Ready 31s** +
+> alias domain chính → curl = **8.8.0 LIVE** + `/api/units` trả data thật.
+
+> **Restart GIONG_SMED_Agent (nạp sql_reports.py C.237):** check rảnh trước —
+> log 30 phút cuối 0 job (slot Task_02 23:00 chưa tới) → xóa `__pycache__` 3
+> thư mục → sc stop/start → RUNNING. Verify: log mới
+> `web_agent_121026_185654.log` (task runner bật, poll 20s OK) · `/health`
+> tunnel_ok + GiongDB OK (1.582 jobs).
+
+> **Tiêu chí kiểm chứng:** (1) camera điểm danh/check-in trên điện thoại đúng
+> 4 điểm GĐ 400; (2) bccn job mới hết nhân đôi lượt tải (Mai Sương 1 mũi
+> 2.925.000); (3) module Bảng TH GB-KM_GN-CK-LN hoạt động trên production.
+
+> **Version:** app tổng **5.8.3** / repo con **8.8.0** — ĐÃ PUSH + ĐÃ LIVE.
