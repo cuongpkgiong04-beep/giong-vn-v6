@@ -3259,3 +3259,40 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.8.1** / repo con **8.7.1**.
+
+---
+
+### GĐ 397 / C.234 (Trợ lý Freebuff): PA Push đợt GĐ 396 / C.232 — bump 5.8.2 / 8.7.2 + LIVE production + restart agent (2026-10-12)
+
+> **Lệnh "Push" của Đại ca (12/10, 16:05 — sau GĐ 396).** Rà trùng lặp theo
+> nguyên tắc 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**;
+> registry KHÔNG có 🔒 dở (0 dòng "| 🔒 |"); status chỉ `permissions.ts` (GĐ
+> 315 — phiên khác) + file deleted cũ — KHÔNG đụng; email
+> `cuongpk.giong04@gmail.com` ✓.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.8.1 →
+> 5.8.2** (patch — GĐ 396 fix logic ghép lượt trả + tách 2 cột tk-goi) —
+> package.json + package-lock.json (2 chỗ) + DEFAULT_VERSION app-shell.tsx;
+> repo con **8.7.1 → 8.7.2** (patch — C.232) — package.json + DEFAULT_VERSION
+> app-shell.tsx. Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+>
+> **Push:** app tổng `342c378..7043602` (GĐ 396 claim+code+docs+unlock · GĐ
+> 397 bump) · repo con `ddcc047..89fb8c5` (C.232 code+docs · C.233 bump).
+>
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **VERSION 5.8.2** · app con
+> `giong-banhang.vercel.app` = **VERSION 8.7.2** — cả 2 LIVE (sót "1.9.4/
+> 1.69.9/1.67.9" = thư viện ngoài trùng số trúng — lesson GĐ 328).
+>
+> **✅ Restart GIONG_SMED_Agent (nạp builder bccn mới):** agent rảnh khi
+> restart (job cuối done 13:57, slot lịch gần nhất Task_04 17:15 — cách ~1h);
+> xóa `__pycache__` sau sc stop (lesson GĐ 168) → RUNNING **PID mới 20944**;
+> `/health` 200 — `tunnel_ok:true`, db GiondDB OK, 1.558 jobs.
+>
+> **Tiêu chí kiểm chứng:** web bccn tạo job mới kỳ dài → cn-dt CÓ Trung Thảo
+> (TS · 106190120120030) 1 mũi Verorab 0.5ml 470.000; tk-goi khách này
+> 'Trạng thái đặt trước' = 2 'Đã hoàn thành' + 1 'Sử dụng tốt', 'Trạng thái
+> tiêm' = 2 'Đã tiêm' (03/07+07/07) + 1 'Chưa tiêm'; cn-dt toàn hệ ~196 mũi
+> còn nợ (~293 triệu — tăng so bản cũ vì các mũi bị pop oan quay về đúng).
+>
+> **Version:** app tổng **5.8.2** / repo con **8.7.2** — ĐÃ PUSH + ĐÃ LIVE.
