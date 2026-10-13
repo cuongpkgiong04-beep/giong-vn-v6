@@ -6,7 +6,53 @@
 // Chạy: node --experimental-strip-types --test src/lib/camera-frame.test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeCenterCrop } from "./camera-frame.ts";
+import { computeCenterCrop, applyGrayWhiteBalance } from "./camera-frame.ts";
+
+// GĐ 408 — test auto white-balance gray-world. Fake canvas object tối thiểu
+// (getImageData/putImageData) nên chạy node thuần, không cần DOM.
+function makeFakeCanvas(w: number, h: number, px: [number, number, number, number]) {
+  const data = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < data.length; i += 4) { data[i] = px[0]; data[i + 1] = px[1]; data[i + 2] = px[2]; data[i + 3] = px[3]; }
+  let written: Uint8ClampedArray | null = null;
+  const ctx = {
+    getImageData: () => ({ data: data, width: w, height: h }),
+    putImageData: (img: any) => { written = img.data; },
+  };
+  const canvas = { width: w, height: h, getContext: () => ctx };
+  return { canvas, data, written: () => written };
+}
+
+test("WB gray-world: ảnh NGẢ VÀNG đèn (R/G cao, B thấp) → B nhân lên, R/G kéo xuống — cân lại", () => {
+  // Ảnh 64×1 toàn màu vàng đèn R=255 G=220 B=120
+  const f = makeFakeCanvas(64, 1, [255, 220, 120, 255]);
+  const beforeR = f.data[0], beforeG = f.data[1], beforeB = f.data[2];
+  applyGrayWhiteBalance(f.canvas as any, 0.7);
+  const d = f.written() ?? f.data;
+  // gray = (255+220+120)/3 = 198.3
+  // rGain = 1 + (198.3/255 − 1)*0.7 ≈ 0.844 → R ≈ 215
+  // gGain ≈ 1 + (198.3/220 − 1)*0.7 ≈ 0.931 → G ≈ 205
+  // bGain = 1 + (198.3/120 − 1)*0.7 ≈ 1.457 → clamp 1.25 → B ≈ 150
+  assert.ok(d[0] < beforeR, `R phải giảm: ${d[0]} < ${beforeR}`);
+  assert.ok(d[2] > beforeB, `B phải tăng: ${d[2]} > ${beforeB}`);
+  assert.ok(d[0] > 195 && d[0] < 235, `R về giữa: ${d[0]}`);
+  assert.ok(d[2] > 135 && d[2] < 165, `B kéo lên 1.25 cap (clamp): ${d[2]}`);
+});
+
+test("WB gray-world: ảnh TRUNG TÍNH (gains ≈ 1) → bỏ qua, không chạm ảnh", () => {
+  const f = makeFakeCanvas(64, 1, [128, 128, 128, 255]);
+  applyGrayWhiteBalance(f.canvas as any, 0.7);
+  assert.equal(f.written(), null, "không putImageData khi ảnh đã trung tính");
+  assert.equal(f.data[0], 128);
+});
+
+test("WB gray-world: clamp gain — ảnh xanh đậm làm gain B hạ sàn 0.8, không điên hóa ảnh", () => {
+  // B=gắn cao: R=60,G=60,B=255 → gray=125 → rGain=1+((125/60)-1)*0.7=1.76→clamp 1.25; bGain=1+((125/255)-1)*0.7=0.643→clamp 0.8
+  const f = makeFakeCanvas(64, 1, [60, 60, 255, 255]);
+  applyGrayWhiteBalance(f.canvas as any, 0.7);
+  const d = f.written() ?? f.data;
+  assert.ok(d[0] <= 76, `R ×1.25 cap: ${d[0]} ≤ 76 (60*1.25=75)`);
+  assert.ok(d[2] >= 200, `B ×0.8 sàn: ${d[2]} ≥ 200 (255*0.8=204)`);
+});
 
 test("crop khung ngang 1920×1080 → view dọc 3/4: lấy giữa theo chiều ngang", () => {
   const c = computeCenterCrop(1920, 1080, 3, 4);

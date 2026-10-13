@@ -77,6 +77,46 @@ export interface DrawFrameOptions {
   mirror?: boolean;
 }
 
+/**
+ * GĐ 408 (13/10 — Đại ca test thật thấy ảnh vẫn ám vàng): auto white-balance
+ * GRAY-WORLD ngay trên snapshot — đo trung bình kênh màu của ẢNH NÀY, ánh vàng
+ * đèn thì R+G cao / B thấp → nhân gain từng kênh về trung tính 70% (strength
+ * 0.7 — đủ nhạt vàng mà da không bị xám), clamp gain 0.8-1.25 tránh quá tay.
+ * "Theo ảnh" = đèn LED vàng, đèn sợi đốt, ánh tự nhiên... đều đo đúng mức riêng,
+ * không phụ thuộc tham số tĩnh. Tối ưu: đo lấy mẫu mỗi 8 pixel (đủ chuẩn cho
+ * trung bình toàn ảnh) rồi áp gain 1 pass cho cả ảnh.
+ */
+export function applyGrayWhiteBalance(canvas: HTMLCanvasElement, strength = 0.7): void {
+  const c = canvas.getContext("2d");
+  if (!c) return;
+  const img = c.getImageData(0, 0, canvas.width, canvas.height);
+  const d = img.data;
+  // Đo trung bình kênh trên mẫu (mỗi 8 pixel → 1/8 dữ liệu — đủ ổn định, nhanh)
+  let rSum = 0, gSum = 0, bSum = 0, n = 0;
+  for (let i = 0; i < d.length; i += 32) {
+    rSum += d[i]; gSum += d[i + 1]; bSum += d[i + 2]; n++;
+  }
+  const rAvg = rSum / n, gAvg = gSum / n, bAvg = bSum / n;
+  const gray = (rAvg + gAvg + bAvg) / 3 || 1;
+  // gain > 1 = kênh thiếu (bị ngả vàng/tím); < 1 = kênh dư. strength 0.7 + clamp.
+  const rGain = clampGain(1 + ((gray / (rAvg || 1)) - 1) * strength);
+  const gGain = clampGain(1 + ((gray / (gAvg || 1)) - 1) * strength);
+  const bGain = clampGain(1 + ((gray / (bAvg || 1)) - 1) * strength);
+  // Nếu gain gần 1 hết (ảnh đã trung tính — ban ngày) thì khỏi loop, khỏi ghi lại
+  if (Math.abs(rGain - 1) < 0.01 && Math.abs(gGain - 1) < 0.01 && Math.abs(bGain - 1) < 0.01) return;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = d[i] * rGain;
+    d[i + 1] = d[i + 1] * gGain;
+    d[i + 2] = d[i + 2] * bGain;
+  }
+  c.putImageData(img, 0, 0);
+}
+
+/** Gain white-balance chặn trong [0.8, 1.25] — tránh ảnh bị lạnh/nóng quá tay. */
+function clampGain(g: number): number {
+  return g < 0.8 ? 0.8 : g > 1.25 ? 1.25 : g;
+}
+
 /** Cân bằng ánh sáng toàn ảnh: lift vùng tối + kéo vùng cháy sáng về trung tính.
  *  Cách chạy: vẽ ảnh vào canvas nội bộ qua filter rồi trả canvas —
  *  mọi pixel được xử lý thống nhất (khác CSS filter trên 1 element).
@@ -152,6 +192,15 @@ export function drawCameraFrame(
 
   if (!opts.beauty) return;
 
+  // ── GĐ 408: auto white-balance GRAY-WORLD trên snapshot TRƯỚC các lớp làm
+  // đẹp — đo độ ngả vàng của chính ảnh này rồi trừ 70% → ảnh bớt vàng theo
+  // nguồn sáng thực tế (khớp ĐH chốt "auto white-balance theo ảnh"), da không
+  // xám. Chỉ chạy khi beauty BẬT (beauty tắt = ảnh gốc nguyên bản).
+  applyGrayWhiteBalance(snap, 0.7);
+  ctx.filter = "none";
+  ctx.globalAlpha = 1;
+  ctx.drawImage(snap, 0, 0); // vẽ lại bản đã cân màu thay bản gốc vừa vẽ
+
   // ── Lớp 0 — BASE: cân bằng ánh sáng + tương phản nhẹ (canvas nội bộ) ──
   // GĐ 400 mức VỪA (đại ca chốt 12/10): brightness 1.07→1.15 (sáng hơn),
   // contrast 1.06→1.08, saturate 0.97→0.82 (vàng là màu bão hòa thấp của
@@ -163,11 +212,10 @@ export function drawCameraFrame(
   ctx.drawImage(base, 0, 0);
 
   // ── Lớp 0b — WHITE BALANCE: làm lạnh ám vàng (GĐ 400) ──
-  // soft-light với xanh dương nhạt #9ecbff 35% — đẩy nhiệt màu về trung tính
-  // kiểu chỉnh white-balance: vàng nhạt đi tự nhiên, không ám xanh, giữ tương phản.
+  // soft-light với xanh dương nhạt #9ecbff — GĐ 408 nâng 0.35→0.5 cùng auto-WB.
   ctx.save();
   ctx.globalCompositeOperation = "soft-light";
-  ctx.globalAlpha = 0.35;
+  ctx.globalAlpha = 0.5;
   ctx.fillStyle = "#9ecbff";
   ctx.fillRect(0, 0, w, h);
   ctx.restore();

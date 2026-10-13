@@ -365,8 +365,10 @@ function ChamCongPage() {
     const maxStampWidth = Math.min(Math.round(w * 0.50), 480);
     // GĐ 400 (12/10 — Đại ca): thu gọn khối dấu ~40% để hết đè lên mặt người —
     // chữ giờ 96→38, chữ nhỏ 48→21, gap giữa cụm 18→8 (chỉnh thêm lineGap/margin ở 2 khối vẽ).
-    const bigTimeMaxWidth = Math.max(24, Math.min(Math.round(w * 0.055), 38));
-    const smFontMaxWidth = Math.max(12, Math.min(Math.round(w * 0.027), 21));
+    // GĐ 408 (13/10 — Đại ca sau khi test thật): dấu nhỏ quá → to hơn MỘT CHÚT (¾ nâng):
+    // giờ 38→46, chữ nhỏ 21→25 — đủ nhìn rõ trên điện thoại, vẫn gọn + sát lề.
+    const bigTimeMaxWidth = Math.max(28, Math.min(Math.round(w * 0.064), 46));
+    const smFontMaxWidth = Math.max(14, Math.min(Math.round(w * 0.035), 25));
     const groupGap = Math.round(8 * scale);
 
     const now = new Date();
@@ -1159,7 +1161,7 @@ function ChamCongPage() {
                   {beauty && (
                     <div
                       className="absolute inset-0 rounded-2xl pointer-events-none"
-                      style={{ zIndex: 5, mixBlendMode: "soft-light", background: "#9ecbff", opacity: 0.35 }}
+                      style={{ zIndex: 5, mixBlendMode: "soft-light", background: "#9ecbff", opacity: 0.5 }}
                     />
                   )}
                   {/* Overlay canvas draws on top of video */}                    <canvas
