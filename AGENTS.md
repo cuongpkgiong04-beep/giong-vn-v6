@@ -3642,6 +3642,35 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > **Version:** app tổng **5.9.0** / repo con **9.0.0** — ĐÃ PUSH + ĐÃ LIVE.
 ---
 
+### GĐ 407 / C.244 (Trợ lý Freebuff): KPI Tổng quan — Ngân hàng xanh nước biển đậm + Marketing chi tiết theo bảng tt-cn Báo cáo công nợ đặt trước (2026-10-13)
+
+> **Yêu cầu của Đại ca (13/10, tiếp GĐ 389/394):** (1) hộp NGÂN HÀNG thay màu
+> vàng bằng XANH NƯỚC BIỂN ĐẬM — khác các màu xanh các hộp KPI đã có; (2) hộp
+> MARKETING khi bấm vào chi tiết lấy theo dữ liệu "Báo cáo công nợ đặt trước"
+> — bảng "Chạy báo cáo công nợ đặt trước từ dữ liệu SQL (GiondDB)", cột giữ
+> nguyên: Trung tâm / Gói còn nợ / Mũi còn nợ / Tiền còn nợ.
+>
+> **Đã làm (repo con code `02406a6` 2 file +88/−56 · docs `8ee589b`):** Ngân
+> hàng — tone mới `navy: bg-blue-700` (khác sky-500 Tồn kho / indigo-700 Cận
+> hạn) · Marketing — `loadOverviewMarketingDetail` viết lại: job bccn done
+> MỚI NHẤT từ `smed_pull_jobs` (bằng chứng probe: report='sqlreport' +
+> query_key='bccn-dattruoc' — report='bccn-dattruoc' KHÔNG tồn tại; job mới
+> nhất 13/10 00:53 `1D54EE7B`) + đọc sheet 'tt-cn' OPENJSON (pattern GĐ 324)
+> + map 4 cột giữ nguyên + lọc theo đơn vị + trả jobTime cho note. Hưởng luôn
+> logic builder mới GĐ 390/405 (lọc kỳ, khử trùng).
+>
+> **Verify:** tsc EXIT 0 · probe thật sheet tt-cn job `1D54EE7B`: 19 dòng —
+> BH 15 gói/56 mũi/42.437.400 · LB 41/193/143.793.200 — khớp builder mới.
+>
+> **Tiêu chí kiểm chứng (sau Push):** hộp Ngân hàng xanh đậm; hộp Marketing
+> → chi tiết 4 cột = số Bảng 1 Báo cáo công nợ đặt trước (cùng nguồn) + note
+> giờ chạy job.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.9.0** / repo con **9.0.0** (bump GĐ 405).
+
+---
+
 ### GĐ 409 / C.245 (Trợ lý Freebuff): Điều chỉnh module "Bảng TH GB-KM_GN-CK-LN" theo 8 điểm — tên rút gọn + NCC/giá bán/ưu đãi tự động + LN trừ KM/Thưởng (2026-10-13)
 
 > **Điều chỉnh của Đại ca (13/10 — 8 điểm, tiếp GĐ 398/C.235):** (1) Tên Vắc
@@ -3713,3 +3742,29 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > KM/Thưởng; (2) hộp Ngân hàng xanh đậm + Marketing chi tiết theo bảng tt-cn.
 >
 > **Version:** app tổng **6.0.0** / repo con **9.1.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
+
+> **Yêu cầu của Đại ca (13/10, sau GĐ 405):** thêm 1 bảng ở cuối trang sau
+> "Ma trận chưa tiêm theo trung tâm và dịch vụ_CN", tên **"Tổng hợp công nợ
+> theo Gói và Đặt trước"** — ghép 2 bảng cn-goi + cn-dt, 9 cột: STT (đánh
+> STT dòng) · Trung tâm · Khách hàng · Mã tiêm chủng · Ngày đăng ký · Dịch
+> vụ · **Mã gói** (mã gói hoặc "ĐT_VắcXin") · SL mũi tiêm còn nợ · Số tiền
+> còn nợ.
+>
+> **Đã làm (chi tiết ở AGENTS.md repo con C.247, code `76ba40d`):** builder
+> `cn_goi_mamap` + `cn_tonghop_rows` (mỗi nhóm còn nợ của cn-goi/cn-dt 1
+> dòng — Mã gói theo slot ghép f3 hoặc 'ĐT_VắcXin'); key **'cn-tonghop'**
+> CUỐI meta.sheets + order client (sau mt-cn).
+>
+> **Verify:** unit **86/86 PASS** (T23) · tsc EXIT 0 · builder thật kỳ
+> 2018→30/09: **357 dòng — SL 1.370 = 1.273 + 97 · tiền 995.114.300 =
+> 871.819.300 + 123.295.000 khớp từng đồng** · STT xuyên suốt.
+>
+> **Tiêu chí kiểm chứng (sau Push):** trang bccn job mới → bảng cuối cùng
+> sau ma trận 9 cột đúng; tổng = cộng 2 bảng nguồn; restart agent sau Push.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.0.0** / repo con **9.1.0**.
