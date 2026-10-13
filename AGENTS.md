@@ -991,3 +991,31 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 0.5ml · ĐT_VắcXin · 1 mũi · 8.700.000 · hẹn 13/10 'Chưa tiêm' + Tổng cộng.
 >
 > **Version:** app tổng **6.1.1** (giữ) / repo con **9.2.1** — ĐÃ PUSH + LIVE.
+---
+
+### GĐ 419 / C.253 (Trợ lý Freebuff): Bảng TH GB-KM thiếu 4 vắc xin so với bảng giá chuẩn 52 — seed bổ sung (2026-10-13)
+
+> **Anh hỏi kiểm tra (13/10):** bảng giá 52 sản phẩm nhưng Bảng TH GB-KM chỉ
+> 48 dòng — có trùng lặp/thiếu sót?
+>
+> **Kết luận (probe thật):** **KHÔNG trùng lặp** — price_list sau C.236 đã
+> chuẩn 52 dòng / 52 ten_smed distinct / 52 tên rút gọn distinct. **THIẾU 4**
+> (Bảng TH seed từ bản giá TRƯỚC C.236 — khi 4 ten_smed còn trùng 2 mức giá
+> ABRYSVO/Menquadfi/MMR-II/Vaxneuvance, C.236 dọn + thêm 4 sản phẩm mới):
+> 1. stt 22 **Measles, Mumps and Rubella Vaccine Live, Attenuated
+>    (Freeze-Dried)** (MMR Ấn Độ) — giá bán 310.000
+> 2. stt 31 **MENACTRA** — 1.300.000
+> 3. stt 33 **Nimenrix** — 1.700.000
+> 4. stt 36 **PREVENAR 13** — 1.250.000
+>
+> **Đã làm (data GiondDB — không đổi code):** INSERT 4 dòng idempotent (WHERE
+> NOT EXISTS) theo ten_smed rút gọn → **th_gbkm_gnck_ln = 52/52 khớp bảng
+> giá**. 4 dòng tự hưởng NCC + Giá nhập tạm qua map load có sẵn (stg_5BKN:
+> MMR Ấn Độ → Biovaccine · 168.000; MENACTRA → DP TB YT HÀ NỘI · 969.760;
+> Nimenrix → CHI NHÁNH SANG · 1.341.900; PREVENAR 13 → CHI NHÁNH SANG ·
+> 1.077.300). 4 dòng nằm CUỐI bảng (STT 49-52, thứ tự id) — KHÔNG rebuild
+> (phát hiện data Anh điền tay: BCG-TCDV KM 20.000 + Thưởng NV 10.000 lúc
+> 15:52 — phải giữ nguyên; guard assert chặn kịp trước DELETE).
+>
+> **Version:** KHÔNG bump (chỉ data — precedent GĐ 365-close). App tổng
+> **6.1.1** / repo con **9.2.1**.
