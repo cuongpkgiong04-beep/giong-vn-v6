@@ -3796,3 +3796,111 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.9.0** / repo con **9.0.0**.
+
+---
+
+### GĐ 408 (Trợ lý Freebuff): Tinh chỉnh camera sau khi Đại ca test thật — auto white-balance gray-world bớt vàng + chữ dấu to hơn (2026-10-13)
+
+> **Phản hồi của Đại ca (13/10, sau khi LIVE 5.9.0 với GĐ 400):** (1) ảnh vẫn
+> chưa đủ bớt vàng đèn; (2) chữ đóng dấu nhỏ quá, cho to hơn một chút.
+>
+> **Lưu ý song song:** lúc em làm, phiên Freebuff khác đã push GĐ 405/C.241 +
+> GĐ 406/C.243 (5.9.0/9.0.0 LIVE) — local main của em đã pull về trước khi sửa;
+> claim GĐ 408 (số mới max+1 — đúng quy tắc GĐ 285).
+
+> **ĐH chốt 2 phương án (vòng hỏi-đáp 13/10):**
+> - **Bớt vàng: AUTO white-balance gray-world theo ảnh** — đo trung bình kênh
+>   màu của CHÍNH ảnh đó rồi nhân gain về trung tính 70% (strength 0.7, clamp
+>   0.8-1.25) — vàng đèn mạnh thì trừ mạnh, ban ngày cân sẵn thì gần như không
+>   động. Khác "giảm saturate thuần" ở chỗ: WB giữ độ ấm sắc da tự nhiên, chỉ
+>   đẩy nhiệt màu về đúng, không bị xám. + Lớp soft-light xanh #9ecbff alpha
+>   0.35→0.5 (cả canvas lưu lẫn preview mix-blend — khớp nhau).
+> - **Chữ dấu:** giờ 38→46, chữ nhỏ 21→25 (¾ nâng) — cả 2 trang.
+
+> **Đã làm (3 file code + 1 test + package.json):** `src/lib/camera-frame.ts`
+> (+`applyGrayWhiteBalance` export — getImageData đo trung bình mẫu 1/8, áp gain
+> 1 pass, skip khi ảnh trung tính; vẽ lại snapshot sau cân màu) + `check-in.tsx`
+> + `cham-cong.tsx` stamp params + `src/lib/camera-frame.test.ts` (3 test WB;
+> fake canvas object chạy node thuần) + `package.json` (đăng ký camera-frame.test.ts
+> vào npm test).
+
+> **Verify:** tsc EXIT 0 · unit **9/9 PASS** (6 crop cũ + 3 WB mới — ảnh vàng đèn
+> R≈215 G≈205 B≈150 cân lại; ảnh trung tính không chạm; clamp không điên) ·
+> **E2E local fake camera: ghim 569ms** (trước 1-5s, vẫn nhanh hơn +150ms so GĐ
+> 400 do WB) · ảnh lưu thật: dấu to rõ hơn, sát lề dưới-trái, không đè mặt.
+
+> **Tiêu chí kiểm chứng (sau Push):** điện thoại đèn vàng → ảnh hết ám vàng mà
+> da không xám; chữ dấu đọc rõ (giờ 46px) không đè mặt.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.9.0** / repo con **9.0.0**.
+
+---
+
+### GĐ 411 / C.247 (Trợ lý Freebuff): Fix 5 vắc xin thiếu NCC + Giá nhập niêm yết TẠM từ phiếu nhập (2026-10-13)
+
+> **Phản hồi của Đại ca (13/10):** 5 dòng thiếu NCC (14 ROTARIX 1.5ml · 18
+> INFLUVAC Tetra · 22 Priorix · 30 Menquadfi · 43 QUIMI-HIB); tạm thời thêm
+> Giá nhập niêm yết = giá nhập CÓ THUẾ từ phiếu nhập để tính LN tạm. Chi tiết
+> ở entry C.247 AGENTS.md repo con (`511c02b`).
+>
+> **Chẩn đoán:** stg_5BKN CÓ ĐỦ data cả 5 — join trượt vì: khác chữ hoa ·
+> SMED ghi 2 cách tên ('Influvac Tetra'/'INFLUVAC') · Priorix lượt gần nhất
+> là dòng "Nhập tồn" bị lọc. **Đã làm (repo con `511c02b`):** key map UPPER
+> + lọc Nhập tồn TRƯỚC MAX(id) (param $1) + fallback prefix + giaNhapMap =
+> col13 phiếu gần nhất → cột Giá nhập TẠM tự động (DB điền tay ghi đè) + LN
+> dùng giá nhập hiệu dụng. **Verify:** đủ 48/48 tên có NCC — 0 thiếu · tsc 0
+> · unit 12/12. **KHÔNG cần bổ sung download phiếu nhập.**
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.0.0** / repo con **9.1.0**.
+
+### GĐ 413 / C.249 (Trợ lý Freebuff): Trang Lịch hẹn tiêm — bảng mới "Danh sách trả nợ theo lịch hẹn tiêm" sau bảng ds-lht (2026-10-13)
+
+> **Yêu cầu của Đại ca (13/10):** trong "BÁO CÁO MARKETING \ 5. Danh sách lịch
+> hẹn tiêm" (app con, trang /m/bc-lich-hen) thêm bảng mới "Danh sách trả nợ
+> theo lịch hẹn tiêm" đặt SAU bảng "Danh sách lịch hẹn tiêm ()" — 11 cột STT ·
+> Trung tâm · Họ tên · Mã tiêm chủng · Vắc xin · Mã gói · SL mũi tiêm còn nợ ·
+> Số tiền còn nợ · Ngày hẹn · Nguồn hẹn · Ghi chú — mapping "Tổng hợp công nợ
+> theo Gói và Đặt trước" ↔ "Danh sách lịch hẹn tiêm" qua Họ tên/Khách hàng +
+> Mã tiêm chủng + Vắc xin để tra Ngày hẹn (chỉ tiêu của báo cáo).
+>
+> **Hỏi-đáp chốt 4 điểm (ĐH 13/10):** (1) **PA-2** — tách vắc xin GÓI ('Dịch vụ'
+> gộp 'A | B | C' — bằng chứng probe: 'Hexaxim 0.5ml | Prevenar 13 | Vaxigrip
+> Tetra 0.5ml' SL 3 · 2.670.000) thành TỪNG DÒNG vắc xin có SL + tiền riêng —
+> Subtotal lệch công nợ là lẽ đương nhiên; (2) Ngày hẹn = lịch hẹn còn 'Chưa
+> tiêm' GẦN NHẤT, không còn → gần nhất bất kỳ; (3) CHỈ hiện vắc xin còn nợ CÓ
+> lịch hẹn trong kỳ báo cáo; (4) công nợ tính THEO KỲ JOB LHT.
+>
+> **Thiết kế:** nguồn công nợ = sheet tk-goi của builder bccn (chi tiết TỪNG
+> MŨI — 'Trạng thái tiêm' 'Chưa tiêm' = còn nợ, quy ước GĐ 311/C.227) — builder
+> LHT import sql_reports (cùng máy agent, GiondDB cục bộ) → KHÔNG sửa
+> sql_reports.py · KHÔNG job mới; sheet `cn-tra-no` chèn SAU 'ds-lht' trong
+> result job → trang web tự render (SubSheets C.189) hưởng sẵn khung chuẩn
+> (title + Tổng cộng + màu + nút Tải Excel + phân trang + 4 nguyên tắc định
+> dạng). Join: chính xác sau chuẩn hóa (casefold + bỏ ' 0.5ml'/'(…)' — style
+> _norm_service) + fallback PREFIX 2 chiều cùng MTC ('Hexaxim 0.5ml' ↔
+> 'Hexaxim', guard ≥ 4 ký tự); lịch hẹn ngoài kỳ [df, dt] loại trước khi chọn.
+>
+> **Đã làm (repo con `ae8bac6` — chi tiết đầy đủ ở AGENTS.md repo con C.249):**
+> 1. `gd348-build-lht-ds.py` (+196/−12): TRA_NO_* + `_norm_vx`/`_dmy`/`_num` +
+>    `_lht_hen_map`/`_find_hen`/`_pick_hen` + `tra_no_core` (thuần) +
+>    `build_tra_no` (lỗi công nợ → None — job LHT vẫn xong) +
+>    `_payload_sheets(…, extra_sheets)` + CLI `--cn-from/--cn-to`.
+> 2. `40_web_agent.py` run_lht_report_task: gọi build_tra_no(dateFrom, dateTo)
+>    → sheets['cn-tra-no']; lỗi chỉ log cảnh báo.
+> 3. Test mới `gd348-tra-no.test.py` — **8/8 PASS** offline.
+>
+> **Verify (chạy thật kỳ 01/10→31/10 — folder 2026-10-01, 19 file, 19.989 →
+> 28.067 dòng):** tk-goi 13 dòng → 8 nhóm còn nợ **10 mũi · 29.995.000** —
+> bảng mới **1 dòng** (TĐ · Nguyễn Phước Trường An · Beyfortus 0.5ml ·
+> ĐT_VắcXin · 1 mũi · 8.700.000 · hẹn 13/10/2026 'Chưa tiêm'); 7 nhóm còn lại
+> (21.295.000) không có lịch hẹn trong kỳ → loại đúng ĐH chốt; đối chứng
+> 8.700.000 + 21.295.000 = 29.995.000 ✓ từng đồng.
+>
+> **Tiêu chí kiểm chứng (sau Push):** tạo job "Danh sách lịch hẹn tiêm" kỳ mới
+> → trang /m/bc-lich-hen thấy bảng 2 SAU bảng lịch hẹn — chỉ khách còn nợ có
+> lịch hẹn trong kỳ; job cũ trước C.249 chưa có bảng mới (chạy lại báo cáo).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.0.0** / repo con **9.1.0**.
