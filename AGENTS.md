@@ -3640,3 +3640,38 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > khoản trả sau; banner "Dữ liệu tải đến <ngày>".
 >
 > **Version:** app tổng **5.9.0** / repo con **9.0.0** — ĐÃ PUSH + ĐÃ LIVE.
+---
+
+### GĐ 409 / C.245 (Trợ lý Freebuff): Điều chỉnh module "Bảng TH GB-KM_GN-CK-LN" theo 8 điểm — tên rút gọn + NCC/giá bán/ưu đãi tự động + LN trừ KM/Thưởng (2026-10-13)
+
+> **Điều chỉnh của Đại ca (13/10 — 8 điểm, tiếp GĐ 398/C.235):** (1) Tên Vắc
+> xin RÚT GỌN ("BCG-TCDV" — bỏ phần mô tả); (2) NCC lấy theo "Báo cáo nhập
+> kho"; (3) Giá bán + Ưu đãi lấy theo "Bảng giá dịch vụ" (Đơn giá (VNĐ) /
+> Đơn giá ưu đãi (VNĐ)); (4-6) KM khách hàng · Thưởng NV (chờ Chương trình
+> khuyến mãi) · Giá nhập + 4 CK nhập (chờ MUA HÀNG · Chương trình Loyalty —
+> module chưa có dữ liệu) → TRỐNG điền tay; (7) LN = (Giá bán hoặc ưu đãi)
+> − KM − Thưởng − Giá nhập tương ứng CK; (8) tiêu đề căn GIỮA + số không
+> thập phân. Chi tiết đầy đủ ở entry C.245 AGENTS.md repo con (`554d5c4`).
+>
+> **Nguồn tự động (probe thật):** stg_5BKN col6 = chính xác tên rút gọn → NCC
+> = col2 lượt nhập GẦN NHẤT (MAX(id) per col6 — 57 tên vắc xin; BCG-TCDV →
+> Công Ty Cổ Phần Biovaccine Việt Nam) · giá bán/ưu đãi từ price_list.gia /
+> gia_uu_dai (cột mới C.236 — đang 0 → trống). 4 tên trùng 2 mức giá → chọn
+> MIN(stt) đại diện (giả định, báo Đại ca).
+>
+> **Đã làm:** repo con `342085e` (5 file +451/−260) + `554d5c4` (entry) +
+> `0ad1a97` (xóa script cũ): UPDATE DB 48 ten_smed rút gọn · API trả giaMap
+> + nccMap + smeds rút gọn · loinhuan công thức MỚI (trừ KM+Thưởng) · trang
+> render tự động 3 cột + dialog chỉ 6 ô nhập tay + header căn giữa + CK 0
+> thập phân · script E2E `gd409-verify-e2e.mjs` (chạy máy Windows).
+>
+> **Verify:** unit LN **12/12 PASS** · tsc EXIT 0 · SQL thật UPDATE 48 + NCC
+> gần nhất 57 tên. ⚠️ Sự cố registry đa-agent (đã xử lý): lần đầu claim nhầm
+> số **GĐ 408** trùng phiên khác (claim camera — dòng đang dở trong working
+> tree, bị commit `dac68fd` nuốt kèm) → amend 2 lần tách sạch: commit cuối
+> `975aa99` chỉ chứa dòng GĐ 409, dòng camera + entry GĐ 407 của phiên khác
+> đã trả NGUYÊN working tree (sự cố pattern GĐ 394 lặp — bài học: registry
+> giờ chuẩn LF, luôn `git diff --cached` trước commit + `commit --only`).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.9.0** / repo con **9.0.0**.
