@@ -3675,3 +3675,41 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.9.0** / repo con **9.0.0**.
+
+---
+
+### GĐ 410 / C.246 (Trợ lý Freebuff): PA Push đợt GĐ 407/C.244 + GĐ 409/C.245 — bump 6.0.0 / 9.1.0 + LIVE production (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10, sau GĐ 409).** Rà trùng lặp theo nguyên tắc 3:
+> `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry 0 🔒
+> dở (cột trạng thái); email `cuongpk.giong04@gmail.com` ✓; working tree chỉ
+> còn thay đổi dở của phiên khác (skills/PIPELINE/entry GĐ 407 + dòng camera
+> GĐ 408) — KHÔNG đụng, KHÔNG nhét vào commit (kiểm `--cached` trước từng
+> commit — sau 2 lần nuốt GĐ 409).
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.9.0 →
+> 6.0.0** (minor nhớ 9→0 theo GĐ 138 — C.244 KPI navy + Marketing theo tt-cn +
+> C.245 điều chỉnh Bảng TH GB-KM 8 điểm) — package.json + package-lock.json
+> (2 chỗ root; "6.0.0" dòng 6495 lock là thư viện ngoài trùng số trúng — giữ
+> nguyên, lesson GĐ 328) + DEFAULT_VERSION app-shell.tsx — đủ 4 chỗ; repo con
+> **9.0.0 → 9.1.0** (minor) — **`apps/banhang/package.json`** (KHÔNG phải
+> package.json root — root luôn 0.1.0 generic) + DEFAULT_VERSION — đủ 2 chỗ.
+> Checklist GĐ 138 ✓ (mỗi thành phần 1 chữ số — 6.0.0 / 9.1.0).
+>
+> **Push (qua SSH máy Windows — `ssh cuongkm-server` chạy git trên
+> `D:\DuLieuChung\...`, dùng chung .git qua share; push trực tiếp từ Linux
+> FAIL thẩm quyền — SSH alias `github-beep` chỉ resolve trên Windows):**
+> app tổng `77c4569..2852f0e` — 5 commit (GĐ 407 claim+docs · GĐ 409
+> claim+docs+unlock · GĐ 410 claim+bump) · repo con `3da419a..c8eb081` — 6
+> commit (C.244 code+docs · C.245 code+entry+xóa script cũ · C.246 bump).
+>
+> **✅ Verify production (curl --compressed, ~2 phút sau push):** app tổng
+> `giong-vn-v6.vercel.app` = **VERSION 6.0.0** · app con
+> `giong-banhang.vercel.app` = **VERSION 9.1.0** — cả 2 LIVE, không ghim
+> deployment cũ. (1.9.4/1.69.9/1.67.9 trong HTML = thư viện ngoài trùng số.)
+>
+> **Tiêu chí kiểm chứng nghiệp vụ:** (1) app con `/m/banhang-th-gbkm-gnck-ln`
+> — 48 dòng tên rút gọn, NCC + Giá bán + Ưu đãi tự động, 6 ô điền tay, LN trừ
+> KM/Thưởng; (2) hộp Ngân hàng xanh đậm + Marketing chi tiết theo bảng tt-cn.
+>
+> **Version:** app tổng **6.0.0** / repo con **9.1.0** — ĐÃ PUSH + ĐÃ LIVE.
