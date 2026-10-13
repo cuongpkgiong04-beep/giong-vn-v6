@@ -61,6 +61,8 @@ export type ModuleKey =
   | "admin"
   | "preview"
   | "banhang" // GĐ B hệ sinh thái — app con Bán hàng (SSO handoff), default TẮT (chốt 2026-09-14)
+  | "bienbanhop" // GĐ 315 — Biên bản họp (DỰ ÁN NỘI BỘ)
+  | "zalo" // GĐ 315 — Zalo (DỰ ÁN NỘI BỘ)
   // GĐ 142 (16/09/2026) — phân quyền CHI TIẾT app Bán hàng theo nhóm bộ phận
   // (yêu cầu Đại ca: Kế toán/Kho/Marketing chỉ thấy nhóm của mình). Quyền chi tiết
   // đi kèm JWT SSO (mods) → app con đọc là có, KHÔNG cần DB riêng ở app con.
@@ -93,6 +95,8 @@ export const MODULE_DEFINITIONS = [
   // GĐ B hệ sinh thái — app con KHÔNG có path nội bộ (link ngoài, bắt đầu http) →
   // getAllowedNavItems/route guard tự bỏ qua; Sidebar tự lọc qua getEffectiveModuleAccess("banhang")
   { key: "banhang", label: "Bán hàng (Dự án)", paths: [], group: "DỰ ÁN" },
+  { key: "bienbanhop", label: "Biên bản họp", paths: ["/bien-ban-hop"], group: "DỰ ÁN" },
+  { key: "zalo", label: "Zalo", paths: ["/zalo"], group: "DỰ ÁN" },
 ] as const;
 
 /**
@@ -251,6 +255,8 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
     guide: true,
     preview: false, // Preview Mobile — chỉ Admin (chốt GĐ 71)
     banhang: false, // GĐ B hệ sinh thái — default TẮT, anh bật từng người trong Phân quyền (chốt 2026-09-14)
+    bienbanhop: false, // GĐ 315 — default TẮT, bật từng người trong Phân quyền
+    zalo: false, // GĐ 315 — default TẮT, bật từng người trong Phân quyền
   };
 
   if (!employee) return defaultMap;
@@ -273,6 +279,8 @@ export function getDefaultModuleAccess(employee: Employee | null): ModuleAccessM
       admin: true,
       preview: true,
       banhang: true,
+      bienbanhop: true,
+      zalo: true,
     };
   }
 
