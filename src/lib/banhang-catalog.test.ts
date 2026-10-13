@@ -23,7 +23,17 @@ test("GĐ 420 — cấu trúc: 14 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số 
     "/m/danh-muc-khac",
   ]);
   assert.deepEqual(routesOf("bh-nhap-kho-hang"), ["/m/nhap-dieu-chuyen"]);
-  assert.deepEqual(routesOf("bh-nhap-mua-hang"), ["/m/nhap-loyty"]);
+  // GĐ 429 (14/10 — yêu cầu Đại ca): MUA HÀNG từ 1 lá (LOYALTY) → 7 module con,
+  // đúng thứ tự sidebar app con 1-7 (nav.ts NHAP_MUA_HANG_LEAFS).
+  assert.deepEqual(routesOf("bh-nhap-mua-hang"), [
+    "/m/mua-hang-quy-trinh",
+    "/m/mua-hang-bang-gia-vx",
+    "/m/nhap-loyty",
+    "/m/mua-hang-don-dat",
+    "/m/mua-hang-ncc-order",
+    "/m/mua-hang-unc",
+    "/m/mua-hang-theo-doi",
+  ]);
   assert.deepEqual(routesOf("bh-nhap-ban-hang"), [
     "/m/banhang-bang-gia-dich-vu",
     "/m/banhang-chuong-trinh-khuyen-mai",

@@ -1361,3 +1361,86 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 **TIẾP THEO:** Commit + Push (quy trình ĐA AGENT) — chờ lệnh "Push" của Đại ca.
 
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** / repo con **9.3.0**.
+
+---
+
+### GĐ 429 / C.259 (Trợ lý Freebuff): Module MUA HÀNG — 7 module con + nhập liệu file AI đọc (2026-10-14)
+
+> **Yêu cầu của Đại ca (14/10):** app con, nhóm MUA HÀNG — tạo 7 module con đúng
+> trình tự + xây chi tiết từng module (mô tả 2.1 → 2.7 trong yêu cầu).
+
+> **Đã làm — 7 lá sidebar "NHẬP DỮ LIỆU → MUA HÀNG" (đánh số tự sinh 1-7):**
+> 1. **Quy trình mua hàng** `/m/mua-hang-quy-trinh` — sơ đồ 6 KHỐI có MŨI TÊN
+>    (Đơn đặt hàng → NCC xử lý → NCC gửi Order có giá bán + tổng tiền → Lập UNC →
+>    NCC giao hàng → Trung tâm nhập kho SMED); mỗi khối bấm được → nhảy module.
+> 2. **Bảng giá Vắc xin** `/m/mua-hang-bang-gia-vx` — 8 cột đúng yêu cầu (STT ·
+>    Tên VX rút gọn SMED · ĐVT · Giá niêm yết NCC đã gồm VAT · Giá CK theo hóa
+>    đơn · CK tháng · CK quý · CK khác) — seed sẵn 52 VX (NCC gợi ý từ phiếu
+>    nhập gần nhất: **52/52**).
+> 3. **Chương trình LOYALTY** `/m/nhap-loyty` (đã có route từ GĐ 223 → nay làm
+>    thật) — chương trình · thời gian · điều kiện · mức CK · chỉ tiêu SL ·
+>    **Thực tế đã hoàn thành TÍNH từ phiếu nhập kho SMED** (stg_5BKN cộng theo
+>    cửa sổ thời gian chương trình) · **Còn phải nhập thêm**.
+> 4. **Đơn đặt hàng gửi NCC** `/m/mua-hang-don-dat` — trung tâm (viết tắt) · NCC ·
+>    VX · ĐVT · SL đặt · ghi chú (+ Ngày đặt để theo dõi nhiều đợt).
+> 5. **NCC gửi Order** `/m/mua-hang-ncc-order` — SL chốt · đơn giá · thành tiền
+>    (+ Ngày Order + Số Order để làm căn cứ bước 6 lập UNC).
+> 6. **Lập UNC chuyển tiền** `/m/mua-hang-unc` — KHUNG chờ (ĐH chốt: làm sau vì
+>    liên quan AppBank) + nêu 4 việc cần ĐH chốt trước khi làm; bảng `mh_unc` đã
+>    tạo sẵn.
+> 7. **Theo dõi trạng thái mua hàng** `/m/mua-hang-theo-doi` — bảng kê tổng hợp
+>    GHÉP 4 nguồn + phiếu nhập kho: 16 cột (trung tâm · NCC · VX · ĐVT · SL đặt ·
+>    SL chốt · đơn giá · thành tiền · đã chuyển tiền · đã nhập kho · 3 mốc ngày ·
+>    số UNC · trạng thái · ghi chú) + 4 thẻ lọc theo bước (①→④).
+
+> **NHẬP LIỆU BẰNG FILE (yêu cầu chung 2.2-2.5) — kiến trúc:**
+> - File PDF/Word/Excel/Text/Ảnh → **LƯU TẠI MÁY CHỦ** `agent/mua-hang/files/<module>/<ngày>/`
+>   qua 3 endpoint MỚI của api_server: `POST /mua-hang/upload` (base64) ·
+>   `POST /mua-hang/extract` · `GET /mua-hang/files` (auth x-api-token, whitelist
+>   module + định dạng, CHẶN đọc file ngoài kho). Web KHÔNG giữ file.
+> - **AI ĐỌC & PHÂN TÍCH**: `agent/mua_hang_extract.py` đọc text layer (PyMuPDF ·
+>   python-docx · openpyxl/xlrd · CSV tự dò encoding) + **OCR Tesseract vie+eng**
+>   cho ảnh & PDF scan → web gửi nội dung cho **Z.ai GLM** (ZAI_API_KEY trên
+>   Vercel — KHÔNG lộ key xuống máy chủ) chuẩn hóa thành dòng theo đúng cột module
+>   (prompt kèm danh sách 52 tên SMED + 20 mã trung tâm để AI map tên chuẩn) →
+>   **Đại ca XEM TRƯỚC** trong hộp thoại rồi bấm Lưu mới ghi DB (AI KHÔNG tự ghi).
+> - **FALLBACK không-AI** (mới phát sinh khi làm): chưa cấu hình key / AI lỗi →
+>   đọc TRỰC TIẾP bảng Excel/CSV theo từ khóa tiêu đề cột, ghi rõ "đọc trực tiếp
+>   từ bảng trong file"; ô không nhận dạng để trống (KHÔNG bịa số).
+
+> **Dữ liệu (GiondDB — 6 bảng mới, `agent/mua_hang_setup.py` idempotent):**
+> `mh_bang_gia_vx` (52 dòng seeded) · `mh_loyalty` · `mh_don_dat` · `mh_ncc_order` ·
+> `mh_unc` (chờ) · `mh_files` (sổ kho file + số dòng AI đã lưu).
+
+> **Đã làm (repo con `6b9ad4d` — 26 file):** agent: mua_hang_extract.py + test ·
+> mua_hang_setup.py · api_server.py (+144 dòng, 3 endpoint) + test · probe SQL ·
+> web: `src/lib/mua-hang.ts` (logic thuần) + `src/routes/api/-mua-hang.ts`
+> (8 server fn) + `src/lib/mua-hang.test.ts` · 7 route + 4 component · nav.ts ·
+> smed-auth.ts (ROUTE_TO_GROUP +6) · db.ts (export resolveTunnelBaseUrl) ·
+> package.json (npm test) · .gitignore (kho file). App tổng: `banhang-catalog.ts`
+> (+6 lá nhóm bh-nhap-mua-hang) + test.
+
+> **Verify:** unit `mua-hang.test.ts` **54/54 PASS** (chuẩn hóa tên · bóc JSON AI ·
+> cộng SL theo cửa sổ · 4 bước trạng thái · ghép 4 nguồn · số/ngày VN · fallback
+> bảng) · `mua_hang_extract.test.py` **7/7 PASS** (txt/csv/xlsx/docx/ảnh OCR/guard)
+> · endpoint agent **4/4 PASS** (file thật lên máy chủ + ghi sổ mh_files) ·
+> **probe SQL thật trên GiondDB 19/19 PASS** (đọc 6 bảng + stg_5BKN + GHI
+> insert/update có `now()` + DỌN sạch) · tsc app con **EXIT 0** · tsc app tổng
+> **EXIT 0** · **7 trang render HTTP 200** (dev server, nav đủ 7 lá) · app tổng
+> `npm test` **57/57 PASS**.
+
+> **⚠️ Agent restart (đã làm 02:25):** rảnh 30 phút → xóa `__pycache__` 3 thư mục
+> → `sc stop/start GIONG_API_Server` → **tunnel ĐỔI URL** (`lyric-portion-curtis-
+> personality`) → gist tự ghi + chạy `scripts/update-tunnel-env.py` sync `.env.local`
+> 2 app. **Production KHÔNG cần redeploy** — fallback gist GĐ 426 tự lấy URL mới
+> (đúng thiết kế PA-1). Endpoint mới đã verify sống: `/mua-hang/files` trả rows,
+> token sai → 401.
+
+> **⚠️ CHỒNG LẤN CẦN ĐẠI CA BIẾT:** phiên song song đã claim **GĐ 430 / C.260
+> "Module Chương trình khuyến mãi" (nhánh BÁN HÀNG app con)** — mô tả CÙNG cơ chế
+> "nhập file PDF/Word/Excel/Ảnh → AI đọc". Em đã commit xong phần dùng chung
+> (endpoint `/mua-hang/*` + `mua_hang_extract.py` + `-mua-hang.ts`) trước — phiên
+> đó nên TÁI DÙNG thay vì viết cơ chế upload thứ hai (tránh 2 đường lưu file/AI).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** /
+> repo con **9.3.0**.

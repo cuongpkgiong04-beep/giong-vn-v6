@@ -73,7 +73,15 @@ export const BH_GROUPS: BhGroup[] = [
     key: "bh-nhap-mua-hang",
     label: "NHẬP DỮ LIỆU — MUA HÀNG",
     leaves: [
+      // GĐ 429 (14/10/2026 — yêu cầu Đại ca): MUA HÀNG đủ 7 module con, thứ tự
+      // 1-7 khớp sidebar app con (nav.ts). LOYALTY có từ GĐ 223 — giữ vị trí số 3.
+      { to: "/m/mua-hang-quy-trinh", label: "Quy trình mua hàng" },
+      { to: "/m/mua-hang-bang-gia-vx", label: "Bảng giá Vắc xin" },
       { to: "/m/nhap-loyty", label: "Chương trình LOYALTY" },
+      { to: "/m/mua-hang-don-dat", label: "Đơn đặt hàng gửi NCC" },
+      { to: "/m/mua-hang-ncc-order", label: "NCC gửi Order" },
+      { to: "/m/mua-hang-unc", label: "Lập UNC chuyển tiền" },
+      { to: "/m/mua-hang-theo-doi", label: "Theo dõi trạng thái mua hàng" },
     ],
   },
   {
