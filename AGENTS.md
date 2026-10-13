@@ -3768,3 +3768,31 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.0.0** / repo con **9.1.0**.
+
+### GĐ 412 / C.248 (Trợ lý Freebuff): Fix 2 bug KPI Tổng quan — drill-down Nhập VX rỗng + mặt hộp Marketing lệch chi tiết (2026-10-13)
+
+> **Đại ca báo (13/10 12:01, 2 ảnh):** (1) chi tiết hộp Nhập Vắc Xin — bấm dòng
+> Prevenar 20 · Lô MR7043 → "Không có phiếu nhập của dòng này trong kỳ" (lần
+> trước từng hiển thị); (2) mặt hộp Marketing (412 gói/3.927 mũi/3.089.831.550)
+> KHÔNG khớp chi tiết bên trong (tt-cn job bccn).
+>
+> **Chẩn đoán:** (1) `loadOverviewImportByCenter` GĐ 388 — SQL $1..$4 nhưng
+> params truyền `[day, vax, unit, unit, lo]` THỪA 1 unit → $4 (so col8) nhận
+> nhầm 'company' → col8='company' luôn 0 dòng (verify GĐ 388 bằng literal đúng
+> giá trị nên không lộ — probe ≠ code thực tế); (2) mặt hộp Marketing vẫn SQL
+> live f3/f4/f1 (GĐ 389) trong khi chi tiết đã sheet tt-cn job bccn (GĐ 407).
+>
+> **Đã làm (repo con code `d09708d` +22/−34 · docs `1fd1712`):** params đúng
+> `[day, vax, unit, lo]` + comment cảnh báo · `marketingStats` viết lại — TỔNG
+> sheet tt-cn (OPENJSON SUM) của job `query_key='bccn-dattruoc'` done mới nhất
+> — cùng nguồn chi tiết GĐ 407.
+>
+> **Verify:** tsc EXIT 0 · Bug 1: probe (12/10, Prevenar 20, MR7043) → 1 dòng
+> TP 10 × 1.356.264 = 13.562.640 (đúng dòng Bảng 1) · Bug 2: tổng sheet tt-cn
+> = **273 gói / 1.370 mũi / 995.114.300** — mặt hộp = tổng bảng chi tiết.
+>
+> **Tiêu chí kiểm chứng (sau Push):** bấm dòng Bảng 1 Nhập Vắc Xin → phiếu
+> nhập theo trung tâm hiện đúng; mặt hộp Marketing = TỔNG bảng chi tiết.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.9.0** / repo con **9.0.0**.
