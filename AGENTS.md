@@ -928,3 +928,30 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** app tổng **6.1.1** (bump đợt push sót permissions — duyệt PA-3)
 > / repo con **9.2.0** (không đụng code) — permissions.ts ĐÃ PUSH + LIVE; phần
 > docs GĐ 416 KHÔNG push chờ lệnh.
+
+---
+
+### GĐ 417 (Trợ lý Freebuff): PA Push đợt GĐ 416 — docs-only KHÔNG bump + LIVE production (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10, sau GĐ 416).** Rà trùng lặp theo nguyên tắc
+> 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo** · remote
+> `origin/main` 0 commit mới (fetch — không có agent khác push) · registry 0 🔒
+> dở · status chỉ còn `D attachments/*.zip` của phiên trước (không đụng).
+
+> **Push:** app tổng `cbfc655..0f8debf` — 5 commit: 4 docs GĐ 416 (tách archive
+> lần 2 + registry 7 ô · mục 13 + heading GĐ 411 ⛔ · entry + unlock · skill
+> REA `.claude/skills/`) + 1 claim GĐ 417. Repo con: **"Everything up-to-date"**
+> — 0 commit local (C.- không có thay đổi, giữ nguyên).
+
+> **KHÔNG bump version (docs-only):** đợt push 0 code app (AGENTS.md +
+> registry + archive + `.claude/skills/` — không đụng build/production code) —
+> precedents GĐ 319 (tách lần 1, docs-only). App tổng 6.1.1 vừa bump + LIVE
+> sáng nay cho permissions.ts; giữ nguyên.
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` HTTP 200 = **6.1.1** · app con
+> `giong-banhang.vercel.app` HTTP 200 = **9.2.0** — deploy mới chạy, không ghim
+> deployment cũ (khác sự cố GĐ 306).
+
+> **Version:** app tổng **6.1.1** / repo con **9.2.0** — ĐÃ PUSH + ĐÃ LIVE
+> (không đổi — docs-only).
