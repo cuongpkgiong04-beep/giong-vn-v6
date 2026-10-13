@@ -1285,3 +1285,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.2.0** / repo con **9.3.0**. Entry + code KHÔNG push chờ lệnh.
+
+---
+
+### GĐ 427 (Trợ lý Freebuff): Nghiên cứu browser-use-main → ĐH chốt PA-1 — cài CÔNG CỤ KHẢO SÁT webapp (venv Python 3.13), KHÔNG đưa vào pipeline (2026-10-13)
+
+> **Yêu cầu của Đại ca (13/10):** kiểm tra thư mục
+> `D:\DuLieuChung\CUONG_2026\Github\browser-use-main` xem có áp dụng được vào
+> việc lấy dữ liệu SMED / BANK / THUẾ thay cho code Python hiện tại không.
+
+> **Khảo sát (ra quyết định):** browser-use v0.12.6 (MIT, Python ≥3.11) = AI
+> browser agent — LLM lái Chrome qua CDP, mỗi bước gửi DOM + ảnh lên LLM.
+> Hệ thống hiện tại ĐÃ CÓ trụ Playwright (SMED 13 tool · MISA + OTP Gmail ·
+> VCB/TCB/TPB) + requests thuần API MIA/THUẾ (ddddocr captcha) — xử lý sẵn
+> WAF headful (VCB), 429 backoff (MIA), captcha retry. Pipeline 23:00 cần
+> chính xác 100% → LLM lái = chậm + phí token + không deterministic; bản
+> open-source không giải captcha; dữ liệu ngân hàng KHÔNG được đưa qua LLM API
+> ngoài. → Trình 3 PA, **ĐH chốt PA-1: chỉ dùng ở giai đoạn THIẾT KẾ/KHẢO SÁT**
+> (khai báo nguồn mới — VTB; debug UI đổi làm selector chết), pipeline không đổi.
+
+> **Đã cài (ngoài repo — thư mục tool):** `uv venv --python 3.13` (3.13.14) +
+> `uv pip install -e .` tại `D:\DuLieuChung\CUONG_2026\Github\browser-use-main`
+> → `.venv/Scripts/browser-use.exe`. `doctor` 3/5 OK (thiếu cloudflared +
+> profile-use là dịch vụ cloud trả phí — TA KHÔNG DÙNG; api_key chưa set —
+> không cần cho CLI).
+
+> **Verify thử nghiệm (KHÔNG login, KHÔNG đụng credentials):** (1) example.com
+> — open + state + screenshot OK (`_test-example.png`); (2) trang thật
+> `tcgiongts.smed.vn/Account/Login` — state soi được cấu trúc form: input
+> username + password nằm trong **SHADOW(open)**, nút submit, link
+> email-activation — screenshot `_test-smed-login.png` (phát hiện có giá trị
+> cho khai báo: SMED dùng Shadow DOM cho ô nhập). Browser đóng sạch sau test.
+
+> **Hướng dẫn phiên sau:** `GIONG-NOTE.md` trong thư mục tool (lệnh
+> open/state/click/input/screenshot/close · browser sống đến `close` · khi nào
+> dùng/không dùng · WAF chặn headless → `--headed` hoặc `--profile "Default"`).
+
+> **Version:** KHÔNG bump (docs-only + tool ngoài repo — không đụng code app).
+> App tổng **6.2.0** / repo con **9.3.0**. KHÔNG push chờ lệnh.
