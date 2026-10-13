@@ -875,3 +875,56 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (4) Bảng TH GB-KM_GN-CK-LN: đủ 48/48 NCC + giá nhập tạm đúng.
 
 > **Version:** app tổng **6.1.0** / repo con **9.2.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 416 (Trợ lý Freebuff): PA-3 chốt hệ thống quy định đa agent — tách archive lần 2 + sửa registry vỡ + mục 13 + push sót permissions.ts 6.1.1 + dọn rác (2026-10-13)
+
+> **Yêu cầu của Đại ca (13/10):** "Xem lại một lần nữa hệ thống các quy định,
+> hệ thống các phân loại... để chốt lại cho các AI Agent làm việc hiệu quả."
+> Em rà toàn bộ AGENTS.md + AGENT_REGISTRY.md + CLAUDE.md + archive → trình
+> 4 tầng quy tắc + 6 vấn đề bằng chứng → **ĐH chốt PA-3** (dọn đỏ + gom quy
+> tắc + chốt việc treo).
+
+> **Đã làm (docs-only + 1 file code sót GĐ 315):**
+> 1. **Tách archive LẦN 2** (`dddbc00`, script `scripts/gd416-split-archive.py`):
+>    entry GĐ 319→410 (3.163 dòng) dời NGUYÊN VĂN xuống CUỐI AGENTS_ARCHIVE.md —
+>    **md5 khớp byte-đối-byte**; AGENTS.md **3.991 → 828 dòng** (~79% nhẹ hơn —
+>    hết lặp lại bệnh tràn context GĐ 319); header + footer archive cập nhật
+>    mốc "GĐ 1 → 410"; mục 12 đổi "entry từ GĐ 319" → "từ GĐ 411".
+> 2. **Sửa registry 3 dòng vỡ** (script `scripts/gd416-fix-registry.py`): đếm
+>    7-ô phát hiện đúng 3 dòng dính (19 dòng báo lúc đầu là false-positive):
+>    dòng 44 (thừa 1 ô — gộp) · dòng 80 (4 entry dính → tách; 2 entry thiếu số
+>    TRẢ LẠI số đã tồn tại: **C.198** điều tra bccn — GĐ 377 nhắc "bản C.198" ·
+>    **C.197** fix Tiền thuế MIA — hoàn tất nhắc C.197b) · dòng 91 (2 entry →
+>    tách; khảo sát UI/UX = **GĐ 347** — khớp claim `e7a794e`). Mọi dòng bảng
+>    khóa số = đủ 7 ô; 4 số "thiếu heading" 339/363/365/408 kiểm = nguyên trạng
+>    (339/363/365 không từng có entry riêng — nhắc trong entry Push; 408 giữ ở
+>    AGENTS.md).
+> 3. **Mục 13 QUY TẮC NGHIỆP VỤ HIỆN HÀNH** (`fc1a888`): gom 4 nhóm quy tắc
+>    hiệu lực rải trong entry — 13.1 logic đếm bccn bản cuối (kỳ theo Ngày
+>    đăng ký · RAW f1 · ghép ghi_chu/giá · Kiểm tra nguồn) · 13.2 ETL
+>    rebuild-ngày + auto-ETL nhường job + skip 3dtthc · 13.3 vận hành agent
+>    (__pycache__, taskkill node/python, tunnel, verify curl) · 13.4 ghi chép
+>    (entry repo con ghi file GỐC — lặp 2 lần; sót version lock = thư viện;
+>    NBSP E2E; trùng số ⛔).
+> 4. **Hoàn tất sót GĐ 315** (`b66a261` + bump `cbfc655`): `permissions.ts` +8
+>    dòng (phân quyền 2 module Biên bản họp + Zalo — modified 8 ngày chờ ĐH OK
+>    riêng) — ĐH duyệt qua PA-3 → commit + **bump 6.1.0 → 6.1.1 (patch — 4 chỗ,
+>    hookable 6.1.1 lock là thư viện ngoài trùng số trúng)** + push + curl
+>    LIVE 6.1.1 lần đầu. Repo con KHÔNG đụng (giữ 9.2.0).
+> 5. **Entry GĐ 411 sai số** (trùng entry GĐ 414 — cùng code `511c02b`): đánh
+>    dấu ⛔ ĐỔI SỐ ở heading (không xóa nội dung).
+> 6. **Dọn rác untracked:** 8 file .whl (wheel Python) · j58.json (dump tạm
+>    tasks) · dev-main*.log 2 file · LOG/ (log dev cũ nhất 08/10) ·
+>    `public/~$DSACH TID VCB.xlsx` (Excel lock) — GIỮ: attachments/, screenshots/,
+>    public/*.jpg, favicon, `.claude/skills/` (hỏi riêng ĐH).
+
+> **Verify:** md5 khối dời byte khớp · bảng khóa số 100% dòng 7 ô (bằng script,
+> loại bảng phân vai/sự cố khác cột) · đếm entry AGENTS.md 7 + archive đủ
+> 319→410 (4 số thiếu heading = nguyên trạng có kiểm chứng) · curl 6.1.1 ·
+> git status còn lại chỉ untracked có chủ + 1 file deleted của phiên trước.
+
+> **Version:** app tổng **6.1.1** (bump đợt push sót permissions — duyệt PA-3)
+> / repo con **9.2.0** (không đụng code) — permissions.ts ĐÃ PUSH + LIVE; phần
+> docs GĐ 416 KHÔNG push chờ lệnh.
