@@ -3904,3 +3904,41 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.0.0** / repo con **9.1.0**.
+---
+
+### GĐ 414 / C.250 (Trợ lý Freebuff): Fix 5 vắc xin thiếu NCC + Giá nhập niêm yết TẠM từ phiếu nhập (2026-10-13)
+
+> **Phản hồi của Đại ca (13/10):** 5 dòng thiếu NCC (14 ROTARIX 1.5ml · 18
+> INFLUVAC Tetra · 22 Priorix · 30 Menquadfi · 43 QUIMI-HIB) — tìm lại dữ
+> liệu nhập kho, chưa có thì nhắc bổ sung download phiếu nhập; tạm thời thêm
+> Giá nhập niêm yết = giá nhập CÓ THUẾ từ phiếu nhập để tính LN tạm. Chi tiết
+> đầy đủ ở entry C.247→C.250 AGENTS.md repo con (code `511c02b`).
+>
+> **Chẩn đoán (probe thật):** stg_5BKN **CÓ ĐỦ** data cả 5 — join trượt vì 3
+> nguyên nhân: khác chữ hoa ('ROTARIX 1.5ml' ↔ 'Rotarix 1.5ml' · 'Menquadfi'
+> ↔ 'MenQuadfi' · 'QUIMI-HIB' ↔ 'Quimi-Hib') · SMED ghi 2 cách tên
+> ('Influvac Tetra' / 'INFLUVAC') · Priorix lượt gần nhất theo MAX(id) là
+> dòng "Nhập tồn" (23/06) bị lọc → trống.
+>
+> **Đã làm (repo con `511c02b` — 2 file +60/−17):** (1) key nccMap/giaNhapMap
+> = **UPPER(tên rút gọn)**; (2) lọc "Nhập tồn" **TRƯỚC** MAX(id) (param $1 —
+> Priorix lấy lượt thật 19/09/2025); (3) fallback lookup prefix cho tên 2
+> cách; (4) giaNhapMap = col13 (đơn giá SAU VAT — có thuế) phiếu gần nhất →
+> cột "Giá nhập (niêm yết)" **TẠM THỜI** tự động; **DB điền tay GHI ĐÈ**
+> (Anh điều chỉnh được); (5) LN dùng giá nhập hiệu dụng; dialog thêm info
+> giá nhập tạm.
+>
+> **Verify (probe query mới + JS map — giả lập load thật):** **đủ 48/48 tên
+> bảng TH có NCC — 0 thiếu**; 5 tên khớp: ROTARIX 1.5ml → CHI NHÁNH CÔNG TY
+> TNHH TV&DP SANG TẠI HÀ NỘI · 398.754; INFLUVAC Tetra → Công Ty CP Biovaccine
+> VN · 213.500; Priorix → CHI NHÁNH SANG HÀ NỘI · 270.000; Menquadfi → CÔNG
+> TY CP DP TB YT HÀ NỘI · 1.371.720; QUIMI-HIB → CÔNG TY CP Y TẾ ĐỨC MINH ·
+> 109.958. tsc EXIT 0 · unit 12/12. **KHÔNG cần bổ sung download phiếu nhập.**
+>
+> **Tiêu chí kiểm chứng (sau Push):** 5 dòng hiện NCC + Giá nhập tạm; LN 3
+> cột tính đủ cho dòng có Giá bán tự động; khi Loyalty có dữ liệu → thay
+> nguồn giá nhập (việc sau).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.0.0** / repo con **9.1.0**.
+
