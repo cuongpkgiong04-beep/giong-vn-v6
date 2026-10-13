@@ -1177,3 +1177,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > đủ nhánh NHẬP DỮ LIỆU (hết bug menu ẩn/chặn oan user thường).
 
 > **Version:** app tổng **6.2.0** / repo con **9.3.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 424 (Trợ lý Freebuff): Điều tra sự cố "nhiệm vụ + lịch sử download/báo cáo biến mất" sau push 6.2.0 — KHÔNG MẤT DỮ LIỆU, tunnel URL cũ chết — ĐÃ HỒI PHỤC (2026-10-13)
+
+> **Đại ca báo (13/10 tối):** "sau khi push xong anh kiểm tra sơ bộ thì các
+> nhiệm vụ cũ, đang thực hiện biến mất tiêu đâu rồi. các lịch sử làm việc như
+> download, báo cáo... cũng biến mất."
+
+> **Chẩn đoán (bậc thang — bằng chứng thật):** DỮ LIỆU KHÔNG MẤT —
+> 1. API agent cục bộ `:8777/health`: **GiondDB 1.639 jobs nguyên vẹn** ·
+>    service GIONG_SMED_Agent RUNNING · api_server LISTENING · cloudflared sống.
+> 2. Nghi phạm: **Quick Tunnel đổi URL mỗi lần restart agent** (17:51 — log
+>    `web_agent_131026_175104`) → URL cũ `unnecessary-programming-convicted-very`
+>    (trong env `.env.local` + env Vercel bake build-time `TUNNEL_API_BASE_URL`)
+>    CHẾT → production không nối được agent → nhiệm vụ + lịch sử + báo cáo
+>    hiển thị RỖNG. Tunnel mới: `exhibit-node-mlb-silver.trycloudflare.com`
+>    (curl /health từ ngoài: `tunnel_ok: true`).
+> 3. Gist tự ghi vẫn sống (script đọc được URL mới — curl raw 404 là do cần
+>    token API, không phải gist mất).
+
+> **Đã hồi phục (không đụng code — chỉ env):**
+> 1. Chạy `scripts/update-tunnel-env.py` (quy trình 13.3) → đồng bộ
+>    `.env.local` 2 app = URL mới.
+> 2. Vercel: `TUNNEL_API_BASE_URL` production **2 app** (app tổng + app con
+>    — cả 2 đều có biến này) → rm + add URL mới → `vercel redeploy` cả 2
+>    (Ready 31s/42s) — version giữ nguyên 6.2.0 / 9.3.0.
+> 3. **Verify browser thật (login SSO → /m/tasks):** Task_04 17:15
+>    **Hoàn thành 22/22 bước OK** (xong 18:52) · Task_03 **24/29 báo cáo OK**
+>    · SuperAdmin thấy đủ — DỮ LIỆU TRỞ LẠI ĐẦY ĐỦ.
+
+> **🚨 Việc cần làm tiếp (chưa làm):** cơ chế fallback gist runtime GĐ C.40
+> (query fail → đọc gist → URL mới) đáng lẽ TỰ hồi phục mà KHÔNG — cần điều
+> tra vì sao (nếu hoạt động đúng thì không phải redeploy mỗi lần tunnel đổi
+> URL). Kiểm: GH_GIST_TOKEN trên Vercel còn hạn? · fallback có chạy trên SSR
+> hay chỉ client? · cache 60s có kẹt?
+
+> **Version:** 6.2.0 / 9.3.0 giữ nguyên (chỉ env + redeploy — 0 code đổi).
+> Entry docs KHÔNG push chờ lệnh (claim `45d37cf` — chờ, unlock commit này).
