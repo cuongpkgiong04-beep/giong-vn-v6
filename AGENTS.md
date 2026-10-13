@@ -1019,3 +1019,25 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (chỉ data — precedent GĐ 365-close). App tổng
 > **6.1.1** / repo con **9.2.1**.
+
+
+### GĐ 420 / C.254 (Trợ lý Freebuff): PA-1 — bảng "Danh sách trả nợ theo lịch hẹn tiêm" dùng công nợ 01/01/2018 → ngày chạy (2026-10-13)
+
+> **Đại ca báo (13/10 15:10+):** bảng mới chỉ có 1 dòng (Trường An hẹn 13/10)
+> — hỏi logic khác trao đổi không. **Chẩn đoán:** không phải lỗi join — nguồn
+> công nợ sai ý: em tính công nợ theo kỳ job LHT mà công nợ lọc kỳ theo Ngày
+> đăng ký → chỉ khách ĐK tháng 10 còn nợ (8 nhóm → 1 dòng). Probe công nợ
+> 2018→30/09 (1.067 nhóm · 995.114.300) join LHT tháng 10 → **157 dòng**.
+>
+> **ĐH chốt PA-1** — công nợ TÍNH LẠI 01/01/2018 → NGÀY CHẠY job LHT. Đã làm
+> (repo con `72d2b27`): `build_tra_no(cn_df, cn_dt, rows, hen_df, hen_dt)` —
+> HAI KỲ RIÊNG (công nợ 2018→ngày chạy · lịch hẹn lọc theo kỳ job LHT) — chặn
+> lỗi chép kỳ công nợ vào lọc lịch hẹn (lần chạy đầu ra 94 dòng — mất 63
+> dòng hẹn 14→31/10); hook hentiem CLI thêm --hen-from/--hen-to. Unit 8/8 ·
+> chạy thật: **156 dòng · 203 mũi · 198.229.200** (chênh probe 157 = lượt trả
+> 01/10→13/10 giờ nằm trong kỳ công nợ — khách đã trả loại đúng). Chi tiết ở
+> AGENTS.md repo con C.254. Restart agent nạp code.
+>
+> **Tiêu chí kiểm chứng (sau Push):** chạy job LHT kỳ 10/2026 → bảng mới
+> ~156 dòng khách còn nợ có lịch hẹn tháng 10. **Version:** KHÔNG bump (chờ
+> lệnh Push) — app tổng 6.1.1 / repo con 9.2.1.
