@@ -2,18 +2,19 @@
  * GĐ 199 (2026-09-22) — CATALOG PHÂN QUYỀN CHI TIẾT app con Bán hàng
  * ====================================================================
  * Nguồn sự thật duy nhất cho trang Phân quyền app tổng khi cấu hình quyền
- * CHI TIẾT app con: 8 NHÓM (bậc 2) + TỪNG LÁ (bậc 3/4 — báo cáo/phân hệ).
+ * CHI TIẾT app con: 14 NHÓM (bậc 2) + TỪNG LÁ (bậc 3/4 — báo cáo/phân hệ).
  *
  * ⚠️ ĐỒNG BỘ 2 NƠI (bắt buộc khi thêm nhóm/báo cáo MỚI — xem CHECKLIST cuối file):
  *   - App tổng:  src/lib/banhang-catalog.ts (file này)
- *   - App con:   giong-apps/apps/banhang/src/lib/nav.ts (cây sidebar) + smed-auth.ts (REPORT_GROUP + route→nhóm)
+ *   - App con:   giong-apps/apps/banhang/src/lib/nav.ts (cây sidebar) + smed-auth.ts (REPORT_GROUP + route→nhóm) + components/app-shell.tsx (NAV_GROUP_TO_MOD)
  *
  * Mô hình (chốt Đại ca 22/09): NHÓM + TỪNG LÁ — mỗi nhóm 1 toggle tóm tắt
  * (bật = bật cả nhóm), xổ ra toggle từng lá. Quyền lưu trong cùng ô
  * module_access JSONB hiện có (không migration mới):
  *   - Nhóm: 4 key cũ "banhang-*" GIỮ NGUYÊN (không vỡ quyền đang chạy) +
  *     4 key mới "bh-bao-cao-ke-toan" / "bh-bao-cao-kho" / "bh-bao-cao-marketing" /
- *     "bh-upload-misa-amis"
+ *     "bh-upload-misa-amis" + GĐ 420 — 4 key "bh-nhap-*" (NHẬP DỮ LIỆU: DANH MỤC /
+ *     KHO HÀNG / MUA HÀNG / BÁN HÀNG tách khỏi banhang-misa)
  *   - Lá: "bh-leaf-<routeLá>" (VD "bh-leaf-/m/misa-hoadon") — key = route lá, ổn định
  *
  * BACKWARD-COMPAT (chốt Đại ca — phương án 3):
@@ -37,8 +38,53 @@ export type BhGroup = {
   leaves: BhLeaf[];
 };
 
-/** 8 nhóm bậc 2 của app con — 4 nhóm DOWNLOAD giữ key cũ + 4 nhóm mới. */
+/** 14 nhóm bậc 2 của app con — 4 nhóm NHẬP DỮ LIỆU (bậc 1, GĐ 420) + 4 nhóm
+ *  DOWNLOAD giữ key cũ + 3 BÁO CÁO + UPLOAD + NHIỆM VỤ + BANK. */
 export const BH_GROUPS: BhGroup[] = [
+  // ============================================================
+  // GĐ 420 (13/10 — yêu cầu Đại ca): NHẬP DỮ LIỆU — nhóm bậc 1 sidebar app con
+  // (DANH MỤC → KHO HÀNG → MUA HÀNG → BÁN HÀNG) trước đây bị NHÉT vào nhóm
+  // banhang-misa (backward-compat GĐ 223/336/340/370) → trang Phân quyền app
+  // tổng KHÔNG có mục NHẬP DỮ LIỆU để cấu hình riêng (ĐH báo thiếu 13/10).
+  // Nay TÁCH THÀNH 4 NHÓM RIÊNG theo đúng cây nav.ts app con — Admin cấp
+  // quyền độc lập từng nhóm con. Đặt ĐẦU BH_GROUPS khớp thứ tự sidebar.
+  // ⚠️ User ĐÃ có config nhóm (không rơi nhánh "chưa cấu hình → đủ hết") CẦN
+  // được Admin bật lại 4 nhóm này nếu muốn xem — trước đây thấy qua nhóm MISA.
+  // ============================================================
+  {
+    key: "bh-nhap-danh-muc",
+    label: "NHẬP DỮ LIỆU — DANH MỤC",
+    leaves: [
+      { to: "/m/danh-muc-vac-xin", label: "Danh mục Vắc Xin" },
+      { to: "/m/danh-muc-nha-cung-cap", label: "Danh mục Nhà cung cấp" },
+      { to: "/m/danh-muc-trung-tam", label: "Danh mục Trung tâm" },
+      { to: "/m/danh-muc-khach-hang", label: "Danh mục Khách hàng" },
+      { to: "/m/danh-muc-khac", label: "Danh mục khác" },
+    ],
+  },
+  {
+    key: "bh-nhap-kho-hang",
+    label: "NHẬP DỮ LIỆU — KHO HÀNG",
+    leaves: [
+      { to: "/m/nhap-dieu-chuyen", label: "Điều chuyển nội bộ Vắc Xin" },
+    ],
+  },
+  {
+    key: "bh-nhap-mua-hang",
+    label: "NHẬP DỮ LIỆU — MUA HÀNG",
+    leaves: [
+      { to: "/m/nhap-loyty", label: "Chương trình LOYALTY" },
+    ],
+  },
+  {
+    key: "bh-nhap-ban-hang",
+    label: "NHẬP DỮ LIỆU — BÁN HÀNG",
+    leaves: [
+      { to: "/m/banhang-bang-gia-dich-vu", label: "Bảng giá dịch vụ" },
+      { to: "/m/banhang-chuong-trinh-khuyen-mai", label: "Chương trình khuyến mãi" },
+      { to: "/m/banhang-th-gbkm-gnck-ln", label: "Bảng TH GB-KM_GN-CK_LN" },
+    ],
+  },
   {
     key: "banhang-misa",
     label: "DỮ LIỆU TỪ MISAmeInvoice",
@@ -51,25 +97,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/mia-muavao-chitiet", label: "Mua vào - Chi tiết (MiaTool)" },
       { to: "/m/mia-banra-tongquan", label: "Bán ra - Tổng quan (MiaTool)" },
       { to: "/m/mia-banra-chitiet", label: "Bán ra - Chi tiết (MiaTool)" },
-      // GĐ 223: nhóm NHẬP DỮ LIỆU (bậc 1 mới) — gán quyền nhóm MISA để backward
-      // compat (user có quyền MISA thấy luôn; tinh chỉnh lá sau khi có nội dung).
-      { to: "/m/nhap-dieu-chuyen", label: "Điều chuyển nội bộ Vắc Xin (NHẬP DỮ LIỆU)" },
-      { to: "/m/nhap-loyty", label: "Chương trình LOYALTY (NHẬP DỮ LIỆU)" },
-      // GĐ 336 (07/10): nhóm DANH MỤC mới trong NHẬP DỮ LIỆU — gán quyền nhóm
-      // MISA để backward-compat (user có quyền MISA thấy luôn — như 2 mục trên).
-      { to: "/m/danh-muc-vac-xin", label: "Danh mục Vắc Xin (DANH MỤC)" },
-      { to: "/m/danh-muc-nha-cung-cap", label: "Danh mục Nhà cung cấp (DANH MỤC)" },
-      { to: "/m/danh-muc-trung-tam", label: "Danh mục Trung tâm (DANH MỤC)" },
-      { to: "/m/danh-muc-khach-hang", label: "Danh mục Khách hàng (DANH MỤC)" },
-      { to: "/m/danh-muc-khac", label: "Danh mục khác (DANH MỤC)" },
-      // GĐ 340 (07/10): nhóm BÁN HÀNG mới trong NHẬP DỮ LIỆU (cuối nhóm — chốt
-      // thứ tự DANH MỤC → KHO HÀNG → MUA HÀNG → BÁN HÀNG) — gán quyền nhóm MISA
-      // backward-compat như GĐ 336.
-      // GĐ 370 (10/10): thêm lá "Chương trình khuyến mãi" (số 2), đẩy
-      // "Bảng TH GB-KM_GN-CK_LN" thành số 3.
-      { to: "/m/banhang-bang-gia-dich-vu", label: "Bảng giá dịch vụ (BÁN HÀNG)" },
-      { to: "/m/banhang-chuong-trinh-khuyen-mai", label: "Chương trình khuyến mãi (BÁN HÀNG)" },
-      { to: "/m/banhang-th-gbkm-gnck-ln", label: "Bảng TH GB-KM_GN-CK_LN (BÁN HÀNG)" },
+      // GĐ 420: 10 lá NHẬP DỮ LIỆU (điều chuyển/LOYALTY/danh mục/banhang-*) đã
+      // TÁCH sang 4 nhóm "bh-nhap-*" phía trên — nhóm này còn 2 MISA + 4 MIA.
     ],
   },
   {
@@ -196,7 +225,7 @@ export const BH_GROUPS: BhGroup[] = [
   },
 ];
 
-/** Mọi key nhóm (8) — dùng vòng for, tránh suy diễn từ mảng literal. */
+/** Mọi key nhóm (14) — dùng vòng for, tránh suy diễn từ mảng literal. */
 export const BH_GROUP_KEYS: string[] = BH_GROUPS.map((g) => g.key);
 
 /** Mọi key lá (bh-leaf-*) — phẳng từ BH_GROUPS. */
@@ -260,10 +289,14 @@ export function getBanhangDetailAccess(
 }
 
 /**
- * CHECKLIST KHI THÊM NHÓM/BÁO CÁO MỚI (GĐ 199 — bắt buộc):
+ * CHECKLIST KHI THÊM NHÓM/BÁO CÁO MỚI (GĐ 199 — bắt buộc; bổ sung GĐ 420):
  * 1. Thêm lá vào BH_GROUPS (file này) — key lá = "bh-leaf-<route>"
  * 2. Thêm lá cùng nhãn vào nav.ts app con (cây sidebar)
- * 3. Map route → nhóm trong smed-auth.ts app con (REPORT_GROUP / SQL_QUERY_GROUP)
- * 4. Route mới thuộc nhóm quyền nào thì page guard + API guard tự ăn theo —
+ * 3. Map route → nhóm trong smed-auth.ts app con (REPORT_GROUP / SQL_QUERY_GROUP /
+ *    ROUTE_TO_GROUP + thêm key nhóm vào BH_ALL_GROUP_KEYS — thiếu ROUTE_TO_GROUP
+ *    là BUG: leaf key không sinh → menu app con ẩn + chặn oan user thường, GĐ 420)
+ * 4. Map NHÓM BẬC 2 sidebar → key quyền trong components/app-shell.tsx app con
+ *    (NAV_GROUP_TO_MOD) — nhóm không map = không ẩn theo nhóm (GĐ 420)
+ * 5. Route mới thuộc nhóm quyền nào thì page guard + API guard tự ăn theo —
  *    KHÔNG cần sửa hệ thống phân quyền (UI toggle sinh từ BH_GROUPS).
  */
