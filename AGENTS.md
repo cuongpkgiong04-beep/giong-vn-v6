@@ -1486,3 +1486,77 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.7.0** / repo con **8.6.0**.
+
+### GĐ 430 / C.260 (Trợ lý Freebuff): Module "Chương trình khuyến mãi" (BÁN HÀNG app con) — nhập file PDF/Word/Excel/Text/Ảnh → AI đọc → bảng DS Vắc Xin theo CTKM (cột động) → LINK bảng TH GB-KM_GN-CK-LN (2026-10-14)
+
+> **Yêu cầu Đại ca (14/10):** xây "Chương trình khuyến mãi" trong app con: nhập
+> dữ liệu từ file (PDF/Word/Excel/Text/Ảnh) → lưu tại máy chủ → AI đọc & phân
+> tích → cập nhật bảng "Danh sách Vắc Xin theo chương trình khuyến mãi" (STT ·
+> Vắc Xin · ĐVT · Giá niêm yết · CT khuyến mại_1/2/3…) → giá trị KM là căn cứ
+> LINK vào bảng TH GB-KM_GN-CK-LN.
+
+> **⚠️ ĐH CHƯA trả lời 4 câu hỏi chốt thiết kế (phiếu hỏi bị bỏ trống — không
+> phải từ chối) → em tự chọn 4 mặc định Đề xuất, ĐH đổi được bất kỳ điểm nào:**
+> (1) cột CT = SỐ TIỀN (đ/mũi) + mô tả nguyên văn; (2) bảng TH TỰ ĐỘNG lấy giá
+> trị CT đang hiệu lực hôm nay — nhập tay ghi đè; (3) cột chương trình ĐỘNG
+> theo dữ liệu; (4) đợt này CHỈ làm CTKM (7 module MUA HÀNG còn lại đợt sau).
+
+> **⚠️ SONG SONG đa agent (đã kiểm tra trước khi sửa):** phiên khác (cùng "Trợ
+> lý Freebuff") đang làm GĐ 429 Module MUA HÀNG — sửa nav.ts · smed-auth.ts ·
+> lib/mua-hang.ts · -mua-hang.ts · mua-hang-page.tsx (mtime 02:20-02:27). Em
+> TÁCH HOÀN TOÀN, không đụng các file đó: `-chuong-trinh-km.ts` tự chứa; chỉ
+> IMPORT chỉ-đọc normVx từ lib/mua-hang.ts. Phiên kia đã commit `6b9ad4d`
+> (GĐ 429 — gồm api_server.py chứa dòng MH_MODULES "chuong-trinh-km" của em),
+> `7e26483` (hạ trần upload 4MB→3MB), `21c70d6` (GĐ 431/C.261). Em commit SAU
+> — 0 file trùng.
+
+> **Đã làm (repo con `5adec76` + `6e621ee`):**
+> 1. Bảng `ctkm_vacxin` GiondDB (LONG: 1 dòng = 1 VX × 1 CT) — `agent/ctkm_setup.py`
+>    DDL idempotent + report — ĐÃ CHẠY THẬT trên máy chủ.
+> 2. `src/lib/ctkm.ts` (logic thuần, unit-test được): todayIso (VN = UTC+7) ·
+>    listChuongTrinh (CT mới nhất đứng trước = CT_1) · buildMatrix (pivot cột
+>    động; trùng key → id lớn thắng) · kmHieuLuc (chọn CT ĐANG HIỆU LỰC: hiệu
+>    lực theo ngày, nhiều CT → den_ngay muộn nhất, fallback PREFIX tên theo bài
+>    học GĐ 411) + `ctkm.test.ts`.
+> 3. `src/routes/api/-chuong-trinh-km.ts` (tự chứa — không đụng file phiên kia):
+>    loadCtkm (52 VX từ price_list + ĐVT từ mh_bang_gia_vx/vaccines + rows
+>    ctkm_vacxin) · uploadCtkmFile (module `chuong-trinh-km` — dùng chung 3
+>    endpoint agent GĐ 429) · parseCtkmFile (agent extract đa định dạng + OCR →
+>    LLM Z.ai prompt CTKM: quy tiền CHỈ khi có căn cứ, nhiều CT trong 1 file →
+>    1 tên riêng mỗi CT, KHÔNG bịa số) · saveCtkmDraft · saveCtkmCell (upsert ô)
+>    · deleteCtkmCell · deleteCtkmChuongTrinh.
+> 4. Trang `/m/banhang-chuong-trinh-khuyen-mai` (thay placeholder GĐ 370 — route
+>    + menu + quyền bh-nhap-ban-hang đã có sẵn): khối 1 nhập file (chọn file →
+>    lưu máy chủ → "AI đọc" → bảng NHÁP sửa được → nút Lưu mới ghi DB) + khối 2
+>    bảng "Danh sách Vắc Xin theo chương trình khuyến mãi" (52 dòng × cột CT
+>    ĐỘNG: header "CT khuyến mại_N" + tên CT + nút xóa CT; bấm ô → dialog
+>    thêm/sửa/xóa; Tải Excel; đủ 4 nguyên tắc định dạng 21/09).
+> 5. LINK bảng TH GB-KM_GN-CK-LN: `-th-gbkm.ts` thêm `kmCtkmMap` (CT đang hiệu
+>    lực hôm nay per VX — thử/lỗi nếu bảng chưa tạo, không chặn trang) → trang
+>    TH hiển thị giá trị tự động kèm "(CTKM)" + tooltip tên CT/mô tả; 3 cột LN
+>    gộp dùng giá trị hiệu dụng; DB nhập tay GHI ĐÈ (mô hình giá nhập tạm GĐ 411).
+
+> **Verify:** unit **14/14 PASS** (todayIso ngày VN · sắp cột · pivot trùng key ·
+> hiệu lực/hết hạn/chưa tới ngày/nhiều CT/fallback prefix) · tsc app con **EXIT
+> 0** · **E2E THẬT trên máy công ty:** tạo Excel mẫu 2 sheet → upload qua
+> endpoint thật → lưu `agent/mua-hang/files/chuong-trinh-km/2026-10-14/024105_
+> Ctkm-mau-2026-10-11.xlsx` (id=7) → extract 542 ký tự/2 bảng OK → ghi 4 dòng/2
+> CT vào ctkm_vacxin → `kmHieuLuc` verify: **Hexaxim 200.000 · Infanrix Hexa
+> 250.000 (CT Tháng 10 đang hiệu lực); PREVENAR 13 chỉ mô tả ("Giảm 10%" — không
+> bịa số); ROTARIX 1.5ml CT Tháng 11 chưa tới ngày → không điền** = 3/52 VX có
+> KM hiệu lực hôm nay.
+
+> **Lưu ý ĐH:** (a) bước gọi LLM cần `ZAI_API_KEY` — chỉ có trên Vercel
+> (Sensitive, không pull được) → em test trọn đường đọc file + chuẩn hóa + ghi
+> DB + link; **LLM thật test trên production sau Push**; (b) 4 dòng CTKM MẪU giữ
+> lại cho ĐH xem bảng hoạt động — xóa bằng nút ✕ trên header cột chương trình;
+> (c) service agent đã nạp module mới (phiên kia restart) — KHÔNG cần restart lại.
+
+> **Tiêu chí kiểm chứng (sau Push):** trang /m/banhang-chuong-trinh-khuyen-mai →
+> chọn file CTKM thật (PDF/ảnh/Word/Excel) → "AI đọc" → sửa nháp → Lưu → bảng
+> đủ 52 dòng × cột "CT khuyến mại_1..N" đúng dữ liệu; mở bảng TH GB-KM_GN-CK-LN
+> → cột "KM khách hàng" tự điền kèm "(CTKM)" cho VX có CT hiệu lực + LN gộp đổi
+> theo; nhập tay ở bảng TH → ghi đè.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.2.0** / repo con **9.3.0**.
