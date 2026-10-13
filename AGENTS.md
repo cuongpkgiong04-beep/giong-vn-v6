@@ -1420,6 +1420,10 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > package.json (npm test) · .gitignore (kho file). App tổng: `banhang-catalog.ts`
 > (+6 lá nhóm bh-nhap-mua-hang) + test.
 
+> **Fix sau commit đầu (`7e26483`):** hạ trần file tải lên **4MB → 3MB** — base64 phình
+> ×1,33 nên file 4MB thành ~5,3MB, VỮT giới hạn body 4,5MB của Vercel serverless
+> (413 FUNCTION_PAYLOAD_TOO_LARGE). Trần 3MB ≈ 4,0MB base64 + JSON = an toàn.
+
 > **Verify:** unit `mua-hang.test.ts` **54/54 PASS** (chuẩn hóa tên · bóc JSON AI ·
 > cộng SL theo cửa sổ · 4 bước trạng thái · ghép 4 nguồn · số/ngày VN · fallback
 > bảng) · `mua_hang_extract.test.py` **7/7 PASS** (txt/csv/xlsx/docx/ảnh OCR/guard)
@@ -1444,3 +1448,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** /
 > repo con **9.3.0**.
+
+### GĐ 431 / C.261 (Trợ lý Freebuff): PA-1 — phân trang ROOT rows cho loadReportResult — fix Bảng kê HĐ GTGT bán ra kỳ 9 trống (2026-10-14)
+
+> **Đại ca báo (13/10 23:31, ảnh /m/bc-mia-banra app con):** kỳ 01/09–30/09
+> trước đây xem được, giờ hiện "0 dòng nguồn" + "Không có dữ liệu trong khoảng
+> ngày này" + cảnh báo freshness; chạy lại Phần 2 → "Chưa đủ dữ liệu thực hiện".
+> **ĐH chốt PA-1** (14/10) sau khi em trình 3 PA.
+
+> **Điều tra (bằng chứng GiondDB qua /db/query + E2E Playwright prod tái hiện
+> 100%):** (1) **data KHÔNG mất** — mia_hddt_hd 8.623 dòng, job TQ kỳ 9 16:25
+> done result 3,7MB **6.632 dòng đầy đủ**; (2) root rễ bảng trống:
+> `loadReportResult` GĐ 324/C.170 cắt root rows >1000 về [] nhưng phân trang
+> chỉ đọc `meta.sheets` — builder MIA trả root rows (khuôn cũ) → **kỳ >1000
+> dòng trống vĩnh viễn trên web**; (3) "Chưa đủ dữ liệu" chi tiết kỳ 9 là
+> **ĐÚNG**: mia_hddt_hh kỳ 9 chỉ có muavao 596 dòng — **banra = 0 dòng** →
+> cần tải lại file tool 43 bán ra kỳ 9; (4) cảnh báo freshness = đúng GĐ 375.
+
+> **Đã làm (PA-1 — code repo con `21c70d6`, 2 file +137/−6):** chi tiết ở
+> entry C.261 AGENTS.md repo con — (1) `-smed.ts`: nhánh phân trang ROOT
+> `rootPage/rootPageSize` (OPENJSON `$.rows` — shape `sheet` key '__root__');
+> (2) `sql-data-module.tsx`: nhận truncated → tự tải trang 1 + banner
+> "Bảng lớn — xem theo trang" (‹ Trang trước · Trang X/N · Trang sau ›).
+
+> **Verify:** tsc EXIT 0 · SQL nhánh root job 16:25: **trang 1 = 1.000 ·
+> trang 7 = 632 · tổng 6.632** · E2E prod verify bảng + banner chạy sau Push
+> (script gd384-e2e-verify-fix.mjs để sẵn).
+
+> **Phát hiện kèm đã báo ĐH (chưa xử lý):** SQL Server GiondDB — quyền connect
+> login mới hỏng từ 10/10 16:28 (errorlog State 38) + DB nhấp nháy 23:49 13/10;
+> service sống nhờ connection pool cũ — cần ĐH xác nhận có backup/restore/
+> OFFLINE GiondDB 10/10 18:30 không.
+
+> **Tiêu chí kiểm chứng (sau Push):** kỳ 9 bấm job 16:25 → 1.000 dòng + banner
+> "Trang 1/7 · 6.632 dòng"; Trang sau → nửa sau bảng. Chi tiết kỳ 9: tải dữ
+> liệu còn thiếu (tool 43 bán ra) + ETL → chạy lại có dòng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.7.0** / repo con **8.6.0**.
