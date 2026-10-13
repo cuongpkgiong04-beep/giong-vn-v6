@@ -1254,3 +1254,34 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (điều tra docs — 0 code đổi). Entry KHÔNG push
 > chờ lệnh.
+
+---
+
+### GĐ 426 / C.258 (Trợ lý Freebuff): PA-1 — tự hồi phục URL Quick Tunnel: gist public đọc không cần token bắt buộc + 401 → retry KHÔNG token (2026-10-13)
+
+> **ĐH chốt PA-1** (sau điều tra GĐ 425 — GH_GIST_TOKEN chết → 401 → fallback
+> null im lặng). **Đã làm (2 file + 1 test mới, +100/−21):**
+> 1. `fetchTunnelUrlFromGist` (db.ts **CẢ 2 app** — app tổng `8ba98a3` · repo
+>    con `6703d6f`): điều kiện đầu bỏ yêu cầu token (chỉ cần `gistId` — gist
+>    public); fetch gói hàm `doFetch(withToken)` — lần 1 gửi token nếu có;
+>    **`res.status === 401` → tự retry KHÔNG token** (gist public: không gửi
+>    = 200, gửi sai = 401 — bằng chứng probe GĐ 425); + export hàm cho test.
+> 2. Điều kiện gọi fallback trong `tunnelFetch`: `gistToken && gistId` →
+>    `gistId` (fallback sống cả khi token trống).
+> 3. Test mới `src/lib/tunnel-gist-fallback.test.ts` (fake fetch, 3 case:
+>    401→retry→URL mới khớp header từng lần · 401×2→null giữ hành vi cũ ·
+>    200 lần đầu→không retry thừa) — đăng ký npm test.
+
+> **Verify:** unit **57/57 PASS** (54 cũ + 3 mới) · tsc app tổng EXIT 0 · tsc
+> repo con EXIT 0 · **verify THẬT:** gọi hàm với gist thật + token rác (mô
+> phỏng đúng trạng thái GH_GIST_TOKEN chết trên Vercel) → trả đúng URL
+> `exhibit-node-mlb-silver.trycloudflare.com` (gist thật public). 2 file
+> db.ts khớp 100% vùng sửa (diff rỗng).
+
+> **Hệ quả:** lần tunnel restart tới (Quick Tunnel đổi URL) app sẽ tự đọc
+> gist → tự lành < 1 phút — **KHÔNG cần redeploy nữa** (kết thúc điểm nghẽn
+> vận hành GĐ 244 từng ghi). KHÔNG đụng đường GHI gist (api_server giữ token
+> riêng ở máy công ty); GH_GIST_TOKEN chết trên Vercel giờ vô hại.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.2.0** / repo con **9.3.0**. Entry + code KHÔNG push chờ lệnh.
