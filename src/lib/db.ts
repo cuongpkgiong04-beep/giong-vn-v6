@@ -144,17 +144,26 @@ function gistUrlExtract(text: string): string | null {
   return m ? m[1] : null;
 }
 
-async function fetchTunnelUrlFromGist(): Promise<string | null> {
-  if (!gistToken || !gistId) return null; // chưa cấu hình — giữ env build-time
+export async function fetchTunnelUrlFromGist(): Promise<string | null> {
+  if (!gistId) return null; // GĐ 426: gist public — đọc KHÔNG cần token bắt buộc
   __gistFetchLock ??= (async () => {
     try {
-      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-        headers: {
-          Authorization: `Bearer ${gistToken}`,
-          Accept: "application/vnd.github+json",
-        },
-        signal: AbortSignal.timeout(10_000),
-      });
+      const doFetch = (withToken: boolean) =>
+        fetch(`https://api.github.com/gists/${gistId}`, {
+          headers: {
+            ...(withToken && gistToken
+              ? { Authorization: `Bearer ${gistToken}` }
+              : {}),
+            Accept: "application/vnd.github+json",
+          },
+          signal: AbortSignal.timeout(10_000),
+        });
+      let res = await doFetch(true);
+      // GĐ 426 (PA-1): GH_GIST_TOKEN hết hạn/revoke → GitHub 401 — gửi token
+      // SAI còn tệ hơn KHÔNG gửi (gist public: không gửi = 200, sai = 401)
+      // → retry KHÔNG token thay vì chết im lặng (sự cố 13/10: fallback chết
+      // cả buổi tối, phải redeploy tay mới hồi phục).
+      if (res.status === 401) res = await doFetch(false);
       if (!res.ok) return null;
       const json = (await res.json()) as {
         files?: Record<string, { content?: string }>;
@@ -230,7 +239,7 @@ async function tunnelFetch<T>(text: string, params: unknown[]): Promise<T[]> {
   // ⚠️ !res.ok cũng phải đọc Gist: tunnel chết ngầm thường trả HTTP 530/5xx
   // CÓ response (Cloudflare edge vẫn resolve hostname cũ) — chỉ check res === null
   // sẽ bỏ sót trường hợp này (bắt được khi verify 13:13 — /api/units rỗng 0.6s).
-  if ((res === null || !res.ok) && gistToken && gistId) {
+  if ((res === null || !res.ok) && gistId) {
     const fresh = await fetchTunnelUrlFromGist();
     if (fresh && fresh !== base) {
       console.log(`[db] tunnel ${base} không phản hồi → thử URL mới từ Gist: ${fresh}`);
