@@ -3606,3 +3606,37 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.8.4** / repo con **8.9.0**.
+
+---
+
+### GĐ 406 / C.243 (Trợ lý Freebuff): PA Push đợt GĐ 405 / C.241 — bump 5.9.0 / 9.0.0 + LIVE production + restart agent (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10, sau GĐ 405).** Rà trùng lặp theo nguyên tắc
+> 3: `main..agent-cli` + `main..pipeline-work` = **RỖNG cả 2 repo**; registry
+> 0 🔒 dở; status chỉ `permissions.ts` (GĐ 315 — phiên khác) + file deleted cũ
+> — KHÔNG đụng; email `cuongpk.giong04@gmail.com` ✓.
+>
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **5.8.4 →
+> 5.9.0** (minor — GĐ 405 bccn lọc theo Ngày đăng ký + công nợ đến kỳ + cảnh
+> báo trả sau kỳ) — package.json + package-lock.json (2 chỗ) +
+> DEFAULT_VERSION app-shell.tsx; repo con **8.9.0 → 9.0.0** (minor — C.241;
+> **nhớ 9→0 theo quy tắc GĐ 138** — KHÔNG tồn tại 8.10.0) — package.json +
+> DEFAULT_VERSION app-shell.tsx. Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+>
+> **Push:** app tổng `2d443de..63ccd0e` (GĐ 405 code+docs+unlock · GĐ 406
+> bump) · repo con `ffcee9b..3da419a` (C.241 code+docs · C.242 bump).
+>
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **VERSION 5.9.0** · app con
+> `giong-banhang.vercel.app` = **VERSION 9.0.0** — cả 2 LIVE lần curl đầu.
+>
+> **✅ Restart GIONG_SMED_Agent (nạp builder bccn mới):** agent rảnh khi
+> restart (job cuối done 00:53, slot lịch gần nhất Task_04 17:15 — cách ~8h);
+> xóa `__pycache__` sau sc stop (lesson GĐ 168) → RUNNING **PID mới 19436**;
+> `/health` 200 — `tunnel_ok:true`, db GiondDB OK, 1.627 jobs.
+>
+> **Tiêu chí kiểm chứng:** web bccn chạy kỳ 2018→30/09 → hết khách đăng ký
+> ngoài kỳ (Quỳnh Anh 11/10 = 0 dòng); cột 'Đã trả sau kỳ' cảnh báo các
+> khoản trả sau; banner "Dữ liệu tải đến <ngày>".
+>
+> **Version:** app tổng **5.9.0** / repo con **9.0.0** — ĐÃ PUSH + ĐÃ LIVE.
