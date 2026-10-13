@@ -1216,3 +1216,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** 6.2.0 / 9.3.0 giữ nguyên (chỉ env + redeploy — 0 code đổi).
 > Entry docs KHÔNG push chờ lệnh (claim `45d37cf` — chờ, unlock commit này).
+
+---
+
+### GĐ 425 (Trợ lý Freebuff): Điều tra vì sao fallback gist GĐ C.40 KHÔNG tự hồi phục — TÌM RA GỐC: GH_GIST_TOKEN chết → 401 → fallback trả null im lặng (2026-10-13)
+
+> **Nhiệm vụ tiếp GĐ 424 (ĐH yêu cầu):** cơ chế tự hồi phục (query fail → đọc
+> gist → URL mới) đáng lẽ chạy mà phải redeploy tay.
+
+> **Điều tra (đọc code + probe thật):**
+> 1. Logic `db.ts` (app con — app tổng đồng bộ GĐ 169) VIẾT ĐÚNG: cache
+>    fromGist dùng trực tiếp · env cache 60s rồi đọc gist ĐỒNG BỘ (GĐ 244) ·
+>    query fail cả khi HTTP 5xx (GĐ C.41 bắt 530) → fallback chồng 2 lớp.
+> 2. KHÔNG có serverFn nào bypass `tunnelFetch` (grep — chỉ db.ts dùng env).
+> 3. **Probe GitHub API quyết định:** gist `db3dae34…` là **PUBLIC** — đọc
+>    KHÔNG token = **200** (có `base_url: exhibit-node-mlb-silver…` updated
+>    19:15:34) · gửi Bearer token rỗng/sai = **401** · token
+>    `.secrets/gh_gist_token.txt` trên máy = **RỖNG 0 ký tự** (đã revoke/xoá
+>    — api_server ghi gist thành công 19:15 nhờ token ở env biến môi trường
+>    service, token file cũ đã chết).
+> 4. **GỐC CHỐT:** `fetchTunnelUrlFromGist` bắt buộc gửi
+>    `Authorization: Bearer ${GH_GIST_TOKEN}` (env Vercel set 24 ngày trước —
+>    cùng token đã chết) → GitHub **401** → `if (!res.ok) return null` →
+>    fallback CHẾT IM LẶNG. Với gist public, gửi token SAI còn tệ hơn KHÔNG
+>    gửi (gh_public + token invalid = 401; không gửi = 200).
+
+> **Trình 3 PA (chờ ĐH chốt):**
+> - **PA-1 (khuyến nghị):** sửa `db.ts` 2 app — khi gist fetch 401 → retry
+>   KHÔNG token (gist public); đọc gist không cần token bắt buộc (token chỉ
+>   cần khi GHI — api_server giữ riêng). Dự đoán: fallback sống lại, tunnel
+>   đổi URL lần tới app tự lành <1 phút, không redeploy. Rủi ro ~0.
+> - **PA-2 (vận hành):** tạo PAT GitHub mới (scope gist) + cập nhật env
+>   GH_GIST_TOKEN trên Vercel 2 app + máy service. Dự đoán: hoạt động nhưng
+>   PAT hết hạn/revoke lại → phải lặp. Không giải quyết gốc.
+> - **PA-3:** PA-1 + PA-2 (code retry-no-token + token chuẩn dự phòng nếu
+>   sau này gist chuyển private).
+
+> **Version:** KHÔNG bump (điều tra docs — 0 code đổi). Entry KHÔNG push
+> chờ lệnh.
