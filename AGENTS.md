@@ -580,6 +580,55 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 ---
 
+## 13. QUY TẮC NGHIỆP VỤ HIỆN HÀNH (gom từ entry — hiệu lực vĩnh viễn, GĐ 416):
+
+> **Nguồn:** gom từ entry GĐ 319→410 (đã dời AGENTS_ARCHIVE.md) — quy tắc
+> NGHIỆP VỤ + VẬN HÀNH đang hiệu lực, agent phiên mới đọc 1 chỗ, không phải
+> grep 92 entry. Khi entry mới ĐỔI quy tắc nào → sửa ngay tại đây.
+
+### 13.1 Báo cáo công nợ đặt trước (bccn) — logic đếm bản cuối:
+- **Kỳ = lọc theo Ngày đăng ký** (f1/f3/f4; f2 KHÔNG lọc) — snapshot toàn
+  bộ không phân kỳ đã bỏ (GĐ 405/C.241).
+- **Lượt trả chỉ tính ≤ đến kỳ** — lượt trả SAU kỳ KHÔNG pop → còn nợ tại
+  kỳ + cột "Đã trả sau kỳ" (GĐ 405/C.241).
+- **Đếm RAW f1 'Sử dụng tốt' KHÔNG trừ lượt trả f2** (quy tắc web SMED —
+  GĐ 376/C.213; bản "trừ lượt trả" GĐ 377/C.217 đã UNDO).
+- Ghép f2 theo ghi_chu: 'Đặt trước' = mũi lẻ (phân bổ 2 pha), 'Gói dịch
+  vụ' = mũi gói (GĐ 396/C.232); khóa ghép f2→f1 theo GIÁ (GĐ 338/C.182).
+- Cột "Kiểm tra"/"Kiểm tra nguồn" đếm lại từ nguồn ĐỘC LẬP → ✓/✗ (GĐ 327/338).
+- Job báo cáo = SNAPSHOT thời điểm tính — nguồn SMED đổi → số kỳ cũ đổi
+  (GĐ 329); job cũ không tự cập nhật, chạy lại để thấy số mới.
+
+### 13.2 ETL — quy tắc nạp dữ liệu:
+- **Rebuild-ngày (GĐ 403/C.239):** folder ngày có ≥1 file MỚI → nạp lại
+  TOÀN BỘ file của folder (bỏ hash-skip) — mỗi lượt nạp luôn ĐỦ NGÀY.
+- **Auto-ETL nhường job:** KHÔNG chạy khi agent đang thực thi job download.
+- **Dedupe đa-lượt SKIP stg_3dtthc** — 2 cổng tcgiong + tcgiongts BỔ SUNG
+  nhau, không phải nạp đè (GĐ 343/C.186).
+- Đối chứng tổng TỪNG ĐỒNG với file gốc trước khi tin kết quả (quy trình
+  Download→ETL→Báo cáo mục trước).
+
+### 13.3 Vận hành agent/service:
+- Restart GIONG_SMED_Agent: check rảnh (log 30 phút 0 job) → xóa
+  __pycache__ 3 thư mục agent/api_server/etl (lesson GĐ 168) → sc
+  stop/start · api_server KHÔNG chết theo sc stop — phải taskkill
+  python.exe (GĐ 329).
+- Server dev cổ treo: kill PID node THẬT giữ port (netstat -ano) — PID
+  npm shim không ăn (GĐ 334).
+- Tunnel đổi URL: gist tự ghi → chạy scripts/update-tunnel-env.py đồng bộ
+  .env.local 2 app.
+- Sau Push code builder: restart agent nạp builder khi rảnh.
+- Verify production: curl --compressed + grep -a version + E2E thật; curl
+  lần đầu có version mới = domain không ghim deployment cũ (khác GĐ 306).
+
+### 13.4 Ghi chép & quy trình:
+- Entry repo con ghi vào **AGENTS.md GỐC repo con** — KHÔNG
+  apps/banhang/AGENTS.md (lặp 2 lần: C.172, C.232).
+- Bump version: sót "x.y.z" trong package-lock = thư viện ngoài trùng số
+  trúng (safe-buffer/hookable/estraverse...) — giữ nguyên (GĐ 328/416).
+- E2E: innerText chứa NBSP (U+00A0) — normalize trước khi so chuỗi (GĐ 327).
+- Trùng số GĐ → đổi số theo quy tắc GĐ 285; entry/registry cũ đánh ⛔.
+
 ---
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
@@ -674,7 +723,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 ---
 
-### GĐ 411 / C.247 (Trợ lý Freebuff): Fix 5 vắc xin thiếu NCC + Giá nhập niêm yết TẠM từ phiếu nhập (2026-10-13)
+### GĐ 411 / C.247 (Trợ lý Freebuff): ⛔ ĐỔI SỐ thành GĐ 414 / C.250 (trùng claim phiên khác — quy tắc GĐ 285; nội dung đầy đủ xem entry GĐ 414) — Fix 5 vắc xin thiếu NCC + Giá nhập niêm yết TẠM từ phiếu nhập (2026-10-13)
 
 > **Phản hồi của Đại ca (13/10):** 5 dòng thiếu NCC (14 ROTARIX 1.5ml · 18
 > INFLUVAC Tetra · 22 Priorix · 30 Menquadfi · 43 QUIMI-HIB); tạm thời thêm
