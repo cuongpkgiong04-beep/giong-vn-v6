@@ -1134,3 +1134,46 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.1.1** / repo con **9.2.1**.
+
+---
+
+### GĐ 423 / C.257 (Trợ lý Freebuff): PA Push ĐA AGENT đợt cuối 13/10 — GĐ 420/C.254 phân quyền NHẬP DỮ LIỆU + bump 6.2.0 / 9.3.0 + LIVE (2026-10-13)
+
+> **Lệnh của Đại ca (13/10 tối):** "Tất cả các Agent đều xong việc. Em hãy
+> Push toàn bộ công việc đã xong nhé." Rà toàn diện cả 2 repo: nhánh phụ
+> `agent-cli` + `pipeline-work` **RỖNG** (không cần merge) · worktree khác
+> sạch · commit chưa push = đúng bộ **GĐ 420 / C.254 phân quyền app tổng**
+> (phiên Freebuff khác làm, đã verify 8/8 unit + tsc 0 + audit 12/12 — entry
+> ghi "KHÔNG bump chờ Push"): app tổng `71285aa` (code: BH_GROUPS tách 4 nhóm
+> bh-nhap-* + test mới banhang-catalog.test.ts) + `f64029b` (entry) +
+> `27d9e03` (unlock) · repo con `2e9f5d9` (ROUTE_TO_GROUP +7 route +
+> BH_ALL_GROUP_KEYS +5 key + NAV_GROUP_TO_MOD) + `34db69c` (entry).
+
+> **Em chạy lại unit lần cuối trước push: 54/54 PASS** (gồm 8 test phân quyền
+> mới — không code gãy được đẩy production).
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** nội dung = feature mới →
+> **minor**: app tổng **6.1.1 → 6.2.0** (4 chỗ — hookable 6.1.1 lock là thư
+> viện ngoài trùng số trúng, giữ nguyên) · repo con **9.2.1 → 9.3.0** (2 chỗ).
+> Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số).
+
+> **⚠️ SỐ C.x commit bump repo con ghi SAI — đã minh bạch:** commit
+> `6b641ee` message ghi "C.256" nhưng **C.256 đã thuộc GĐ 422 phiên khác**
+> (push trước) — theo quy tắc GĐ 285 (lịch sử chỉ đi tới, KHÔNG amend commit
+> đã push) → đợt này đúng số = **C.257**; entry + registry ghi số đúng, commit
+> giữ nguyên (message sai số — không đổi nội dung/code).
+
+> **Push:** app tổng `8458282..98ab1c7` (5 commit: 3×GĐ 420 + claim GĐ 423 +
+> bump) · repo con `473cb6c..6b641ee` (3 commit: 2×C.254 + bump).
+
+> **✅ Verify production (curl --compressed lần đầu):** app tổng
+> `giong-vn-v6.vercel.app` HTTP 200 = **6.2.0** · app con
+> `giong-banhang.vercel.app` HTTP 200 = **9.3.0** — deploy mới, không ghim
+> deployment cũ. Agent: không cần restart (0 code builder đổi).
+
+> **Tiêu chí kiểm chứng của Đại ca:** trang Phân quyền app tổng → phần "Bán
+> hàng (Dự án)" có 4 nhóm mới ở ĐẦU danh sách ("NHẬP DỮ LIỆU — DANH MỤC"
+> 5 chip · KHO HÀNG · MUA HÀNG · BÁN HÀNG); bật nhóm cho user → app con thấy
+> đủ nhánh NHẬP DỮ LIỆU (hết bug menu ẩn/chặn oan user thường).
+
+> **Version:** app tổng **6.2.0** / repo con **9.3.0** — ĐÃ PUSH + ĐÃ LIVE.
