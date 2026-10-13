@@ -784,9 +784,16 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (21.295.000) không có lịch hẹn trong kỳ → loại đúng ĐH chốt; đối chứng
 > 8.700.000 + 21.295.000 = 29.995.000 ✓ từng đồng.
 >
-> **Tiêu chí kiểm chứng (sau Push):** tạo job "Danh sách lịch hẹn tiêm" kỳ mới
-> → trang /m/bc-lich-hen thấy bảng 2 SAU bảng lịch hẹn — chỉ khách còn nợ có
-> lịch hẹn trong kỳ; job cũ trước C.249 chưa có bảng mới (chạy lại báo cáo).
+> **Bổ sung (Đại ca báo 15:10 "Push xong chạy lại LHT vẫn không thấy bảng"):**
+> trang /m/bc-lich-hen render order CỨNG `["ds-lht"]` — sheet `cn-tra-no` có
+> trong result nhưng bị bỏ qua (probe: job `F53ADEAF` 15:05 result có đủ
+> `['ds-lht', 'cn-tra-no']` — agent side chạy đúng). Fix commit repo con
+> `e4e979d`: order thêm `cn-tra-no` (job cũ chưa có sheet → skip) + moneyCols
+> theo từng sheet (cn-tra-no cộng Subtotal SL + tiền) — tsc 0 — **chờ Push**.
+>
+> **Tiêu chí kiểm chứng (sau Push):** trang /m/bc-lich-hen bấm chạy (hoặc bấm
+> job `F53ADEAF` trong lịch sử) → bảng 2 "Danh sách trả nợ theo lịch hẹn
+> tiêm" hiện SAU bảng lịch hẹn — chỉ khách còn nợ có lịch hẹn trong kỳ.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.0.0** / repo con **9.1.0**.
