@@ -243,3 +243,4 @@
 
 **Chốt của Đại ca (GĐ 285):** từ GĐ này mọi nhiệm vụ claim trước bằng registry —
 hết trạng thái "phát hiện trùng rồi mới xử lý".
+| GĐ 424 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Điều tra sự cố ĐH báo (13/10 tối, sau Push 6.2.0/9.3.0): "các nhiệm vụ cũ, đang thực hiện biến mất + lịch sử làm việc (download, báo cáo...) biến mất" — check bậc thang: tunnel agent sống? · GiondDB còn scheduled_tasks/smed_pull_jobs không? · code phân quyền GĐ 420/C.254 có chặn load không? — CHỈ ĐỌC, không sửa chờ ĐH chốt | registry + scripts probe chỉ-đọc | 🔒 | 13/10 | |
