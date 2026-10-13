@@ -1346,6 +1346,18 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 4. **Tích hợp**: Thêm job type `misa-nhapkho` vào `40_web_agent.py` REPORT_MAP + progress marker.
 > 5. **Ước lượng**: ~2-3 ngày dev, 3-5s/phiếu (Playwright fill form).
 >
-> **TIẾP THEO (sau entry này):** Unlock registry GĐ 428 → code `agent/misa_nhapkho_upload.py` + tích hợp `40_web_agent.py` → unit test + verify 1 kỳ thật → commit + Push (quy trình ĐA AGENT).
->
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** / repo con **9.3.0**.
+> **✅ CODE HOÀN TẤT (14/10 chiều):**
+- Tạo `apps/banhang/agent/misa_nhapkho_upload.py` builder:
+  - Đọc `stg_5BKN` theo `report_date` (lọc detail rows: `col5` mã hàng bắt đầu bằng số)
+  - Lấy NCC trực tiếp từ `col2` của detail row
+  - Nhóm theo center → 1 phiếu/ trung tâm
+  - Playwright fill form `INInwardDetail`: header (Ngày HT, Ngày CT, Số CT, NCC, Diễn giải `TEST_CUONG...`) + grid 12 cột click-to-focus (Mã/Tên hàng, Kho=NL, TK Nợ=156_NL, TK Có=331, ĐVT=Liều, Vị trí=NL, SL, Đơn giá, Thành tiền, Số lô, HSD)
+  - Bấm "Cất" → verify title cập nhật
+  - Session `misa_state.json` bền + OTP Gmail auto
+- Tích hợp `40_web_agent.py`: thêm "misa-nhapkho" vào `REPORT_MAP` (script `misa_nhapkho_upload.py`, base `5.BKN`) + progress marker "✅ Phiếu "
+- Unit test `misa_nhapkho_upload.test.py`: 5/5 PASS (group_by_center, REQUIRED_DEFAULTS, SMED_TO_MISA_MAP, _secret fallback, get_dates default)
+- Verify đọc `stg_5BKN` ngày 13/10/2026: 9 dòng detail, 8 trung tâm (ĐX, HM, LB, ML, PY, TĐ, TP x2, TS) — NCC đúng từng dòng
+
+**TIẾP THEO:** Commit + Push (quy trình ĐA AGENT) — chờ lệnh "Push" của Đại ca.
+
+**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** / repo con **9.3.0**.
