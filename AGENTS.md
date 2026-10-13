@@ -1074,3 +1074,63 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > chạy). Task_02 23:00 tối nay chạy bình thường.
 >
 > **Version:** app tổng **6.1.1** / repo con **9.2.1** — ĐÃ PUSH + LIVE.
+
+---
+
+### GĐ 420 / C.254 (Trợ lý Freebuff): Phân quyền app tổng — Bổ sung nhóm NHẬP DỮ LIỆU + đồng bộ app con (2026-10-13)
+
+> **Yêu cầu của Đại ca (13/10):** "Trong phần phân quyền trên App tổng cho phần
+> Bán hàng (Dự án) hiện tại đang thiếu... Anh đang mới nhìn thấy thiếu phần
+> 'NHẬP DỮ LIỆU' và các module con bên trong nó. Còn các phần khác anh chưa
+> kiểm tra. Em hãy kiểm tra lại một lần nữa cho chắc chắn để anh phân quyền
+> cho nhân viên trên App tổng."
+
+> **Rà soát toàn bộ (66/66 route khớp 3 nguồn — script đối chiếu tự động):**
+> so khớp nav.ts app con ↔ BH_GROUPS (catalog app tổng) ↔ route files ↔
+> ROUTE_TO_GROUP app con → phát hiện **4 lỗi phân quyền**:
+> 1. **NHẬP DỮ LIỆU (10 lá: DANH MỤC×5 · KHO HÀNG×1 · MUA HÀNG×1 · BÁN HÀNG×3)
+>    KHÔNG có nhóm riêng** trên trang Phân quyền — bị nhét vào nhóm
+>    banhang-misa từ GĐ 223/336/340/370 (backward-compat) → ĐH không thấy mục
+>    "NHẬP DỮ LIỆU" để cấu hình (lỗi ĐH báo).
+> 2. **ROUTE_TO_GROUP app con THIẾU 7 route** (5 danh mục + /m/nhap-dieu-chuyen
+>    + /m/nhap-loyty) → leaf key "bh-leaf-*" không bao giờ sinh → sidebar app
+>    con ẩn DANH MỤC/KHO HÀNG/MUA HÀNG + canAccessRoute chặn oan user thường.
+> 3. **BH_ALL_GROUP_KEYS app con thiếu "bh-dieu-hanh-nhiem-vu"** (sót GĐ 229) →
+>    user đã bật nhóm NHIỆM VỤ + có config nhóm khác bị ẩn oan menu /m/tasks.
+> 4. **NAV_GROUP_TO_MOD app con thiếu map** "DỮ LIỆU TỪ BANK" (sót GĐ 253).
+
+> **Đã làm (app tổng `71285aa` · repo con `2e9f5d9`):**
+> - App tổng `banhang-catalog.ts`: tách 10 lá NHẬP DỮ LIỆU → **4 nhóm mới**
+>   `bh-nhap-danh-muc` / `bh-nhap-kho-hang` / `bh-nhap-mua-hang` /
+>   `bh-nhap-ban-hang` (đặt ĐẦU BH_GROUPS khớp thứ tự sidebar; nhãn
+>   "NHẬP DỮ LIỆU — X") — banhang-misa còn 6 lá (2 MISA + 4 MIA TOOL).
+>   Catalog 8→**14 nhóm** — trang Phân quyền tự hiện (UI render động BH_GROUPS).
+> - Repo con `smed-auth.ts`: ROUTE_TO_GROUP +7 route thiếu + đổi 3 route
+>   banhang-* sang nhóm mới; BH_ALL_GROUP_KEYS 9→14 key.
+> - Repo con `app-shell.tsx`: NAV_GROUP_TO_MOD map 4 nhóm con + DỮ LIỆU TỪ BANK.
+> - Unit test MỚI `src/lib/banhang-catalog.test.ts` (8 test) + đăng ký npm test.
+
+> **Verify:** unit **8/8 PASS** · tsc app tổng **EXIT 0** · tsc app con
+> **EXIT 0** · audit 3 nguồn **12/12 PASS** (route files == nav.ts == catalog
+> == ROUTE_TO_GROUP TỪNG route; 14/14 key nhóm khớp 2 repo) · nhóm src/lib
+> **54/54 PASS** (3 test scripts/with-app-env fail CÓ SẴN — đối chứng worktree
+> HEAD sạch fail y hệt, không liên quan).
+
+> **⚠️ Lưu ý khi cấp quyền (ĐH đọc kỹ):** user ĐÃ từng cấu hình nhóm (không rơi
+> nhánh "chưa cấu hình → đủ hết") sẽ KHÔNG còn thấy 10 mục NHẬP DỮ LIỆU nếu
+> Admin chưa bật 4 nhóm mới — trước đây thấy qua quyền MISA. User chưa từng
+> cấu hình → vẫn đủ hết (không ảnh hưởng). Đây là chủ đích tách nhóm để phân
+> quyền riêng (ĐH yêu cầu).
+
+> **Tiêu chí kiểm chứng (sau Push):** trang Phân quyền app tổng phần "Bán hàng
+> (Dự án)" → thấy **4 nhóm mới ở ĐẦU danh sách** ("NHẬP DỮ LIỆU — DANH MỤC"
+> với 5 chip, KHO HÀNG, MUA HÀNG, BÁN HÀNG); bật nhóm → nhân viên vào app con
+> thấy đủ nhánh NHẬP DỮ LIỆU; toggle nhóm NHIỆM VỤ hoạt động đúng.
+
+> **Trùng số GĐ 420 (minh bạch 13/10):** phiên khác claim trùng số 420 (PA-1
+> công nợ LHT) — em commit `f6a9659` 17:17:31 TRƯỚC 74 giây (họ `140e4bb`
+> 17:18:45) → theo quy tắc GĐ 285, **em giữ GĐ 420/C.254**, phiên khác tự đổi
+> thành GĐ 421 / C.255.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.1.1** / repo con **9.2.1**.
