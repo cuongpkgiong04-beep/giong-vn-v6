@@ -962,3 +962,32 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** app tổng **6.1.1** / repo con **9.2.0** — ĐÃ PUSH + ĐÃ LIVE
 > (không đổi — docs-only).
+
+
+### GĐ 418 / C.252 (Trợ lý Freebuff): PA Push đợt fix render bảng "Danh sách trả nợ theo lịch hẹn tiêm" — bump repo con 9.2.1 + LIVE (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10 15:10+, sau khi anh báo chạy lại LHT vẫn
+> không thấy bảng — GĐ 413).** Rà trùng lặp: remote 0 commit mới cả 2 repo;
+> repo con 3 commit local của em (`e4e979d` fix render + `8bff2c8` entry +
+> bump); app tổng 2 commit (`819809a` entry + claim); working tree chỉ file
+> deleted của phiên trước — KHÔNG đụng. Gặp `index.lock` của phiên khác 1
+> lần — chờ 15s nhả lock, commit lại OK.
+>
+> **Bump:** repo con **9.2.0 → 9.2.1** (patch — fix nhỏ) — package.json +
+> DEFAULT_VERSION; package-lock giữ nguyên (đang 5.9.4 lệch từ trước — lesson
+> GĐ 328). App tổng **KHÔNG bump** (docs-only — tiền lệ GĐ 416), giữ 6.1.1.
+>
+> **Push:** repo con `6953d79..83f7272` · app tổng `1007520..278762f`.
+>
+> **✅ Verify production (curl --compressed lần đầu):** app con
+> `giong-banhang.vercel.app` = **9.2.1** · app tổng `giong-vn-v6.vercel.app` =
+> **6.1.1** — không ghim deployment cũ. Agent không cần restart (0 code
+> builder đổi).
+>
+> **Tiêu chí kiểm chứng của Đại ca:** trang /m/bc-lich-hen (app con, version
+> 9.2.1 góc trái) → bấm job vừa chạy trong lịch sử (hoặc Chạy báo cáo lại) →
+> bảng "Danh sách trả nợ theo lịch hẹn tiêm" hiện SAU bảng "Danh sách lịch
+> hẹn tiêm" — kỳ 10/2026: 1 dòng TĐ · Nguyễn Phước Trường An · Beyfortus
+> 0.5ml · ĐT_VắcXin · 1 mũi · 8.700.000 · hẹn 13/10 'Chưa tiêm' + Tổng cộng.
+>
+> **Version:** app tổng **6.1.1** (giữ) / repo con **9.2.1** — ĐÃ PUSH + LIVE.
