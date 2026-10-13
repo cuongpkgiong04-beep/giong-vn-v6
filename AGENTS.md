@@ -3942,3 +3942,50 @@ cặp”** (không sửa cặp nào; 2 dòng Vaxneuvance 15 giá khác map cùng
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.0.0** / repo con **9.1.0**.
 
+
+---
+
+### GĐ 415 / C.251 (Trợ lý Freebuff): PA Push đợt GĐ 408 / GĐ 411-414 / C.247-C.250 — bump 6.1.0 / 9.2.0 + LIVE production (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10, sau khi GĐ 408 xong).** Rà trùng lặp theo
+> nguyên tắc 3: 0 nhánh phụ (`main..agent-cli` + `main..pipeline-work` = RỖNG);
+> working tree sạch (chỉ file cũ của phiên khác — attachments deleted +
+> permissions.ts GĐ 315 — không đụng); app tổng 11 commit chưa push (GĐ 408
+> camera WB của em + docs GĐ 411-414 của phiên song song); repo con 10 commit
+> (C.247-C.250 đủ code + docs).
+
+> **🔒 Dở trong registry (đã dọn docs-only trước push):**
+> - Dòng **GĐ 413 / C.249** (bảng "Danh sách trả nợ theo lịch hẹn tiêm") — code
+>   XONG (repo con `ae8bac6` + `bdd484d` + `2b465c8`) nhưng registry còn 🔒 →
+>   em unlock ✅ kèm hash đúng commit.
+> - Dòng **GĐ 411 / C.247 cũ** ("Fix 5 vắc xin thiếu NCC") — phiên khác đã đổi
+>   số sang **GĐ 414 / C.250** theo quy tắc GĐ 285 (trùng claim) → em sửa dòng
+>   này thành ⛔ (chuyển sang GĐ 414) — tránh 2 số trùng lên lịch sử.
+
+> **Bump version (lúc Push — đúng quy tắc ĐA AGENT):** app tổng **6.0.0 → 6.1.0**
+> (minor — có feature mới: bảng trả nợ LHT + bảng cn-tonghop bccn) — package.json
+> + package-lock.json (2 chỗ) + DEFAULT_VERSION app-shell.tsx; repo con
+> **9.1.0 → 9.2.0** (minor — C.247/C.249/C.250) — apps/banhang/package.json +
+> DEFAULT_VERSION. Checklist GĐ 138 ✓ (6.1.0/9.2.0 mọi thành phần 1 chữ số;
+> sót "6.0.0" chỉ là thư viện locate-path trùng số — lesson GĐ 328).
+
+> **Push:** app tổng `d3a86e9..f05a87e` (11 commit: GĐ 408 + docs GĐ 408/411-
+> 414 + GĐ 415 claim+bump) · repo con `c8eb081..6953d79` (10 commit: C.247
+> cn-tonghop · C.248 KPI · C.249 trả nợ LHT (code+hook+entry) · C.250 fix NCC ·
+> C.251 bump).
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **6.1.0** (curl lần đầu) · app con
+> `giong-banhang.vercel.app` = **9.2.0** (curl lần đầu) — không ghim deployment
+> (khác sự cố GĐ 402 git_info_fail, lần này i9n mượt). Agent: log `web_agent_
+> ...` poll OK · `/health` tunnel_ok + GiongDB 1.610 jobs (đã restart lúc C.249
+> — phiên song song làm trước đó).
+
+> **Tiêu chí kiểm chứng của Đại ca:** (1) camera điểm danh/check-in trên điện
+> thoại thật: ảnh hết vàng đèn + da không xám (auto WB) + chữ dấu to đủ đọc sát
+> lề dưới-trái; (2) trang /m/bc-lich-hen app con: bảng mới "Danh sách trả nợ
+> theo lịch hẹn tiêm" đặt sau ds-lht, chỉ hiện vắc xin còn nợ có lịch hẹn kỳ;
+> (3) KPI Tổng quan: drill-down Nhập VX ra đúng phiếu + marketing hộp khớp;
+> (4) Bảng TH GB-KM_GN-CK-LN: đủ 48/48 NCC + giá nhập tạm đúng.
+
+> **Version:** app tổng **6.1.0** / repo con **9.2.0** — ĐÃ PUSH + ĐÃ LIVE.
