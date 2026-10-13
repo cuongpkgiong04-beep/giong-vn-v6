@@ -1041,3 +1041,36 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Tiêu chí kiểm chứng (sau Push):** chạy job LHT kỳ 10/2026 → bảng mới
 > ~156 dòng khách còn nợ có lịch hẹn tháng 10. **Version:** KHÔNG bump (chờ
 > lệnh Push) — app tổng 6.1.1 / repo con 9.2.1.
+
+
+### GĐ 422 / C.256 (Trợ lý Freebuff): PA Push đợt GĐ 421/C.255 PA-1 — push KHÔNG bump — LIVE (2026-10-13)
+
+> **Lệnh "Push" của Đại ca (13/10 17:30+, sau PA-1 GĐ 420).** Rà trùng lặp
+> nguyên tắc 3 — **CẢNH BÁO 2 phát hiện**:
+> 1. **Trùng số GĐ 420** — phiên khác claim `f6a9659` 17:17:31 TRƯỚC em
+>    `140e4bb` 17:18:45 → theo quy tắc GĐ 285 em ĐỔI SỐ entry/registry của em
+>    thành **GĐ 421 / C.255** (nội dung/dữ liệu không đổi — commit code giữ
+>    message số cũ, history chỉ đi tới); phiên khác giữ GĐ 420/C.254.
+> 2. **3 file web đang dở của phiên khác** (`app-shell.tsx`, `smed-auth.ts`
+>    repo con · `banhang-catalog.ts` app tổng — phân quyền NHẬP DỮ LIỆU GĐ 420
+>    phiên khác) → KHÔNG đụng, KHÔNG add.
+>
+> **KHÔNG bump version (khác GĐ 418):** fix lần này 100% agent-side python
+> (`gd348-build-lht-ds.py` + `40_web_agent.py` — chạy trên máy agent, không
+> nằm trong bundle web) — version web không phản ánh; đồng thời `app-shell.tsx`
+> (file DEFAULT_VERSION) đang bị phiên khác sửa dở → không thể chạm. Tiền lệ
+> docs-only GĐ 416/417. Web giữ **9.2.1 / 6.1.1**.
+>
+> **Push:** repo con `83f7272..473cb6c` (4 commit: fix + entry + lesson + đổi
+> số) · app tổng `0186c1a..5fe171e` (3 commit: entry + đổi số + claim/unlock).
+>
+> **✅ Verify production (curl --compressed):** app con **9.2.1** · app tổng
+> **6.1.1** (HTTP 200, deploy chạy). Agent đã restart 17:24 nạp code PA-1 —
+> KHÔNG cần restart thêm.
+>
+> **Tiêu chí kiểm chứng của Đại ca:** chạy job LHT kỳ 01/10→31/10 → bảng
+> "Danh sách trả nợ theo lịch hẹn tiêm" ~156 dòng · 203 mũi · 198.229.200
+> (số thay đổi theo nợ/lượt trả đến thời điểm chạy — công nợ 01/01/2018→ngày
+> chạy). Task_02 23:00 tối nay chạy bình thường.
+>
+> **Version:** app tổng **6.1.1** / repo con **9.2.1** — ĐÃ PUSH + LIVE.
