@@ -1794,3 +1794,44 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 1..N liền mạch.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.3.0** / repo con **9.4.0**.
+
+### GĐ 436 / C.265 (Trợ lý Freebuff): Fix Task_03 BỎ 5 báo cáo (VCB/TPB/tkgvvxdt) — VCB về Task_04 17:15 + tool báo lỗi thật + TPB "0 vẫn chạy ra số 0" + tkgvvxdt về Task_02 (2026-10-14)
+
+> **ĐH báo (14/10 sáng, 2 ảnh trang Nhiệm vụ):** Task_03 kỳ 13/10 = 24/29 — BỎ 5
+> (bank-vcb×2 · bank-tpb×2 · tkgvvxdt) dù "thấy file dữ liệu được download thành
+> công". Điều tra → 3 root cause (chi tiết + đối chứng đầy đủ ở AGENTS.md repo
+> con C.265): (1) **VCB job done GIẢ** — lượt ~00:2x (Task_02 23:00) tải 0 file
+> nhưng job báo done vì tool coi "0 dòng = ngày rỗng hợp lệ" + agent đếm "✅ 33
+> file Excel mới" = quét cả cây 15.BANK_VCB (file cũ tháng 9); đối chứng quyết
+> định: chạy lại tool 09:16 → ra **115 GD ngày 13/10** → ETL nạp xong, check
+> PASS; (2) **TPB file CÓ nhưng ngân hàng trả 0 GD** (đối chứng 10/10 ra đúng 7
+> GD — tool/khớp kỳ tốt; ĐH xác nhận TPB không phát sinh); (3) **tkgvvxdt không
+> nằm trong danh sách tải Task_02** từ 05/10.
+
+> **ĐH chốt + chỉ thị:** PA-1 + PA-2 · "TPB không có dữ liệu vẫn chạy ra và báo
+> cáo là số 0" · "tkgvvxdt cho thêm vào để chạy lấy download báo cáo".
+
+> **Đã làm code `72d160d` (repo con, 7 file, 130 ins/41 del):** PA-1 VCB →
+> TASK_QUICK_REPORTS +bank-vcb (9 phân hệ, chạy 17:15 giờ hành chính; bỏ khỏi
+> Task_02) · PA-2a tool 40 retry khi tìm kiếm 0 dòng (3 lần × 45s) · PA-2b agent
+> thu file VCB theo KỲ JOB + **0 file → job LỖI rõ** (hết done giả) · TPB
+> valid-empty (check_source_data theo LƯỢT XUẤT BANKTPB + EMPTY_OK_KEYS + web
+> freshness -smed.ts) · test task_runner_quick **40/40** · tsc EXIT 0. **DB live
+> ngay:** Task_04 seed +bank-vcb (8→9) · Task_02 seed −bank-vcb +tkgvvxdt (20,
+> dailyTimes giữ 23:00). **Restart GIONG_SMED_Agent** nạp task_runner/40_web_agent
+> mới (PID 20044, log web_agent_141026_123818).
+
+> **⚠️ Trùng số GĐ (minh bạch):** claim đầu GĐ 435 nhưng phiên song song commit
+> `e5734e4` (GĐ 435) trước vài giây → theo quy tắc GĐ 285 đổi thành **GĐ 436 /
+> C.265**. `sql_reports.py` + `-smed.ts` lúc làm đang M của phiên khác (WIP
+> dieu-chuyen) → commit bằng **blob tách riêng** (verify staged grep dieu_chuyen
+> = 0; WIP giữ nguyên trên đĩa cho phiên họ).
+
+> **Tiêu chí kiểm chứng (sau Push + tối nay):** 17:15 Task_04 chạy 23 bước (9
+> download + 14 báo cáo) — VCB ban chiều ra file; 23:00 Task_02 (20 phân hệ, có
+> tkgvvxdt); Task_03 sau đó: 2 báo cáo VCB chạy thật · 2 báo cáo TPB ra số 0 ·
+> tkgvvxdt chạy snapshot mới. ĐH có thể "Chạy lại" Task_03 kỳ 13/10 ngay (VCB
+> 13/10 = 115 GD đã trong DB).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.3.0** /
+> repo con **9.4.0**.
