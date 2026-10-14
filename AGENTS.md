@@ -1346,7 +1346,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 **KIẾN TRÚC PA-1 HOÀN TẤT (ĐH chốt 14/10 chiều):**
 1. **SMED → DB**: `4_smed_NHAPKHO.py` (2 domain) → `stg_5BKN` (nạp đè ngày, 9186 dòng).
-2. **Builder** `agent/misa_nhapkho_upload.py`: 
+2. **Builder** `agent/misa_muahang_upload.py`: 
    - Đọc `stg_5BKN` lấy danh sách phiếu (mã phiếu, center, NCC).
    - Với TỪNG phiếu → vào SMED detail (Playwright `openViewDetail`) → lấy line items + ngày HĐ.
    - Upload MISA AMIS "Mua hàng" (form có Số/Nhật HĐ) — fill header + grid 20 cột click-to-focus.
@@ -1355,8 +1355,8 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 5. **Phiếu test**: prefix `TEST_CUONG_MH-` → báo anh, anh đồng ý mới xóa.
 
 **✅ CODE HOÀN TẤT (14/10 tối):**
-- `misa_nhapkho_upload.py` builder đầy đủ: SMED login+navigate → detail scrape (kendo grid `openViewDetail`) → MISA login (session `misa_state.json` + OTP Gmail) → `PUVoucherManager` click "Thêm" → `PUVoucherDetail` fill header (10 trường) + grid 20 cột click-to-focus → bấm "Cất" → verify title.
-- `40_web_agent.py`: job type `"misa-mua-hang"`, script `misa_nhapkho_upload.py`, base `5.BKN`, progress marker `"✅ Phiếu "`.
+- `misa_muahang_upload.py` builder đầy đủ: SMED login+navigate → detail scrape (kendo grid `openViewDetail`) → MISA login (session `misa_state.json` + OTP Gmail) → `PUVoucherManager` click "Thêm" → `PUVoucherDetail` fill header (10 trường) + grid 20 cột click-to-focus → bấm "Cất" → verify title.
+- `40_web_agent.py`: job type `"misa-mua-hang"`, script `misa_muahang_upload.py`, base `5.BKN`, progress marker `"✅ Phiếu "`.
 - Unit test 4/4 PASS (get_dates, _secret, fetch_otp_structure, read_functions).
 - Syntax OK cả 2 file.
 
@@ -1575,8 +1575,8 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >   KHÔNG token** (unit 3 test mới).
 > - **GĐ 427 (phiên khác):** cài browser-use venv làm công cụ khảo sát (ngoài
 >   repo — docs-only).
-> - **GĐ 428 (phiên khác):** tool `misa_nhapkho_upload.py` (Playwright fill
->   phiếu nhập kho MISA AMIS từ stg_5BKN — unit 5/5).
+> - **GĐ 428 (phiên khác):** tool `misa_muahang_upload.py` (Playwright fill
+>   phiếu mua hàng MISA AMIS từ stg_5BKN — unit 4/4).
 > - **GĐ 429 / C.259 (phiên khác):** Module MUA HÀNG 7 module con + AI đọc
 >   file + phân quyền nhóm MUA HÀNG 7 lá (unit mua-hang 54/54) + hạ trần file
 >   3MB.
