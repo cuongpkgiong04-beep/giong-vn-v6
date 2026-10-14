@@ -1835,3 +1835,48 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.3.0** /
 > repo con **9.4.0**.
+
+---
+
+### GĐ 438 / C.267 (Trợ lý Freebuff): Phân quyền "XEM BÁO CÁO CỦA MỌI NGƯỜI" — user được cấp xem báo cáo của mọi người như Admin (2026-10-14)
+
+> **Yêu cầu của Đại ca (14/10):** "Bổ sung phân quyền cho anh. Các user được
+> phân quyền có thể xem được báo cáo đã tạo của mọi người không phân biệt Admin
+> với user nữa. Nhớ là chỉ có phần báo cáo."
+
+> **Đã làm (app tổng `60958c7` · repo con `fab2f38`):**
+> - App tổng `banhang-catalog.ts`: nhóm mới **"BÁO CÁO — XEM CỦA MỌI NGƯỜI"**
+>   (key `bh-xem-bao-cao-moi-nguoi`, KHÔNG lá — toggle duy nhất) đặt sau 3 nhóm
+>   BÁO CÁO — trang Phân quyền tự hiện (catalog 14→**15 nhóm**). Unit test +1
+>   case (**9/9 PASS**).
+> - App con `smed-auth.ts`: hàm `canViewAllReports()` — Admin=true; user đọc
+>   module_access key mới (đọc THẲNG, không đưa vào BH_ALL_GROUP_KEYS — chủ
+>   đích: quyền XEM bổ trợ, không phải nhóm sidebar); logic khớp 100% app tổng
+>   (chưa config nhóm → đủ hết theo compat GĐ 108/143).
+> - App con `-smed.ts`: `loadSmedJobs` thấy TOÀN BỘ job báo cáo (`sqlreport`/
+>   `txds`) của mọi người khi có quyền — job DOWNLOAD giữ nguyên chỉ của mình
+>   ("chỉ có phần báo cáo"); `loadReportResult` + `checkReportFreshness` cho xem
+>   kết quả + banner "data mới hơn"; `cancelSmedJob` thêm guard CHỦ JOB (khớp
+>   cancelAll GĐ C.66 + delete GĐ C.43 — user chỉ XEM, không hủy job người
+>   khác); `SmedJob.canManage` (Admin/chủ job) → 3 component lịch sử ẩn nút
+>   Hủy/Xóa/Chạy-lại với báo cáo người khác.
+> - ⚠️ Cơ chế cấp: user ĐÃ config nhóm (không rơi nhánh "đủ hết") → mặc định
+>   CHƯA xem được — Admin bật toggle "BÁO CÁO — XEM CỦA MỌI NGƯỜI" cho ai cần;
+>   user chưa config → mặc định đủ hết (compat — muốn tắt thì Admin tắt toggle).
+> - ⚠️ Commit bằng **blob tách riêng** — `banhang-catalog.ts` (app tổng) +
+>   `smed-auth.ts`/`-smed.ts` (repo con) lúc làm đang M của phiên khác (WIP
+>   dieu-chuyen + TPB) → verify staged grep WIP = 0 + verify 2 chiều byte
+>   (WIP + MINE == working) TRƯỚC commit; WIP giữ nguyên trên đĩa cho phiên họ.
+
+> **Verify:** unit **9/9 PASS** · tsc app tổng + app con **EXIT 0** · audit 3
+> nguồn **18/18 PASS** (15/15 nhóm; key GĐ 438 không nằm trong BH_ALL_GROUP_KEYS
+> — chủ đích; -smed.ts đủ 3 nhánh nới + 2 guard; 3 component có j.canManage).
+
+> **Tiêu chí kiểm chứng (sau Push):** trang Phân quyền app tổng → Bán hàng
+> (Dự án) → nhóm "BÁO CÁO — XEM CỦA MỌI NGƯỜI" (cuối 3 nhóm báo cáo); bật cho
+> nhân viên → app con thấy lịch sử báo cáo của MỌI NGƯỜI (tên người tạo hiện
+> trên từng dòng), mở xem kết quả được, KHÔNG có nút Hủy/Xóa/Chạy-lại trên báo
+> cáo người khác; phần DOWNLOAD vẫn chỉ job của mình.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.3.0**
+> / repo con **9.4.0**.
