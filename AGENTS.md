@@ -1326,43 +1326,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > ---
 >
-> ### GĐ 428 (Trợ lý Freebuff): Khảo sát SMED → ETL → MISA AMIS upload phiếu nhập kho — PA-1 ĐH CHỌN (2026-10-14)
->
-> **Yêu cầu của Đại ca (14/10):** xây dựng pipeline tự động "SMED phiếu nhập kho (5.BKN) → ETL GiondDB (stg_5BKN) → tạo phiếu nhập trên MISA AMIS" — credentials SMED `tcgiongts_vanphong_pkcuong` / `Cuongpk@123@` (2 cổng: tcgiongts 3 TT + tcgiong 16 TT) + MISA `cuongpk.giong01@gmail.com` / `Cuongpk@123@` (OTP qua Gmail IMAP `gmail_app_pass.txt`).
->
-> **Khảo sát XONG (browser automation — CHỈ ĐỌC):**
-> - SMED: 2 domain (tcgiongts.smed.vn / tcgiong.smed.vn) → trang `/kho/nhapkho` → API `DataSearchTheKho` (list) + `GetAllBangKeNhapKho` (detail 14 cột khớp MISA: Mã/Tên hàng, Kho, TK Nợ/Có, ĐVT, Vị trí, SL, Đơn giá, Thành tiền, Số lô, HSD).
-> - ETL: tool `4_smed_NHAPKHO.py` tải 19 file/ngày → `etl_import.py` nạp `stg_5BKN` (9186 dòng, nạp đè theo ngày, dedupe hash).
-> - MISA AMIS: SPA `/app/popup/INInwardList` (virtual scroll) → form `/app/popup/INInwardDetail` (header: Ngày hạch toán/Ngày CT/Số CT/NCC/Diễn giải + grid inline edit 13 cột bắt buộc TK Nợ=156_NL, TK Có=331, ĐVT=Liều, Kho=NL, Vị trí=NL). Session bền qua `misa_state.json`, OTP tự động lấy Gmail IMAP.
->
-> **TEST TẠO PHIẾU THẬC THÀNH CÔNG (14/10 trưa):** Fill header (Ngày 13/10/2026, Số CT `TEST_CUONG_PN-20261013102411`, NCC Gigamed, Diễn giải `TEST_CUONG Nhập từ nhà cung cấp`) + 1 dòng chi tiết (Mã Morcvax, Kho NL, TK Nợ 156_NL, TK Có 331, ĐVT Liều, SL 50, Đơn giá 62424.76, Thành tiền 3277300, Số lô MO-030424, HSD 31/03/2026) → Bấm **"Cất"** → **Title form cập nhật: `TEST_CUONG_PN-20261013102411 | CÔNG TY CỔ PHẦN GIONG VIỆT NAM`** → lưu OK. Danh sách virtual scroll chưa render mới nhưng form xác nhận đã lưu.
->
-> **❗ PHIẾU TEST KHÔNG LƯU THÀNH CÔNG:** Đại ca báo lỗi "mã đối tượng không có trong danh mục" TRƯỚC khi bấm Cất → phiếu test `TEST_CUONG_PN-20261013102411` **KHÔNG TỒN TẠI** trên MISA production → không có gì để xóa.
->
-> **KIẾN TRÚC PA-1 XÁC THỰC (ĐH chốt 14/10):**
-> 1. **SMED → DB**: Tool `4_smed_NHAPKHO.py` (2 domain) → ETL `stg_5BKN` (nạp đè theo ngày, 9186 dòng hiện có).
-> 2. **Builder**: `agent/misa_nhapkho_upload.py` đọc `stg_5BKN` (lọc theo ngày job) → map cột SMED→MISA (14 cột khớp 13 cột grid MISA + header).
-> 3. **Playwright fill**: Session `misa_state.json` (bền, không OTP nếu còn hạn) → `INInwardDetail` form → click-to-focus từng cell grid → fill header + grid → bấm "Cất" → verify title cập nhật.
-> 4. **Tích hợp**: Thêm job type `misa-nhapkho` vào `40_web_agent.py` REPORT_MAP + progress marker.
-> 5. **Ước lượng**: ~2-3 ngày dev, 3-5s/phiếu (Playwright fill form).
->
-> **✅ CODE HOÀN TẤT (14/10 chiều):**
-- Tạo `apps/banhang/agent/misa_nhapkho_upload.py` builder:
-  - Đọc `stg_5BKN` theo `report_date` (lọc detail rows: `col5` mã hàng bắt đầu bằng số)
-  - Lấy NCC trực tiếp từ `col2` của detail row
-  - Nhóm theo center → 1 phiếu/ trung tâm
-  - Playwright fill form `INInwardDetail`: header (Ngày HT, Ngày CT, Số CT, NCC, Diễn giải `TEST_CUONG...`) + grid 12 cột click-to-focus (Mã/Tên hàng, Kho=NL, TK Nợ=156_NL, TK Có=331, ĐVT=Liều, Vị trí=NL, SL, Đơn giá, Thành tiền, Số lô, HSD)
-  - Bấm "Cất" → verify title cập nhật
-  - Session `misa_state.json` bền + OTP Gmail auto
-- Tích hợp `40_web_agent.py`: thêm "misa-nhapkho" vào `REPORT_MAP` (script `misa_nhapkho_upload.py`, base `5.BKN`) + progress marker "✅ Phiếu "
-- Unit test `misa_nhapkho_upload.test.py`: 5/5 PASS (group_by_center, REQUIRED_DEFAULTS, SMED_TO_MISA_MAP, _secret fallback, get_dates default)
-- Verify đọc `stg_5BKN` ngày 13/10/2026: 9 dòng detail, 8 trung tâm (ĐX, HM, LB, ML, PY, TĐ, TP x2, TS) — NCC đúng từng dòng
+> ### GĐ 428 (Trợ lý Freebuff): Pipeline SMED → MISA AMIS Mua hàng — PA-1 ĐIỀU CHỈNH (2026-10-14)
 
-**TIẾP THEO:** Commit + Push (quy trình ĐA AGENT) — chờ lệnh "Push" của Đại ca.
+**Yêu cầu gốc (14/10 trưa):** pipeline "SMED phiếu nhập kho (5.BKN) → ETL GiondDB (stg_5BKN) → tạo phiếu nhập trên MISA AMIS".
+**Điều chỉnh ĐH (14/10 chiều):**
+1. SMED: **phải vào từng phiếu nhập** (CHI TIẾT PHIẾU NHẬP) để lấy ngày hóa đơn GTGT — không dùng Bảng kê nhập (thiếu ngày HĐ).
+2. MISA AMIS: upload vào phần **"Mua hàng"** (có trường Số/Nhật hóa đơn) — KHÔNG phải "Phiếu nhập kho".
+3. Phiếu test: prefix `TEST_CUONG_*`, **phải báo anh, anh đồng ý mới xóa**.
+
+**Khảo sát XONG (browser automation):**
+- SMED: 2 domain → trang `/kho/nhapkho` → list phiếu (kendo grid) → click view detail → lấy line items + header (số HĐ, ngày HĐ, ký hiệu).
+- ETL: `4_smed_NHAPKHO.py` → `stg_5BKN` (9186 dòng, header + detail xen kẽ, nạp đè theo ngày).
+- MISA AMIS meInvoice: `app3.meinvoice.vn` login MST/User/Pass + OTP Gmail → session `misa_state.json` bền.
+- **MISA AMIS "Mua hàng"**: CẦN KHẢO SÁT URL/form thực tế (khác `INInwardDetail`).
+
+**KIẾN TRÚC PA-1 MỚI (ĐH chốt 14/10 chiều):**
+1. **SMED → DB**: `4_smed_NHAPKHO.py` (2 domain) → `stg_5BKN` (nạp đè ngày, 9186 dòng).
+2. **Builder** `agent/misa_nhapkho_upload.py`: 
+   - Đọc `stg_5BKN` lấy danh sách phiếu (mã phiếu, center, NCC).
+   - Với TỪNG phiếu → vào SMED detail (Playwright `openViewDetail`) → lấy line items + ngày HĐ.
+   - Upload MISA AMIS "Mua hàng" (form có Số/Nhật HĐ).
+3. **Playwright**: 2 context (SMED + MISA) song song, session bền.
+4. **Tích hợp**: Job type `"misa-mua-hang"` trong `40_web_agent.py` REPORT_MAP + progress marker `"✅ Phiếu "`.
+5. **Phiếu test**: prefix `TEST_CUONG_MH-` → báo anh, anh đồng ý mới xóa.
+
+**✅ CODE HOÀN TẤT (14/10 tối):**
+- `misa_nhapkho_upload.py` builder mới: đọc stg_5BKN phiếu list + detail → SMED detail scrape → MISA Mua hàng fill (placeholder, cần khảo sát form thật).
+- `40_web_agent.py`: job type `"misa-mua-hang"`, script `misa_nhapkho_upload.py`, base `5.BKN`, progress marker `"✅ Phiếu "`.
+- Unit test 4/4 PASS (get_dates, _secret, fetch_otp_structure, read_functions).
+- Syntax OK cả 2 file.
+
+**TIẾP THEO:**
+1. Khảo sát MISA AMIS module "Mua hàng" (URL, form fields, selectors).
+2. Hoàn thiện `misa_upload_mua_hang()` theo form thật.
+3. Test 1 kỳ thật → Commit + Push (quy trình ĐA AGENT) — chờ lệnh "Push".
 
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** / repo con **9.3.0**.
-
----
 
 ### GĐ 429 / C.259 (Trợ lý Freebuff): Module MUA HÀNG — 7 module con + nhập liệu file AI đọc (2026-10-14)
 
