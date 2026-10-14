@@ -1720,3 +1720,32 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > chờ lệnh Push cho các commit local này.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.3.0** / repo con **9.4.0**.
+
+### GĐ 435 / C.264 (Trợ lý Freebuff): Fix hộp KPI MARKETING 0/0/0 — chọn job bccn CÓ còn nợ mới nhất (2026-10-14)
+
+> **Đại ca báo (14/10 11:08, ảnh):** hộp MARKETING 0 gói / 0 mũi / 0 tiền — hôm
+> qua vẫn có 273 gói / 1.370 mũi / 995.114.300. Anh nghi do phân quyền nhân sự.
+> **KHÔNG liên quan phân quyền** — KPI không lọc quyền.
+>
+> **Chẩn đoán (bằng chứng probe):** job bccn-dattruoc mới nhất `E9A101A8`
+> (14/10 00:52, Task-runner — Task_04 tự chạy mỗi đêm) kỳ **13/10→13/10 (1
+> ngày)** — builder GĐ 405 lọc công nợ theo NGÀY ĐĂNG KÝ → bảng tt-cn có đủ 19
+> dòng trung tâm nhưng TOÀN BỘ cột còn nợ = 0 → mặt hộp = 0/0/0. Số hôm qua
+> (273/1.370/995tr) từ job `7D5D3C29` (kỳ 2018→30/09). Kèm: tunnel URL ĐỔI lần
+> nữa (warranties-publishing-out-ethics — .env.local đã sync sẵn).
+>
+> **Đã làm (repo con code `d4fe6fd` +38/−23 · docs `a1850fa`):** `marketingStats`
+> + `loadOverviewMarketingDetail` — điều kiện chọn job `having SUM(TRY_CONVERT(
+> float, JSON_VALUE(c.[value], N'$."Tổng số mũi còn nợ"'))) > 0` — job MỚI NHẤT
+> CÓ CÒN NỢ (bỏ job kỳ 1 ngày 0 còn nợ) + trả `period` (kỳ job) cho note dialog
+> ("kỳ 01/01/2018 → 30/09/2026 · chạy lúc ...").
+>
+> **Verify:** tsc EXIT 0 · SQL chọn đúng job `7D5D3C29` → tổng **273 gói /
+> 1.370 mũi / 995.114.300** — khớp số Đại ca xem hôm qua từng đồng.
+>
+> **Tiêu chí kiểm chứng (sau Push):** hộp Marketing hiện 273 gói / 1.370 mũi /
+> 995.114.300 (số mới hơn nếu chạy lại bccn kỳ dài); chi tiết = tt-cn cùng
+> nguồn + note kỳ + giờ chạy.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **5.9.0** / repo con **9.0.0**.
