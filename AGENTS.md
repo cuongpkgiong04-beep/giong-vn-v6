@@ -1338,28 +1338,29 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 - SMED: 2 domain → trang `/kho/nhapkho` → list phiếu (kendo grid) → click view detail → lấy line items + header (số HĐ, ngày HĐ, ký hiệu).
 - ETL: `4_smed_NHAPKHO.py` → `stg_5BKN` (9186 dòng, header + detail xen kẽ, nạp đè theo ngày).
 - MISA AMIS meInvoice: `app3.meinvoice.vn` login MST/User/Pass + OTP Gmail → session `misa_state.json` bền.
-- **MISA AMIS "Mua hàng"**: CẦN KHẢO SÁT URL/form thực tế (khác `INInwardDetail`).
+- **MISA AMIS "Mua hàng"**: `actapp.misa.vn/app/PU` → `PUVoucherManager` (list) → click "Thêm" → `PUVoucherDetail` popup (form tạo mới).
+  - Header: Loại CT, Ngày hạch toán, Ngày CT, Số CT, Ngày HĐ, Số HĐ, NCC, Loại CT2, Mã địa điểm KD, Diễn giải.
+  - Grid 20 cột: Mã/Tên hàng, Kho, TK Kho, TK Công nợ, Vị trí, ĐVT, SL, Đơn giá sau thuế, Đơn giá, Thành tiền, %VAT, Tiền VAT, TK VAT, Nhóm HHDV, Chi phí mua, GT nhập kho, Số lô, HSD, Mã địa điểm.
+  - Defaults bắt buộc: TK Kho=156_NL, TK Công nợ=331, ĐVT=Liều, Kho=NL, Vị trí=NL.
+  - Nút lưu: "Cất" (không phải "Cất và Đóng").
 
-**KIẾN TRÚC PA-1 MỚI (ĐH chốt 14/10 chiều):**
+**KIẾN TRÚC PA-1 HOÀN TẤT (ĐH chốt 14/10 chiều):**
 1. **SMED → DB**: `4_smed_NHAPKHO.py` (2 domain) → `stg_5BKN` (nạp đè ngày, 9186 dòng).
 2. **Builder** `agent/misa_nhapkho_upload.py`: 
    - Đọc `stg_5BKN` lấy danh sách phiếu (mã phiếu, center, NCC).
    - Với TỪNG phiếu → vào SMED detail (Playwright `openViewDetail`) → lấy line items + ngày HĐ.
-   - Upload MISA AMIS "Mua hàng" (form có Số/Nhật HĐ).
-3. **Playwright**: 2 context (SMED + MISA) song song, session bền.
+   - Upload MISA AMIS "Mua hàng" (form có Số/Nhật HĐ) — fill header + grid 20 cột click-to-focus.
+3. **Playwright**: 2 context (SMED + MISA) song song, session bền (`misa_state.json` + SMED login).
 4. **Tích hợp**: Job type `"misa-mua-hang"` trong `40_web_agent.py` REPORT_MAP + progress marker `"✅ Phiếu "`.
 5. **Phiếu test**: prefix `TEST_CUONG_MH-` → báo anh, anh đồng ý mới xóa.
 
 **✅ CODE HOÀN TẤT (14/10 tối):**
-- `misa_nhapkho_upload.py` builder mới: đọc stg_5BKN phiếu list + detail → SMED detail scrape → MISA Mua hàng fill (placeholder, cần khảo sát form thật).
+- `misa_nhapkho_upload.py` builder đầy đủ: SMED login+navigate → detail scrape (kendo grid `openViewDetail`) → MISA login (session `misa_state.json` + OTP Gmail) → `PUVoucherManager` click "Thêm" → `PUVoucherDetail` fill header (10 trường) + grid 20 cột click-to-focus → bấm "Cất" → verify title.
 - `40_web_agent.py`: job type `"misa-mua-hang"`, script `misa_nhapkho_upload.py`, base `5.BKN`, progress marker `"✅ Phiếu "`.
 - Unit test 4/4 PASS (get_dates, _secret, fetch_otp_structure, read_functions).
 - Syntax OK cả 2 file.
 
-**TIẾP THEO:**
-1. Khảo sát MISA AMIS module "Mua hàng" (URL, form fields, selectors).
-2. Hoàn thiện `misa_upload_mua_hang()` theo form thật.
-3. Test 1 kỳ thật → Commit + Push (quy trình ĐA AGENT) — chờ lệnh "Push".
+**TIẾP THEO:** Test 1 kỳ thật (13/10: 8 phiếu, 9 dòng detail) → Commit + Push (quy trình ĐA AGENT) — chờ lệnh "Push".
 
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.2.0** / repo con **9.3.0**.
 
