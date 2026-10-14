@@ -2024,3 +2024,52 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (docs-only). App tổng **6.4.0** / repo con **9.5.0**
 > giữ nguyên. Entry KHÔNG push chờ lệnh.
+
+---
+
+### GĐ 442 / C.269 (Trợ lý Freebuff): PA-1 khảo sát "tận gốc" MISA AMIS — API thuần KHẢ THI: cần Bearer + `x-misa-context` + cookie; `save_batch` nhận đúng schema chứng từ (Success + bath_session_id); còn 1 bước hoàn tất batch — KHÔNG tạo rác trên MISA (2026-10-14)
+
+> **Lệnh ĐH (14/10 sau GĐ 441):** "PA-1" — mở buổi khảo sát MISA AMIS: bắt
+> network khi lưu phiếu → tài liệu hóa endpoint → đánh giá client API thuần.
+
+> **Cách làm:** script mới `gd442_amis_network_probe.py` (repo con `443de0e`) —
+> tái dùng fill/stg của tool GĐ 428 + tự viết flow login AMIS riêng + recorder
+> request/response; tải TOÀN BỘ 281 JS chunk của app từ misacdn để trích endpoint
+> (không đoán mò); gọi API trực tiếp trong trang (page.evaluate fetch) với header
+> bắt nguyên từ request thật.
+
+> **Phát hiện 1 — bug tool GĐ 428 (quan trọng):** `misa_login` có KHỐI OTP LẦN 2
+> nằm SAU khi đã vào dashboard — không còn ô OTP nào → **luôn trả False** ⇒ tool
+> `misa_muahang_upload.py` **chưa từng login được** (job misa-mua-hang sẽ fail
+> 100%). Probe GĐ 442 tự viết flow đúng + lưu `misa_state.json` (có cookie
+> actapp) → lần sau bỏ qua OTP. **Chờ ĐH cho phép sửa file tool GĐ 428**
+> (ngoài phạm vi GĐ 442).
+
+> **Phát hiện 2 — kiến trúc API MISA AMIS (tận gốc):** REST `/g2/api/pu/v1/pu_voucher/*`
+> (get_paging_detail · detail_full · save_batch · save_full…). Gọi API thuần cần
+> ĐỦ 3 thứ: **Bearer token** + header **`x-misa-context`** {TenantId, TenantCode,
+> DatabaseId} + cookie phiên — thiếu x-misa-context → `Code 99` ("liên hệ MISA"),
+> đủ → `Success: true` + dữ liệu thật (verify: get_paging_detail + detail_full
+> trả **schema chứng từ 71 field master + dòng chi tiết**).
+
+> **Phát hiện 3 — endpoint lưu:** `POST …/pu_voucher/save_batch` với body
+> `{"Data": {pu_voucher:[…], pu_voucher_detail:[…], pu_voucher_detail_cost:[]}}`
+> → **Success: true + bath_session_id** (batch session mở). `/save` → 405;
+> `/save_full` → InvalidData/Code 99 với các dạng payload đã thử. **1 bước còn
+> thiếu: hoàn tất batch** để chứng từ ghi sổ — verify bằng search UI
+> "TEST_CUONG" trên AMIS = **"Không có dữ liệu"** ⇒ **KHÔNG có phiếu rác nào
+> được tạo** (an toàn, không cần xin ĐH xóa gì).
+
+> **Phát hiện 4 — validate form UI (nếu vẫn muốn Playwright):** "Số hóa đơn
+> không được để trống" (tab Hóa đơn — điền được bằng định vị toạ độ input dưới
+> label) + "Mã hàng không được để trống" (grid cần CHỌN từ danh mục — cách
+> click-to-focus của GĐ 428 điền được các cột phụ nhưng KHÔNG commit mã hàng).
+
+> **Việc tiếp (đề xuất):** (1) tìm bước hoàn tất batch từ bundle (biến thể
+> `submitFullBatch`/`SaveBathSessionID`) → tạo chứng từ qua API thuần; (2) khảo
+> sát login API thuần (bỏ hẳn browser); (3) khi ĐH duyệt: sửa bug `misa_login`
+> GĐ 428. Bằng chứng: `agent/LOG/gd442/` (JSON request/response, schema, ảnh —
+> gitignored).
+
+> **Version:** KHÔNG bump. App tổng **6.4.0** / repo con **9.5.0** — giữ
+> nguyên. Commit chờ lệnh Push (app tổng entry · repo con `443de0e`).
