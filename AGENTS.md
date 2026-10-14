@@ -1749,3 +1749,48 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **5.9.0** / repo con **9.0.0**.
+
+### GĐ 437 / C.266 (Trợ lý Freebuff): Sắp xếp danh sách Vắc xin theo TÊN SMED A→Z — rà hết app con: 6 bảng (2026-10-14)
+
+> **Yêu cầu ĐH (14/10):** "Tìm kiếm các bảng thể hiện danh sách Vắc xin để sắp xếp
+> Vắc xin theo tên từ A đến Z theo tên SMED" — ĐH mới thấy 4 chỗ (Danh mục Vắc xin
+> · Mua hàng/Bảng giá Vắc xin · Bán hàng/Bảng giá dịch vụ · Bảng TH GB-KM) và yêu
+> cầu rà HẾT các bảng còn lại.
+
+> **Rà toàn app (Explore, 72 lượt tool): 6 BẢNG danh sách VX cần sửa — 5 file:**
+> 1. `/m/danh-muc-vac-xin` — `vaccines ORDER BY ten_hang` → **`ma_smed`
+>    COLLATE Vietnamese_CI_AS** (ma_smed = tên rút gọn SMED; STT render theo index).
+> 2. `/m/mua-hang-bang-gia-vx` — SPECS `bang-gia-vx` orderBy `id` → `ten_smed
+>    COLLATE Vietnamese_CI_AS, id` (STT render index).
+> 3. `/m/nhap-loyty` (LOYALTY — cũng là bảng danh sách VX theo chương trình) —
+>    orderBy `id` → `ten_smed COLLATE Vietnamese_CI_AS, id`.
+> 4. `/m/banhang-bang-gia-dich-vu` — `price_list ORDER BY stt` → `ten_smed
+>    COLLATE Vietnamese_CI_AS` + **STT đánh LẠI 1..N** (trước hiện stt gốc bảng giá
+>    → sort lại sẽ lộn xộn; trang render `r.stt` trực tiếp).
+> 5. `/m/banhang-th-gbkm-gnck-ln` — `th_gbkm_gnck_ln ORDER BY id` → `ten_smed
+>    COLLATE Vietnamese_CI_AS, id` (STT render index).
+> 6. `/m/banhang-chuong-trinh-khuyen-mai` — mảng `vaccines` sort SAU dedup bằng
+>    `localeCompare("vi")` + đánh lại STT (**giữ cách chọn dòng MIN(stt) đại diện
+>    cho tên trùng — KHÔNG đổi nguồn giá**; sort sau dedup vì lý do này).
+
+> **LOẠI TRỪ có lý do (bảng GIAO DỊCH — giữ thứ tự nhập liệu):** đơn đặt hàng gửi
+> NCC + NCC gửi Order (id DESC) · theo dõi trạng thái mua hàng (center→ncc→ten_smed
+> theo thiết kế) · điều chuyển nội bộ (id DESC) · matrix điều chuyển (builder đã
+> sort VX A→Z tiếng Việt sẵn) · danh mục khách hàng/NCC/trung tâm + báo cáo
+> kho/MISA/bank/lịch hẹn (không phải danh sách VX).
+
+> **Verify:** tsc app con **EXIT 0 sạch toàn bộ** (5 lỗi cũ `-dieu-chuyen.ts` của
+> phiên khác đã được họ sửa) · SQL THẬT 4 bảng đều A→Z chuẩn tiếng Việt
+> (**Abhayrab 0.5ml < ABRYSVO < Adacel < Avaxim 80U < BARYCELA < BCG-TCDV <
+> Bexsero < Boostrix**) · **sort JS `localeCompare("vi")` khớp 100% SQL `COLLATE
+> Vietnamese_CI_AS` (52/52 vị trí)** — bảng CTKM (sort JS) đồng nhất 5 bảng SQL ·
+> mh_loyalty hiện 0 dòng (sort áp dụng đúng khi có dữ liệu).
+
+> **Không đụng (ngoài phạm vi chỉ-định — ĐH cần thì báo em):** dropdown chọn Vắc
+> xin trong các form (mua-hàng / điều chuyển / CTKM / GB-KM) vẫn theo thứ tự gốc.
+
+> **Tiêu chí kiểm chứng (sau Push):** mở 6 trang liệt kê — mọi dòng Vắc xin xếp
+> A→Z theo tên SMED; cột STT (Bảng giá dịch vụ + DS Vắc Xin theo CTKM) đánh lại
+> 1..N liền mạch.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.3.0** / repo con **9.4.0**.
