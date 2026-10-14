@@ -1653,3 +1653,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (0 code app — hạ tầng máy công ty + script tool).
 > App tổng **6.3.0** / repo con **9.4.0**. Entry + script KHÔNG push chờ lệnh.
+
+### GĐ 434 / C.263 (Trợ lý Freebuff): Kho file nhập liệu → thư mục INPUT (ngang hàng OUTPUT) — giữ nguyên file gốc rồi mới cho AI đọc → DB (2026-10-14)
+
+> **Yêu cầu ĐH (14/10):** file upload sau khi AI đọc xong phải lưu vào thư mục MỚI
+> `apps/banhang/INPUT` NGANG HÀNG thư mục OUTPUT (các thư mục trong INPUT làm việc
+> giống cách làm với OUTPUT) — GIỮ LẠI file gốc — sau đó mới để AI đọc & lưu DB.
+
+> **⚠️ TRÙNG LẶP ĐA AGENT (ĐH cần biết):** phiên song song (tự gọi "GĐ 429b") đã
+> làm AGENT-SIDE y hệt TRƯỚC em: `_MH_ROOT` → `apps/banhang/INPUT` +
+> `MH_MODULE_FOLDER` map (folder module gạch dưới) + log "file gốc GIỮ LẠI tại
+> INPUT" + guard extract đọc trong INPUT + kèm MODULE MỚI Điều chuyển nội bộ
+> (`/dieu-chuyen/*` + `INPUT\dieu_chuyen\`). Em KHÔNG sửa đè — chỉ làm phần còn
+> lại + restart + verify.
+
+> **Em làm (repo con `6b9cbb6`):** `apps/banhang/.gitignore` +`INPUT/` (ngang hàng
+> OUTPUT/ — file ĐH tải lên không vào git) · `-chuong-trinh-km.ts` comment kho
+> INPUT · trang CTKM: mô tả "File GỐC GIỮ NGUYÊN ... thư mục INPUT (ngang hàng
+> OUTPUT)" + hover tên file hiện đường dẫn đầy đủ.
+
+> **Restart GIONG_API_Server (nạp code mới — 08:32):** syntax OK → sc stop/start
+> (lần này service STOPPED hẳn, PID cũ thoát) → **tunnel MỚI
+> `warranties-publishing-out-ethics`** + `scripts/update-tunnel-env.py` sync
+> .env.local 2 app — production TỰ LÀNH nhờ fallback gist GĐ 426 đã push (KHÔNG
+> cần redeploy). `__pycache__` agent/ + etl/ bị SMED agent giữ (Access denied —
+> không xóa được) nhưng Python tự invalidate .pyc theo mtime source → rủi ro thấp.
+
+> **Verify E2E thật (file gốc GIỮ NGUYÊN):** file Excel mẫu → upload qua endpoint
+> thật → lưu ĐÚNG `apps\banhang\INPUT\chuong_trinh_km\2026-10-14\083802_
+> Ctkm-mau-INPUT-check.xlsx` (id=14, file tồn tại trên đĩa) → extract đọc OK
+> (178 ký tự/1 bảng) → mh_files id=14 trỏ INPUT ✓ → dọn dòng id=7 MỒ CÔI (file
+> test cũ bị xóa cùng `agent/mua-hang/` — KHÔNG phải file thật của ĐH).
+
+> **⚠️ Việc còn ở phiên khác (không phải GĐ 434):** `api_server.py` (+159/−3:
+> INPUT + module điều-chuyển) CHƯA commit, đang M chung → em KHÔNG add (quy tắc
+> đa agent — sẽ vào git khi phiên đó commit); tsc app con hiện 5 lỗi trong
+> `-dieu-chuyen.ts`/`nhap-dieu-chuyen.tsx` CỦA PHIÊN KIA đang viết dở (0 lỗi file
+> GĐ 434).
+
+> **Tiêu chí kiểm chứng của ĐH:** lên trang Chương trình khuyến mãi → tải 1 file
+> thật → mở thư mục `D:\DuLieuChung\CUONG_2026\giong-vn-v6\giong-apps\apps\
+> banhang\INPUT\chuong_trinh_km\<ngày>\` thấy file gốc + bấm "AI đọc" → Lưu →
+> dữ liệu vào bảng như cũ.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.3.0** / repo con **9.4.0**.
