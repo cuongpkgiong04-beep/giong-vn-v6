@@ -1964,3 +1964,63 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Việc tiếp:** theo dõi errorlog hết 24h (sáng 15/10) + kiểm backup tự
 > động lần đầu 15/10 02:00 → báo ĐH chốt.
+
+---
+
+### GĐ 441 (Trợ lý Freebuff): Khảo sát nanobrowser-master — AI web automation extension: KHÔNG upload được chứng từ (chặn file uploader) + KHÔNG đọc API nội bộ; nhu cầu "biết tận gốc MISA AMIS" làm được bằng hướng bắt network → API thuần (tiền lệ GĐ 228e) — 3 PA chờ ĐH chốt (2026-10-14)
+
+> **Yêu cầu ĐH (14/10):** nghiên cứu thư mục
+> `D:\DuLieuChung\CUONG_2026\Github\nanobrowser-master` xem áp dụng được vào
+> giong-vn-v6 không — "anh đang muốn biết tận gốc các webapp như misa amis
+> để upload chứng từ".
+
+> **nanobrowser là gì (khảo sát 112 file TS — CHỈ ĐỌC, KHÔNG cài đặt):**
+> extension Chrome MV3 (WXT 0.21.4 + React 18, Apache-2.0, v0.2.0) — AI agent
+> đa nhiệm chạy LOCAL trong browser: **Planner** (chiến lược) + **Navigator**
+> (thao tác DOM) — CLAUDE.md còn nhắc Validator nhưng code bản này KHÔNG còn
+> file (2 agent). Điều khiển tab thật bằng **puppeteer-core + ExtensionTransport**
+> (CDP qua quyền `debugger` trong manifest `wxt.config.ts`); mỗi bước gửi
+> **cây DOM gán index (buildDomTree.js 52KB) + screenshot** lên LLM
+> (OpenAI/Anthropic/Gemini/DeepSeek/Grok/Azure/OpenRouter/Ollama/CustomOpenAI
+> — GLM Z.ai dùng được qua CustomOpenAI). Máy đã đủ điều kiện build:
+> Node v24.16.0 + pnpm 10.34.6 (không cần cài thêm gì).
+
+> **Kết luận đối chiếu nhu cầu — THIẾU đúng 2 khả năng cốt lõi:**
+> 1. **KHÔNG upload được file** — 20 action hoạt động (`schemas.ts`:
+>    done/go_to_url/click_element/input_text/scroll/send_keys/dropdown/tab…)
+>    **không có upload_file**; `click_element` gặp phần tử file uploader bị
+>    CHẶN (`builder.ts:236` + `isFileUploader` `page.ts:1358` → chỉ báo
+>    message, không bấm) → không đính kèm được chứng từ.
+> 2. **KHÔNG "biết tận gốc" API** — không có network recorder/inspector (chỉ
+>    dùng network để chờ trang ổn định, `page.ts:1393`) → không đọc/ghi được
+>    API nội bộ webapp.
+> 3. **KHÔNG tự động hóa từ pipeline** — giao việc qua port
+>    'side-panel-connection', CHẶN mọi nguồn ngoài sidepanel.html
+>    (`index.ts:85`); không có CLI/headless → muốn lái phải tự viết cầu.
+> 4. ⚠️ Mỗi bước gửi DOM + ảnh trang lên LLM API → dữ liệu khách (MISA/SMED)
+>    đi ra ngoài — cùng rủi ro đã ghi ở GĐ 427 với browser-use.
+
+> **Nhu cầu của ĐH LÀM ĐƯỢC — bằng hướng khác, có tiền lệ trong dự án:**
+> "tận gốc để upload chứng từ" = **bắt network khi thao tác UI → tìm endpoint
+> → thay bằng API thuần**. Dự án đã làm đúng quy trình này với MISA meInvoice
+> (GĐ 228e: UI chuông treo 81 lần → probe network → 2 API thuần
+> GetNotification + DownloadHandler). Với MISA AMIS (actapp.misa.vn): hiện có
+> Playwright `misa_muahang_upload.py` (1.142 dòng, GĐ 428) — bước tiếp là
+> record request khi bấm "Cất" phiếu Mua hàng → lập client API.
+
+> **3 PA trình ĐH (chờ chốt):**
+> - **PA-1 (khuyến nghị):** không đưa nanobrowser vào app — mở buổi khảo sát
+>   AMIS: Playwright (session `misa_state.json` sẵn) tạo 1 phiếu TEST_CUONG_*
+>   + bắt toàn bộ request khi lưu → tài liệu hóa endpoint → viết client API
+>   thuần. Dự đoán: xác định được API trong 1 buổi; nếu AMIS REST + cookie
+>   phiên → upload ổn định, hết phụ thuộc UI; rủi ro: CSRF/anti-tamper (xử lý
+>   được vì đã có phiên + header), API đổi ngầm (theo dõi như meInvoice).
+> - **PA-2:** fork nanobrowser thêm action upload_file (CDP
+>   `DOM.setFileInputFiles`) → RPA AI cho AMIS. Dự đoán: 1-2 ngày code nhưng
+>   KHÔNG tự động hóa pipeline (phải người mở Chrome + gõ prompt), chậm + tốn
+>   token mỗi bước, dữ liệu khách lên LLM → yếu hơn Playwright hiện có.
+> - **PA-3:** nanobrowser làm công cụ khảo sát UI như browser-use GĐ 427.
+>   Dự đoán: trùng vai browser-use đã cài, giá trị gia tăng thấp.
+
+> **Version:** KHÔNG bump (docs-only). App tổng **6.4.0** / repo con **9.5.0**
+> giữ nguyên. Entry KHÔNG push chờ lệnh.
