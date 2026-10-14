@@ -1691,6 +1691,15 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > `-dieu-chuyen.ts`/`nhap-dieu-chuyen.tsx` CỦA PHIÊN KIA đang viết dở (0 lỗi file
 > GĐ 434).
 
+> **⚠️ SỰ CỐ COMMIT (đã sửa ngay trong phiên):** commit entry đầu (`2f521f1`) bị
+> NUỐT luôn `api_server.py` của phiên kia — file nằm SẴN trong index (phiên đó
+> `git add` nhưng chưa commit) → phát hiện qua `git diff --cached --stat` ngay
+> sau commit → `git reset --mixed HEAD~1` + commit lại CHỈ AGENTS.md (`2ffc13b`)
+> — file phiên kia về nguyên trạng M chờ họ commit. **LẶP LẠI sự cố GĐ 285 —
+> checklist bắt buộc TRƯỚC mọi commit: xem `git diff --cached --stat` +
+> `git status --short`; index có file lạ (agent khác `git add` sẵn) → `git reset`
+> bỏ staging TRƯỚC khi add file của mình.**
+
 > **Tiêu chí kiểm chứng của ĐH:** lên trang Chương trình khuyến mãi → tải 1 file
 > thật → mở thư mục `D:\DuLieuChung\CUONG_2026\giong-vn-v6\giong-apps\apps\
 > banhang\INPUT\chuong_trinh_km\<ngày>\` thấy file gốc + bấm "AI đọc" → Lưu →
