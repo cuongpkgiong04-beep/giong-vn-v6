@@ -1880,3 +1880,49 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.3.0**
 > / repo con **9.4.0**.
+
+---
+
+### GĐ 439 / C.268 (Trợ lý Freebuff): PA Push toàn bộ 14/10 — gộp 23+14 commit MỌI phiên (GĐ 433-438 / C.263-C.267) + bump 6.4.0 / 9.5.0 + LIVE (2026-10-14)
+
+> **Lệnh của Đại ca (14/10):** "Push toàn bộ". Rà trùng lặp SẠCH (remote 0
+> commit mới · nhánh phụ RỖNG · file dở `banhang-catalog.ts` WIP điều chuyển
+> của phiên khác — KHÔNG đụng). **Chưa push = 23 commit app tổng + 14 commit
+> repo con** của mọi phiên:
+> - **GĐ 433 (em):** hạ tầng — GiongDB `AUTO_CLOSE True→OFF` (gốc State 38) +
+>   backup lần đầu 2 bản VERIFYONLY + `scripts/gionddb-backup.py` + Task
+>   Scheduler 02:00 daily giữ 14 bản.
+> - **GĐ 434 / C.263 (phiên khác):** kho file nhập liệu → thư mục INPUT
+>   (giữ file gốc trước khi AI đọc) + lesson commit nuốt + fix encoding CRLF.
+> - **GĐ 435 / C.264 (phiên khác):** fix hộp Marketing 0/0/0 (chọn job bccn
+>   còn nợ mới nhất — 273/1.370/995.114.300 khớp).
+> - **GĐ 436 / C.265 (phiên khác):** fix Task_03 BỎ 5 báo cáo (VCB về
+>   Task_04 17:15 · PA-2 tool báo lỗi thật · TPB valid-empty · tkgvvxdt về
+>   Task_02) + DB live + restart agent.
+> - **GĐ 437 / C.266 (phiên khác):** sắp 6 bảng danh sách Vắc xin theo tên
+>   SMED A→Z (COLLATE Vietnamese_CI_AS + localeCompare vi khớp 100%).
+> - **GĐ 438 / C.267 (phiên khác):** phân quyền "XEM BÁO CÁO CỦA MỌI NGƯỜI"
+>   — nhóm mới bh-xem-bao-cao-moi-nguoi (trang Phân quyền app tổng) + 3 nhánh
+>   nới xem + guard chủ job (unit 9/9 · audit 18/18).
+
+> **Verify trước push:** unit app tổng **58/58 PASS** (tổng của mọi phiên) ·
+> repo con **ctkm 14/14 · mua-hang 54/54 · th-gbkm FAIL 0** · tsc app tổng
+> EXIT 0 · tsc repo con EXIT 0.
+
+> **Bump MINOR (feature mới):** app tổng **6.3.0 → 6.4.0** (4 chỗ) · repo con
+> **9.4.0 → 9.5.0** (2 chỗ) — checklist GĐ 138 ✓.
+
+> **Push:** app tổng `263f652..2c04c7f` (24 commit) · repo con
+> `3a95da6..e88d41e` (15 commit) — local = remote cả 2 (0 commit chờ).
+
+> **✅ Verify production (curl --compressed lần đầu):** app tổng
+> `giong-vn-v6.vercel.app` HTTP 200 = **6.4.0** · app con
+> `giong-banhang.vercel.app` HTTP 200 = **9.5.0** — deploy mới, không ghim.
+
+> **Tiêu chí kiểm chứng của Đại ca:** (1) trang Phân quyền app tổng có nhóm
+> "XEM BÁO CÁO CỦA MỌI NGƯỜI" — cấp cho nhân viên → thấy báo cáo mọi người
+> (chỉ xem, không hủy/xóa); (2) hộp Marketing KPI có số còn nợ; (3) 6 bảng
+> danh sách Vắc xin sắp A→Z theo tên SMED; (4) Task_03 chạy đủ báo cáo
+> (bỏ 5 lỗi đã xử lý riêng); (5) backup GiondDB tự chạy 02:00 mỗi ngày.
+
+> **Version:** app tổng **6.4.0** / repo con **9.5.0** — ĐÃ PUSH + ĐÃ LIVE.
