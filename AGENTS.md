@@ -1714,7 +1714,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > + đường lưu `INPUT\<module>\<yyyy-mm-dd>\<HHMMSS>_<tên gốc>` + log "file gốc
 > GIỮ LẠI tại INPUT" + guard `/mua-hang/extract` đổi sang kho INPUT + test 4/4 PASS
 > + web ghi rõ INPUT. Đã restart `GIONG_API_Server` 08:39 → **probe HTTP THẬT: upload
-> → `INPUTang_gia_vx6-10-14 83956_probe_input_check.txt`** (đã dọn) + sync
+> → `INPUT\bang_gia_vx\2026-10-14\083956_probe_input_check.txt`** (đã dọn) + sync
 > `.env.local` 2 app tunnel mới (production tự lành). **→ GĐ 434 KHÉP KÍN cả 2 phía**
 > (web: `6b9cbb6` + docs `2ffc13b` phiên kia; agent: `876f632` của em) — còn lại chỉ
 > chờ lệnh Push cho các commit local này.
