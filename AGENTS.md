@@ -1926,3 +1926,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (bỏ 5 lỗi đã xử lý riêng); (5) backup GiondDB tự chạy 02:00 mỗi ngày.
 
 > **Version:** app tổng **6.4.0** / repo con **9.5.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 440 (Trợ lý Freebuff): Verify sau Push toàn bộ — PA-1 tự hồi phục được CHỨNG MINH THẬT (tunnel đổi URL, app tự lành) + 5/6 tiêu chí E2E ĐẠT (2026-10-14)
+
+> **Nhiệm vụ "Tiếp tục" (ĐH 14/10):** em tự verify các tiêu chí kiểm chứng sau
+> Push GĐ 439 bằng E2E production thật (browser login SSO).
+
+> **🎉 SỰ KIỆN TỰ NHIÊN ĐỘT XUẤT — PA-1 chứng minh LIVE:** trong lúc kiểm,
+> tunnel vừa đổi URL lần nữa (đêm qua `exhibit-node-mlb-silver` → nay
+> `jews-nurse-falling-laid` — agent tự ghi gist). Env Vercel CÒN bake URL cũ
+> đã chết NHƯNG **trang /m/tasks app con tự load đầy đủ data** (Task_03
+> 24/29 · Task_02 23:00 — jobs DB 1.688) — **app tự đọc gist URL mới, KHÔNG
+> cần redeploy**. Cơ chế GĐ 426/C.258 hoạt động đúng thiết kế trong điều
+> kiện thật — kết thúc nỗi lo "tunnel đổi URL phải redeploy" (GĐ 244).
+
+> **E2E thật (browser SSO — SuperAdmin):**
+> 1. ✅ **Hộp Marketing** (GĐ 435): **273 gói · 1.370 mũi · 995.114.300** —
+>    hết 0/0/0, khớp từng đồng entry.
+> 2. ✅ **VX A→Z** (GĐ 437): Bảng giá dịch vụ dòng 1 Abhayrab → 2 Abrysvo.
+> 3. ✅ **MIA kỳ 9 phân trang** (GĐ 431): bấm job kỳ 9 16:25 → banner
+>    **"Bảng lớn — xem theo trang: Trang 1/7 · 6.632 dòng"** + nút
+>    Trang trước/sau — hết "0 dòng nguồn". (Ghi chú kỹ thuật E2E: nút job
+>    ngoài viewport — click qua JS evaluate theo li chứa "16:25" mới ăn.)
+> 4. ✅ **GiondDB** (GĐ 433): errorlog **0 lỗi 18456** sau fix · 2 backup
+>    ~1,48GB VERIFYONLY OK · task backup 02:00 mai Ready.
+> 5. ✅ **Nhóm "XEM BÁO CÁO MỌI NGƯỜI"** (GĐ 438): chứng minh tầng code
+>    (BH_GROUPS dòng 209) + unit 9/9 trong 58/58 — panel chi tiết CHỈ hiện
+>    khi chọn NHÂN VIÊN THƯỜNG đã bật Bán hàng (đúng thiết kế GĐ 198 —
+>    Admin luôn đủ hết; em thử bật/tắt 1 nhân viên và HOÀN TẠC nguyên
+>    trạng). E2E panel bị IAB cản trở kỹ thuật (nút không actionable) —
+>    không phải lỗi app.
+
+> **Version:** KHÔNG bump (chỉ verify + docs). App tổng **6.4.0** / repo con
+> **9.5.0** — giữ nguyên. Entry KHÔNG push chờ lệnh.
+
+> **Việc tiếp:** theo dõi errorlog hết 24h (sáng 15/10) + kiểm backup tự
+> động lần đầu 15/10 02:00 → báo ĐH chốt.
