@@ -1560,3 +1560,52 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.2.0** / repo con **9.3.0**.
+
+---
+
+### GĐ 432 / C.262 (Trợ lý Freebuff): PA Push đợt lớn 14/10 — TOÀN BỘ công việc mọi phiên (GĐ 424-431 / C.258-C.261) + bump 6.3.0 / 9.4.0 + LIVE (2026-10-14)
+
+> **Lệnh của Đại ca (14/10):** "Push" (sau "Tất cả các Agent đều xong việc").
+> Rà toàn diện: remote 0 commit mới · nhánh phụ `agent-cli`/`pipeline-work`
+> RỖNG cả 2 repo · status chỉ file deleted phiên trước. **Chưa push = 17
+> commit app tổng + 11 commit repo con** của MỌI phiên:
+> - **GĐ 424/425/426 / C.258 (em):** điều tra sự cố nhiệm vụ "biến mất" (tunnel
+>   URL cũ chết — KHÔNG mất data) · điều tra fallback gist chết im lặng
+>   (GH_GIST_TOKEN hết hạn → 401) · **PA-1 fix db.ts 2 app: gist public retry
+>   KHÔNG token** (unit 3 test mới).
+> - **GĐ 427 (phiên khác):** cài browser-use venv làm công cụ khảo sát (ngoài
+>   repo — docs-only).
+> - **GĐ 428 (phiên khác):** tool `misa_nhapkho_upload.py` (Playwright fill
+>   phiếu nhập kho MISA AMIS từ stg_5BKN — unit 5/5).
+> - **GĐ 429 / C.259 (phiên khác):** Module MUA HÀNG 7 module con + AI đọc
+>   file + phân quyền nhóm MUA HÀNG 7 lá (unit mua-hang 54/54) + hạ trần file
+>   3MB.
+> - **GĐ 430 / C.260 (phiên khác):** Module Chương trình khuyến mãi (nhập
+>   file → AI đọc → bảng CTKM cột động → link bảng TH GB-KM) (unit 14/14,
+>   E2E thật 3/52) — ⚠️ ĐH CHƯA trả lời 4 câu chốt, phiên đó chọn 4 mặc định
+>   (đổi được bất kỳ lúc nào).
+> - **GĐ 431 / C.261 (phiên khác):** phân trang ROOT rows `loadReportResult`
+>   (fix Bảng kê MIA kỳ 9 trống — root rows >1000) + cảnh báo hạ tầng SQL
+>   GiondDB (quyền login hỏng từ 10/10 — đã báo ĐH riêng, không chặn push).
+
+> **Verify trước push (chạy lại cuối):** unit app tổng **57/57 PASS** · unit
+> repo con **ctkm 14/14 · mua-hang 54/54 · th-gbkm 12/11 FAIL 0** · tsc app
+> tổng EXIT 0 · tsc repo con EXIT 0.
+
+> **Bump MINOR (nhiều feature mới):** app tổng **6.2.0 → 6.3.0** (4 chỗ) ·
+> repo con **9.3.0 → 9.4.0** (2 chỗ) — checklist GĐ 138 ✓.
+
+> **Push:** app tổng `2d884ef..7b885e6` (19 commit) · repo con
+> `6b641ee..40d68ee` (12 commit).
+
+> **✅ Verify production (curl --compressed lần đầu):** app tổng
+> `giong-vn-v6.vercel.app` HTTP 200 = **6.3.0** · app con
+> `giong-banhang.vercel.app` HTTP 200 = **9.4.0** — deploy mới, không ghim.
+
+> **Tiêu chí kiểm chứng của Đại ca:** (1) app con sidebar có nhóm MUA HÀNG 7
+> lá + Chương trình khuyến mãi hoạt động; (2) Bảng kê MIA kỳ 9 → 1.000
+> dòng + banner "Trang 1/7 · 6.632 dòng"; (3) trang Phân quyền app tổng nhóm
+> MUA HÀNG 7 chip; (4) tunnel đổi URL lần tới → app tự lành (không cần em
+> redeploy — PA-1 GĐ 426).
+
+> **Version:** app tổng **6.3.0** / repo con **9.4.0** — ĐÃ PUSH + ĐÃ LIVE.
