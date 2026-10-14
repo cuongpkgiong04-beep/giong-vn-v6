@@ -1609,3 +1609,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > redeploy — PA-1 GĐ 426).
 
 > **Version:** app tổng **6.3.0** / repo con **9.4.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
+
+### GĐ 433 (Trợ lý Freebuff): Khắc phục DỨT ĐIỂM cảnh báo GĐ 431 — GiongDB bật AUTO_CLOSE (gốc State 38) + GiongDB chưa từng có backup → đã tắt + backup daily 02:00 (2026-10-14)
+
+> **Yêu cầu của Đại ca (14/10):** "Phần cảnh báo từ GĐ 431 khắc phục và xử
+> lý dứt điểm cho anh" (cảnh báo: quyền connect login mới hỏng từ 10/10
+> 16:28 State 38 + DB nhấp nháy 23:49 13/10; service sống nhờ pool cũ).
+
+> **Chẩn đoán (errorlog + query thật):**
+> 1. **GỐC RỄ = GiongDB bật `AUTO_CLOSE = True`** (mặc định SQL Express):
+>    DB rảnh → SQL tự đóng → **mọi kết nối MỚI fail ngay `18456 State 38
+>    "Failed to open the explicitly specified database 'GiondDB'"`** rồi
+>    retry mới mở lại. Lỗi đầu tiên **10/10 16:26:34** (khớp cảnh báo GĐ
+>    431), đêm 13/10 23:52 → 14/10 00:12 lặp liên tục (DB rảnh đêm). Service
+>    agent + api_server là `LocalSystem` — sống nhờ connection pool cũ giữ
+>    DB mở (đúng mô tả cảnh báo).
+> 2. **KHÔNG có restore/offline GiondDB 10/10** — errorlog chứng minh: SQL
+>    Server chỉ START 1 lần 09/10 11:14, không shutdown/attach/restore nào.
+>    Login `NT AUTHORITY\SYSTEM` + `GIONGPC\Administrator` đều tồn tại,
+>    không disabled. → Hết lo phần "ai đụng DB".
+> 3. **PHÁT HIỆN NẶNG HƠN: GiongDB CHƯA TỪNG có bản backup nào**
+>    (msdb.dbo.backupset trống!) — 1.685 jobs production không có bản sao.
+
+> **Đã xử lý dứt điểm (3 fix):**
+> 1. **Fix gốc:** `ALTER DATABASE GiongDB SET AUTO_CLOSE OFF` — verify
+>    `is_auto_close_on = False`; test 3 kết nối MỚI liên tục OK. Từ nay DB
+>    luôn mở → State 38 không còn khả năng xảy ra.
+> 2. **Backup NGAY 2 bản** (do fix 1 + verify): `RESTORE VERIFYONLY` hợp lệ
+>    — `D:\DuLieuChung\CUONG_2026\backups\GiondDB\gionddb_full_*.bak`
+>    (2 × ~1.48 GB).
+> 3. **Script `scripts/gionddb-backup.py` + Task Scheduler "GiondDB Backup
+>    Daily"** — 02:00 hằng ngày, account SYSTEM, full + CHECKSUM +
+>    VERIFYONLY + giữ 14 bản gần nhất (retention tự xóa) + log
+>    `backup.log`. Next Run 15/10 02:00 — Status Ready (chạy tay 1 lần đã
+>    verify PASS).
+
+> **Verify cuối:** errorlog lỗi 18456 cuối cùng = 14/10 00:12 (TRƯỚC fix
+> 08:25) — sau fix 0 lỗi mới · GiongDB ONLINE auto_close=False · jobs 1.685
+> nguyên vẹn · 2 backup VERIFYONLY OK · task Ready. Theo dõi thêm 24h
+> errorlog không còn 18456 = chốt hẳn.
+
+> **Version:** KHÔNG bump (0 code app — hạ tầng máy công ty + script tool).
+> App tổng **6.3.0** / repo con **9.4.0**. Entry + script KHÔNG push chờ lệnh.
