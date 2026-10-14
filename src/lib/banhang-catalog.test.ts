@@ -12,9 +12,9 @@ import { BH_GROUPS, BH_GROUP_KEYS, BH_LEAF_KEYS, getBanhangDetailAccess } from "
 const groupOf = (key: string) => BH_GROUPS.find((g) => g.key === key);
 const routesOf = (key: string) => (groupOf(key)?.leaves ?? []).map((l) => l.to);
 
-test("GĐ 420 — cấu trúc: 14 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số lá, banhang-misa còn 6 lá", () => {
-  assert.equal(BH_GROUPS.length, 14, "phải có đủ 14 nhóm (10 cũ + 4 nhập dữ liệu)");
-  assert.equal(new Set(BH_GROUP_KEYS).size, 14, "key nhóm không được trùng");
+test("GĐ 420 — cấu trúc: 15 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số lá, banhang-misa còn 6 lá", () => {
+  assert.equal(BH_GROUPS.length, 15, "phải có đủ 15 nhóm (10 cũ + 4 nhập dữ liệu + 1 GĐ 438)");
+  assert.equal(new Set(BH_GROUP_KEYS).size, 15, "key nhóm không được trùng");
   assert.deepEqual(routesOf("bh-nhap-danh-muc"), [
     "/m/danh-muc-vac-xin",
     "/m/danh-muc-nha-cung-cap",
@@ -56,12 +56,34 @@ test("GĐ 420 — mọi lá chỉ thuộc MỘT nhóm duy nhất (không route t
   assert.equal(new Set(all).size, all.length, "route bị lặp giữa 2 nhóm");
 });
 
-test("GĐ 420 — Admin: đủ 14 nhóm + mọi lá (kể cả 10 lá NHẬP DỮ LIỆU)", () => {
+test("GĐ 420 — Admin: đủ 15 nhóm + mọi lá (kể cả 10 lá NHẬP DỮ LIỆU)", () => {
   const { groups, leaves } = getBanhangDetailAccess("Admin", {});
   for (const k of BH_GROUP_KEYS) assert.equal(groups[k], true, `nhóm ${k} phải bật`);
   for (const k of BH_LEAF_KEYS) assert.equal(leaves[k], true, `lá ${k} phải bật`);
   assert.equal(leaves["bh-leaf-/m/danh-muc-vac-xin"], true);
   assert.equal(leaves["bh-leaf-/m/banhang-th-gbkm-gnck-ln"], true);
+});
+
+test("GĐ 438 — nhóm XEM BÁO CÁO CỦA MỌI NGƯỜI: không lá, toggle hoạt động đúng mọi nhánh", () => {
+  // cấu trúc: nhóm tồn tại, KHÔNG có lá (toggle duy nhất trên trang Phân quyền)
+  assert.deepEqual(routesOf("bh-xem-bao-cao-moi-nguoi"), []);
+  // Admin → luôn bật
+  assert.equal(getBanhangDetailAccess("Admin", {}).groups["bh-xem-bao-cao-moi-nguoi"], true);
+  // chưa bật banhang → tắt
+  assert.equal(getBanhangDetailAccess("User", {}).groups["bh-xem-bao-cao-moi-nguoi"], undefined);
+  // bật banhang chưa config nhóm → đủ hết (compat) → bật
+  assert.equal(getBanhangDetailAccess("User", { banhang: true }).groups["bh-xem-bao-cao-moi-nguoi"], true);
+  // có config nhóm khác (chỉ KHO) → CHƯA bật nhóm này → tắt (chủ đích: Admin bật tường minh)
+  assert.equal(
+    getBanhangDetailAccess("User", { banhang: true, "banhang-kho": true }).groups["bh-xem-bao-cao-moi-nguoi"],
+    false,
+  );
+  // Admin bật tường minh → bật
+  assert.equal(
+    getBanhangDetailAccess("User", { banhang: true, "banhang-kho": true, "bh-xem-bao-cao-moi-nguoi": true })
+      .groups["bh-xem-bao-cao-moi-nguoi"],
+    true,
+  );
 });
 
 test("GĐ 420 — chưa bật banhang: không nhóm, không lá", () => {

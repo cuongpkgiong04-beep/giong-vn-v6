@@ -2,7 +2,7 @@
  * GĐ 199 (2026-09-22) — CATALOG PHÂN QUYỀN CHI TIẾT app con Bán hàng
  * ====================================================================
  * Nguồn sự thật duy nhất cho trang Phân quyền app tổng khi cấu hình quyền
- * CHI TIẾT app con: 14 NHÓM (bậc 2) + TỪNG LÁ (bậc 3/4 — báo cáo/phân hệ).
+ * CHI TIẾT app con: 15 NHÓM (bậc 2) + TỪNG LÁ (bậc 3/4 — báo cáo/phân hệ).
  *
  * ⚠️ ĐỒNG BỘ 2 NƠI (bắt buộc khi thêm nhóm/báo cáo MỚI — xem CHECKLIST cuối file):
  *   - App tổng:  src/lib/banhang-catalog.ts (file này)
@@ -38,8 +38,9 @@ export type BhGroup = {
   leaves: BhLeaf[];
 };
 
-/** 14 nhóm bậc 2 của app con — 4 nhóm NHẬP DỮ LIỆU (bậc 1, GĐ 420) + 4 nhóm
- *  DOWNLOAD giữ key cũ + 3 BÁO CÁO + UPLOAD + NHIỆM VỤ + BANK. */
+/** 15 nhóm bậc 2 của app con — 4 nhóm NHẬP DỮ LIỆU (bậc 1, GĐ 420) + 4 nhóm
+ *  DOWNLOAD giữ key cũ + 3 BÁO CÁO + XEM BÁO CÁO MỌI NGƯỜI (GĐ 438) + UPLOAD
+ *  + NHIỆM VỤ + BANK. */
 export const BH_GROUPS: BhGroup[] = [
   // ============================================================
   // GĐ 420 (13/10 — yêu cầu Đại ca): NHẬP DỮ LIỆU — nhóm bậc 1 sidebar app con
@@ -194,6 +195,19 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-lich-hen", label: "Danh sách lịch hẹn tiêm" },
     ],
   },
+  // ============================================================
+  // GĐ 438 (14/10/2026 — yêu cầu Đại ca): "BÁO CÁO — XEM CỦA MỌI NGƯỜI" —
+  // user ĐƯỢC PHÂN QUYỀN (toggle dưới đây) xem được báo cáo đã tạo của MỌI
+  // NGƯỜI như Admin (sqlreport/txds — lịch sử + kết quả), KHÔNG phân biệt
+  // Admin/user. CHỈ áp dụng phần XEM báo cáo — không mở hủy/xóa job người khác.
+  // Nhóm không có lá (toggle nhóm = công tắc duy nhất). App con đọc trực tiếp
+  // key "bh-xem-bao-cao-moi-nguoi" trong module_access (canViewAllReports).
+  // ============================================================
+  {
+    key: "bh-xem-bao-cao-moi-nguoi",
+    label: "BÁO CÁO — XEM CỦA MỌI NGƯỜI",
+    leaves: [],
+  },
   {
     key: "bh-upload-misa-amis",
     label: "UPLOAD - MISA AMIS",
@@ -233,7 +247,7 @@ export const BH_GROUPS: BhGroup[] = [
   },
 ];
 
-/** Mọi key nhóm (14) — dùng vòng for, tránh suy diễn từ mảng literal. */
+/** Mọi key nhóm (15) — dùng vòng for, tránh suy diễn từ mảng literal. */
 export const BH_GROUP_KEYS: string[] = BH_GROUPS.map((g) => g.key);
 
 /** Mọi key lá (bh-leaf-*) — phẳng từ BH_GROUPS. */
