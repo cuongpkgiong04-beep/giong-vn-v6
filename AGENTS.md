@@ -1705,4 +1705,18 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > banhang\INPUT\chuong_trinh_km\<ngày>\` thấy file gốc + bấm "AI đọc" → Lưu →
 > dữ liệu vào bảng như cũ.
 
+> **✅ PHẦN AGENT-SIDE ĐÃ XONG (phiên làm GĐ 429 — commit repo con `876f632`):**
+> phiên em (GĐ 429 — Module MUA HÀNG) là phiên đang giữ `api_server.py` M, đã commit
+> ĐÚNG phần của mình bằng blob dựng từ HEAD + sửa của em (`git hash-object -w` +
+> `update-index --cacheinfo`) — WIP `/dieu-chuyen` của phiên kia GIỮ NGUYÊN chưa
+> staged (không nuốt). Nội dung: `_MH_ROOT` → `apps/banhang/INPUT` +
+> `MH_MODULE_FOLDER` (bang_gia_vx | loyalty | don_dat | ncc_order | chuong_trinh_km)
+> + đường lưu `INPUT\<module>\<yyyy-mm-dd>\<HHMMSS>_<tên gốc>` + log "file gốc
+> GIỮ LẠI tại INPUT" + guard `/mua-hang/extract` đổi sang kho INPUT + test 4/4 PASS
+> + web ghi rõ INPUT. Đã restart `GIONG_API_Server` 08:39 → **probe HTTP THẬT: upload
+> → `INPUTang_gia_vx6-10-14 83956_probe_input_check.txt`** (đã dọn) + sync
+> `.env.local` 2 app tunnel mới (production tự lành). **→ GĐ 434 KHÉP KÍN cả 2 phía**
+> (web: `6b9cbb6` + docs `2ffc13b` phiên kia; agent: `876f632` của em) — còn lại chỉ
+> chờ lệnh Push cho các commit local này.
+
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.3.0** / repo con **9.4.0**.
