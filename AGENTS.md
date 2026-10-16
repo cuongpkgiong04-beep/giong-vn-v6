@@ -558,6 +558,15 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
    bối cảnh.
 5. **Checkpoint là nguồn sự thật:** AGENTS.md (quy tắc + entry mới) +
    AGENTS_ARCHIVE.md (lịch sử đầy đủ). Mọi phiên mới luôn đọc AGENTS.md trước.
+6. **Think in Code (hiệu lực 2026-10-17, GĐ 450 — ĐH chốt PA-3 sau khảo sát
+   context-mode GĐ 449):** việc ĐẾM / LỌC / PHÂN TÍCH / SO SÁNH dữ liệu lớn
+   (file lớn, log, dump DB, danh sách dài) → **viết script node/python xử lý
+   rồi chỉ in KẾT QUẢ nhỏ vào context** — KHÔNG đọc nguyên dữ liệu vào phiên
+   (1 script thay hàng chục lần Read; mẫu: probe plan GĐ 448, tách archive
+   GĐ 416, audit phân quyền 3 nguồn GĐ 420). Read/grep trực tiếp CHỈ dành cho
+   chỗ cần xem/sửa ĐÚNG DÒNG (quy tắc 2). Bắt buộc với MỌI Agent — kể cả
+   probe DB/log qua API agent: lấy JSON về file/BIẾN rồi lọc trong script,
+   không in toàn bộ response ra phiên.
 
 ### Xử lý khi ĐÃ gặp lỗi tràn context (tham khảo nhanh):
 
@@ -2347,3 +2356,25 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (khảo sát docs-only — 0 code đổi). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 450 (Trợ lý Freebuff): PA-3 ĐH chốt — KHÔNG cài context-mode; rút "Think in Code" thành quy tắc số 6 mục 11 (2026-10-17)
+
+> **ĐH chốt PA-3 (17/10, sau khảo sát GĐ 449):** KHÔNG cài context-mode — chỉ
+> rút tinh thần "Think in Code" thành quy tắc làm việc cho MỌI Agent.
+
+> **Đã làm (docs-only — 0 code đổi):** mục 11 QUY TẮC QUẢN LÝ CONTEXT thêm
+> **quy tắc số 6 Think in Code**: việc đếm/lọc/phân tích/so sánh dữ liệu lớn
+> (file lớn, log, dump DB, danh sách dài) → viết script node/python xử lý rồi
+> chỉ in kết quả nhỏ vào context — KHÔNG đọc nguyên dữ liệu vào phiên (1 script
+> thay hàng chục lần Read); Read/grep trực tiếp chỉ khi xem/sửa ĐÚNG DÒNG
+> (quy tắc 2); kể cả probe DB/log qua API agent — lọc trong script, không in
+> toàn bộ response. Nêu 3 mẫu đã áp dụng: probe plan GĐ 448, tách archive
+> GĐ 416, audit phân quyền GĐ 420.
+
+> **Tiêu chí kiểm chứng:** các phiên sau đọc mục 11 thấy ngay quy tắc 6; khi
+> gặp việc phân tích dữ liệu lớn agent viết script thay vì Read toàn bộ.
+
+> **Version:** KHÔNG bump (docs-only). App tổng **6.5.0** / repo con
+> **9.6.0**.
