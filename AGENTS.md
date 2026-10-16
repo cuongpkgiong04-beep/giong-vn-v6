@@ -2308,3 +2308,42 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 449 (Trợ lý Freebuff): Khảo sát thư mục `context-mode-main` — công cụ tiết kiệm context cho AI Agent — KHÔNG cài, trình 3 PA chờ ĐH (2026-10-17)
+
+> **Yêu cầu của ĐH (17/10):** tìm hiểu
+> `D:\DuLieuChung\CUONG_2026\Github\context-mode-main` xem có áp dụng vào dự
+> án giong-vn-v6 được không (tiền lệ GĐ 427 browser-use, GĐ 441 nanobrowser).
+
+> **Kết quả khảo sát (đọc README + platform-support + BENCHMARK + LICENSE +
+> hooks):** **context-mode** (npm `context-mode` v1.0.169, tác giả cá nhân
+> mksglu — HN #1) là **MCP plugin cho AI coding agents** — KHÔNG phải thư
+> viện cho ứng dụng web. Giải 4 bài toán: (1) sandbox `ctx_execute` giữ raw
+> data ngoài context (benchmark 96-98% — 315KB → 5.4KB); (2) session continuity
+> SQLite + FTS5/BM25 (trả lại ngữ cảnh sau compact); (3) "Think in Code" —
+> agent viết script xử lý thay vì đọc raw; (4) hooks chặn curl/WebFetch/Read
+> thuần và điều hướng về sandbox. Hỗ trợ 17 platforms (Claude Code, Codex CLI,
+> Gemini CLI, Cursor...) — **KHÔNG có ZCode**; Codex CLI hỗ trợ full
+> (`~/.codex/hooks.json` + config.toml). **License Elastic-2.0** (không
+> MIT/Apache): dùng nội bộ hợp lệ, cấm cung cấp như managed service.
+
+> **Đánh giá áp dụng vào giong-vn-v6:** (1) KHÔNG tích hợp vào app
+> tổng/app con/agent Python — sai mục đích; (2) giá trị thật = công cụ cho
+> các phiên AI Agent làm việc trên repo — đúng bài toán GĐ 319 (tràn context
+> 400K); NHƯNG 3 rào cản: ZCode không nằm trong 17 platform (chỉ dùng được
+> lớp MCP-only, mất auto-routing) · hooks chặn curl/WebFetch/Read → GÃY quy
+> trình probe tunnel/8777 + E2E Playwright + đọc code trực tiếp của mình ·
+> phụ thuộc package cá nhân + hooks ghi đè cấu hình client.
+
+> **Trình 3 PA (chờ ĐH chốt):** PA-1 cài MCP-only cho ZCode (không hooks —
+> chỉ thêm 5-6 tool ctx_*, không chặn gì, thí nghiệm 1 phiên) · PA-2 full
+> MCP+hooks trên Claude Code/Codex CLI (tiết kiệm tối đa nhưng gãy workflow
+> curl/Read hiện tại) · **PA-3 khuyến nghị: KHÔNG cài — chỉ rút paradigm
+> "Think in Code" vào quy tắc mục 11 AGENTS.md** (việc đếm/lọc/phân tích file
+> lớn → viết script node/python chỉ in kết quả — cách em đã tự làm qua các
+> probe script các GĐ trước), 0 chi phí 0 phụ thuộc.
+
+> **Version:** KHÔNG bump (khảo sát docs-only — 0 code đổi). App tổng
+> **6.5.0** / repo con **9.6.0**.
