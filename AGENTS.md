@@ -2419,3 +2419,37 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version: KHÔNG bump** (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 451 / C.276 (Trợ lý Freebuff): Ghi sổ tự động cho job 23:00 + điều tra 3 phiếu TT 01/10 + rà soát Push (2026-10-17)
+
+> **Lệnh ĐH (17/10): "1+2+3"** theo 3 gợi ý em nêu ở GĐ 447.
+
+> **① JOB TỰ ĐỘNG GHI SỔ — ĐÃ BẬT (repo con `2d1d74d`, agent ĐÃ restart):**
+> env `MISA_AUTO_POST=1` cho job `misa-mua-hang-api` (40_web_agent.py) + chèn bước
+> **misa-mua-hang-api** vào Task_02 gốc NGAY SAU 'nhapkho' (20 → **21 bước**, script
+> `gd451_add_misa_step.py` idempotent + backup config) + **restart GIONG_SMED_Agent**
+> (kiểm tra rảnh trước: 0 job/0 task; verify log mới "Task_02 tự chạy 23:00").
+> ⇒ Từ tối nay 23:00: job tạo phiếu Mua hàng MISA **+ TỰ GHI SỔ** cho cả 19 TT.
+
+> **② 3 PHIẾU TT 01/10 — ĐIỀU TRA XONG: nguyên nhân KHÁC dự đoán GĐ 444** (không
+> phải phiếu bị xóa): **tài khoản SMED của TT không thấy BẤT KỲ phiếu nhập nào** —
+> search 3 mã 01/10 + 2 mã 07-08/10 + 2 mã 30/09 + search RỘNG ("PN-2026"/tên NCC)
+> đều 0 dòng, trong khi LB/TD tìm thấy ngay bằng cùng hàm builder (đối chứng: user
+> LB không thấy phiếu TT; user TT không tồn tại ở domain tcgiongts). MISA cũng chưa
+> có 5 mã TT tháng 10. ⇒ **VIỆC CỦA ĐH:** kiểm tra tài khoản TT trên SMED (quyền
+> xem phân hệ Kho / kho TT có tồn tại / hoạt động nhập kho do ai thực hiện) — xong
+> thì chạy builder cho TT kỳ 01/10 + 07/10 + 08/10 là tự tạo + ghi sổ.
+
+> **③ RÀ SOÁT PUSH — CHƯA SẴN SÀNG (đúng kế hoạch "đợt gộp" ĐH đã chốt):**
+> 15 commit chưa push (repo con) + 21 commit (app tổng). **Module Điều chuyển của
+> PHIÊN SONG SONG còn dở** (untracked: `src/components/dieu-chuyen/`,
+> `-dieu-chuyen.ts`, `bc-dieu-chuyen-matrix.tsx`; modified: `nhap-dieu-chuyen.tsx`,
+> `-smed.ts`, `quy-trinh-mua-hang.tsx`). ⚠️ Kiểm tra thêm: `routeTree.gen.ts` (đã
+> commit GĐ 447) tham chiếu route chưa commit → an toàn trên Vercel vì plugin
+> `tanstackStart()` tự sinh lại routeTree khi build, nhưng **nên Push SAU khi phiên
+> song song commit xong** (hoặc kiểm tra log build app con nếu Push trước).
+
+> **Version: KHÔNG bump** (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.5.0** / repo con **9.6.0**.
