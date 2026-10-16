@@ -2196,3 +2196,17 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > XÓA + TẠO LẠI.
 
 > **Unit 6/6 + 7/7 PASS. Version: KHÔNG bump** — app tổng **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 444 / C.271 — ĐỢT 4 (Trợ lý Freebuff): CHẠY 19 TRUNG TÂM NGÀY 16/10 — 34/34 phiếu khớp DB từng đồng (2026-10-16 tối)
+
+> **Lệnh ĐH:** "xây dựng đủ 19 trung tâm và chạy 19 trung tâm ngày 16/10/2026".
+> Builder (đã tra danh mục động đủ 19 TT ở đợt 3) + script `_run_all_centers.sh`
+> chạy loop 18 TT (TĐ test trước) — 20:53→21:11.
+
+> **✅ KẾT QUẢ: 34/34 phiếu ngày 16/10 tạo trên MISA — MISA 568.141.273 khớp
+> DB stg_5BKN TỪNG ĐỒNG (lệch 0).** 11 TT có phiếu (TD 5 · QO 6 · HM/PY/LM 4 ·
+> ML 3 · ĐX/TS/TP 2 · LB/TĐ 1); 8 TT không nhập hàng ngày này. LB 1 lỗi
+> transient → retry OK. Log `agent/LOG/gd444-run19-1610.log` (gitignore) ·
+> chi tiết entry C.271 AGENTS.md repo con. **Version: KHÔNG bump** — 6.5.0/9.6.0.
