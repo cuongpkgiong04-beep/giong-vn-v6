@@ -2171,3 +2171,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Việc tiếp:** CENTER_IDS 18 trung tâm còn lại (tra API danh mục) · nối job
 > 40_web_agent · check trùng số CT khi chạy lại. **Version: KHÔNG bump** —
 > app tổng **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 444 / C.271 — ĐỢT 3 (Trợ lý Freebuff): 3 danh mục MISA + VỊ TRÍ vào phiếu + bài học DELETE (2026-10-16 tối)
+
+> **ĐH gửi 3 danh mục MISA** (kho/vị trí/mã thống kê — 20 mã: 19 TT + VP, mã
+> trung tâm = mã kho = mã vị trí = mã thống kê) + yêu cầu phiếu PN-20261012155647
+> thiếu **Vị trí** → sửa thêm.
+
+> **Đã làm (repo con — entry C.271 đợt 3 + CHECKPOINT-GD444.md):** tìm ra 4
+> endpoint danh mục GET (`di/v1/stock_get` · `inventory_location_get` ·
+> `list_item_get` · `organization_unit_get`) → builder tra ĐỘNG đủ 19 trung tâm;
+> thêm `inventory_location_id/code` vào detail; file .xls lưu `agent/misa_danh_muc/`.
+
+> **✅ Kết quả:** phiếu PN-20261012155647 tạo lại **có Vị trí NL** (refid
+> `1f7434d1`) — UI xác nhận: VAXIGRIP · kho NL · **Vị trí NL** · 45.900.000.
+
+> **⚠️ 2 bài học vận hành MISA (rất quan trọng cho phiên sau):**
+> (1) `DELETE /pu_voucher/batch_voucher` body đúng = **`[{"refid": uuid}]`** —
+> body `[{"Key":...}]` trả Success nhưng KHÔNG xóa (5 phiếu tưởng đã xóa thực ra
+> còn — đã xóa thật + verify từng phiếu, MISA sạch 0 rác);
+> (2) UPDATE phiếu qua save_full bị chặn InvalidRefno Code 6 → muốn sửa phải
+> XÓA + TẠO LẠI.
+
+> **Unit 6/6 + 7/7 PASS. Version: KHÔNG bump** — app tổng **6.5.0** / repo con **9.6.0**.
