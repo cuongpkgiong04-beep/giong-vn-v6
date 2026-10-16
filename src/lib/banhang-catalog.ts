@@ -60,6 +60,11 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/danh-muc-nha-cung-cap", label: "Danh mục Nhà cung cấp" },
       { to: "/m/danh-muc-trung-tam", label: "Danh mục Trung tâm" },
       { to: "/m/danh-muc-khach-hang", label: "Danh mục Khách hàng" },
+      // GĐ 447 / C.274 (17/10 — ĐH chốt "1+2+3", GĐ 444 tồn đọng (b)): 3 danh mục
+      // MISA (Kho · Vị trí · Mã thống kê) — seed từ file Excel ĐH gửi.
+      { to: "/m/danh-muc-kho", label: "Danh mục Kho" },
+      { to: "/m/danh-muc-vi-tri", label: "Danh mục Vị trí" },
+      { to: "/m/danh-muc-ma-thong-ke", label: "Danh mục Mã thống kê" },
       { to: "/m/danh-muc-khac", label: "Danh mục khác" },
     ],
   },
@@ -181,6 +186,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-kiem-ke", label: "Báo cáo kiểm kê cuối tháng" },
       { to: "/m/bc-matrix-nhap", label: "Báo cáo nhập kho — ma trận theo trung tâm" },
       { to: "/m/bc-matrix-xuat", label: "Báo cáo xuất kho — ma trận theo trung tâm" },
+      // GĐ 430 / C.260 (14/10/2026 — yêu cầu Đại ca): Ma trận điều chuyển nội bộ Vắc Xin
+      { to: "/m/bc-dieu-chuyen-matrix", label: "Điều chuyển nội bộ — Ma trận tổng hợp" },
     ],
   },
   {
@@ -213,7 +220,7 @@ export const BH_GROUPS: BhGroup[] = [
     label: "UPLOAD - MISA AMIS",
     leaves: [
       { to: "/m/up-hoadon-gtgt", label: "UPLOAD Hóa đơn GTGT bán hàng" },
-      { to: "/m/up-nhap-kho", label: "UPLOAD Bảng kê phiếu nhập kho" },
+      { to: "/m/up-nhap-kho", label: "UPLOAD Chứng từ mua hàng" },
       { to: "/m/up-xuat-kho", label: "UPLOAD Bảng kê phiếu xuất kho" },
       { to: "/m/up-tecombank", label: "UPLOAD Ngân hàng TECOMBANK" },
       { to: "/m/up-tpbank", label: "UPLOAD Ngân hàng TPBANK" },

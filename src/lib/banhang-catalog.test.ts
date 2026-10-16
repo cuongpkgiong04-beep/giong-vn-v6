@@ -20,6 +20,10 @@ test("GĐ 420 — cấu trúc: 15 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số 
     "/m/danh-muc-nha-cung-cap",
     "/m/danh-muc-trung-tam",
     "/m/danh-muc-khach-hang",
+    // GĐ 447/C.274: 3 danh mục MISA (Kho · Vị trí · Mã thống kê)
+    "/m/danh-muc-kho",
+    "/m/danh-muc-vi-tri",
+    "/m/danh-muc-ma-thong-ke",
     "/m/danh-muc-khac",
   ]);
   assert.deepEqual(routesOf("bh-nhap-kho-hang"), ["/m/nhap-dieu-chuyen"]);
