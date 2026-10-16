@@ -2378,3 +2378,44 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (docs-only). App tổng **6.5.0** / repo con
 > **9.6.0**.
+
+---
+
+### GĐ 447 / C.274 (Trợ lý Freebuff): ĐH chốt "1+2+3" — tự ghi sổ + tạo lại 34 phiếu 16/10 (ghi sổ 34/34) + 3 danh mục MISA lên sidebar (2026-10-17)
+
+> **Lệnh ĐH (17/10): "1+2+3"** theo 3 gợi ý em đề xuất ở GĐ 446.
+
+> **② Builder TỰ GHI SỔ (repo con `23649fa`):** thêm `build_ledger_post_body` +
+> `post_ledger` (POST `ledger/v1/ledger/post` với `PassWarnings` +
+> `IsPassAllWarning:true` = tương đương UI bấm "Có" ở cảnh báo MỀM 5 mục) +
+> CLI `--post` + env `MISA_AUTO_POST` (dùng cho job tự động); wrapper log +
+> đếm "đã ghi sổ x/y". Unit **8/8 PASS**.
+
+> **① TẠO LẠI 34 PHIẾU NGÀY 16/10 — HOÀN TẤT:** xóa phiếu bản cũ (chỉ xóa khi
+> hội đủ 3 điều kiện an toàn: mã nằm trong stg_5BKN 16/10 · chưa có Đơn vị/Mã
+> thống kê · chưa ghi sổ) → tạo lại bằng builder mới + ghi sổ tự động.
+> **KẾT QUẢ: xóa 34 · tạo 34 · GHI SỔ 34/34 · 0 lỗi** — verify độc lập:
+> **34/34 đủ 2 mã + 34/34 `is_posted_finance=true` + tổng 568.141.273 khớp DB
+> từng đồng**.
+
+> **③ 3 DANH MỤC MISA LÊN SIDEBAR (NHẬP DỮ LIỆU → DANH MỤC → 5/6/7):** seed 3
+> bảng GiondDB `dm_misa_kho` · `dm_misa_vi_tri` · `dm_misa_ma_thong_ke` (20
+> dòng/bảng = 19 TT + VP từ 3 file Excel ĐH gửi, script `gd447_seed_dm_misa.py`)
+> + 3 trang app con + nav.ts + phân quyền 3 điểm (app tổng `banhang-catalog.ts`
+> 5→8 lá + `smed-auth.ts` ROUTE_TO_GROUP + routeTree). Verify: probe qua endpoint
+> web `/query` 20/20 dòng/bảng · tsc app con **EXIT 0** · app tổng unit **58/58
+> PASS**.
+
+> **⚠️ CẢNH BÁO TRÙNG LẶP (nguyên tắc 3 — ĐH biết trước khi Push):** 4 FILE DÙNG
+> CHUNG có thay đổi của **PHIÊN SONG SONG** (module Điều chuyển nội bộ GĐ 430/C.260)
+> đã bị commit kèm trong đợt này vì bắt buộc chạm: repo con `nav.ts` ·
+> `smed-auth.ts` · `routeTree.gen.ts` (lá `/m/bc-dieu-chuyen-matrix` + label
+> "UPLOAD Chứng từ mua hàng" + refactor `BANHANG_GROUP_KEYS`) · app tổng
+> `banhang-catalog.ts` (2 dòng tương ứng). **Route web app con của module điều
+> chuyển CHƯA commit** — phiên đó commit riêng (khi Push rà 2 repo + merge nhánh).
+
+> **Tiêu chí kiểm chứng:** MISA 34 phiếu 16/10 "Đã ghi sổ"; chạy builder
+> `--post` → log "📗 ĐÃ GHI SỔ"; sidebar app con có 3 danh mục MISA mới (20 dòng/bảng).
+
+> **Version: KHÔNG bump** (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.5.0** / repo con **9.6.0**.
