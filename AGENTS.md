@@ -2210,3 +2210,29 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > ML 3 · ĐX/TS/TP 2 · LB/TĐ 1); 8 TT không nhập hàng ngày này. LB 1 lỗi
 > transient → retry OK. Log `agent/LOG/gd444-run19-1610.log` (gitignore) ·
 > chi tiết entry C.271 AGENTS.md repo con. **Version: KHÔNG bump** — 6.5.0/9.6.0.
+
+---
+
+### GĐ 444 / C.271 — ĐỢT 5 (Trợ lý Freebuff): retry tự động + IDEMPOTENT + job type (2026-10-16 đêm)
+
+> **Lệnh ĐH:** "thêm retry tự động và nối vào task/job; tạo danh mục để vào phần
+> danh mục trên sidebar (3 file Excel ĐH gửi)".
+
+> **✅ Đã xong (repo con — entry/checkpoint C.271 đợt 5):**
+> (1) **Retry tự động** — scrape SMED 3 lần + upload 2 lần; lỗi nghiệp vụ
+> (InvalidInvno/InvalidRefno/NCC) KHÔNG retry — đã chứng minh chạy thật;
+> (2) **IDEMPOTENT** — phiếu đã tồn tại (trùng số HĐ) → skip "đã tồn tại trên
+> MISA" thay vì failed → job chạy lặp an toàn exit 0 (chứng minh 22 phiếu 01/10
+> tự bỏ qua);
+> (3) **Job type `misa-mua-hang-api`** trong 40_web_agent.py REPORT_MAP + marker
+> "✅ PHIẾU ĐÃ TẠO" — wrapper `misa_muahang_api_run.py` chạy CẢ 19 trung tâm
+> theo SMED_FROM_DATE + tổng kết JSON + exit code chuẩn.
+
+> **⚠️ Tồn đọng 2 việc (checkpoint `CHECKPOINT-GD444.md`):**
+> (a) **3 phiếu TT ngày 01/10** (PN-...163416/163827/164153) — phiếu KHÔNG còn
+> hiện trên SMED khi search (nghi hủy/đổi mã sau khi tải BKN) — cần điều tra;
+> (b) **3 danh mục sidebar** (KHO/VỊ TRÍ/MÃ THỐNG KÊ từ file Excel ĐH gửi) —
+> CHƯA làm (seed + route + nav + phân quyền 3 điểm) — ước lượng 1 phiên.
+> 01/10 hiện 22/25 phiếu trên MISA (ĐH đã đồng ý giữ).
+
+> **Version: KHÔNG bump** — app tổng **6.5.0** / repo con **9.6.0**.
