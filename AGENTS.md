@@ -2073,3 +2073,40 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump. App tổng **6.4.0** / repo con **9.5.0** — giữ
 > nguyên. Commit chờ lệnh Push (app tổng entry · repo con `443de0e`).
+
+---
+
+### GĐ 444 / C.271 (Trợ lý Freebuff): PA-1 SMED phiếu nhập kho → MISA AMIS "Mua hàng" — chặng 1+2 xong, chứng minh API save_full tạo phiếu thật (2026-10-16)
+
+> **ĐH chốt PA-1** (16/10 sau khi em trình 3 PA — anh chọn "đóng Chrome, em
+> mở lại kèm cổng điều khiển CDP" khi trao đổi cách truy cập MISA). Chi tiết
+> đầy đủ entry **C.271 AGENTS.md repo con** + checkpoint
+> `apps/banhang/agent/CHECKPOINT-GD444.md` + schema
+> `apps/banhang/agent/misa_save_full_schema_gd444.json`.
+
+> **Tóm tắt:** (1) probe stg_5BKN thật 13-15/10 → code GĐ 428 đọc SAI cột
+> (col12=%VAT · col13=đơn giá SAU VAT · col14=thành tiền — code cũ map col13
+> thành thanh_tien) → sửa + fill %VAT thật + dedupe ma_phieu (repo con
+> `399cb8d`, unit 7/7, đối chứng 25/25 dòng khớp từng đồng). (2) fix bug
+> misa_login GĐ 428 (ĐH duyệt riêng): xóa vòng OTP lặp sau dashboard +
+> dead code, lưu phiên storage_state vào luồng chính, nhánh không-OTP hết
+> return False oan, user/pass từ param. (3) chặng 2: giải mã bundle JS —
+> save_full cho phiếu nhỏ / save_batch W-form cho lớn; **PAYLOAD CHUẨN bắt
+> từ request thật khi UI bấm Cất qua CDP** — `[{Type, RefType:302,
+> RefTypeCategory:201, Object:{master}, Details:[{Alias,View,Objects}],
+> Links:[pu_invoice RefType:3400]}]` — số/ngày/ký hiệu HĐ + NCC nằm trong
+> Links[0].Object (SMED chi tiết phiếu); **%VAT không có trường riêng** —
+> server suy từ unit_price ↔ unit_price_after_tax. (4) **CHỨNG MINH THẬT:**
+> save_full đúng schema → Success · phiếu tạo thật (refid c9638d9d —
+> detail_full Success).
+
+> **Rác MISA (báo ĐH — chưa xóa):** 1 phiếu Gardasil 9 (refid c9638d9d,
+> refno None — UI search không thấy). 0 phiếu TEST_CUONG_MH-P2* (probe cũ
+> không tạo phiếu). ĐH đồng ý rồi em mới xóa.
+
+> **Tiếp theo:** builder API thuần thay fill form — tra ID danh mục (NCC +
+> hàng hóa/đvt/kho/vị trí) + inventory_location_id từng dòng (hết lỗi "Tài
+> khoản 156_NL chi tiết theo Đơn vị") → test 1 kỳ thật 13/10 (8 phiếu).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.5.0** / repo con **9.6.0**.
