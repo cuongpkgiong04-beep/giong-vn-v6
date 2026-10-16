@@ -2236,3 +2236,41 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 01/10 hiện 22/25 phiếu trên MISA (ĐH đã đồng ý giữ).
 
 > **Version: KHÔNG bump** — app tổng **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 446 / C.273 (Trợ lý Freebuff): Phiếu Mua hàng thiếu Mã đơn vị + Mã thống kê → thêm vào phiếu, GHI SỔ ĐƯỢC (2026-10-16 đêm)
+
+> **ĐH báo (16/10 22:41, ảnh MISA):** "Ghi sổ không thành công — Tài khoản 156_LM
+> chi tiết theo **Đơn vị**. Vui lòng bổ sung thông tin Đơn vị. Tài khoản 156_LM
+> chi tiết theo **Mã thống kê**. Vui lòng bổ sung thông tin Mã thống kê." →
+> "Em cho thêm vào cho anh nhé. Các mã giống nhau do đều lấy từ tên trung tâm
+> viết tắt VD: TĐ, TD, BH (Mã kho, Vị trí, Mã đơn vị, Mã thống kê)."
+
+> **Đã làm (repo con code `4e7304b` + entry `479314c`):** builder
+> `misa_muahang_api.py` — tra danh mục MISA lấy thêm tên + thêm **7 key** vào
+> dòng chi tiết (90 key): `list_item_id/code/name` (Mã thống kê) +
+> `organization_unit_id/code/name` (Đơn vị) + `inventory_location_name` (Vị trí).
+> Tài liệu mới `agent/misa_ghi_so_gd446.json` (API ghi sổ + cơ chế cảnh báo 2 bước).
+
+> **Probe (bằng chứng thật):** 4 danh mục MISA (kho · vị trí · mã thống kê · đơn
+> vị) đều dùng **MÃ TRUNG TÂM VIẾT TẮT** (NL/LM/TĐ/TD…; đơn vị có thêm GIONGVN
+> công ty mẹ) — đúng như ĐH nói; tên key đối chiếu phiếu kế toán cũ ĐÃ GHI SỔ
+> (PN-20260930150232); MISA KHÔNG tự tra tên từ id (phiếu builder cũ
+> `inventory_location_name = None`).
+
+> **✅ VERIFY THẬT trọn chuỗi:** xóa phiếu test cũ (DELETE `batch_voucher`
+> `[{"refid":…}]` + verify không còn dữ liệu) → tạo lại (refid `bb51ebcc`) →
+> detail_full **đủ Đơn vị NL + Mã thống kê NL** (id/code/name) + 45.900.000 khớp →
+> **GHI SỔ THÀNH CÔNG** (lỗi cứng Đơn vị/Mã thống kê ĐÃ HẾT; chỉ còn cảnh báo MỀM
+> 5 mục — phiếu kế toán cũ cũng vậy — pass bằng `IsPassAllWarning:true` →
+> `is_posted_finance = true`) → chạy lại builder **idempotent skip OK** → unit
+> **7/7 PASS**.
+
+> **⚠️ TỒN ĐỌNG chờ ĐH:** 34 phiếu ngày 16/10 tạo TRƯỚC fix (thiếu 2 mã) → muốn
+> ghi sổ phải **XÓA + TẠO LẠI** từng phiếu (sửa qua save_full không được —
+> InvalidRefno). Phiếu NL 12/10 đã ghi sổ trong quá trình verify (bỏ ghi sổ được
+> nếu ĐH muốn). Ghi sổ tự động trong builder = việc sau, chờ ĐH chốt.
+
+> **Version: KHÔNG bump** (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.5.0** / repo con **9.6.0**.
