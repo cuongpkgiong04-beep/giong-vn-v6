@@ -2142,3 +2142,32 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 444 / C.271 — BỔ SUNG (Trợ lý Freebuff): builder API thuần HOÀN THÀNH + TEST THẬT THÀNH CÔNG (2026-10-16)
+
+> **ĐH chốt nghiệp vụ bổ sung (16/10 chiều) + giao test NL:** login SMED user
+> trung tâm nào → trung tâm+kho đó · dữ liệu từ CHI TIẾT PHIẾU NHẬP SMED ·
+> VAT không nhập (đơn giá = giá đã có thuế) · ngày hạch toán = ngày hóa đơn ·
+> số CT = mã phiếu SMED · NCC tra theo `danh_sach_nha_cung_cap.xlsx` ĐH gửi
+> (138 NCC) · NCC/hàng không khớp → bỏ phiếu + báo lỗi.
+
+> **Builder `agent/misa_muahang_api.py`** (repo con — chi tiết entry C.271 +
+> `CHECKPOINT-GD444.md`): SMED chi tiết phiếu qua Playwright (19 user trung tâm)
+> → API MISA tra NCC theo mã + hàng hóa theo tên → save_full với **bộ key CHÍNH
+> XÁC như UI gửi** (49 master + 79 detail — capture FULL 6028 ký tự). **Bài học
+> lớn:** payload theo schema RESPONSE (105 trường) → Code 99 liên tục.
+
+> **✅ TEST THẬT 17:33 — PHIẾU TẠO QUA API THUẦN, KHỚP TỪNG ĐỒNG:**
+> `python misa_muahang_api.py --date 12/10/2026 --center NL` → PN-20261012155647
+> (refid `747b4cc6`) · VAXIGRIP 0.5ml · SL 200 × 229.500 (giá có thuế, VAT 0) =
+> **45.900.000** · số HĐ 00055672 · ngày hạch toán 12/10/2026 = ngày HĐ ·
+> NCC DP TB YT Hà Nội · kho NL. Đã gửi ĐH ảnh UI MISA xác nhận đầy đủ số liệu.
+
+> **Đã dọn 5 phiếu rác MISA theo lệnh ĐH** (4 phiếu form UI 0 đồng + Gardasil
+> GĐ 442) — còn đúng 1 phiếu test đầy đủ. Unit 6/6 + 7/7 PASS.
+
+> **Việc tiếp:** CENTER_IDS 18 trung tâm còn lại (tra API danh mục) · nối job
+> 40_web_agent · check trùng số CT khi chạy lại. **Version: KHÔNG bump** —
+> app tổng **6.5.0** / repo con **9.6.0**.
