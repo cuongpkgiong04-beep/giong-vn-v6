@@ -2110,3 +2110,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+### GĐ 445 / C.272 (Trợ lý Freebuff): PA-1 — DANH MỤC 2 "Nhà cung cấp" cập nhật theo file Excel kế toán + CRUD THẬT (2026-10-16)
+
+> **Yêu cầu của Đại ca (16/10):** cập nhật DANH MỤC 2 "Nhà cung cấp" app con
+> theo file Excel `Danh_sach_nha_cung_cap.xlsx` (BCTHUE 2026 anh đính kèm).
+> Trang trước đây (C.195) đọc tổng hợp từ `mia_hddt_hd` (chỉ ra 1 NCC) + CRUD
+> "chỉ giao diện" (PA-3 GĐ 358). **ĐH chốt PA-1:** bảng riêng + nạp 137 dòng
+> + CRUD thật. Chi tiết đầy đủ ở AGENTS.md repo con C.272 (code `e940877`,
+> docs repo con `a7db5df`).
+
+> **Đã làm (repo con `e940877` — 7 file +475/−42):** GiondDB bảng mới
+> `dm_nha_cung_cap` (ma UNIQUE · ten · dia_chi · updated_by truy vết) + seed
+> idempotent `scripts/gd445_seed_dm_ncc.py` — **137/137 dòng khớp file** (8
+> dòng thiếu MST dùng Mã NCC — `NCC_BL_0001`…; 3 dòng thiếu địa chỉ trống;
+> KHÔNG nạp Số tiền nợ + trường mở rộng) · `-danh-muc.ts`: nguồn trang đọc
+> bảng riêng ORDER BY ten COLLATE Vietnamese_CI_AS + 2 serverFn CRUD
+> (`saveDanhMucNcc` add/edit theo oldMa + `deleteDanhMucNcc` — qua /exec GĐ
+> 398, guard isAdmin: mọi user ĐỌC, chỉ Admin/SuperAdmin GHI) · khung
+> `danh-muc-module.tsx` prop `editable`+`onSave` (lưu ok → tự reload; 3
+> trang danh mục khác giữ nguyên PA-3) · route NCC bật editable.
+
+> **Verify:** unit 10/10 · npm test EXIT 0 (12/11 + 54/54 + 10/10) · tsc app
+> con EXIT 0 · probe CRUD thật INSERT/UPDATE/DELETE qua tunnel PASS — bảng
+> còn nguyên 137. Tunnel đổi URL (`cbs-wise-totals-aware` — gist tự ghi) —
+> đã sync `.env.local` 2 app (quy trình 13.3).
+
+> **Tiêu chí kiểm chứng (sau Push):** trang /m/danh-muc-nha-cung-cap hiện
+> 137 dòng; Admin Thêm/Sửa/Xóa lưu thật (F5 còn); user thường bấm Lưu bị
+> chặn "Chỉ Admin/SuperAdmin được sửa".
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.5.0** / repo con **9.6.0**.
