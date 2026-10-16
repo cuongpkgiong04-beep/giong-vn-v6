@@ -2274,3 +2274,37 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version: KHÔNG bump** (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 448 / C.275 (Trợ lý Freebuff): PA-1 — module Bảng giá Vắc xin: Lưu AI đọc = ĐIỀN GIÁ vào dòng có sẵn theo tên SMED (2026-10-17)
+
+> **ĐH báo (16/10 tối, 2 ảnh):** "Giá niêm yết không được tự động cập nhật là
+> sao nhỉ?... khi chọn nhập liệu từ file thì sẽ phải chọn tên vắc xin trong
+> file được tải lên. Tìm kiếm xem đúng tên Vắc xin đã có trong danh mục Bảng
+> giá để đưa giá Niêm yết vào."
+
+> **Điều tra (E2E thật production — session ĐH, KHÔNG lưu gì):** AI đọc HOẠT
+> ĐỘNG ĐÚNG (dialog 13 dòng CÓ giá) — **GỐC GÃY ở `saveMuaHangDraft` GĐ 429:
+> chỉ INSERT dòng mới, không dò tên khớp 52 dòng danh mục** → 52 dòng gốc giá
+> "—" mãi mãi. DB 16/10: 52 dòng / 0 có giá / 4 file chưa có lượt Lưu. Danh mục
+> 52 dòng không có "Beyfortus" + "Pentaxim". Chi tiết điều tra ở entry C.275
+> AGENTS.md repo con.
+
+> **ĐH chốt PA-1.** Đã làm (repo con code `c628070` — 4 file +299/−23):
+> hàm thuần `planBangGiaUpsert` khớp tên 3 lớp (normVx exact → prefix 2 chiều
+> ≥4 → KHÔNG CÁCH ≥6 — 'AVAXIM80' ↔ 'Avaxim 80U') + `saveMuaHangDraft`
+> UPDATE `COALESCE` chỉ điền ô trống (không đè số điền tay) / không khớp →
+> INSERT + nhãn cột "Dòng AI đọc được" (đếm ngay khi AI đọc xong) + thông báo
+> "điền X dòng có sẵn + thêm Y dòng mới". Module khác giữ nguyên INSERT.
+
+> **Verify:** unit **62/62** (8 mới) · 2 test file khác không ảnh hưởng · tsc
+> app con **EXIT 0** · **probe thật:** 13 dòng AI đọc → **điền 9 dòng có sẵn
+> + thêm 4** (Beyfortus ×2 · Pentaxim — danh mục không có; Vaxigrip dòng 2 —
+> đã nhận giá).
+
+> **Tiêu chí kiểm chứng (sau Push):** AI đọc file bảng giá → Lưu → giá niêm
+> yết hiện ngay trên 52 dòng danh mục; lưu lần 2 không đè giá điền tay.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.5.0** / repo con **9.6.0**.
