@@ -2572,3 +2572,46 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.6.0** / repo con **9.7.0**.
+
+---
+
+### GĐ 455 / C.280 (Trợ lý Freebuff): UPLOAD Chứng từ mua hàng — người dùng tự tạo phiếu MISA cho giai đoạn trước (2026-10-17)
+
+> **Yêu cầu ĐH (17/10, ảnh):** "UPLOAD - MISA AMIS/UPLOAD Chứng từ mua hàng hiện
+> đang chưa có giao diện để người dùng tạo thủ công. Em nghiên cứu cho anh vào để
+> anh cho phép người sử dụng lấy các phiếu nhập kho từ các giai đoạn trước. Còn
+> việc em tạo trên lịch nhiệm vụ thì ĐỂ NGUYÊN chưa vội điều chỉnh." Giao diện
+> giống BÁO CÁO KẾ TOÁN/BÁO CÁO KHO nhưng **chi tiết theo từng phiếu nhập**, gồm:
+> (1) chạy báo cáo (từ ngày→đến ngày) · (2) lịch sử chạy báo cáo · (3) báo cáo chạy
+> ra có nút **"Tải Excel"** và **"Upload Misa"**.
+
+> **ĐH dặn "hỏi lại nếu chưa rõ, đừng đoán"** → em khảo sát (trang placeholder +
+> khung báo cáo mẫu SqlDataModule + job misa-mua-hang-api chỉ 1 ngày) → trình
+> 3 PA cho từng điểm → **ĐH chốt 4 điểm:** nguồn = dữ liệu ĐÃ TẢI VỀ (ngày chưa có
+> → báo chưa đủ dữ liệu + cho tải bổ sung) · Upload Misa = **CẢ KỲ × 19 trung tâm**
+> (tự bỏ qua phiếu đã có) · **GHI SỔ LUÔN** · bảng 8 cột + **Trạng thái MISA**.
+
+> **Đã làm (repo con `6fde0bc` + entry `cb2196d`):** agent — script
+> **`misa_status_sync.py`** (đồng bộ trạng thái phiếu MISA → bảng mới GiondDB
+> `misa_phieu_status`: số HĐ · ngày HĐ · đã ghi sổ) + builder
+> **`misa_nk_chitiet`** (138 phiếu kỳ 01/10→16/10, 9 cột, LEFT JOIN trạng thái) +
+> wrapper **hỗ trợ khoảng ngày** (`iter_days`, trần 92 ngày, unit 4/4) · web —
+> `-smed.ts` (+5 chỗ phân quyền/nguồn/whitelist) + `smed-auth.ts` REPORT_GROUP +
+> `sql-data-module.tsx` **prop `uploadMisa`** (nút Upload Misa + confirm + poll 8s +
+> tự chạy lại báo cáo khi xong) + trang `up-nhap-kho.tsx` (placeholder → giao diện
+> thật 3 phần) + nav desc. **Lịch nhiệm vụ Task_02 KHÔNG đụng (đúng lời ĐH).**
+
+> **✅ VERIFY THẬT (job Upload Misa qua agent, kỳ 12/10→13/10, 19 TT):** tạo
+> **11 phiếu + GHI SỔ 11 · 0 lỗi** → báo cáo cập nhật: 73/138 phiếu có trên MISA ·
+> **51 đã ghi sổ (tăng đúng 11)** · phiếu 12-13/10 = 12/12 "Đã ghi sổ". tsc EXIT 0 ·
+> unit app con PASS. ⚠️ ĐH biết: 11 phiếu 12-13/10 là phiếu THẬT đã lên MISA trong
+> lúc em test end-to-end (đúng nghiệp vụ — cùng loại 34 phiếu 16/10 đã duyệt).
+> ⚠️ Bài học vận hành: Chrome CDP bị treo WebSocket (connect timeout cả sync+async)
+> → kill + mở lại Chrome profile `.secrets/chrome-cdp` (cookie MISA bền, không cần
+> OTP lại); CDP chết thì báo cáo vẫn chạy với trạng thái cũ.
+
+> **Tiêu chí kiểm chứng (sau Push):** mở UPLOAD - MISA AMIS → UPLOAD Chứng từ mua
+> hàng: (1) chọn kỳ → Chạy báo cáo → bảng chi tiết từng phiếu 9 cột + Tải Excel;
+> (2) bấm **Upload Misa** → xác nhận → theo dõi job → bảng tự cập nhật "Đã ghi sổ".
+
+> **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
