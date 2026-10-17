@@ -2643,3 +2643,54 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > Upload Misa) từ giờ đã đúng ngày.
 
 > **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
+
+---
+
+### GĐ 459 / C.283 (Trợ lý Freebuff): Điều tra Task_03 kỳ 16/10 bỏ 6 báo cáo "chưa đủ dữ liệu nguồn" — TCB 0 giao dịch THỰC · MISA BKCT/BKTH đã fix GĐ 456 · tkgvvxdt nguồn rỗng (2026-10-17)
+
+> **ĐH hỏi (17/10):** "TCB đã download xong trong Task_02 nhưng Task_03 không
+> chạy được báo chưa đủ nguồn dữ liệu là sao? Hôm qua 16/10 anh cho chạy nhiệm
+> vụ thì thấy báo lỗi."
+
+> **Bằng chứng điều tra (log agent 16/10 + file Excel thật + DB đối chứng +
+> chạy lại tool):** Task_03 đêm 16/10 chạy 23/29 OK — BỎ 6: hddt-bkth ·
+> hddt-bkct · dsxk-comparison · bank-tcb-chitiet · bank-tcb-tonghop ·
+> tkgvvxdt. 3 nhóm nguyên nhân:
+>
+> 1. **TCB (2 báo cáo) — THỰC TẾ 0 giao dịch, hệ thống ĐÚNG:** Task_02 23:00
+>    tool 41 "✅ xong 1 file" NHƯNG sheet "Txn enquiry without txn" (dòng 21:
+>    "Quý khách không có giao dịch") — ETL nạp 0 GD đúng file. DB đối chứng:
+>    12/10=21 GD · 13/10=8 · 14/10=13 · 15/10=10 · 16/10=0 dòng. Chạy lại tool
+>    17/10 2 lần (kỳ 16/10 riêng + gộp 15→16): kỳ gộp trả 10 GD toàn bộ ngày
+>    15/10 — 16/10 vẫn trống → KHÔNG phải lỗi hệ thống/TCB chậm cập nhật —
+>    tài khoản không phát sinh giao dịch 16/10. Điểm gây hiểu nhầm: tool 41
+>    tải file rỗng vẫn báo "✅ Job xong — 1 file" (khác VCB GĐ 436 "0 file →
+>    job LỖI") → Task_03 bỏ với lý do "chưa đủ dữ liệu nguồn".
+> 2. **MISA BKCT/BKTH (3 báo cáo) — ĐÃ FIX trong GĐ 456 (hôm nay):** tool
+>    30/31 chết fill() ×3 mỗi tool — phiên misa_state chết + MISA đổi login
+>    2 bước + OTP (`a842785` PA-1 verify 2 file 41KB/33KB kỳ 16/10 đã tải).
+>    ⚠️ Agent restart 01:39 TRƯỚC commit fix 11:49 → service đang chạy BẢN
+>    CŨ — ca 23:00 tối nay chết lại nếu phiên MISA hết hạn → cần Push +
+>    restart trước 23:00.
+> 3. **tkgvvxdt — nguồn rỗng kỳ 16/10:** là báo cáo SQL (không download); ETL
+>    ca 23:00 run #5472: 76 file mới chỉ nạp 5 dòng (nguồn DLGoi-Dtruoc kỳ
+>    16/10 ít) → Task_03 bỏ. Soi riêng nếu ĐH cần số này.
+
+> **3 PA trình ĐH (chờ chốt):**
+> - **PA-1 (khuyến nghị):** (a) Push GĐ 456 + restart agent trước 23:00 —
+>   hết chết BKCT/BKTH, chạy lại Task_03 kỳ 16/10 đủ 3 báo cáo hddt/dsxk;
+>   (b) minh bạch hóa TCB: tool 41 gặp "without txn" → báo rõ "TCB không có
+>   giao dịch ngày X (hợp lệ)" + Task_03 bỏ báo cáo TCB với lý do "ngày
+>   không phát sinh giao dịch" (mẫu valid-empty TPB GĐ 436) — hết nhầm
+>   "download xong mà báo cáo chết"; (c) soi tkgvvxdt sau.
+> - **PA-2:** chỉ Push GĐ 456 + restart — giữ nguyên wording TCB (Task_03
+>   tiếp tục bỏ 2 báo cáo TCB ngày 0-GD).
+> - **PA-3:** không đụng gì — chờ ca 23:00 (nếu phiên MISA còn sống thì 3
+>   báo cáo hddt tự chạy được).
+
+> **Tiêu chí kiểm chứng:** sau PA-1: Task_03 chạy lại kỳ 16/10 = 26/29 (3
+> hddt/dsxk có số); ca 23:00 tối nay tool 30/31 hết lỗi fill; ngày TCB 0 GD
+> báo cáo rõ ràng không còn "✅ xong" chung chung.
+
+> **Version:** KHÔNG bump (điều tra docs-only — 0 code đổi). App tổng
+> **6.6.0** / repo con **9.7.0**.
