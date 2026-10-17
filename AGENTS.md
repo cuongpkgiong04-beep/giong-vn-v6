@@ -2773,3 +2773,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** app tổng **6.6.0** / repo con **9.8.0** — đợt GĐ 456 ĐÃ PUSH +
 > LIVE; **phần docs + fix TCB KHÔNG push chờ lệnh** (commit local `d9a517b` +
 > docs đợt này).
+
+---
+
+### GĐ 461 / C.285 (Trợ lý Freebuff): PA Push đợt 17/10 chiều — repo con 9.8.1 LIVE (2026-10-17)
+
+> **Lệnh ĐH:** "Push". Rà trùng lặp 2 repo: nhánh phụ 0 commit · remote 0 commit mới ·
+> **phát hiện phiên song song đã push hộ code GĐ 455/457 của em trong đợt 9.8.0**
+> (remote repo con có `6fde0bc` + `a8ec0b1`) → đợt này chỉ còn: fix TCB (C.284/GĐ 460
+> của phiên song song) + entry GĐ 458 + bump.
+
+> **⚠️ SỰ CỐ ĐA PHIÊN (minh bạch):** commit `9d103d4` của em lỡ **XÓA dòng registry
+> GĐ 460** — nguyên nhân: working tree của `AGENT_REGISTRY.md` đã bị sửa TRƯỚC khi em
+> `git add` (file dùng chung giữa nhiều phiên) → staged luôn thay đổi đó. Phiên song
+> song đã tự khôi phục (`8c262ab`) rồi dọn tiếp (`3182247`). **Bài học: `git diff
+> <file>` TRƯỚC KHI `git add` với mọi file dùng chung (AGENTS.md / AGENT_REGISTRY.md /
+> nav.ts / catalog…) trong môi trường đa phiên** — đã ghi vào quy trình.
+
+> **Bump:** repo con **9.8.0 → 9.8.1** (`package.json` + `DEFAULT_VERSION`) — đợt có
+> code fix (TCB). Lưu ý: working tree đang bị hạ lạc về 9.7.0 (thay đổi lạc của phiên
+> khác) — em ghi đúng dòng thời gian 9.8.1. **App tổng docs-only → KHÔNG bump**
+> (tiền lệ GĐ 417) — giữ 6.6.0.
+
+> **Push:** app tổng `768c6a8..a3af488` (8 commit: docs GĐ 458 + GĐ 459 + GĐ 460 +
+> GĐ 461 + GĐ 462 claim của phiên song song) · repo con `0086195..80fb7c2` (4 commit:
+> bump 9.8.1 + entry GĐ 460 + fix TCB + entry GĐ 458).
+
+> **✅ Verify production (curl --compressed):** app tổng **6.6.0** · app con **9.8.1**
+> (curl lần đầu, không ghim deployment cũ) · HTTP 200 cả 2 · **trang
+> `/m/up-nhap-kho` = 200 với nội dung MỚI** ("UPLOAD Chứng từ mua hàng" + "Upload
+> Misa", KHÔNG còn "Chưa kết nối dữ liệu") ⇒ giao diện GĐ 455 đã LIVE.
+
+> **Version: app tổng 6.6.0 / repo con 9.8.1 — ĐÃ PUSH + ĐÃ LIVE.**
