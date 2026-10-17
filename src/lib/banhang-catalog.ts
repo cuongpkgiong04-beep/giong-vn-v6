@@ -221,7 +221,7 @@ export const BH_GROUPS: BhGroup[] = [
     leaves: [
       { to: "/m/up-hoadon-gtgt", label: "UPLOAD Hóa đơn GTGT bán hàng" },
       { to: "/m/up-nhap-kho", label: "UPLOAD Chứng từ mua hàng" },
-      { to: "/m/up-xuat-kho", label: "UPLOAD Bảng kê phiếu xuất kho" },
+      { to: "/m/up-xuat-kho", label: "UPLOAD Phiếu xuất kho" },
       { to: "/m/up-tecombank", label: "UPLOAD Ngân hàng TECOMBANK" },
       { to: "/m/up-tpbank", label: "UPLOAD Ngân hàng TPBANK" },
       { to: "/m/up-hoadon-dauvao", label: "UPLOAD Hóa đơn đầu vào" },

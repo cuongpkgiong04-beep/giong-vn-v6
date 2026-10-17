@@ -2805,3 +2805,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > Misa", KHÔNG còn "Chưa kết nối dữ liệu") ⇒ giao diện GĐ 455 đã LIVE.
 
 > **Version: app tổng 6.6.0 / repo con 9.8.1 — ĐÃ PUSH + ĐÃ LIVE.**
+
+---
+
+### GĐ 462 / C.286 (Trợ lý Freebuff): UPLOAD Phiếu xuất kho — quét SMED TRỰC TIẾP → chứng từ Kho MISA in_outward + ghi sổ tự động + Task_05 (2026-10-17)
+
+> **ĐH chốt (17/10 tối, sau GĐ 455):** đổi tên sidebar "UPLOAD Bảng kê phiếu
+> xuất kho" → **"UPLOAD Phiếu xuất kho"** · giao diện giống Chứng từ mua hàng
+> (1A/2A) · **nguồn TRỰC TIẾP SMED** "mở từng webapp của từng trung tâm theo
+> ngày" (ảnh /kho/xuatkho + chi tiết phiếu PX-SD) — KHÔNG dùng 6.BKX · **TẤT CẢ
+> phiếu** trong danh sách (B) · Task riêng chạy hàng ngày sau download BKX (3A)
+> · phiếu test TEST_CUONG_XK-* được phép (xóa khi ĐH OK). Chi tiết đầy đủ ở
+> entry **C.286 AGENTS.md repo con** (code `f33e044` + docs `3f29240`).
+
+> **Đã làm (app tổng chỉ 1 file code):** `src/lib/banhang-catalog.ts` — leaf
+> `/m/up-xuat-kho` đổi label **"UPLOAD Phiếu xuất kho"** (trang Phân quyền app
+> tổng tự hiện nhãn mới). Repo con: builder `misa_xuatkho_api.py` (schema
+> in_outward reftype 2020 — giá xuất = unit_price_finance, Nợ 632_<TT>/Có
+> 156_<TT) + wrapper + unit 37/37 + job "misa-xuat-kho-api" + **Task_05 · MISA
+> xuất kho** (spawn khi Task_02 xong) + builder misa-xk-chitiet + trang
+> /m/up-xuat-kho + nav.
+
+> **✅ VERIFY THẬT:** scan LB 17/10 = 10 phiếu (chi tiết chuẩn MMR 151,000.006 +
+> VAXIGRIP 229,500.003); **TEST_CUONG_XK-001 tạo + GHI SỔ** trên MISA AMIS —
+> đối chiếu refdate 17/10 = ngày lập SMED (GĐ 457) + giá/lô/HSD/TK 632_LB·
+> 156_LB khớp từng đồng. tsc 2 repo EXIT 0 · unit TS PASS. 2 bài học: kendo
+> SMED tách list 2 table (merge theo PX-) + JS nhầm bảng LỊCH (Th10/Th11) —
+> bảng hàng chung 1 table chọn theo th "Tên hàng".
+
+> **⚠️ CHỜ ĐH:** (1) phiếu TEST_CUONG_XK-001 ĐÃ GHI SỔ trên MISA — xóa khi ĐH
+> đồng ý (quy trình GĐ 458); (2) máy GIANGKT KHÔNG có SSH key/credentials Git —
+> KHÔNG pull/push được từ máy này (remote origin dùng alias `github-beep`);
+> cần sync (pull remote có commit GĐ 461 phiên khác tới `80fb7c2`) trước khi
+> push — nhờ ĐH chạy trên máy chủ hoặc cấp key; (3) commit f33e044 KHÔNG gồm 4
+> file đang dở của phiên khác (api_server.py · gd-c184-verify · quy-trinh-mua-
+> hang.tsx · nhap-dieu-chuyen.tsx — lần đầu lỡ commit pathspec, đã reset --soft
+> tách ra trước khi commit lại — commit local chưa push, minh bạch).
+
+> **Tiêu chí kiểm chứng (sau Push):** sidebar app tổng + app con = "UPLOAD
+> Phiếu xuất kho" → chọn kỳ → Upload Misa → job quét 19 TT + tạo phiếu + ghi
+> sổ → bảng "Đã ghi sổ"; Task_02 xong → Task_05 tự chạy; restart agent nạp
+> builder.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.6.0** / repo con **9.8.1** (local thêm C.286 chờ sync/push).
