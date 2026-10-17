@@ -2718,3 +2718,58 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > toàn về ngày lập phiếu + ngày hóa đơn.**
 
 > **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
+
+---
+
+### GĐ 460 / C.284 (Trợ lý Freebuff): PA-1 ĐH chốt — minh bạch hóa TCB ngày 0 giao dịch + Push GĐ 456 + chạy lại Task_03 kỳ 16/10 = 26/29 OK (2026-10-17)
+
+> **ĐH chốt PA-1** (sau điều tra GĐ 459). Đã làm 3 phần:
+
+> **(a) Push GĐ 456 + bump 9.8.0:** rà trùng lặp — repo con 8 commit local (GĐ
+> 456 fix tool 30/31 meInvoice login 2 bước+OTP · C.280 UPLOAD chứng từ mua
+> hàng · C.281/GĐ 457 ngày phiếu SMED) + app tổng 11 commit docs-only; 0 nhánh
+> phụ; WIP GĐ 458 phiên khác KHÔNG nằm trong commit (không đụng — file version
+> đang M churn → bump bằng **blob tách riêng**). Bump repo con **9.7.0 →
+> 9.8.0** (minor — C.280 feature) — package.json + DEFAULT_VERSION; app tổng
+> **docs-only giữ 6.6.0** (tiền lệ GĐ 416/417). Push: repo con
+> `ce5f1f5..0086195` · app tổng `b93ded6..768c6a8`. **Verify prod (curl lần
+> đầu): app con = 9.8.0 · app tổng = 6.6.0.**
+
+> **(b) Minh bạch hóa TCB (repo con `d9a517b` — 3 file +52/−7):**
+> 1. `etl/sql_reports.py` check_source_data — tách `bank_tcb_tx` khỏi nhánh
+>    MIA: MAX(period_to) < kỳ + **CÓ lượt xuất BANKTCB trong import_log** (ETL
+>    ghi MỌI file kể cả 0 dòng) → nguồn HỢP LỆ-rỗng: vẫn missing (Task_03
+>    KHÔNG chạy — không báo số 0 như TPB) nhưng gắn `reason: 'empty-ok'` +
+>    label lý do "ngày X không phát sinh giao dịch (hợp lệ — file 'Txn
+>    enquiry without txn')".
+> 2. `task_runner.py` — thông điệp BỎ đổi theo reason: toàn empty-ok →
+>    "ngày không phát sinh giao dịch (hợp lệ)" thay "chưa đủ dữ liệu nguồn"
+>    (error + step + log).
+> 3. `41_tcb_saoke.py` — sau lưu file, nhận diện sheet "without txn" → log
+>    "⚠️ TCB không có giao dịch ngày X→Y — HỢP LỆ" (hết "✅ xong 1 file" mù
+>    mờ).
+
+> **Verify:** ast.parse 3 file OK · test task_runner_quick **40/40 PASS** ·
+> **check_source_data thật 4 kỳ**: 16/10 = empty-ok + lý do rõ · 14/10 = đủ
+> (`[]`) · 17/10 = missing thường (chưa tải) · TPB 16/10 = `[]` không đổi.
+
+> **Restart agent** (16:10 — quy trình 13.3: rảnh 0 job → xóa __pycache__
+> agent+etl → sc stop/start): nạp đủ GĐ 456 fix + code TCB mới; tunnel giữ
+> nguyên.
+
+> **Chạy lại Task_03 kỳ 16/10** (đặt pending qua /exec — đúng SQL serverFn
+> "Chạy lại"): agent nhặt 16:16 → **XONG 26/29 OK** (DB: done · progress 100 ·
+> "Xong 26/29 báo cáo OK") — 3 báo cáo hddt-bkth / hddt-bkct / dsxk-comparison
+> chạy được (nguồn BKCT 216 dòng · BKTH 175 dòng kỳ 16/10) · **2 TCB BỎ với
+> lý do mới**: "ngày không phát sinh giao dịch (hợp lệ): Sao kê ngân hàng TCB
+> — ngày 2026-10-16 không phát sinh giao dịch (hợp lệ — file 'Txn enquiry
+> without txn')" · tkgvvxdt vẫn bỏ "chưa đủ dữ liệu nguồn" (mục (c) soi sau).
+
+> **Tiêu chí kiểm chứng:** ca Task_02 23:00 tối nay → Task_03 tự chạy: ngày
+> TCB 0 GD → log tool + thông điệp BỎ rõ ràng; ngày có GD → 2 báo cáo TCB
+> chạy bình thường. Kiểm thêm: tool 30/31 hết lỗi fill khi phiên MISA chết
+> (OTP Gmail tự đọc — GĐ 456).
+
+> **Version:** app tổng **6.6.0** / repo con **9.8.0** — đợt GĐ 456 ĐÃ PUSH +
+> LIVE; **phần docs + fix TCB KHÔNG push chờ lệnh** (commit local `d9a517b` +
+> docs đợt này).
