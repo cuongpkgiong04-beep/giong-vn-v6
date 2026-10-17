@@ -2453,3 +2453,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version: KHÔNG bump** (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.5.0** / repo con **9.6.0**.
+
+---
+
+### GĐ 452 / C.277 (Trợ lý Freebuff): PA Push đợt gộp 17/10 — bump 6.6.0 / 9.7.0 + LIVE (2026-10-17)
+
+> **Lệnh "Push" của Đại ca (17/10, sau GĐ 451).** Rà trùng lặp theo nguyên tắc 3:
+> nhánh phụ `agent-cli` + `pipeline-work` **0 commit chưa merge** (cả 2 repo) ·
+> remote `origin/main` **0 commit mới** (không có agent khác push trước) · working
+> tree còn file dở **của PHIÊN SONG SONG** (module Điều chuyển GĐ 430/C.260:
+> `src/components/dieu-chuyen/` · `-dieu-chuyen.ts` · `bc-dieu-chuyen-matrix.tsx`
+> untracked + `nhap-dieu-chuyen.tsx`/`-smed.ts`/`quy-trinh-mua-hang.tsx`/`api_server.py`/
+> `sql_reports.py` modified) → **KHÔNG add, KHÔNG đụng** (giữ nguyên cho phiên đó).
+
+> **⚠️ CẢNH BÁO ĐÃ NÊU TRƯỚC KHI PUSH (nguyên tắc 3):** 4 file dùng chung đã commit
+> ở GĐ 447 (nav.ts · smed-auth.ts · routeTree.gen.ts repo con + banhang-catalog.ts
+> app tổng) có khai báo lá `/m/bc-dieu-chuyen-matrix` của phiên song song trong khi
+> **file route web CHƯA commit** ⇒ menu app con hiện lá "Điều chuyển nội bộ — Ma
+> trận tổng hợp" nhưng bấm vào **404** cho tới khi phiên đó commit + Push. Đã kiểm
+> chứng SAU push: `/m/bc-dieu-chuyen-matrix` = **404**; build app con vẫn THÀNH CÔNG
+> (plugin `tanstackStart()` tự sinh lại routeTree khi build — đúng như dự đoán).
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT): minor** (đợt nhiều feature) —
+> app tổng **6.5.0 → 6.6.0** (`package.json` + `DEFAULT_VERSION` app-shell.tsx)
+> · repo con **9.6.0 → 9.7.0** (2 chỗ). Checklist GĐ 138 ✓ (6.6.0 / 9.7.0 — mọi
+> thành phần 1 chữ số).
+
+> **Push:** app tổng `f5aac53..e1a5a3f` (**24 commit**: GĐ 444→452 của 2 phiên
+> Freebuff — MISA Mua hàng API thuần + retry/idempotent/job + tự ghi sổ + 3 danh
+> mục MISA + danh mục NCC CRUD + fix KPI Tổng quan + bảng trả nợ LHT + bảng giá VX
+> Lưu-AI + Think-in-Code + bump) · repo con `6b8b704..c0e9171` (**18 commit**:
+> C.271→C.277).
+
+> **✅ Verify production (curl --compressed + grep -a):** app tổng
+> `giong-vn-v6.vercel.app` = **6.6.0** · app con `giong-banhang.vercel.app` =
+> **9.7.0** — deploy mới, không ghim deployment cũ. HTTP: 2 trang chủ 200 · 3 trang
+> danh mục MỚI (`/m/danh-muc-kho`, `/m/danh-muc-vi-tri`, `/m/danh-muc-ma-thong-ke`)
+> **200** · `/m/bc-dieu-chuyen-matrix` 404 (hệ quả đã cảnh báo — chờ phiên song song).
+
+> **Tiêu chí kiểm chứng của Đại ca:** (1) góc trái app tổng 6.6.0 / app con 9.7.0;
+> (2) sidebar app con NHẬP DỮ LIỆU → DANH MỤC có 5. Kho · 6. Vị trí · 7. Mã thống kê
+> (20 dòng/bảng); (3) MISA: 34 phiếu 16/10 + phiếu 12/10 đều "Đã ghi sổ"; (4) tối
+> nay 23:00 job Task_02 chạy bước MISA Mua hàng mới → phiếu tạo + tự ghi sổ.
+
+> **Version: app tổng 6.6.0 / repo con 9.7.0 — ĐÃ PUSH + ĐÃ LIVE.**
