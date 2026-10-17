@@ -2497,3 +2497,29 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > nay 23:00 job Task_02 chạy bước MISA Mua hàng mới → phiếu tạo + tự ghi sổ.
 
 > **Version: app tổng 6.6.0 / repo con 9.7.0 — ĐÃ PUSH + ĐÃ LIVE.**
+
+---
+
+### GĐ 453 / C.278 (Trợ lý Freebuff): SMED phân lại quyền nhưng tài khoản Thanh Thùy VẪN chưa thấy phiếu — bằng chứng API rỗng (2026-10-17)
+
+> **ĐH báo (17/10):** SMED đã phân lại quyền kho hàng cho tài khoản Thanh Thùy.
+
+> **Em kiểm tra lại:** VẪN không thấy — 5 mã phiếu TT (01/10 ×3 + 07/10 + 08/10)
+> và search rộng "PN-2026"/tên NCC đều **0 dòng**.
+
+> **🔎 Bằng chứng quyết định (bắt network trang nhập kho — script `LOG/gd453/_catch_network.py`):**
+> API `GET /api/services/app/kho/GetKhoNhapByFunctionAndCosotiemchung` (danh sách
+> kho nhập theo cơ sở tiêm chủng):
+> - **TT** (`tcgiong_thanhthuy_pkcuong`): **`{"result":[]}` — RỖNG** ⇒ tài khoản
+>   chưa được gán **cơ sở tiêm chủng / kho nhập**.
+> - **LB** (đối chứng `tcgiong_pkcuong`): trả về cơ sở
+>   `TRUNG TÂM TIÊM CHỦNG VẮC XIN GIÓNG LONG BIÊN` (id 10277).
+>
+> ⇒ "Phân lại quyền kho hàng" **chưa đủ**: cần gán **cơ sở tiêm chủng "TRUNG TÂM
+> TIÊM CHỦNG GIÓNG THANH THÙY"** + chức năng nhập kho cho tài khoản
+> `tcgiong_thanhthuy_pkcuong`. Xong → em chạy builder TT kỳ 01/10 + 07/10 + 08/10,
+> 5 phiếu tự lên MISA + ghi sổ.
+
+> **VIỆC CỦA ĐH:** gửi SMED bằng chứng trên (kèm tên cơ sở cần gán — so mẫu LB).
+
+> **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
