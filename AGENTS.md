@@ -2615,3 +2615,31 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (2) bấm **Upload Misa** → xác nhận → theo dõi job → bảng tự cập nhật "Đã ghi sổ".
 
 > **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
+
+---
+
+### GĐ 457 / C.281 (Trợ lý Freebuff): Ngày lập phiếu trên MISA AMIS = đúng ngày lập phiếu SMED (2026-10-17)
+
+> **Yêu cầu ĐH (17/10, ảnh SMED chi tiết phiếu):** điều chỉnh ngày lập phiếu ghi
+> trên MISA AMIS theo đúng **ngày lập phiếu SMED** → sau khi sửa, Ngày lập phiếu +
+> Ngày hóa đơn khớp nhau ở cả 2 hệ thống.
+
+> **Gốc lệch:** builder gán NGÀY HÓA ĐƠN cho ngày chứng từ + ngày hạch toán (quy
+> tắc cũ GĐ 444) → MISA hiện 30/9 trong khi SMED ngày lập = 1/10.
+
+> **Đã sửa (repo con `a8ec0b1` + entry `ab3ec0f`):** tách 2 mốc — master
+> `refdate`/`posted_date`/`caba_*`/`in_reforder` = **ngày lập phiếu SMED**
+> (fallback ngày HĐ nếu thiếu); ngày HÓA ĐƠN giữ ở dòng hàng + khối hóa đơn
+> (đúng payload UI MISA). Unit **9/9 PASS**.
+
+> **✅ VERIFY THẬT** (phiếu CĐ 02/10 PN-20261002143315 tạo + ghi sổ bằng builder
+> mới): SMED ngày lập **2/10** ↔ MISA ngày chứng từ + hạch toán **02/10** · SMED
+> ngày HĐ **30/9** ↔ MISA **30/09** · số HĐ 0136186 khớp · đã ghi sổ · tiền
+> 9.220.609. **⇒ 2 hệ thống đã giống nhau, đúng yêu cầu ĐH.**
+
+> **⚠️ CHỜ ĐH QUYẾT:** các phiếu ĐÃ tạo trước GĐ 457 (~50 phiếu: 34 phiếu 16/10 +
+> 11 phiếu 12-13/10 + 5 phiếu TT) còn ngày chứng từ = ngày HĐ — muốn khớp SMED
+> phải xóa + tạo lại (sửa qua save_full không được). Phiếu MỚI (job 23:00 + nút
+> Upload Misa) từ giờ đã đúng ngày.
+
+> **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
