@@ -2849,3 +2849,91 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.6.0** / repo con **9.8.1** (local thêm C.286 chờ sync/push).
+
+
+### GĐ 463 / C.287 (Trợ lý Freebuff): NGHIÊN CỨU "Chứng từ bán hàng" MISA AMIS + đề xuất UPLOAD Hóa đơn GTGT bán hàng — CHỜ ĐH chốt PA, chưa viết code (2026-10-17)
+
+> **Yêu cầu ĐH (17/10, 2 ảnh: sidebar app con + màn hình MISA tab Bán hàng):**
+> phần **UPLOAD - MISA AMIS → "UPLOAD Hóa đơn GTGT bán hàng"** (`/m/up-hoadon-gtgt`,
+> hiện chỉ là placeholder) — (1) nghiên cứu phiếu Bán hàng trên MISA AMIS, **căn cứ
+> các phiếu đã lập trước đây** để biết dữ liệu nào đã được đưa vào "Chứng từ bán
+> hàng" (ĐH liệt kê nguồn liên quan: bảng kê chi tiết HĐ đã sử dụng · thống kê tình
+> hình sử dụng HĐĐT · bảng kê chung cuối ngày · thống kê DT theo đối tượng · bảng kê
+> xuất kho); (2) tạo giao diện lấy dữ liệu phiếu hóa đơn bán hàng → up lên MISA từ
+> SMED **giống phần phiếu mua hàng** + bổ sung Task chạy hàng ngày; (3) **HỎI LẠI ĐH**
+> xác định lại công việc trước khi viết code.
+
+> **🔬 KẾT QUẢ NGHIÊN CỨU (probe read-only thật — MISA CDP 9222 + SMED login LB;
+> artifact trong `apps/banhang/agent/LOG/gd463/`, gitignored):**
+
+> **1️⃣ MISA "Chứng từ bán hàng" = SA voucher, `reftype 3537`** (màn
+> `actapp.misa.vn/app/SA/SAVoucher`). API: list
+> `POST sa/v1/sa_voucher_get/paging_filter_v2` (loadMode 2 = dòng dữ liệu / 3 = tổng
+> hợp — bài học: sai loadMode → PageData rỗng), dòng hàng
+> `POST sa_voucher_get/get_paging_detail` (filter property 3993 = refid), full
+> `GET sa/v1/sa_voucher/detail?req=<base64>` (⚠️ Code 99 khi tự dựng req/fetch lại —
+> phải capture từ UI). Ghi/sửa: bundle MISA có `save_full` / `save_and_post`
+> (⇒ tạo phiếu qua API thuần KHẢ THI, cùng khuôn PU GĐ 444 / IN GĐ 462).
+> **Hiện trạng dữ liệu:** **20.217** chứng từ (tổng **19.929.181.550**) từ 01/01/2026
+> → **10/10/2026**; **11/10 → 17/10 = 0 phiếu (trống 7 ngày)** — `created_by =
+> "Vũ Thị Thủy"`, `created_date = 17/10 16:27–16:52` (đang được nhập/import dồn,
+> 100% chứng từ 09–10/10 đều tạo hôm nay).
+
+> **2️⃣ Dữ liệu đã đưa vào chứng từ (mẫu HM 6101017103935 ↔ HĐ 00003368 · Gardasil 9 ·
+> 2.850.000 · LÊ THỊ OANH — created 17/10 16:52):** master: `refno_finance` (= số
+> chứng từ), `refdate`/`posted_date` = NGÀY BÁN HÀNG, `inv_no`+`inv_series`+`inv_date`,
+> `account_object_name`, `total_amount`/`total_sale_amount`, `journal_memo`, `paid_type`,
+> `include_invoice=1`; detail: `inventory_item_code` (**= TÊN hàng**, vd "Gardasil 9"),
+> `quantity`, `unit_price`, `amount`, `unit_name` (Liều), `inventory_location_code` +
+> `list_item_code` + `organization_unit_code` (**= mã TT**, vd HM),
+> `debit_account 1121_<TT>` / `credit_account 5113_<TT>`, `inventory_account 156_BH`,
+> `cogs_account 632_BH`, `sale_account 5111`, `vat_account 33311`, `vat_rate -1`,
+> `budget_item_code 100` ("Thu từ bán hàng thu tiền ngay"); **lô/HSD để TRỐNG**
+> (chứng từ hiện có không điền). Kèm link `sa_invoice` (reftype 3560 — HĐ phát hành)
+> + `ba_deposit_withdraw_list` (thu tiền ngân hàng).
+
+> **3️⃣ Nguồn dữ liệu + mapping (đã đối chứng THẬT):** `refno_finance(MISA)` =
+> **mã phiếu bán hàng SMED** (`maPhieu`, màn `#!/hoadondientu` "Danh sách hóa đơn")
+> **bỏ 3 ký tự đầu** ("HD" + 1 số) — verify: LB 10/10 SMED **39 hóa đơn** ↔ MISA
+> **39 chứng từ** prefix `0637` (= 4 số cuối coSoId 10637) · HM "HD26101017103935" ↔
+> "6101017103935" · TT "HD116272610101519120083" ↔ "16272610101519120083".
+> **API nguồn SMED:** `POST api/services/app/hoaDonDienTuExtend/DataHoaDonDienTu`
+> (body `startDate`/`endDate`/`trangThai`: 1=Đã gửi — **trangThai null/0 → 0 dòng**;
+> trả `maPhieu`, `maHoaDon` = ký hiệu HĐ, `hoTenKhachHang`, `ngayGioBanHang`,
+> `tongTien`, `tenHinhThucThanhToan`, `noiDungThu`, `coSoTiemChungId`, `phieuBanHangId`,
+> `transactionUuid`, `soHoaDon` (mẫu LB = RỖNG — chưa cấp số)) · phụ:
+> `POST hoaDonDienTuExtend/DataLichSuGuiHoaDonDienTu` (dataInput JSON: InvSeries,
+> InvNo "<Chưa cấp số>", OrganizationUnitID, AccountObjectName/Address) ·
+> `POST lichSuThanhToan/GetThongTinPhieuBanHang?id=<phieuBanHangId>` (header phiếu:
+> khách/ngày/tiền/HTTT — `lstPhieuBanHangChiTiet` mẫu RỖNG, chưa ra dòng hàng).
+> **DB dự án hiện có:** `stg_1HDDT` (MSHĐ col5 · ký hiệu col10 · ngày · khách · tiền ·
+> HTTT · trạng thái gửi), `stg_2DTTDT` (mã phiếu · khách · dịch vụ · SL · tiền),
+> `stg_4BKCCN` (bảng kê chung cuối ngày: dịch vụ · số lô · giá · mũi tiêm),
+> `stg_6BKX` (xuất kho: lô · HSD · giá), **`stg_11BKCT` (bảng kê chi tiết HĐ đã sử
+> dụng — MISA meInvoice: col2 = KÝ HIỆU HĐ · col3 = số HĐ · col4 ngày · col10 người
+> mua · col11 HTTT · col13 tên hàng · col17 SL · col18 đơn giá · col19 thành tiền ·
+> col22 thuế suất; 10/10: 480 dòng / 375 số HĐ / 6 ký hiệu 1C26MAA→MAF)**.
+> **⚠️ Chưa có nguồn DÒNG HÀNG + lô/HSD trực tiếp từ SMED** (phiếu bán hàng chi tiết
+> cần khảo sát thêm màn Thu ngân khi viết code).
+
+> **📋 TRÌNH 3 PA (ĐH chốt trước khi code — quy trình 5 bước):**
+> - **PA-1 (khuyến nghị):** nguồn **TRỰC TIẾP SMED** (`#!/hoadondientu` từng TT theo
+>   ngày, giống phiếu mua hàng GĐ 428/455) + bù dòng hàng từ **BKCT/GiondDB** (khớp
+>   ký hiệu+số HĐ) → builder `misa_banhang_api.py` (save_full + ghi sổ, idempotent
+>   theo refno = maPhieu bỏ 3 ký tự) + trang `/m/up-hoadon-gtgt` 3 phần (khuôn
+>   `SqlDataModule.uploadMisa`) + Task hằng ngày. Ưu: đúng thứ ĐH yêu cầu, tự chủ,
+>   không phụ thuộc ai nhập tay. Rủi ro: cần khảo sát thêm API dòng hàng SMED.
+> - **PA-2:** nguồn **GiondDB** (stg_1HDDT + stg_11BKCT + stg_4BKCCN — dữ liệu đã
+>   tải hằng ngày 23:00) → builder đọc DB. Ưu: nhanh, dữ liệu sẵn. Rủi ro: DB thiếu
+>   `maPhieu`↔số HĐ ở một số TT (nối qua tên+ngày+tiền → có thể lệch).
+> - **PA-3:** PA-1 + PA-2 (SMED là chính, DB là dự phòng/đối chứng).
+>
+> **❓ CHỜ ĐH (đã hỏi trong phiên):** chọn PA · kỳ cần bù (11/10→17/10 hay từ 01/10)
+> · có cho phép phiếu test `TEST_CUONG_BH-*` để khảo sát API (xóa sau khi ĐH OK)
+> · phạm vi: chỉ chứng từ bán hàng hay kèm link hóa đơn + thu tiền (`ba_deposit_withdraw`).
+
+> **⚠️ GHI NHẬN (mục 12):** AGENTS.md hiện **2.851 dòng** — đã vượt mốc cần tách
+> archive LẦN 3 (dời entry GĐ 411→45x xuống AGENTS_ARCHIVE.md). Đề xuất làm khi ĐH
+> đồng ý (đang có phiên song song sửa AGENTS.md — tránh conflict đa phiên).
+
+> **Version:** KHÔNG bump (docs-only, chưa code — 6.6.0 / 9.8.1 giữ).
