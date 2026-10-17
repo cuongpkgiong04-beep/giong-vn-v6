@@ -2547,3 +2547,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > từ giao diện ("Không có dữ liệu").
 
 > **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
+---
+
+### GĐ 456 / C.281 (Trợ lý Freebuff): Fix download MISA MeInvoice (tool 30/31) — MISA đổi login 2 bước + bắt OTP email, tool chết trước khối OTP — PA-1 + verify thật (2026-10-17)
+
+> **ĐH báo lỗi (17/10, ảnh):** 2 phân hệ "Bảng kê chi tiết hóa đơn đã sử dụng"
+> (BKCT_HDGTGT) + "Bảng kê hóa đơn đã sử dụng" (BKTH_HDGTGT) fail cả Task tự
+> động (15-16/10) lẫn thủ công (17/10 10:41) — "Tool thoát mã 1: TimeoutError
+> fill #password 45000ms". Chi tiết đầy đủ ở entry **C.281 AGENTS.md repo con**.
+
+> **Chẩn đoán (probe browser + log 14-17/10):** MISA meInvoice đổi trang login
+> sang **flow 2 bước** (màn 1 /login/1: #TaxCode + #UserName + "Tiếp tục" —
+> không có ô mật khẩu; sau đó mới màn mật khẩu #Password) + **bắt xác thực 2
+> bước OTP email (/login/2)** khi phiên misa_state chết (chết trước 15/10 —
+> 14/10 17:59 còn OK). Tool 30/31 chết ở `pw.fill(password)` lần 2 (màn OTP
+> không còn ô) TRƯỚC khi tới khối OTP có sẵn (selector `input.value-otp` +
+> `#btnActiveAcount` + `#rememberDevice` vẫn sống trên màn mới).
+
+> **Fix PA-1 (ĐH chốt, repo con `a842785` — 2 file +16/−2):** bọc fill
+> try/except + sau poll check màn OTP visible → break chảy vào khối OTP có
+> sẵn (Gmail IMAP tự đọc). **Verify thật kỳ 16/10 trên máy agent:** tool 30 —
+> OTP tự đọc 7s → lưu phiên → XONG file 41KB (exit 0); tool 31 — "Phiên cũ
+> còn sống" → XONG file 33KB (exit 0). Ổn định → không cần củng cố PA-3.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.6.0** / repo con **9.7.0**.
