@@ -2694,3 +2694,27 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (điều tra docs-only — 0 code đổi). App tổng
 > **6.6.0** / repo con **9.7.0**.
+
+---
+
+### GĐ 458 / C.282 (Trợ lý Freebuff): Tạo lại 70 phiếu cũ theo ngày lập phiếu SMED — khớp từng đồng (2026-10-17)
+
+> **Lệnh ĐH:** "tạo lại phiếu cũ theo ngày SMED" (sau khi GĐ 457 sửa builder).
+
+> **Quy trình (repo con — script trong `agent/LOG/gd458/`, gitignored):** dry-run lọc
+> 70 phiếu lệch ngày (33 nhóm TT×ngày; 16 mã ngoài hệ thống bỏ qua) → **bỏ ghi sổ**
+> (API bắt từ UI: `DELETE /g2/api/ledger/v1/ledger/unpostbatch` body
+> `{masters:[{refno,refid,reftype:302,edit_version}], auditingLogs:[…]}`) → **xóa**
+> (`DELETE batch_voucher [{refid}]`) → **tạo lại** bằng builder mới + ghi sổ.
+
+> **Sự cố & xử lý:** đợt 1 crash ở nhóm PY 16/10 (MISA trả response không-JSON, lỗi tạm
+> thời) + nhóm ML 16/10 đã xóa 3 phiếu nhưng tạo lại lỗi → sửa script (retry + bọc
+> try/except theo nhóm) → chạy lại 8 nhóm: **xóa 22 · tạo lại 25 · 0 lỗi** (3 phiếu ML
+> khôi phục đủ).
+
+> **✅ VERIFY TỔNG:** **0 phiếu lệch ngày** trên toàn MISA (2.573 phiếu đúng ngày lập
+> SMED) · **70/70 phiếu tạo lại có trên MISA + tiền khớp TỪNG ĐỒNG 1.156.275.402 +
+> ngày chứng từ = ngày lập SMED 70/70**. ⇒ **Hai hệ thống SMED ↔ MISA giờ khớp hoàn
+> toàn về ngày lập phiếu + ngày hóa đơn.**
+
+> **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
