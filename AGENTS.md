@@ -2523,3 +2523,27 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **VIỆC CỦA ĐH:** gửi SMED bằng chứng trên (kèm tên cơ sở cần gán — so mẫu LB).
 
 > **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
+
+---
+
+### GĐ 454 / C.279 (Trợ lý Freebuff): SMED gán cơ sở Thanh Thùy xong → 5 phiếu TT lên MISA + GHI SỔ, khớp từng đồng — ĐÓNG tồn đọng GĐ 444 (2026-10-17)
+
+> **ĐH báo (17/10):** "SMED gán xong cho Thanh Thùy rồi đấy."
+
+> **Xác nhận tức thì:** API `GetKhoNhapByFunctionAndCosotiemchung` của tài khoản TT
+> giờ trả về **`TRUNG TÂM TIÊM CHỦNG GIÓNG THANH THUỲ` (id 11693)** — trước đó rỗng
+> (bằng chứng GĐ 453 đã gửi SMED đúng việc cần làm).
+
+> **✅ Chạy builder 3 kỳ `--post` — 5 phiếu TẠO + GHI SỔ:**
+> 01/10: PN-…163416 **16.289.489** · PN-…163827 **24.777.900** · PN-…164153 **9.220.609**
+> · 07/10: PN-…142654 **62.372.617** · 08/10: PN-…104753 **9.603.363**.
+
+> **Verify độc lập:** 5/5 phiếu trên MISA · **5/5 đủ Đơn vị + Mã thống kê (TT/TT)** ·
+> **5/5 `is_posted_finance = true`** · **tổng 122.263.978 KHỚP stg_5BKN TỪNG ĐỒNG**.
+
+> **⇒ Tồn đọng GĐ 444 (3 phiếu TT 01/10) + 2 phiếu 07-08/10 ĐÓNG HOÀN TOÀN.** Nguyên
+> nhân gốc cả chuỗi: tài khoản SMED của TT thiếu **cơ sở tiêm chủng/kho nhập** —
+> không phải phiếu bị xóa. Bài học điều tra: **bắt network API SMED** thay vì đoán
+> từ giao diện ("Không có dữ liệu").
+
+> **Version: KHÔNG bump** (chờ lệnh Push). App tổng **6.6.0** / repo con **9.7.0**.
