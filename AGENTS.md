@@ -3026,3 +3026,64 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Verify:** unit 56/56 PASS · tsc app tổng EXIT 0 · tsc repo con EXIT 0 · schema payload khớp UI thật (probe GĐ 463) · BKCT join 37/39 khớp từng đồng (40/40 dòng hàng) · debit 1121_LB cho 'Chuyển khoản' (phiếu thật 00006198) · lô/HSD bù từ BKCT.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.6.0** / repo con **9.8.1**.
+
+---
+
+### GĐ 465 / C.289 (Trợ lý Freebuff): Bảng kê HĐ GTGT mua vào (MiaTool) — chuẩn MIA TOOL 37 cột + 3 bug Tiền thuế — PA-1 (2026-10-18)
+
+> **Yêu cầu của Đại ca (18/10, gửi file Excel MIA TOOL desktop 4.3.2 kỳ 09/2026
+> MST 0108321182 đối chiếu):** bảng "Bảng kê HĐ GTGT mua vào (MiaTool)" phần
+> chạy CHI TIẾT từ SQL (GiondDB) — (1) cột "Tiền thuế" khác file MIA TOOL
+> (nghi do làm tròn 2 số thập phân từ khâu lấy dữ liệu); (2) thiếu cột + sai
+> thứ tự cột; (3) làm đúng theo MIA TOOL. **ĐH chốt PA-1** (trình 3 PA buổi
+> sáng, dự đoán từng PA đầy đủ).
+
+> **Chẩn đoán (probe đối chứng từng dòng từng đồng — script trong
+> giong-apps/apps/banhang/agent/LOG/gd465/, gitignored):** 588/595 dòng Tiền
+> thuế khớp từng đồng — ETL nạp ĐÚNG; lệch nằm 4 chỗ: (a) **meta totals
+> ×100/×1000** — `_to_num` của `_rows` xóa dấu "." coi là ngăn cách nghìn làm
+> tổng chuỗi thập phân "458010.50" → 26.507.690.200 thay vì 265.068.900 (cột
+> Tiền thuế + Thành tiền chưa thuế + Số lượng); (b) **cách hiển thị** — web
+> render "458.010,50" (GĐ 360/C.197) trong khi Excel MIA TOOL format `#,##0`
+> → nguyên "458.010" (182/595 dòng có phần lẻ); (c) **1 HĐ thừa K26TAN
+> 8864311 +8.002** — tool 43 mình gọi API cổng HĐĐT Quốc gia trực tiếp, file
+> MIA TOOL desktop KHÔNG có HĐ này (nguồn tool 43 không phụ thuộc app desktop
+> `C:\Program Files\MIA TOOL 2026\` — đường dẫn ĐH nhắc không cần chạm);
+> (d) **7 dòng Excel '0' — DB NULL trống**. Kèm: **Đơn giá 192 dòng lẻ tới 4
+> số (458010.4762) bị DECIMAL(19,0) cắt** · thiếu 9 cột (8 chưa nạp: Mẫu số
+> HD, Ngày người bán ký số, MCCQT, Ngày CQT ký số, Đơn vị tiền tệ, Tỷ giá,
+> Địa chỉ người bán, Mã VT + url tra cứu nạp rồi nhưng builder không SELECT) ·
+> thứ tự người bán (c10-12) TRƯỚC người mua (c13-15) ngược file.
+
+> **Đã làm (PA-1 — chi tiết đầy đủ ở entry C.289 AGENTS.md repo con):**
+> ETL `mia_hddt_import.py` (+8 cột + widen Mã tra cứu base64 60+ ký tự + scale
+> dgia (19,4)/thtien (19,2) + fill '0' CÓ SẴN GIỮ NGUYÊN / None→0) · builder
+> `mia_chitiet` (37 cột đúng thứ tự + tên file MIA TOOL · sort ngày lập ·
+> Tiền thuế → SỐ render nguyên như Excel · SL giữ lẻ "4,9" · meta tổng SUM
+> SQL từng đồng) · web `report-result-table.tsx` (DECIMAL_FRACTION_RE 1-4 số
+> lẻ — "4.9"→"4,9", giữ hành vi 2 số C.197) · unit mới 20/20 PASS · nạp lại kỳ
+> 9 từ file ĐH gửi (OUTPUT gitignored).
+
+> **✅ Verify:** **595/595 dòng Tiền thuế khớp từng đồng** (giá trị + hiển thị
+> nguyên) · 385 HĐ · meta 265.068.900 / 5.244.180.687,41 / 31.636,9 khớp Excel
+> · DB giữ Đơn giá lẻ 458010.4762 · node test render 6 case (bắt được bug
+> regex thiếu group capture trước khi commit) · tsc repo con EXIT 0 · npm test
+> 62/62 + 12/11 + 10/10 PASS · unit python 20/20 PASS.
+
+> **⚠️ Minh bạch đa phiên:** phiên GĐ 463 (cùng working tree repo con) commit
+> `c69e9c7` 14:49 **nuốt luôn sửa `sql_reports.py` (mia_chitiet 37 cột) của
+> em** — lịch sử chỉ đi tới (quy tắc 3), phần mia_chitiet thuộc GĐ 465 nằm
+> trong commit của họ; em commit riêng 3 file còn lại. KHÔNG đụng file đang
+> dở của phiên khác (api_server.py · misa_xuatkho_api.py · quy-trinh-mua-hang
+> .tsx · nhap-dieu-chuyen.tsx · .gitignore).
+
+> **⚠️ Agent restart chờ rảnh** (phiên GĐ 464 đang chạy job xuất kho — KHÔNG
+> restart giữa chừng). Kỳ cũ (trước 9) cột mới trống cho tới khi tải lại file
+> các kỳ đó; Bán ra hưởng schema tự động khi nạp file mới.
+
+> **Tiêu chí kiểm chứng (sau Push):** chạy lại Chi tiết kỳ 09/2026 → 37 cột
+> đúng thứ tự file MIA TOOL · Tiền thuế từng dòng nguyên "458.010" khớp Excel
+> · dòng 0% hiển thị 0 · Số lượng "4,9" · tổng 265.068.900 khớp.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.6.0** / repo con **9.8.1**.
