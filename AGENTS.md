@@ -3097,3 +3097,29 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (57 dòng Excel None = trống) + tổng 3 cột khớp (chưa thuế 5.244.280.716,41 ·
 > SL 31.637,9). ⚠️ Hai bản MIA TOOL cùng kỳ lệch 1 HĐ — đối chiếu lần sau HỎI
 > ĐH bản nào là chuẩn.
+
+### GĐ 464 / C.288 (Trợ lý Freebuff): NGHIỆP VỤ tạo phiếu xuất kho 17/10/2026 SMED → MISA + PA-1 fix lọc ngày chết (2026-10-18)
+
+> **ĐH yêu cầu (18/10):** "tạo phiếu xuất kho ngày 17/10/2026 từ SMED đẩy lên
+> MISA". Lần quét đầu lộ **bộ lọc ngày chết im lặng** trong `smed_filter_day`
+> (builder GĐ 462 — lõi cũ focus + gõ không ăn → list về "hôm nay") — 50 phiếu
+> quét nhầm 18/10, **chưa upload gì lên MISA**. **ĐH chốt PA-1**: sửa lõi lọc +
+> guard. Chi tiết đầy đủ ở entry **C.288 AGENTS.md repo con** (code `d808a5a`).
+
+> **Kết quả:** sửa `smed_filter_day` (click + Ctrl+A + gõ `D - D` + Enter +
+> TÌM KIẾM + GUARD 1 đọc lại ô) + GUARD 2 trong `run()` (mã phiếu phải chứa
+> ngày lọc) → quét lại 17/10 đúng **174 phiếu / 18 TT / 221 dòng /
+> 112.101.109,93** → idempotent: **58 phiếu thiếu TẠO MỚI + GHI SỔ · 116 phiếu
+> có sẵn từ trước** (không phải Task_05 — log job upload 0; khả năng ĐH bấm
+> "Upload Misa" web GĐ 462) → **đối chiếu 171/174 khớp từng đồng · 3 phiếu
+> MISA tròn 1 xu (round .01 — giá xuất SMED lẻ .003/.007) · 0 thiếu · 164 đọc
+> được trạng thái — TẤT CẢ ĐÃ GHI SỔ**.
+
+> **Bài học chính:** (1) filter chết im lặng → GUARD sau lọc bắt buộc (đọc lại
+> value ô + mã phiếu chứa ngày); (2) tìm chứng từ MISA theo mã =
+> `ai_search/search_all` (refno → refid/amount/ngày) — list `paging_filter_v2`
+> view 62 không chứa phiếu tháng 10; (3) InvalidRefno = trùng số, phải đối
+> chiếu tiền từng phiếu.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.6.0** / repo con **9.8.1**.
