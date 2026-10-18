@@ -3156,5 +3156,9 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > `misa-ban-hang-api` hiện chưa chạy được; em KHÔNG đụng file này +
 > `api_server.py`. Khi phiên kia xong chỉ cần thêm 3 dòng acquire/release.
 
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.6.0**
-> / repo con **9.8.1**.
+> **Cần restart agent khi rảnh** để `40_web_agent.py` (kill cây tiến trình) hiệu
+> lực — các fix còn lại (builder/tab guard) chạy subprocess nên áp dụng NGAY.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện hành app tổng
+> **6.7.0** / repo con **9.9.0** (phiên song song GĐ 463 đã bump trong lúc phiên
+> này làm).
