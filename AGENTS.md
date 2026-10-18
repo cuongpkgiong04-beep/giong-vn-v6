@@ -3162,3 +3162,26 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). Hiện hành app tổng
 > **6.7.0** / repo con **9.9.0** (phiên song song GĐ 463 đã bump trong lúc phiên
 > này làm).
+
+### GĐ 467 / C.291 (Trợ lý Freebuff): Phục hồi luồng BÁN HÀNG — hoàn thiện misa_banhang_api.py bỏ dở + PUSH theo lệnh ĐH (2026-10-18)
+
+> **Lệnh của Đại ca (18/10 tối):** "Em làm tất cả các việc đó cho anh. Kể cả khi
+> xong thì hãy push lên. Đây chỉ là mệnh lệnh ở giai đoạn này — không ghi vào bộ
+> nhớ và không thực hiện ở các việc tương tự như này." → em làm 3 việc: phục hồi
+> luồng bán hàng · restart agent · PUSH 2 repo (ngoại lệ một lần, không thành quy tắc).
+
+> **Bối cảnh:** commit `be5da0a` (phiên khác) viết lại payload theo UI template
+> nhưng **mất 9 hàm** (`run`, `upload_phieu`, `post_ledger`, `map_debit_account`…)
+> + bug `globals().get("_post_temp")` → job `misa-ban-hang-api` không chạy được.
+> Em giữ hướng template của họ + bổ sung đủ hàm + tab guard GĐ 466 + widget chat +
+> GUARD ngày (bài học GĐ 464 — bản đầu chặn oan vì SMED điền ô ngày dạng
+> `"10/10/2026 - 10/10/2026"`, đã sửa khi test thật).
+
+> **VERIFY:** test **39/39 PASS** · dry-run thật LB 10/10: SMED 39 hóa đơn →
+> **39/39 build payload OK, 0 lỗi, 0 "hàng không khớp MISA", uploaded 0** (không
+> tạo chứng từ nào). ⚠️ Bước tạo phiếu thật chưa test — chờ ĐH cho phép.
+
+> **Chi tiết đầy đủ ở entry C.291 AGENTS.md repo con.** Commit: repo con `592d801`
+> (code) + `76d1d0b` (entry), app tổng entry commit này.
+
+> **Version:** KHÔNG bump (agent-side python — tiền lệ GĐ 422). 6.7.0 / 9.9.0.
