@@ -2936,4 +2936,56 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > archive LẦN 3 (dời entry GĐ 411→45x xuống AGENTS_ARCHIVE.md). Đề xuất làm khi ĐH
 > đồng ý (đang có phiên song song sửa AGENTS.md — tránh conflict đa phiên).
 
-> **Version:** KHÔNG bump (docs-only, chưa code — 6.6.0 / 9.8.1 giữ).
+>
+
+---
+
+### GĐ 463 / C.287 (Trợ lý Freebuff) — TIẾP: ĐH chốt **PA-1** (18/10) → moi được API tạo chứng từ bán hàng + 5 phiếu TEST (2026-10-18)
+
+> **ĐH chốt PA-1** (18/10): nguồn TRỰC TIẾP SMED `#!/hoadondientu` từng TT theo ngày
+> → tạo "Chứng từ bán hàng" MISA (SA) + dòng hàng bù từ BKCT. Em bắt tay khảo sát API.
+
+> **🔑 KẾT QUẢ MOI ĐƯỢC (bằng chứng thật):**
+> - **Endpoint tạo/sửa chứng từ SA = `POST https://actapp.misa.vn/g2/api/sa/v1/sa_voucher/full`**
+>   (KHÔNG phải `save_full` như PU/IN — bundle MISA: `submit(){combineUrl(getAPIUrl(),"full")}`;
+>   GĐ 444 lesson "sai endpoint → Code 999 'Bạn phải nhập chứng từ chi tiết'").
+>   Ghi sổ: `.../sa_voucher/save_and_post` (hoặc `ledger/v1/ledger/post` như GĐ 446).
+> - **Schema payload CHUẨN (bắt từ UI thật, `LOG/gd463/ui_save_full_BH_body.json` 7.4KB):**
+>   `[{Type:"sa_voucher", Key:null, RefType:3530, RefTypeCategory:353,
+>   View:"view_sa_voucher", enableAutoSave:true, BypassValidate:{},
+>   OptionForSave:{PostAfterSave:true, IsQuickEdit:false, FormState:"Add"},
+>   auditing_log:{...}, Object:{46 keys master}, Details:[{Type:"sa_voucher_detail",
+>   Alias:"detail", View:"view_sa_voucher_detail", UseRecover:true, Objects:[101-key line]},
+>   {Type:"sa_voucher_detail_allocation", Alias:"detailOther1", Objects:[]}],
+>   Links:[sa_invoice 3560, in_outward 2020]}]` — master KHÔNG có `refid` (server sinh);
+>   RefType thật = **3530** (không phải 3537 như phiếu cũ — phiếu cũ reftype 3537 do
+>   cấu hình cũ/phiếu thu tiền gửi kèm).
+> - **API `detail` (đọc full entity) YÊU CẦU base64 CÓ PADDING `=`** — thiếu padding →
+>   Code 99 (bài học lớn: hôm 17/10 tưởng endpoint hỏng, thực ra chỉ thiếu padding).
+> - **Form UI điền được bằng data-testid**: `sme_svdp_msi_refno_finance-input-innervalue`
+>   (Số chứng từ) · `sme_svdp_msi_account_object_name-...` (Tên khách) · grid cột
+>   "Mã hàng" (tab Hàng tiền) → chọn autocomplete; **tab "Giá vốn" mới có cột "Kho"**
+>   (bắt buộc — thiếu → "<Kho> không được bỏ trống") · lưu có **cảnh báo mềm** ("giá bán
+>   thấp hơn giá mua gần nhất") → bấm **"Có"** mới cất.
+> - **Test API thật:** gửi lại payload (đổi refno) → MISA trả **`InvalidInvno`** = payload
+>   ĐỌC ĐƯỢC (đúng shape), chỉ vướng số HĐ trùng → xác nhận endpoint/schema đúng.
+
+> **⚠️ 5 PHIẾU TEST ĐÃ TẠO TRÊN MISA (chờ ĐH quyết xóa):**
+> `TEST_CUONG_BH-001…005` (18/10, khách "KHACH TEST CUONG", VAXIGRIP 0.5ml × Kho LB,
+> tổng 0đ, **CHƯA ghi sổ**, `send_tax_office_status=-1`, `esign_state=-1`).
+> MISA **tự cấp số HĐ 000986→000990 (series 1C26MAS)** khi cất vì form bật sẵn
+> "Lập kèm hóa đơn" + "Lập kèm phiếu xuất" → mỗi phiếu kèm 1 bản ghi `sa_invoice`
+> (publish_status 7) + 1 phiếu xuất kho `PX-SD-2026…` (chưa ghi sổ).
+> **Đã kiểm chứng**: meInvoice (stg_11BKCT) CHƯA có số ≥000980 của 1C26MAS → các số này
+> mới chỉ là bản ghi nội bộ AMIS, chưa phát hành → xóa phiếu có thể trả lại dải số.
+> **→ CHỜ ĐH đồng ý mới xóa** (quy tắc: phiếu test phải báo trước khi xóa).
+
+> **📋 BƯỚC TIẾP (chờ ĐH chốt 2 điểm):** (1) xóa 5 phiếu test trên? (2) khi upload thật
+> có gắn kèm hóa đơn (link `sa_invoice` + số HĐ) như phiếu cũ hay tạo chứng từ KHÔNG kèm HĐ
+> (an toàn tuyệt đối, nhưng khác phiếu cũ)? Sau đó: viết `misa_banhang_api.py`
+> (scan SMED hoadondientu + BKCT → payload theo schema trên) + trang `/m/up-hoadon-gtgt`
+> (khuôn SqlDataModule.uploadMisa) + job + Task hằng ngày.
+
+> **Version:** KHÔNG bump (chưa push — 6.6.0 / 9.8.1 giữ).
+
+> **Version:** KHÔNG bump (đang code — 6.6.0 / 9.8.1 giữ).
