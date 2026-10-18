@@ -2986,6 +2986,24 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (scan SMED hoadondientu + BKCT → payload theo schema trên) + trang `/m/up-hoadon-gtgt`
 > (khuôn SqlDataModule.uploadMisa) + job + Task hằng ngày.
 
+>
+
+> **✅ DỌN PHIẾU TEST (18/10, ĐH đồng ý):** đã **XÓA SẠCH 5 phiếu TEST_CUONG_BH-001…005**
+> trên MISA (verify danh sách = rỗng). Endpoint xóa: **`DELETE .../sa/v1/sa_voucher/batch_voucher`**
+> body `[{"refid":…,"refno_finance":…,"reftype":3530,"edit_version":…}]` (khớp bài học
+> GĐ 458; ⚠️ khi xóa qua UI phải bấm nút **"Đồng ý"** trong hộp thoại — nút toolbar
+> "Xóa" chỉ mở lại hộp thoại). Các phiếu xuất kho kèm theo cũng không còn trong danh sách.
+> Không phiếu nào đã ghi sổ / gửi CQT → không ảnh hưởng meInvoice.
+
+> **📌 CHECKPOINT (18/10) — việc tiếp theo của GĐ 463:** viết
+> `apps/banhang/agent/misa_banhang_api.py` theo đúng schema payload đã bắt
+> (`POST sa/v1/sa_voucher/full`, master 46 key + detail ~101 key + Links sa_invoice/in_outward)
+> — nguồn: SMED `hoaDonDienTuExtend/DataHoaDonDienTu` (mã phiếu, ký hiệu HĐ, khách, ngày
+> giờ, tiền, HTTT, trung tâm) + BKCT (`stg_11BKCT`: số HĐ, tên hàng, SL, giá, thành tiền)
+> để bù dòng hàng; idempotent theo refno = maPhieu bỏ 3 ký tự; rồi trang
+> `/m/up-hoadon-gtgt` (khuôn `SqlDataModule.uploadMisa`) + builder báo cáo
+> `misa-bh-chitiet` + job `misa-ban-hang-api` + Task hằng ngày + phân quyền 3 điểm.
+
 > **Version:** KHÔNG bump (chưa push — 6.6.0 / 9.8.1 giữ).
 
 > **Version:** KHÔNG bump (đang code — 6.6.0 / 9.8.1 giữ).
