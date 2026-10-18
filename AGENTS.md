@@ -3191,4 +3191,13 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > lúc 00:28:58 → gist + Vercel register HTTP 200 → `tunnel_ok: true` (curl ngoài)
 > → đồng bộ `.env.local` 2 app. Task_02 không gián đoạn.
 
+> **⚡ Bổ sung 2 — bằng chứng production (01:00→01:40):** job THẬT
+> `misa-xuat-kho-api` kỳ 18/10 (Task_05 tự chạy đêm, 120+ phiếu) chạy suốt 40
+> phút mà Chrome CDP giữ ĐÚNG **3 tab** (2 tab làm việc + newtab của ĐH) — trước
+> đây cùng loại job tồn 58 tab.
+>
+> **⚠️ TỒN ĐỌNG — restart agent CHƯA làm:** agent bận liên tục đêm nay (Task_02 →
+> Task_03 → Task_05 → Task_06 sắp chạy) nên HOÃN tới khi rảnh; lệnh restart ở
+> entry C.291 repo con (chỉ ảnh hưởng phần kill-tree — các fix khác đã hiệu lực ngay).
+
 > **Version:** KHÔNG bump (agent-side python — tiền lệ GĐ 422). 6.7.0 / 9.9.0.
