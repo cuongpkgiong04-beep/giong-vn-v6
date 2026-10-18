@@ -3184,4 +3184,11 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Chi tiết đầy đủ ở entry C.291 AGENTS.md repo con.** Commit: repo con `592d801`
 > (code) + `76d1d0b` (entry), app tổng entry commit này.
 
+> **⚡ Bổ sung cùng phiên (phát hiện khi verify):** TUNNEL chết ngầm từ 16:18 hôm
+> nay (watchdog restart cloudflared 2 lần không lên URL mới) → chiều web → agent
+> đứt ~8 tiếng; Task_02 tự động vẫn chạy. **Đã fix theo cơ chế thiết kế:** kill
+> cloudflared → api_server tạo tunnel mới `metallica-compound-smilies-territories`
+> lúc 00:28:58 → gist + Vercel register HTTP 200 → `tunnel_ok: true` (curl ngoài)
+> → đồng bộ `.env.local` 2 app. Task_02 không gián đoạn.
+
 > **Version:** KHÔNG bump (agent-side python — tiền lệ GĐ 422). 6.7.0 / 9.9.0.
