@@ -3123,3 +3123,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.6.0** / repo con **9.8.1**.
+
+### GĐ 466 / C.290 (Trợ lý Freebuff): Khắc phục tràn tab Chrome CDP — module misa_tab_guard (tái dùng tab + dọn rác) cho 3 luồng SMED→MISA (2026-10-18)
+
+> **Yêu cầu của Đại ca (18/10, ảnh Task Manager: Chrome 1,7GB RAM + 36% CPU):**
+> công việc lấy dữ liệu SMED (Nhập kho · Xuất kho · Bán hàng) đẩy lên MISA mở
+> quá nhiều cửa sổ Chrome → tràn RAM/CPU. Chỉ đạo: "Khi định mở một cửa sổ mới
+> cho Misa hoặc SMED thì phải đóng cửa sổ đã dùng xong rồi lại. Hoặc sử dụng
+> đúng cửa sổ đã dùng xong chỉ việc đăng nhập lại" + "kiểm tra lại luôn để
+> khắc phục". Chi tiết đầy đủ ở entry C.290 AGENTS.md repo con.
+
+> **Bằng chứng thật (probe CDP 9222):** 58 tab rác (32 SMED /kho/xuatkho + 21
+> hoadondientu + 3 MISA + …) — vì mỗi lượt run() (19 TT/ngày) mở tab mới +
+> nhiều nhánh return sớm quên đóng.
+
+> **Đã làm:** (1) module MỚI `misa_tab_guard.py` — đóng dấu `window.name` cho
+> tab builder, lượt sau TÁI SỬ DỤNG (không mở mới, không đụng tab ĐH) + dọn
+> tab rác ≤2 tab/loại; (2) sửa vòng đời tab 2 builder + `misa_status_sync` +
+> 3 wrapper `_run.py` (dọn đầu/cuối lượt — bảo vệ cả luồng bán hàng);
+> (3) `40_web_agent.py` kill CẢ CÂY tiến trình khi hủy job; (4) fix widget chat
+> SMED che nút Đăng nhập + mở Chrome CDP `--window-size=1920,1080`;
+> (5) Chrome CDP treo WebSocket → kill + mở lại profile `.secrets/chrome-cdp`
+> (bài học GĐ 455) → connect 0.4s.
+
+> **Verify:** tab guard **32/32 PASS** · xuất kho 37/37 · mua hàng PASS ·
+> 40_web_agent 4/4 · E2E 2 lượt scan LB 17/10: lượt 1 mở tab mới + đóng dấu,
+> lượt 2 "♻️ Dùng lại tab smed" — tab 1→1 không rò · **dọn tồn 58 → 2 tab**
+> (Chrome CDP 1,0GB; Chrome cá nhân ĐH không đụng).
+
+> **⚠️ CHỒNG LẤN (báo ĐH):** `misa_banhang_api.py` phiên khác đang làm tiếp —
+> commit `be5da0a` (17:48 18/10) **mất 9 hàm** gồm `run()` → job
+> `misa-ban-hang-api` hiện chưa chạy được; em KHÔNG đụng file này +
+> `api_server.py`. Khi phiên kia xong chỉ cần thêm 3 dòng acquire/release.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.6.0**
+> / repo con **9.8.1**.
