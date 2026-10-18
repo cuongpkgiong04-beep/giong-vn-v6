@@ -3087,3 +3087,13 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.6.0** / repo con **9.8.1**.
+>
+> **CẬP NHẬT 18/10 15:06 — ĐH test "lấy lại dữ liệu T9":** ĐH gửi bản file
+> chuẩn MỚI (thư mục `D:\DuLieuChung\CUONG_2026\0108321182\Tháng 9-2026\13.10
+> .2026 - Cuong\...\Mua vào\` — hash dbcc6c0f) — **596 dòng · tổng thuế
+> 265.076.902**, CÓ HĐ K26TAN 8864311 "Cước chuyển phát" +8.002 mà bản
+> attachments lần đầu (595 dòng · 265.068.900) KHÔNG có. Đã nạp lại DB từ bản
+> ĐH chỉ định → **596/596 dòng Tiền thuế khớp từng đồng** + Số lượng 596/596
+> (57 dòng Excel None = trống) + tổng 3 cột khớp (chưa thuế 5.244.280.716,41 ·
+> SL 31.637,9). ⚠️ Hai bản MIA TOOL cùng kỳ lệch 1 HĐ — đối chiếu lần sau HỎI
+> ĐH bản nào là chuẩn.
