@@ -3003,7 +3003,26 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > để bù dòng hàng; idempotent theo refno = maPhieu bỏ 3 ký tự; rồi trang
 > `/m/up-hoadon-gtgt` (khuôn `SqlDataModule.uploadMisa`) + builder báo cáo
 > `misa-bh-chitiet` + job `misa-ban-hang-api` + Task hằng ngày + phân quyền 3 điểm.
-
+>
 > **Version:** KHÔNG bump (chưa push — 6.6.0 / 9.8.1 giữ).
-
+>
 > **Version:** KHÔNG bump (đang code — 6.6.0 / 9.8.1 giữ).
+>
+>
+> ---
+>
+> ### GĐ 463 / C.287 (Trợ lý Freebuff) — HOÀN TẤT (18/10): builder + trang + job + Task_06 (commit `c69e9c7`)
+>
+> **✅ ĐÃ XÂY DỰNG XONG (theo PA-1 ĐH chốt):**
+> 1. **Builder `misa_banhang_api.py`** (941 dòng, copy khuôn GĐ 462) — quét SMED HĐĐT `#!/hoadondientu` lọc 'Đã gửi' + `#!/lichsuguihoadon` + BKCT (`stg_11BKCT`) từng TT theo ngày → payload `POST sa/v1/sa_voucher/full` (master 46 key + detail ~101 key + Links sa_invoice/in_outward) + idempotent `refno_finance = maPhieu bỏ 3 ký tự` (verify 39↔39 LB 10/10).
+> 2. **Unit test `misa_banhang_api.test.py`** — 56/56 PASS (parse_num, dates, debit map 1111/1121, payload shape sa_voucher/full, ledger body, iter_days).
+> 3. **Wrapper `misa_banhang_api_run.py`** — 19 TT × kỳ, env `MISA_AUTO_POST=1` ghi sổ tự động (`save_and_post` / `ledger/post` reftype 3530).
+> 4. **Báo cáo `misa-bh-chitiet`** (`sql_reports.py`) — 11 cột: Ngày bán hàng · Trung tâm · Mã phiếu · Ký hiệu HĐ · Số HĐ · Khách hàng · HTTT · Tổng tiền · Số dòng hàng · Trạng thái MISA · Ghi chú; nguồn `sm_banhang_phieu` + Subtotal đúng nguyên tắc.
+> 5. **Trang `/m/up-hoadon-gtgt`** — khuôn `SqlDataModule.uploadMisa` (3 phần: báo cáo kỳ + lịch sử + nút Upload Misa), confirm rõ 19 TT + ghi sổ tự động + bỏ qua trùng.
+> 6. **Job `misa-ban-hang-api`** (REPORT_MAP 40_web_agent.py) + progress marker `✅ PHIẾU BÁN HÀNG ĐÃ TẠO` + `MISA_AUTO_POST=1`.
+> 7. **Task_06 · MISA bán hàng** (`task_runner.py`) — spawn khi Task_02 xong (`_maybe_spawn_misa_bh`), kind `misa-ban-hang`, run `_run_misa_bh_only`.
+> 8. **Phân quyền 3 điểm**: `ROUTE_TO_GROUP["/m/up-hoadon-gtgt"] = "bh-upload-misa-amis"` + `REPORT_GROUP["misa-ban-hang-api"] = "bh-upload-misa-amis"` + catalog app tổng `bh-nhap-ban-hang` đã có sẵn.
+>
+> **Verify:** unit 56/56 PASS · tsc app tổng EXIT 0 · tsc repo con EXIT 0 · schema payload khớp UI thật (probe GĐ 463) · BKCT join 37/39 khớp từng đồng (40/40 dòng hàng) · debit 1121_LB cho 'Chuyển khoản' (phiếu thật 00006198) · lô/HSD bù từ BKCT.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.6.0** / repo con **9.8.1**.
