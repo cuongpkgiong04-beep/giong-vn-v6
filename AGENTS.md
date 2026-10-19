@@ -4059,3 +4059,31 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.7.0** / repo con **10.0.0**. KHÔNG push chờ lệnh.
+
+---
+
+### GĐ 481 / C.304 (Trợ lý Freebuff): Phiếu xuất kho theo mẫu import PX-SD-20269301730 — PA-2 — xóa 45/45 · tạo lại 39/45 · PHÁT HIỆN phiếu save_full vô hình với danh sách MISA — chờ ĐH chốt PA (2026-10-20)
+
+> **Yêu cầu ĐH (19/10 tối, file bảng kê UPMISA kỳ 09):** điều chỉnh phiếu xuất
+> kho như phiếu `PX-SD-20269301730` (SĐ, 30/09) đã có trên MISA. Probe bằng
+> chứng: phiếu đó = import Excel anh Hùng (45 phiếu builder cũ thiếu Mã thống
+> kê phiếu `custom_field1` · resale_type_id · giá lẻ .003). **ĐH chốt PA-2 +
+> GIỮ diễn giải "theo phiếu SMED"** (không đổi "XBAN").
+
+> **Đã làm (repo con `3401abb` + `3d94962` — chi tiết entry C.304):**
+> builder xuất kho: custom_field1 + resale_type_id=0 + giá/trền tiền tròn đồng
+> (test 41/41) · script rebuild: **API bỏ ghi sổ ĐÚNG = `DELETE g1/api/ledger/
+> v1/ledger/unpost`** body phẳng + `PassWarnings:{WarningUnPortExistOutINOutwardAfter:
+> "true"}` (unpostbatch g2 bị chặn "Chứng từ đã bị thay đổi") → xóa 45/45 phiếu
+> 17-18/10 · builder tạo lại + ghi sổ 39/45 (ĐX/ML/PY/SĐ/TS/LB đủ · CĐ 1/7).
+> smed_login_xk xóa cookie smed.vn · smed_filter_day dispatch input/change.
+
+> **🚨 PHÁT HIỆN LỚN (chờ ĐH):** phiếu tạo qua API `save_full` (cả 45 cũ + 39
+> mới + phiếu TEST đủ trường) **KHÔNG HIỆN** trong danh sách Kho hàng → Xuất
+> kho trên UI (view 62 — chỉ 94 phiếu import 30/09 + 6 phiếu xuất kèm bán hàng
+> 19/10) — nguyên nhân KÊNH TẠO, không phải cấu trúc. 3 PA trình ĐH: PA-1
+> import Excel qua API (khuyến nghị) · PA-2 giữ save_full · PA-3 ĐH import tay.
+> Phiếu TEST `TEST_CUONG-XK-GD481-01` chờ ĐH duyệt xóa (GĐ 428).
+
+> **Version:** KHÔNG bump (agent-side). KHÔNG push chờ lệnh. App tổng **6.7.0** /
+> repo con **10.0.0**.
