@@ -3761,3 +3761,34 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (docs-only). App tổng 6.7.0 / repo con 10.0.0. Commit:
 > registry claim `ab7e5af` + commit này.
 
+
+### GĐ 477 / C.302 (Trợ lý Freebuff): FIX "thiếu phiếu" upload chứng từ mua hàng — 2 gốc (bảng kê cũ + lọc phiếu không số HĐ) — PA-1 ĐH chốt (2026-10-19)
+
+> **ĐH báo (19/10 tối, 2 ảnh):** file đối chiếu "2026.T10.01_17 PNK.xlsx" (179 phiếu)
+> nhiều phiếu **#N/A check khớp** + MISA lọc ngày hạch toán 03/10 → "Không có dữ
+> liệu". **Điều tra (bằng chứng DB + MISA thật):** 137 phiếu bảng kê máy ĐỀU có
+> trên MISA + đúng ngày — **2 gốc thực sự:**
+> 1. **Bảng kê trên máy CŨ:** kỳ 01→17/10 chỉ có **138 phiếu** (file 5.BKN6-10-01
+>    tải 01/10 18:16, nạp đè cuối 06/10 08:41) — **ngày 03/10 = 0 phiếu** trong khi
+>    file anh có (bảng kê tải mới hơn). **Tải lại (job nhapkho e667b5fe): 176 phiếu
+>    (+38)** — 03/10 có **15 phiếu** (PN-20261006141228 SĐ · anh chỉ trong ảnh — CÓ,
+>    ngày nhập 03/10) · 07/10 +3 · 08/10 +2 · 12/10 +3 · 14/10 +15.
+> 2. **Lọc phiếu không có số HĐ:** `read_phieu` điều kiện `col5 LIKE '[0-9]%'`
+>    (col5 = SỐ HÓA ĐƠN) loại **PN-20261008094405** (HM · 08/10 · MenQuadfi ·
+>    10 liều · 1.306.400đ — bảng kê trống số HĐ) → không được đẩy. MISA phiếu mua
+>    hàng KHÔNG bắt buộc hóa đơn.
+>
+> **ĐH chốt PA-1. Đã làm (repo con — builder `misa_muahang_api.py`):**
+> 1. `read_phieu`: BỎ điều kiện col5 (chỉ giữ col2 = NCC — mỗi mã 1 dòng, không
+>    nhặt rác — verify: thêm đúng 1 mã).
+> 2. scrape SMED: số HĐ KHÔNG bắt buộc (chỉ yêu cầu lines + mã phiếu).
+> 3. **Payload phiếu thuần** khi không có số HĐ: `master.include_invoice=0` +
+>    **Links rỗng** (không đính khối pu_invoice) — phiếu CÓ HĐ payload nguyên trạng.
+> 4. Tải lại bảng kê (job trên) → **job Upload Misa toàn kỳ `bcd71270`**
+>    (builder mới — phiếu đã có tự skip, chỉ tạo phần thiếu + phiếu thuần).
+>
+> **Verify đang chạy:** job bcd71270 — tiến độ realtime (bổ sung kết quả bên dưới).
+> Bảng kê mới 176 phiếu — 137 đã có trên MISA (skip) + ~39 cần tạo (15 phiếu
+> 03/10 + phiếu thuần + bổ sung 07/08/12/14/10).
+>
+> **Version:** KHÔNG bump (backend agent python — tiền lệ GĐ 422/468). 6.7.0 / 10.0.0.
