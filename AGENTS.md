@@ -3654,3 +3654,44 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > là lộ), đã xong 4 file.
 
 > **Version:** app tổng **6.7.0** (docs-only) / repo con **10.0.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 476 / C.301 (Trợ lý Freebuff): PA-1 — hoàn thiện backend module Điều chuyển nội bộ (GĐ 430 dở dang) — LIVE (2026-10-19)
+
+> **Bối cảnh (ĐH yêu cầu sau khi các Agent dừng việc):** "kiểm tra các file đang
+> sửa dở dang... GĐ 474 làm những gì? nếu cần phải làm thì anh sẽ để em tiếp tục
+> hoàn thiện ở đây". **Kết quả điều tra:** GĐ 474/C.298 + C.300 (2 bảng bccn f1/f4)
+> ĐÃ HOÀN TẤT + ĐÃ LIVE trong 10.0.0 — không dở. **Dở dang THẬT duy nhất: backend
+> module Điều chuyển (GĐ 430)** — web đã LIVE (PA-1 em commit hôm nay) nhưng
+> (1) bảng `dieu_chuyen_files` GiondDB schema CŨ (file_name/file_path/processed —
+> thế hệ 1) ≠ code endpoint + web LIVE dùng schema đồng bộ mua-hang (module/
+> ten_file/duong_dan/loai/so_dong_ai/ghi_chu — GĐ 429 "3 endpoint dùng chung cấu
+> trúc mua-hang") → upload/extract báo lỗi cột; (2) api_server.py 3 endpoint +
+> dieu_chuyen_extract.py + setup script **chưa commit**.
+>
+> **ĐH chốt PA-1. Đã làm:**
+> 1. **Đồng bộ bảng** (0 dòng — an toàn): DROP+CREATE `dieu_chuyen_files` schema
+>    mới qua **API Server /exec** — login Windows shell bị SQL Server từ chối
+>    (GIONGPC\Administrator 18456 — service vẫn vào được bằng account khác —
+>    dùng kênh service đúng lesson GĐ 170) · setup script DDL cập nhật schema mới.
+> 2. **Sửa extract dò header** (`_map_rows_to_dc`): phiếu thật có dòng tiêu đề
+>    phía trên → dò dòng header = dòng ĐẦU TIÊN trong 10 dòng đầu có ≥2 cột khớp
+>    chuẩn (qua alias) thay vì cứ lấy dòng 1 (file test thật: 6 dc_rows toàn
+>    trống → giờ đọc đúng).
+> 3. **Restart api_server** (kill PID cmdline 24412 — api_server KHÔNG chết theo
+>    sc stop — lesson GĐ 329;NSSM tự hồi sinh PID 7036) — module cache cũ mất.
+> 4. **Commit backend** (`b6bd7dc`): api_server.py (3 endpoint +146) +
+>    dieu_chuyen_extract.py (+381) + test (+127) + setup script (+93).
+>
+> **Verify trọn luồng (file Excel phiếu điều chuyển giả lập):** unit
+> `dieu_chuyen_extract.test.py` PASS · upload (lưu INPUT\dieu_chuyen\ + ghi sổ
+> file_id 1-2) ✓ · extract — **dc_rows 2 dòng đúng từng trường** (Hexaxim 0.5ml
+> Pháp SL 50 lô L2401234 HSD 30/06/2027 · Rotarix 1.5ml Bỉ SL 30 lô R2405678) ✓ ·
+> files list ✓ · **qua tunnel + gist**: api_server restart → Quick Tunnel đổi URL
+> mới `taxes-embassy-char-particularly` — gist tự ghi ✓ + curl từ NGOÀI endpoint
+> files/upload ✓ (web production tự lành theo GĐ 426 — không redeploy).
+>
+> **⚠️ 2 file test mẫu `test_phieu_dieu_chuyen(.2).xlsx` còn trong sổ
+> dieu_chuyen_files (id 1-2) + INPUT\dieu_chuyen\** — chờ ĐH đồng ý mới xóa
+> (quy tắc GĐ 428).
+>
+> **Version:** KHÔNG bump (backend agent python — tiền lệ GĐ 422/468). 6.7.0 / 10.0.0.
