@@ -3317,3 +3317,34 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (docs-only). 6.7.0 / 9.9.0. Commit: registry claim
 > `b602443` + commit này.
 
+### GĐ 469 / C.293 (Trợ lý Freebuff): Hộp KPI LƯỢT TIÊM 2 tầng — bảng tổng hợp theo trung tâm + drill-down chi tiết từng dòng (2026-10-19)
+
+> **Yêu cầu của Đại ca (19/10):** bấm hộp KPI LƯỢT TIÊM → bảng tổng hợp 19
+> trung tâm (STT · Ngày tháng · Tên trung tâm đầy đủ · Số lượng mũi · Số tiền);
+> bấm dòng trung tâm → bảng chi tiết trung tâm đó (STT · Ngày · Trung tâm viết
+> tắt · Tên khách · Vắc xin · Số tiền); kết cấu tiêu đề + TỔNG CỘNG dính khi
+> cuộn. Chi tiết đầy đủ ở entry C.293 AGENTS.md repo con.
+>
+> **Hỏi-đáp chốt 4 điểm (ĐH 19/10):** (1) tên đầy đủ = "Trung tâm TC Gióng
+> <short>" (mẫu anh: "Trung tâm TC Gióng Bích Hòa"); (2) "Số lượng mũi" = đếm
+> DÒNG có giờ vào tiêm (khớp hộp KPI — 18/10 = 943; SUM col18 = 1.324 mũi thật
+> là nghĩa khác); (3) kỳ nhiều ngày = 1 dòng/TT tổng cả kỳ, cột ngày = khoảng;
+> (4) đủ 19 TT kể cả 0 tiêm.
+>
+> **Đã làm (repo con `34af453` — 2 file +277/−56):** `-overview.ts` — nhánh
+> `shots` viết lại (GROUP BY center · params đúng 3 — bài học GĐ 412 · map tên
+> LIVE dbo.centers pattern GĐ 222 · đủ 19 TT · sort giảm dần · `centerCodes`
+> map tên → mã) + serverFn MỚI `loadOverviewShotsCenter` (TOP 200 dòng mới
+> nhất + SUM tiền toàn bộ — pattern Ngân hàng GĐ 394); `overview-dashboard.tsx`
+> — state `shotsCenter` + nhánh tầng 2 trong useEffect chính + nút "← Tổng hợp
+> theo trung tâm" + reset khi đóng + khung render 2 tầng (thead/tfoot dính,
+> 4 nguyên tắc định dạng, dòng bấm được hover sky-50).
+>
+> **Verify:** tsc app con EXIT 0 · probe thật kỳ 18/10: tầng 1 18 TT · tổng 943
+> lượt / 742.771.200 đ (= KPI hộp) · tầng 2 LB 122 dòng, SUM 85.905.600 = tầng 1
+> từng đồng · tên "Trung tâm TC Gióng Long Biên" chuẩn.
+>
+> **Tiêu chí kiểm chứng (sau Push):** bấm hộp LƯỢT TIÊM → 19 dòng (ĐY 0 mũi
+> ngày 18/10) · bấm dòng LB → 122 dòng khách + TỔNG CỘNG 85.905.600.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
