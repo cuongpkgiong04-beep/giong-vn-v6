@@ -3404,3 +3404,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > chết sau này → job dừng nhanh + trang hiện hướng dẫn rõ.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
+
+### GĐ 472 / C.296 (Trợ lý Freebuff): Hộp KPI MARKETING — số còn nợ HIỆN TẠI (không theo ngày) — cộng tập job bccn không giao (2026-10-19)
+
+> **Yêu cầu của Đại ca (19/10):** hộp MARKETING hiện 0 gói / 11 mũi /
+> 23.300.000 — số còn nợ của 1 NGÀY (SQL chọn "job bccn mới nhất có còn nợ
+> >0" trúng job Task_04 kỳ 1 ngày). Anh muốn số còn nợ HIỆN TẠI. Chi tiết ở
+> entry C.296 AGENTS.md repo con.
+>
+> **ĐH chốt:** gốc = job nguyên khối 01/01/2018→30/09 (273 gói / 1.370 mũi /
+> 995.114.300 — KHÔNG có job tách 2 kỳ như anh nhớ, em probe DB + anh OK dùng
+> nguyên khối) + tháng 10: chạy bù 01-11/10 (Task_04 mới lịch từ 12/10) +
+> cộng job từng ngày.
+>
+> **Phát hiện then chốt (probe DB):** job 12/10 (đêm 13/10) là builder CŨ
+> trước GĐ 405 — snapshot TOÀN BỘ (273 gói/1.377 mũi/1.021 tr) — GIAO gốc →
+> cộng thẳng là đúp ~2 tỷ. date_from/date_to nvarchar dd/mm/yyyy — so thời
+> gian phải TRY_CONVERT(…,103).
+>
+> **Đã làm (repo con `592fd77` — 1 file +95/−66):** marketingStats +
+> loadOverviewMarketingDetail đồng bộ — WITH root + tail (mọi job date_from
+> SAU date_to gốc, mỗi khoảng kỳ rn=1) → SUM tt-cn; không mốc cứng — job cũ
+> 12/10 được thay bằng job rebuild 12/10→12/10 (cùng kỳ, mới hơn → rn=1 tự
+> chọn). Vận hành: INSERT 2 job bccn qua `/exec`: bù 01/10→11/10 (7014E614) +
+> rebuild 12/10→12/10 — pending chờ agent rảnh (đang chạy job MISA GĐ 468).
+>
+> **Verify:** tsc EXIT 0 · probe thành phần root/tail riêng khớp từng đồng ·
+> tổng cuối đối chứng khi 2 job done.
+>
+> **Tiêu chí kiểm chứng:** hộp hiện ~273 gói / ~1.388+ mũi / ~1.025 tr+ —
+> không còn 11 mũi/23.300.000; chi tiết khớp hộp.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
