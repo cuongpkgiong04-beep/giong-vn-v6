@@ -4087,3 +4087,24 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (agent-side). KHÔNG push chờ lệnh. App tổng **6.7.0** /
 > repo con **10.0.0**.
+
+### GĐ 471 / C.295 — bổ sung KẾT QUẢ CHỐT 3 chốt của Đại ca chiều 19/10 (2026-10-19)
+
+> **3 chốt của anh (trả lời AskUserQuestion 19/10 chiều):** (1) CHỈ upload hóa
+> đơn — không tick "Kèm phiếu xuất" — không có 632; (2) số chứng từ GIỮ chuẩn
+> bỏ "HD1" (như C.287 — em báo cách hiện tại, anh chốt giữ); (3) "Thu tiền
+> ngay" — Tiền mặt/Chuyển khoản theo HTTT trên hóa đơn. Chi tiết đầy đủ ở
+> **entry C.295 AGENTS.md repo con** (khối "KẾT QUẢ CHỐT").
+
+> **Tóm tắt:** xóa 691 phiếu chuẩn cũ (Total về 0) → tạo lại code mới (bỏ kho
+> `is_sale_with_outward=False` + bỏ link in_outward · IDs Đơn vị/Mã thống kê
+> từ `tra_center_ids` GĐ 444 · `budget_item_id` từ phiếu kế toán cũ · TK NH
+> VCB 1475018888 cho 1121 — anh chốt) → **MISA 18/10 CUỐI: 729 phiếu ·
+> 730.630.000 · GHI SỔ TOÀN BỘ 729/729** · còn 24 phiếu (14 BKCT trùng/miss
+> soi tay · 6 hàng không khớp MISA · ~4 InvalidInvno — anh kiểm tra dãy 1C26MA*).
+> Bonus fix: **SMED đổi UI HĐĐT đêm 19/10** → bỏ lọc UI (capture headers trước
+> login, API tự lọc body) · `SummaryData.Total` MISA trả rác — chỉ tin PageData
+> (loadMode=2). Commits repo con: `7376433` + `ce68221` + 4 commit chốt mới.
+
+> **Version:** KHÔNG bump (agent python — tiền lệ GĐ 422). App tổng **6.7.0** /
+> repo con **9.9.0** (hiện hành).
