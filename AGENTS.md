@@ -3877,3 +3877,53 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > 6.7.0 / repo con 10.0.0.
+
+---
+
+### GĐ 480 (Trợ lý Freebuff): Đội AI Agents từ repo agency-agents-main — cài 10 agent chuyên môn vào ~/.zcode/agents (PA-3 ĐH chốt) (2026-10-19)
+
+> **Yêu cầu của Đại ca (19/10 tối):** đọc thư mục `D:\DuLieuChung\CUONG_2026\Github\agency-agents-main`
+> xem kết hợp được với dự án không; muốn lập 1 đội AI Agents để giao việc và nhận
+> kết quả, có sẵn key API DeepSeek + GLM.
+
+> **Khảo sát:** repo = "The Agency" (MIT, msitarzewski/agency-agents) — 328 agent
+> định nghĩa dạng Markdown (frontmatter name/description + thân: vai trò, tính cách,
+> quy trình, deliverables), 18 division; có sẵn tích hợp ZCode (`integrations/zcode/`
+> → file cài `~/.zcode/agents/` global hoặc `.zcode/agents/` project — đúng thư mục
+> ZCode đọc subagents). Trình 3 PA → **ĐH chốt PA-3**: PA-1 cài đội vào ZCode dùng
+> ngay (em làm tổng đài điều phối), PA-2 (hệ thống giao việc → hàng đợi → kết quả
+> chạy API DeepSeek/GLM trực tiếp) làm roadmap sau khi chạy quen 1-2 tuần.
+
+> **Đã làm (ngoài repo — KHÔNG đụng code 2 repo):** script Node tạm
+> `C:/Users/cuong/AppData/Local/Temp/giong-install-agents.mjs` đọc 10 file nguồn,
+> sinh đúng format convert_zcode (frontmatter name+description) → cài
+> `C:/Users/cuong/.zcode/agents/` (10/10 OK):
+> 1. `frontend-developer` — React/TS/Tailwind (app tổng + app con)
+> 2. `backend-architect` — API/server functions
+> 3. `database-optimizer` — SQL (GiondDB SQL Server / Neon)
+> 4. `code-reviewer` — review code
+> 5. `minimal-change-engineer` — sửa surgical (đúng quy tắc Minimal Change)
+> 6. `sre-site-reliability-engineer` — vận hành production (tunnel/Vercel/deploy)
+> 7. `test-automation-engineer` — unit/E2E
+> 8. `application-security-engineer` — audit đăng nhập/env (bài học GĐ 463/477)
+> 9. `senior-project-manager` — điều phối/bóc việc
+> 10. `product-manager` — chuyển yêu cầu mơ hồ → tiêu chí rõ
+>
+> Nguồn: `engineering/`, `testing/`, `security/`, `project-management/`,
+> `product/` trong agency-agents-main. Thêm/bớt agent = copy file .md tương tự.
+
+> **Cách dùng (phiên ZCode SAU khi cài):** custom subagents được ZCode nạp lúc
+> khởi động phiên → Agent tool có thêm 10 chuyên gia; trong phiên nói với tổng
+> đài: "giao việc X cho code-reviewer" → tổng đài dispatch qua Agent tool +
+> thu kết quả + báo cáo. Model nền = GLM (key DeepSeek/GLM dùng ở lớp model của
+> ZCode — PA-2 sau này gọi API trực tiếp nếu cần).
+
+> **Tiêu chí kiểm chứng:** mở phiên ZCode MỚI → danh sách subagent có 10 agent;
+> thử "giao việc cho test-automation-engineer" → nhận việc + trả kết quả đúng vai.
+
+> **Roadmap PA-2 (chờ ĐH khi cần):** hệ thống giao việc/hàng đợi/kết quả riêng
+> (mở rộng api_server 8777 hoặc trang web mới) — agent chạy song song bằng API
+> DeepSeek/GLM trực tiếp + agent đặc thù GIONV (SMED/ETL/báo cáo/production).
+
+> **Version:** KHÔNG bump (ngoài repo — 0 code app đổi). App tổng **6.7.0** /
+> repo con **10.0.0**. KHÔNG push chờ lệnh.
