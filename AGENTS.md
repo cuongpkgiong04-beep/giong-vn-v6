@@ -3395,16 +3395,18 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >    tồn tại, 0 lỗi, save_full HTTP 200) → job toàn kỳ chạy thật.
 >
 > **Verify:** unit `misa_muahang_api.test.py` PASS · tsc app con EXIT 0 ·
-> `py_compile` cả 2 file OK · test tay BH 01/10 sau fix: 0 lỗi · job toàn kỳ
-> `6e318e5b` chạy (kết quả ở `LOG/misa-mua-hang-api_*.json` + bảng
-> `misa_phieu_status`).
+> `py_compile` cả 3 file OK · test tay BH 01/10 sau fix: 0 lỗi · **KẾT QUẢ
+> JOB TOÀN KỲ `6e318e5b` (10:29→11:59): 63 phiếu TẠO MỚI + GHI SỔ 63/63 ·
+> 74 phiếu đã có trên MISA (bỏ qua đúng — idempotent) · 0 lỗi** ·
+> `misa_status_sync.py` (fix cùng filter g2 — repo con commit `b2bf4a7`)
+> kỳ 01/10→17/10: **137/138 mã có trên MISA · 137 đã ghi sổ · cross-check
+> stg_5BKN → 0 phiếu nguồn thiếu**.
 >
-> **Tiêu chí kiểm chứng:** kỳ 01/10→17/10 đủ phiếu trên MISA (bấm "Chạy báo
-> cáo" lại trên /m/up-nhap-kho → cột "Trạng thái MISA" cập nhật); lần CDP
-> chết sau này → job dừng nhanh + trang hiện hướng dẫn rõ.
+> **Tiêu chí kiểm chứng (ĐÃ ĐẠT):** kỳ 01/10→17/10 đủ phiếu trên MISA —
+> anh bấm "Chạy báo cáo" lại trên /m/up-nhap-kho → cột "Trạng thái MISA"
+> đầy đủ; lần CDP chết sau này → job dừng nhanh + trang hiện hướng dẫn rõ.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
-
 ### GĐ 472 / C.296 (Trợ lý Freebuff): Hộp KPI MARKETING — số còn nợ HIỆN TẠI (không theo ngày) — cộng tập job bccn không giao (2026-10-19)
 
 > **Yêu cầu của Đại ca (19/10):** hộp MARKETING hiện 0 gói / 11 mũi /
