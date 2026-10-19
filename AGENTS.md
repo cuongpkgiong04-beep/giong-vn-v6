@@ -3420,6 +3420,13 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > đã đẩy đủ 18/10) · tạo mới 0 · lỗi nghiệp vụ 0 · **guard chống sai ngày
 > GĐ 464 chặn ĐÚNG tại LB** (SMED trả 10 phiếu 19/10 dù lọc 18/10 → DỪNG
 > an toàn — Task tối nay đẩy đúng kỳ). KHÔNG bump (6.7.0 / 9.9.0).
+>
+> ⚠️ Minh bạch commit `b1b6bdb`: diff hiển thị 3.453 dòng do EM ghi file bằng
+> Python text-mode (open/write) làm đổi line-ending CRLF→LF TOÀN FILE — nội
+> dung nguyên vẹn (verify `git diff -w` = 9+/1- đúng đoạn thêm; mọi entry
+> GĐ 468/469/470/471/472 + mục quy tắc grep nguyên — tiền lệ GĐ 441). Bài
+> học: sửa file dùng chung bằng Edit tool hoặc binary mode, không Python
+> text-mode (universal newlines CRLF→LF khi đọc + ghi).
 ### GĐ 472 / C.296 (Trợ lý Freebuff): Hộp KPI MARKETING — số còn nợ HIỆN TẠI (không theo ngày) — cộng tập job bccn không giao (2026-10-19)
 
 > **Yêu cầu của Đại ca (19/10):** hộp MARKETING hiện 0 gói / 11 mũi /
