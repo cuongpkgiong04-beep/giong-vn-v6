@@ -3792,3 +3792,88 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 03/10 + phiếu thuần + bổ sung 07/08/12/14/10).
 >
 > **Version:** KHÔNG bump (backend agent python — tiền lệ GĐ 422/468). 6.7.0 / 10.0.0.
+
+---
+
+### GĐ 478 / C.302 (Trợ lý Freebuff): Nút Refresh Bảng giá dịch vụ SOI TRỰC TIẾP web 3 nguồn (TCG/LCA/VNVC) + nạp bảng giá 15/10 + thông báo ngày cập nhật (2026-10-19)
+
+> **ĐH báo (19/10 tối, ảnh):** bấm Refresh trang "Bảng giá dịch vụ" (app con)
+> luôn thấy "✅ Bảng giá trên web không đổi — đang là mới nhất." dù **hôm qua
+> anh vừa cập nhật bảng giá trên web**. ĐH yêu cầu: kiểm tra cách thức lấy
+> bảng giá mới nhất + hoàn thiện để không tái diễn + thông báo khi bấm
+> Refresh phải ghi "Bảng giá trên web được cập nhật vào ngày...." = ngày
+> hiện tại lúc bấm nút.
+>
+> **Chẩn đoán (bằng chứng probe):** `checkBangGiaHash` cũ tải URL ảnh **CỨNG
+> hard-code** `Bảng gia 04_07_2026.jpg` → web mỗi lần up bảng giá là TẠO FILE
+> MỚI tên ngày mới (không ghi đè file cũ) → file cũ không bao giờ đổi → md5
+> mãi trùng hash seed → luôn báo "không đổi". Thực tế web (trang
+> `bang-gia-he-thong-...html`) đã trỏ **ảnh mới `Bảng gia 15_10_2026.jpg`**
+> (Last-Modified 18/10 12:25 VN) — ảnh cũ vẫn sống trên server (200 OK,
+> Last-Modified 07/07).
+>
+> **ĐH chốt PA-1 + mở rộng: "Thực hiện cho cả giá của Long Châu và VNVC.
+> Tất cả phải soi trực tiếp trang web của 3 website để lấy giá mới nhất."**
+>
+> **Đã làm (repo con `3557bb6` code 3 nguồn + `c62030e` bảng 15/10 — 7 file):**
+> 1. **Logic thuần mới `src/lib/bang-gia-soi.ts`** (+ test 15/15 PASS node
+>    thuần, đăng ký npm test): parse HTML VNVC (bảng tb01 — 62 dòng, y hệt
+>    tool scrape-gia-ngoai GĐ 399) · parse JSON Long Châu · `extractTcgAnh`
+>    (tìm link ảnh "Bảng gia *.jpg" hiện tại — decode chứa "bảng gia") ·
+>    `soSanhGia` (giá web 0 = chưa niêm yết → bỏ qua; key mới có giá = thay
+>    đổi) · builders SQL INSERT nạp đè + UPDATE cột gia_vnvc/gia_lchau theo
+>    CASE stt từ bảng map.
+> 2. **Server fn `refreshBangGia`** thay `checkBangGiaHash` (-bang-gia.ts):
+>    (1) TCG — soi TRANG bảng giá → ảnh hiện tại → md5 vs src_hash seed;
+>    (2) VNVC — fetch HTML tĩnh → nạp đè price_list_vnvc + UPDATE gia_vnvc;
+>    (3) Long Châu — **API JSON `product/vaccines` (POST {page,size} — 54 SP,
+>    phát hiện probe Playwright 19/10: nút "Xem thêm" trên trang chính là gọi
+>    API này → soi trực tiếp KHÔNG cần Playwright)** → nạp đè price_list_lchau
+>    + UPDATE gia_lchau. Lỗi 1 nguồn KHÔNG chặn nguồn khác. `loadBangGia`:
+>    ORDER BY đẩy dòng chưa map SMED xuống cuối (bảng 15/10 có dòng mới
+>    ten_smed rỗng).
+> 3. **Bảng map mới `price_list_map_gia_ngoai`** (stt PK · vnvc_ten ·
+>    lchau_url) — seed 52 dòng từ map-gia-ngoai.csv C.236 (server fn Vercel
+>    không đọc được CSV trên máy agent → map phải nằm trong DB).
+> 4. **Trang** `banhang-bang-gia-dich-vu.tsx`: onRefresh hiển thị 3-4 dòng
+>    thông báo (TCG/VNVC/LCA) — đúng câu ĐH yêu cầu: web chưa đổi →
+>    "✅ Bảng giá trên web được cập nhật vào ngày dd/mm/yyyy — đang là mới
+>    nhất." (dd/mm/yyyy = NGÀY HIỆN TẠI trên máy lúc bấm — client
+>    `toLocaleDateString`); phát hiện bảng giá/giá mới → ⚠️ amber kèm số thay
+>    đổi + tự `load()` lại bảng sau refresh.
+>
+> **Bảng giá 15/10 nạp xong (ĐH chờ từ tin nhắn PA-1):** đọc TRỰC TIẾP ảnh
+> 1414×2000 (crop 4 dải — không OCR, phương pháp C.236) → JSON chuẩn 54 dòng
+> (`agent/bang-gia/bang-gia-15102026-chuan.json` + ảnh gốc lưu repo, tổng
+> giá 65.650.000) → nạp đè price_list + `src_hash = 418925ce…` = md5 ảnh
+> 15/10. **So 04/07 → 15/10: bỏ Menactra · tách cúm 4 dòng (Vaxigrip,
+> Influvac, Influvac Tetra, GC Flu Quadriva — mỗi dòng 350.000/UD 300.000) ·
+> thêm Beyfotus 2 liều (50mg/0,5ml + 100mg/1ml — 9.700.000/UD 8.700.000) ·
+> đổi giá Rotarix 850→890k · RotaTeq 640→635k · Imojev 900→930k · đổi ưu đãi
+> Bexsero UD bỏ (sang Menquadfi 1.750.000) · Nimenrix UD bỏ · Abrysvo
+> +UD 5.300.000 · Shingrix 3.700→3.630k · Gardasil 9 2.900→2.850k.** Giữ
+> ten_smed + gia_vnvc/gia_lchau theo tên khớp (50/54); **4 dòng MỚI
+> (Vaxigrip · Influvac · Beyfotus 50mg · Beyfotus 100mg) ten_smed rỗng —
+> chờ ĐH duyệt map SMED** (nguyên tắc GĐ 365).
+>
+> **Verify:** tsc EXIT 0 · test app con PASS (15 + 62 + 12 + 10) · nạp qua
+> tunnel: map 52 dòng · VNVC 62 dòng web (0 giá đổi — ngày_lay = hôm nay) ·
+> LCA 54 SP (0 giá đổi) · price_list 54 dòng · gia_vnvc 46/54 · gia_lchau
+> 35/54 · **verify refresh THẬT: md5 ảnh web = src_hash DB (418925ce…)
+> khớp TỪNG KÝ TỰ → bấm Refresh sẽ báo "Bảng giá trên web được cập nhật vào
+> ngày 19/10/2026 — đang là mới nhất."** Giá LCA/VNVC lần bấm sau tự soi web
+> 3 nguồn trực tiếp.
+>
+> **⚠️ TRÙNG SỐ C.302 (minh bạch):** phiên song song claim "GĐ 477 / C.302"
+> (`6d54466` 22:15:58 — phiếu nhập kho MISA) SAU claim em (`6aeb1bf`
+> 21:52:40) → theo quy tắc GĐ 285 **em giữ GĐ 478 / C.302**; phiên khác cần
+> đổi số của họ (việc phiên khác tự xử lý — em KHÔNG đụng dòng registry của
+> họ). C.303 (GĐ 479) phiên khác claim hợp lệ (không giao nhau).
+>
+> **Việc tiếp theo (chờ ĐH):** (1) duyệt ten_smed cho 4 dòng mới 15/10; (2)
+> bảng TH GB-KM_GN-CK-LN (`th_gbkm_gnck_ln` 52 dòng — GĐ 419) cần cập nhật
+> theo bảng 15/10 khi ĐH yêu cầu (em KHÔNG đụng — ngoài phạm vi); (3) push
+> chờ lệnh "Push" — web mới có hiệu lực trên production sau push.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> 6.7.0 / repo con 10.0.0.
