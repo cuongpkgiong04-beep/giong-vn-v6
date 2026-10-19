@@ -3543,3 +3543,37 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (agent python — tiền lệ GĐ 422). App tổng **6.7.0** /
 > repo con **9.9.0** (hiện hành).
+
+---
+
+### GĐ 474 / C.298 (Trợ lý Freebuff): Trang bccn thêm bảng "Danh sách đăng ký đặt trước Vắc xin" — nguồn ĐÚNG f1, lọc Ngày đăng ký ∈ kỳ + STT xuyên suốt (2026-10-19)
+
+> **Yêu cầu của Đại ca (19/10, sau GĐ 473):** "Làm tương tự GĐ 473" — thêm
+> bảng "Danh sách đăng ký đặt trước Vắc xin" BÊN DƯỚI "Báo cáo thống kê tình
+> hình trả mũi đặt trước" (cuối trang bccn).
+
+> **Nguồn:** f1 = "Danh_sách_đăng_ký_đặt_trước_vắc_xin" — tool SMED tải, ETL
+> nạp `stg_10gdtvx_f1_dangky`; file gốc SMED 11 cột (# · Dịch vụ · Khách hàng
+> · Mã tiêm chủng · Ngày sinh · Điện thoại · Ngày đăng ký · Ngày hết hạn ·
+> Giá · Ghi chú · Trạng thái). Kế thừa 2 chốt GĐ 473: lọc kỳ job (f1 theo
+> **Ngày đăng ký** — quy tắc GĐ 403) + STT mới 1→n xuyên suốt.
+
+> **Đã làm (chi tiết ở entry C.298 AGENTS.md repo con — code `ed98135` +60/−6,
+> entry `7095a2c`):** builder bccn_dattruoc thêm khối `ds_dt_vx_rows` (12 cột =
+> STT + Trung tâm + 11 cột SMED nguyên tên; sheet 'ds-dt-vx' SAU 'th-tra-mui';
+> moneyCols = ["Giá"] — đơn giá chặn Subtotal) + trang order thêm CUỐI + test
+> T25 (check 8 bảng).
+
+> **Verify:** unit T1-T25 PASS toàn bộ · tsc EXIT 0 · **builder thật kỳ
+> 01/10→19/10/2026: 36 dòng / 10 trung tâm** — đối chứng SQL thô 37 (style
+> 103 — `ngay_dang_ky` NVARCHAR 'dd/mm/yyyy'), **keep_newest tái dựng độc lập
+> (rank timestamp tên file GĐ 401) = 36 = builder khớp TỪNG DÒNG**; DISTINCT
+> khóa 23 thấp hơn là ĐÚNG (gộp mất dòng trùng khóa hợp lệ cùng file).
+
+> **Tiêu chí kiểm chứng (sau Push):** chạy lại job bccn → 8 bảng, bảng cuối
+> "Danh sách đăng ký đặt trước Vắc xin" bên dưới th-tra-mui — mọi trạng thái,
+> 'Giá' #,##0 không cộng Subtotal. Restart GIONG_SMED_Agent sau Push.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.7.0** / repo con **10.0.0** (hiện hành sau bump C.299 phiên song song —
+> code C.298 commit SAU bump → theo đợt Push tới).
