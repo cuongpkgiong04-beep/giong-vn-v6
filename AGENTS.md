@@ -3479,7 +3479,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > nghiệp vụ) — trước giờ chỉ dùng ngầm map Ngày trả mũi (GĐ 330/338/361/396).
 
 > **Đã làm (chi tiết ở entry C.297 AGENTS.md repo con — code `141b541` +77/−7,
-> entry `5dce41d`+`e0e8751`):** builder bccn_dattruoc thêm khối `th_tra_mui_rows`
+> entry `5dce41d`+`b5ba2a8`):** builder bccn_dattruoc thêm khối `th_tra_mui_rows`
 > (đọc f2 đã dedupe GĐ 390/401, lọc kỳ, 12 cột = STT `_dedup_stt` + Trung tâm +
 > 11 cột SMED nguyên tên; sheet 'th-tra-mui' SAU 'cn-tonghop'; moneyCols =
 > ["Giá đặt trước"] — đơn giá, client isUnitPriceColumn chặn Subtotal — nguyên
