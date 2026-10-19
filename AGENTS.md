@@ -187,6 +187,77 @@
 > - `git diff HEAD` — working tree có file modified của session KHÁC (không phải của mình) → KHÔNG add, KHÔNG đụng, báo Đại ca.
 > - Đối chiếu GĐ mới nhất trong AGENTS.md cả 2 repo — Agent khác vừa ghi GĐ trùng phạm vi → CẢNH BÁO.
 
+### 🧪 KIỂM TRA TRƯỚC & SAU MỌI LẦN PUSH (BẮT BUỘC — MỌI AGENT — hiệu lực GĐ 470, 2026-10-19):
+
+> **Lệnh của Đại ca (19/10/2026) nguyên văn:** *"Áp dụng chung cho tất cả các Agents.
+> Trong dự án này phải được thống nhất. Bất kể là ai khi Push đều phải làm như thế này."*
+>
+> **BỐI CẢNH (lý do có mục này):** lỗi **"không đăng nhập được / sai mật khẩu / sai tên"
+> sau khi Push** đã lặp lại NHIỀU LẦN (GĐ 463: thiếu `DATABASE_URL` → Better Auth rơi
+> về PGLite, DB xoá mỗi deploy; 19/10/2026: `APP_JWT_SECRET` LỆCH giữa 2 app → SSO
+> app tổng → app con verify fail). **Chân rễ LUÔN là ENV/SECRET trên Vercel — KHÔNG
+> phải code.** Code "xanh", deploy báo Ready mà vẫn hỏng đăng nhập. Đại ca chỉ test
+> trên production (không test local) → **AGENT phải tự kiểm tra trước và sau khi push,
+> tự sửa ngay nếu có lỗi, KHÔNG để Đại ca phải nhắc lại.**
+>
+> **Kiến trúc để hiểu đúng (không cần Neon làm nguồn chính):** production dùng
+> `TUNNEL_API_BASE_URL` → Cloudflare Tunnel → API Server (máy công ty) → **SQL Server
+> GiongDB = backend CHÍNH** (`dbSource="tunnel"`). `DATABASE_URL` (Neon) chỉ là **lớp
+> bảo hiểm khi tunnel chết** — thiếu nó thì lúc tunnel down sẽ rơi tiếp về PGLite
+> (mất sạch user → sai mật khẩu).
+
+> **A. TRƯỚC KHI PUSH — verify env Vercel của CẢ 2 APP:**
+> ```bash
+> cd "/d/DuLieuChung/CUONG_2026/giong-vn-v6"
+> npx vercel env ls --scope=giong-vn --project=giong-vn-v6 \
+>   | grep -E "DATABASE_URL|APP_JWT_SECRET|TUNNEL_API_BASE_URL|BETTER_AUTH"
+> cd giong-apps/apps/banhang
+> npx vercel env ls --scope=giong-vn --project=giong-banhang \
+>   | grep -E "DATABASE_URL|APP_JWT_SECRET|TUNNEL_API_BASE_URL|ZAI_API_KEY"
+> ```
+> **Phải có — thiếu/lệch bất kỳ mục nào → DỪNG, BÁO ĐẠI CA, KHÔNG PUSH:**
+> - `DATABASE_URL` (Neon fallback) — **CẢ 2 app**
+> - `APP_JWT_SECRET` (khoá ký SSO handoff) — **CẢ 2 app, PHẢI CÙNG MỘT GIÁ TRỊ**
+> - `TUNNEL_API_BASE_URL` + `TUNNEL_GIST_ID` — CẢ 2 app (backend chính)
+> - `BETTER_AUTH_SECRET` + `BETTER_AUTH_URL` — app tổng · `ZAI_API_KEY` — app con
+
+> **B. SAU KHI DEPLOY (push xong ~1-2 phút) — test login THẬT, KHÔNG tin chữ "Ready":**
+> ```bash
+> # 1) Đăng nhập app tổng → PHẢI trả JSON có "user"
+> curl -s -X POST "https://giong-vn-v6.vercel.app/api/auth/sign-in/email" \
+>   -H "Content-Type: application/json" \
+>   -d '{"email":"cuongpk.giong04@gmail.com","password":"Admin123!"}' -c cookies.txt
+> # 2) Session đọc được → có "user"
+> curl -s -b cookies.txt "https://giong-vn-v6.vercel.app/api/auth/get-session"
+> # 3) SSO sang app con: ký JWT (iss=giong-vn-v6, aud=giong-banhang) bằng APP_JWT_SECRET rồi:
+> curl -s -I "https://giong-banhang.vercel.app/api/auth/sso?sso=<TOKEN>"
+> #    ✅ ĐÚNG : 302 → https://giong-banhang.vercel.app/ + Set-Cookie: bh_session=...
+> #    ❌ SAI  : 302 → https://giong-vn-v6.vercel.app/login?next=bahang = TOKEN VERIFY FAIL
+> #              → ký TOKEN MỚI thử lại TRƯỚC (token 60s có thể đã hết hạn — đừng vội
+> #                kết luận secret lệch); vẫn fail → APP_JWT_SECRET lệch/sai giữa 2 app.
+> # 4) App con nhận phiên → "user":{...} + 14 nhóm + các lá quyền
+> curl -s -H "Cookie: bh_session=<token>" "https://giong-banhang.vercel.app/api/auth/me"
+> ```
+> Cách nhanh nhất (đúng luồng thật): mở `https://giong-vn-v6.vercel.app` → đăng nhập →
+> bấm **"Bán hàng"** ở sidebar → app con PHẢI vào được (không hiện "Chưa đăng nhập").
+
+> **C. PHÁT HIỆN LỖI → SỬA NGAY, KHÔNG CHỜ ĐẠI CA NHẮC:**
+> ```bash
+> # Đổi/đồng bộ env (làm app tổng trước, rồi app con) — rm cần trả lời yes:
+> echo "y" | npx vercel env rm <TÊN_BIẾN> production --scope=giong-vn --project=<project>
+> npx vercel env add <TÊN_BIẾN> production --scope=giong-vn --project=<project> <<< "<giá trị>"
+> # REDEPLOY để lấy env mới — KHÔNG cần push code:
+> npx vercel ls <project> --scope=giong-vn     # lấy URL deployment mới nhất
+> npx vercel redeploy <deployment-url> --scope=giong-vn
+> ```
+> **Lỗi CLI đã gặp thật (đừng mất thời gian lại):** `vercel env ls/add/rm` NHẬN
+> `--project`; nhưng `vercel ls` và `vercel redeploy` **KHÔNG** nhận `--project` —
+> redeploy phải truyền **URL hoặc deployment-id**, không truyền tên project.
+>
+> **BÁO CÁO:** sau khi push + verify, ghi kết quả (login app tổng ✅/❌ · SSO app con
+> ✅/❌ · đã sửa gì) vào entry GĐ trong AGENTS.md để phiên sau biết trạng thái.
+
+
 ### 🖥️⌨️ Worktree ĐA AGENT — Agent Desktop + Agent CLI làm việc SONG SONG không chờ nhau (hiệu lực 2026-09-27):
 
 > **BỐI CẢNH:** Trước đây 2 Agent dùng chung 1 working tree → Agent A đang sửa file (modified) thì Agent B phải CHỜ commit xong mới đụng được file đó (vụ GĐ 230/232 — Agent chờ nhau mất nửa ngày). Nguyên nhân: 1 bàn làm việc chung. **Giải pháp (Đại ca chốt PA-1 + nhánh riêng + worktree cạnh repo):** mỗi Agent 1 working tree riêng qua `git worktree` — dùng chung `.git` (commit thấy nhau NGAY trên máy, không cần qua GitHub), làm việc ĐỘC LẬP hoàn toàn.
@@ -3202,34 +3273,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (agent-side python — tiền lệ GĐ 422). 6.7.0 / 9.9.0.
 
-### GĐ 469 / C.293 (Trợ lý Freebuff): Hộp KPI LƯỢT TIÊM 2 tầng — bảng tổng hợp theo trung tâm + drill-down chi tiết từng dòng (2026-10-19)
+---
 
-> **Yêu cầu của Đại ca (19/10):** bấm hộp KPI LƯỢT TIÊM → bảng tổng hợp 19
-> trung tâm (STT · Ngày tháng · Tên trung tâm đầy đủ · Số lượng mũi · Số tiền);
-> bấm dòng trung tâm → bảng chi tiết trung tâm đó (STT · Ngày · Trung tâm viết
-> tắt · Tên khách · Vắc xin · Số tiền); kết cấu tiêu đề + TỔNG CỘNG dính khi
-> cuộn. Chi tiết đầy đủ ở entry C.293 AGENTS.md repo con.
+### GĐ 470 (Trợ lý Freebuff): QUY TẮC CHUNG — KIỂM TRA TRƯỚC & SAU MỌI LẦN PUSH (mọi Agent) + fix sự cố đăng nhập 19/10 (2026-10-19)
+
+> **Lệnh của Đại ca (19/10/2026) nguyên văn:** *"Áp dụng chung cho tất cả các
+> Agents. Trong dự án này phải được thống nhất. Bất kể là ai khi Push đều phải
+> làm như thế này."*
+
+> **Bối cảnh:** lỗi "không đăng nhập được / sai mật khẩu / sai tên" sau Push lặp
+> lại nhiều lần (ĐH báo: *"Đây không phải lần đầu"*). Chân rễ LUÔN là
+> ENV/SECRET trên Vercel — không phải code, vì deploy vẫn báo Ready.
+
+> **Đã làm (docs-only — 0 file code):**
+> 1. **Thêm mục quy tắc mới vào AGENTS.md mục 4** — ngay sau "Nguyên tắc Push ĐA
+>    AGENT": **"🧪 KIỂM TRA TRƯỚC & SAU MỌI LẦN PUSH (BẮT BUỘC — MỌI AGENT — GĐ 470)"**
+>    gồm: (A) TRƯỚC push verify env Vercel CẢ 2 app — `DATABASE_URL` ·
+>    `APP_JWT_SECRET` (2 app PHẢI GIỐNG NHAU) · `TUNNEL_API_BASE_URL` +
+>    `TUNNEL_GIST_ID` · `BETTER_AUTH_SECRET/URL` (tổng) · `ZAI_API_KEY` (con) —
+>    thiếu/lệch → DỪNG, báo ĐH, KHÔNG push; (B) SAU deploy test login THẬT
+>    (sign-in/email → get-session → SSO app con 302 phải về app con + Set-Cookie
+>    `bh_session`, KHÔNG về `/login?next=bahang` → `/api/auth/me`) kèm lưu ý
+>    **token SSO hết hạn cũng cho cùng kết quả fail — ký token MỚI trước khi kết
+>    luận secret lệch**; (C) phát hiện lỗi → rm/add env + `vercel redeploy` NGAY,
+>    không chờ ĐH nhắc + quirk CLI (`vercel ls`/`redeploy` không nhận `--project`).
+> 2. **Fix sự cố đang tồn (đã verify sống):** cả 2 app Vercel THIẾU `DATABASE_URL`
+>    (→ Better Auth rơi PGLite, DB xoá mỗi deploy = "sai mật khẩu") và
+>    `APP_JWT_SECRET` lệch giữa 2 app (→ SSO app tổng → app con verify fail).
+>    Dùng lệnh "C" ở trên: add `DATABASE_URL` (Neon pooled — org giong-vn/production,
+>    chỉ là FALLBACK khi tunnel chết; SQL Server qua tunnel vẫn là primary) +
+>    rm/add `APP_JWT_SECRET` cho khớp + redeploy cả 2.
 >
-> **Hỏi-đáp chốt 4 điểm (ĐH 19/10):** (1) tên đầy đủ = "Trung tâm TC Gióng
-> <short>" (mẫu anh: "Trung tâm TC Gióng Bích Hòa"); (2) "Số lượng mũi" = đếm
-> DÒNG có giờ vào tiêm (khớp hộp KPI — 18/10 = 943; SUM col18 = 1.324 mũi thật
-> là nghĩa khác); (3) kỳ nhiều ngày = 1 dòng/TT tổng cả kỳ, cột ngày = khoảng;
-> (4) đủ 19 TT kể cả 0 tiêm.
->
-> **Đã làm (repo con `34af453` — 2 file +277/−56):** `-overview.ts` — nhánh
-> `shots` viết lại (GROUP BY center · params đúng 3 — bài học GĐ 412 · map tên
-> LIVE dbo.centers pattern GĐ 222 · đủ 19 TT · sort giảm dần · `centerCodes`
-> map tên → mã) + serverFn MỚI `loadOverviewShotsCenter` (TOP 200 dòng mới
-> nhất + SUM tiền toàn bộ — pattern Ngân hàng GĐ 394); `overview-dashboard.tsx`
-> — state `shotsCenter` + nhánh tầng 2 trong useEffect chính + nút "← Tổng hợp
-> theo trung tâm" + reset khi đóng + khung render 2 tầng (thead/tfoot dính,
-> 4 nguyên tắc định dạng, dòng bấm được hover sky-50).
->
-> **Verify:** tsc app con EXIT 0 · probe thật kỳ 18/10: tầng 1 18 TT · tổng 943
-> lượt / 742.771.200 đ (= KPI hộp) · tầng 2 LB 122 dòng, SUM 85.905.600 = tầng 1
-> từng đồng · tên "Trung tâm TC Gióng Long Biên" chuẩn.
->
-> **Tiêu chí kiểm chứng (sau Push):** bấm hộp LƯỢT TIÊM → 19 dòng (ĐY 0 mũi
-> ngày 18/10) · bấm dòng LB → 122 dòng khách + TỔNG CỘNG 85.905.600.
->
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
+> **Verify (chạy thật production, 19/10 sáng):** login app tổng trả user "Phạm
+> Kiên Cường" ✅ · SSO app con: token mới → 302 về `giong-banhang.vercel.app/` +
+> `Set-Cookie: bh_session` ✅ · `/api/auth/me` trả user + 14 nhóm + 69 lá ✅ ·
+> (bằng chứng phụ: token test cũ hết hạn → 302 về `/login?next=bahang` — khớp
+> đúng lưu ý ở mục B).
+
+> **Ghi chú cho phiên sau:** quy tắc này là ĐIỀU KIỆN PUSH — agent nào push mà
+> không chạy A + B = vi phạm quy tắc chung của dự án. Chi tiết thao tác đầy đủ
+> nằm ngay trong mục 4 AGENTS.md (không cần tra archive).
+
+> **Version:** KHÔNG bump (docs-only). 6.7.0 / 9.9.0. Commit: registry claim
+> `b602443` + commit này.
+
