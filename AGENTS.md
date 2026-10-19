@@ -3989,3 +3989,66 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (AGENTS.md / AGENT_REGISTRY.md) PHẢI viết thành file .cjs/.py có VERIFY +
 > self-check trước khi ghi — CẤM `node -e` nhiều bước chuỗi lệnh dài; stat
 > commit bất thường (xóa > 0 khi chỉ unlock 1 dòng) → DỪNG, đối chiếu ngay.
+
+---
+
+### GĐ 483 / C.305 (Trợ lý Freebuff): Trang Bảng giá dịch vụ — sticky header + fit ngang + sort A-Z Tên Vắc xin + PA-3 thêm 9 VX mới + sửa 3 tên (2026-10-20)
+
+> **Yêu cầu của Đại ca (20/10, kèm 2 ảnh):** sửa trang "Bảng giá dịch vụ" (app
+> con — BÁN HÀNG → 1. Bảng giá dịch vụ): (1) cố định thanh tiêu đề + vừa đủ
+> chiều ngang không cuộn ngang (hẹp cột Tên VX + Tên dịch vụ); (2) sắp xếp
+> A-Z cột Tên Vắc Xin; (3) thêm VX mới từ trang Long Châu/VNVC mà GIONG không có.
+
+> **Hỏi-đáp chốt (20/10):** PA-3 (thêm đủ 9 dòng + sửa luôn 2 tên lỗi) · STT
+> đánh lại 1..n khi sort · 9 dòng INSERT vào DB (SQL Server GiongDB).
+
+> **Probe soi 3 nguồn (script node tạm — fetch web công khai):** VNVC 62 dòng
+> + Long Châu 54 SP vs bảng GIONG 54 dòng (JSON 15/10) — rà tay loại false
+> positive (Tetraxim/SAT/VAT/Jeev/Typhim/Quimi-Hib... khác cách ghi) → 9 sản
+> phẩm THẬT thiếu. 2 chú ý phát hiện: bảng giá gốc ghi "Beyfotus" (chuẩn =
+> Beyfortus) + "GC Flu Quadriva" (bị cắt — đầy đủ Quadrivalent).
+
+> **Đã làm — DB (GiondDB SQL Server, qua tunnel `/exec` + `/db/query` Bearer
+> AGENT_TOKEN — token đọc từ agent/.secrets trên share, giờ 01:07):**
+> 1. UPDATE 3 tên: stt 35/36 "Beyfotus"→"Beyfortus" + stt 20 "GC Flu
+>    Quadriva"→"GC Flu Quadrivalent" (rowcount 1 mỗi câu).
+> 2. INSERT 9 VX mới (stt 55-63, idempotent IF NOT EXISTS, gia = 0 — GIONG
+>    chưa niêm yết, ten_smed rỗng, src_hash = hash bảng 15/10): Envacgen
+>    (TCM · Đài Loan · VNVC 1.850.000/LCA 1.850.000) · Arexvy (RSV · Bỉ ·
+>    4.860.000/4.840.000) · ProQuad (S-QB-R-TĐ · Mỹ · 2.450.000/2.390.000) ·
+>    Td uốn ván bạch hầu (Việt Nam · 245.000/220.000) · Stamaril (sốt vàng ·
+>    650.000/—) · Typhoid VI (338.000/—) · Ivacflu-S (cúm VN · 315.000/—) ·
+>    Ivactuber (lao VN · 165.000/—) · Huyết thanh ImmunoHBs (VGB trẻ em ·
+>    2.500.000/—).
+> 3. INSERT 9 map `price_list_map_gia_ngoai` (stt ↔ vnvc_ten nguyên văn +
+>    lchau_url 4 dòng có LCA) → nút Refresh sau này tự cập nhật giá 2 cột đối
+>    chiếu cho 9 dòng mới.
+> **Verify DB:** 63 dòng · 9 map · 3 tên mới · sort `ORDER BY ten_vac_xin
+> COLLATE Vietnamese_CI_AS` = Abhayrab→Verorab đúng vần Việt.
+
+> **Đã làm — web (repo con `751ca3a` 2 file +35/−26):**
+> 1. `api/-bang-gia.ts` — ORDER BY ten_vac_xin COLLATE Vietnamese_CI_AS
+>    (thay sort SMED GĐ 437 + bỏ đẩy chưa-map xuống cuối); STT đánh lại i+1
+>    giữ nguyên (khớp ĐH chốt).
+> 2. `routes/m/banhang-bang-gia-dich-vu.tsx` — `table-fixed` (10 cột %: Tên
+>    VX 13% · Dịch vụ 17% · SMED 7%) — hết cuộn ngang; thead th `sticky
+>    top-0 z-10 bg-slate-50` — header dính khi cuộn dọc; td truncate +
+>    title hover (nguyên tắc #4).
+
+> **Verify:** tsc app con EXIT 0 · test 15/15 PASS (bang-gia-soi) · query
+> sort thật qua tunnel /query (đúng endpoint app dùng — /db/query bọc
+> subquery chặn ORDER BY, app KHÔNG dùng nó cho load này) · production
+> hiện 63 dòng data, web mới hiệu lực sau Push.
+
+> **Lưu ý truy cập (phiên sau):** từ máy DESKTOP gọi agent được bằng tunnel
+> hiện hành (URL mới nhất đọc gist db3dae34 — API ghi URL mới mỗi restart)
+> + token trong agent/.secrets (share). `/query` + `/exec` = x-api-token;
+> `/db/query` = Bearer AGENT_TOKEN (chặn ORDER BY — bọc subquery).
+
+> **Tiêu chí kiểm chứng (sau Push):** trang Bảng giá dịch vụ — 63 dòng sort
+> A-Z (Abhayrab đầu · Verorab cuối) · STT 1..63 · header dính khi cuộn ·
+> màn ≥1024 không có thanh cuộn ngang · 9 VX mới có cột giá LCA/VNVC +
+> Đơn giá GIONG trống.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.7.0** / repo con **10.0.0**. KHÔNG push chờ lệnh.
