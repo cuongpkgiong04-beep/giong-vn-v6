@@ -3787,9 +3787,16 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 4. Tải lại bảng kê (job trên) → **job Upload Misa toàn kỳ `bcd71270`**
 >    (builder mới — phiếu đã có tự skip, chỉ tạo phần thiếu + phiếu thuần).
 >
-> **Verify đang chạy:** job bcd71270 — tiến độ realtime (bổ sung kết quả bên dưới).
-> Bảng kê mới 176 phiếu — 137 đã có trên MISA (skip) + ~39 cần tạo (15 phiếu
-> 03/10 + phiếu thuần + bổ sung 07/08/12/14/10).
+> **KẾT QUẢ CUỐI (job `bcd71270` 22:32→00:58 + retry `702dcee2` 01:14→01:36):**
+> bảng kê mới **176 phiếu** — **37 phiếu tạo mới + ghi sổ 37/37** (03/10: 13 ·
+> 07/10: 3 · 08/10: 3 — gồm **phiếu thuần PN-20261008094405 không số HĐ —
+> PROBE THÀNH CÔNG: refdate 08/10 · posted 08/10 · ghi sổ ✓** · 12/10: 3 ·
+> 14/10: 15) · 132 bỏ qua (đã có) · **7 lỗi transient** (browser đóng/timeout/
+> scrape chết — retry kỳ 03/10 tạo đủ 2 phiếu còn lại: TO + LM) · **ĐỐI CHIẾU
+> CUỐI: 176/176 phiếu SMED kỳ 01/10→17/10 ĐÚNG NGÀY TRÊN MISA · 0 sai ·
+> 0 chưa có · 0 chưa ghi sổ** (PN-20261006141228 — mã anh chỉ — refdate 03/10 ✓).
+> ⚠️ Ghi chú: 6-7 phiếu "không scrape được SMED" trong job đều là phiếu ĐÃ CÓ
+> trên MISA từ trước (skip) — lỗi scrape chết không gây thiếu, job sau tự qua.
 >
 > **Version:** KHÔNG bump (backend agent python — tiền lệ GĐ 422/468). 6.7.0 / 10.0.0.
 
