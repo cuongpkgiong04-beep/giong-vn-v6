@@ -3612,3 +3612,45 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.7.0** / repo con **10.0.0** (hiện hành).
+
+### GĐ 475 / C.299 (Trợ lý Freebuff): PA Push đợt GĐ 468-474 — bump repo con 9.9.0 → 10.0.0 + LIVE + giải gốc 4 migration T-SQL nhầm chỗ chặn deploy (2026-10-19)
+
+> **Lệnh "Push" của Đại ca (19/10 chiều, sau GĐ 468).** Rà trùng lặp nguyên tắc 3:
+> nhánh phụ 0 commit · remote 0 mới · 5 file working tree của phiên khác (api_server
+> · sql_reports + test · bc-congno-dattruoc · .gitignore · routeTree) — KHÔNG add,
+> KHÔNG đụng. Bump: repo con **9.9.0 → 10.0.0** (minor — C.293 KPI lượt tiêm 2 tầng
+> + C.297 bảng bccn trả mũi; minor=9 → nhớ major, checklist GĐ 138 ✓) 2 nơi
+> `0371edd` · app tổng **docs-only KHÔNG bump 6.7.0** (24 commit docs GĐ 468→474).
+
+> **⚠️ Deploy app con FAIL 3 lần liên tiếp** (production vẫn chạy 9.9.0 an toàn —
+> alias không đổi). Gốc tìm qua **Vercel Build Events API** (v2/deployments/.../events
+> — `vercel logs` không trả log cho deployment ERROR): Vite build ✓ 2s — fail duy nhất
+> ở `db:migrate`: **4 file migration T-SQL (GiondDB) nằm nhầm trong `migrations/` ( Neon
+> PostgreSQL)**: `0008_expected_files_per_report` (C.88) · `0009_scheduled_tasks` (GĐ 224)
+> · `0010_gdtvx_4_tables` (GĐ 228i) · `0011_gvvxdt_staging` (GĐ 228o) — comment file ghi
+> rõ "mỗi app tự quản migration riêng" / "chạy TAY qua API Server /query" (GĐ 170).
+> Từ 26/09 deploy chưa hỏng vì bảng `_migrations` trên Neon DB CŨ có record né; GĐ 463
+> (19/10 sáng) đổi `DATABASE_URL` → migrate chạy lại từ đầu → T-SQL trên PG → **42601
+> syntax error**. Fix: `git rm` 4 file (`fd8e704` + `bc953b4`) — bảng thật trong GiondDB
+> đã có sẵn (áp từ 24-26/09), file 0008 cũng đã bị ghim bởi version catalog cũ.
+> Cùng đợt: **PA-1 ĐH chốt — commit 3 file Điều chuyển còn thiếu** (component +
+> serverFn + matrix route — `aaf0206`) — giải toả tồn đọng GĐ 430 từng chặn build
+> (route + routeTree + nav + phân quyền đã ở GitHub sẵn từ GĐ 463/223).
+
+> **Verify production (checklist GĐ 470 A+B đầy đủ):** (A) env Vercel 2 app ĐỦ
+> (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL/GIST · BETTER_AUTH_* ·
+> ZAI_API_KEY); (B) app tổng **6.7.0** LIVE · app con **10.0.0** LIVE (curl lần đầu) ·
+> **login thật**: sign-in/email → JSON user + get-session ✓ · **SSO thật**: JWT
+> (iss=app tổng, aud=app con, secret APP_JWT_SECRET chung) → `302` về app con +
+> Set-Cookie bh_session → `/api/auth/me` JSON SuperAdmin + 14 nhóm ✓.
+
+> **Push:** app tổng `9785a79..2e34edb` (24 commit docs) · repo con
+> `2ef1fed..bc953b4` (20 commit: code 5 GĐ + bump + 3 fix deploy + docs). Bài học:
+> (1) deployment ERROR của Vercel KHÔNG trả log qua `vercel logs` — dùng API
+> `/v2/deployments/{id}/events` với token CLI (`%APPDATA%/xdg.data/com.vercel.cli/
+> auth.json`); (2) Vercel đăng nhập web cần OTP email — account giong01 KHÔNG có
+> Vercel ("No Vercel account"), giong04 là account team; (3) thư mục
+> `migrations/` = Neon PG — migration GiondDB T-SQL không được để đó (đổi DATABASE_URL
+> là lộ), đã xong 4 file.
+
+> **Version:** app tổng **6.7.0** (docs-only) / repo con **10.0.0** — ĐÃ PUSH + ĐÃ LIVE.
