@@ -3499,3 +3499,47 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.7.0** / repo con **9.9.0** (hiện hành).
+
+---
+
+### GĐ 471 / C.295 (Trợ lý Freebuff): Fix UPLOAD Hóa đơn GTGT bán hàng — ngày 01/01/1900 + InvalidInvno + 3 TT domain `ts` + test upload 18/10 hội tụ 691/753 phiếu MISA (2026-10-19)
+
+> **Đại ca yêu cầu (19/10, ảnh /m/up-hoadon-gtgt):** ngày hiển thị 01/01/1900 —
+> kiểm tra tổng thể cách lấy dữ liệu + Test lấy dữ liệu + upload MISA AMIS
+> ngày 18/10/2026. **ĐH chốt PA-1 (19/10): chạy lại upload 2-3 lượt đến hội tụ.**
+
+> **Chi tiết đầy đủ ở entry C.295 AGENTS.md repo con (code `7376433` +
+> `ce68221`). Tóm tắt:**
+> 1. **Ngày 01/01/1900 — FIXED:** SMED trả `ngayGioBanHang` fraction giây độ
+>    dài thay đổi (`.71` 2 chữ số) — Python 3.10 `fromisoformat` chỉ nhận 3/6
+>    → `_iso_to_iso_z` trả `''` → cast DATETIME2 = 1900. Scan lại 18/10:
+>    **753 phiếu · 0 ngày 1900** (kỳ 17/10 + 10/10 chờ scan lại: 103 + 12 phiếu).
+> 2. **Số HĐ hiển thị từ BKCT** (SMED `<Chưa cấp số>`): 739/753 phiếu — join
+>    DUY NHẤT (series, khách, tổng tiền), trùng/miss bỏ phiếu không đoán (14).
+> 3. **Bonus fix:** 3 TT domain `tcgiongts` (TD·HM·QO) luôn HTTP 400 mọi kỳ
+>    (fetch cứng domain `tcgiong`) — scan 18/10 653→753; `attach_misa_api` lọc
+>    cứng `/g2/api/` chết khi MISA đổi bundle (g1 có x-misa-context); index
+>    BKCT col27/col4 bị hiểu nhầm lô/HSD → để rỗng; `db_upsert` cắt err 200
+>    ký tự (chuỗi lỗi dài gây MERGE fail im lặng).
+> 4. **Upload 18/10 — 6 lượt hội tụ: 691/753 phiếu MISA · 699.960.000 / 756.800.000**
+>    — đối chiếu Total MISA khớp tích lũy từng lượt (216 → 479 → 691) —
+>    **0 trùng 0 mất** (phiếu đã có bị từ chối đúng; detail_full xác nhận).
+>    Lỗi `InvalidRefno`/`InvalidInvno` MISA là TẠM THỜI — chạy lặp hội tụ dần;
+>    lượt 6 em KILL giữa chừng (InvalidInvno tăng vọt — chờ MISA nguội).
+>
+> **⚠️ VIỆC TIẾP cho ĐH:**
+> - **Ghi sổ = 0** — MISA từ chối: "Tài khoản 632_BH chi tiết theo Đơn vị +
+>   Mã thống kê" (giống mua hàng GĐ 446) — cần điền 2 chiều kích từ API danh
+>   mục như `misa_muahang_api` GĐ 444 — chờ anh chốt cho sửa.
+> - **62 phiếu còn thiếu:** ~42 `InvalidInvno` (MISA trả `inv_no` số BKCT —
+>   nghi dãy HĐĐT MISA chưa cấp đến số đó — anh kiểm tra Quyết định cấp số
+>   dãy 1C26MA*) + 14 trùng/miss BKCT (soi tay) + 6 hàng chưa có danh mục.
+> - DB `sm_banhang_phieu` trạng thái lệch MISA thật (lượt 6 kill giữa scan)
+>   — cần 1 lượt hoàn tất khi MISA nguội để bảng web hiển thị đúng.
+
+> **Verify:** unit 60/60 PASS (21 test mới GĐ 471) · dry-run LB 95/95 payload
+> OK · scan 18/10 753 phiếu 0 sai ngày · upload hội tụ 6 lượt 691/753 · commit
+> repo con `7376433` + `ce68221` (code) + entry.
+
+> **Version:** KHÔNG bump (agent python — tiền lệ GĐ 422). App tổng **6.7.0** /
+> repo con **9.9.0** (hiện hành).
