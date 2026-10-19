@@ -3458,3 +3458,44 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > không còn 11 mũi/23.300.000; chi tiết khớp hộp.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
+
+---
+
+### GĐ 473 / C.297 (Trợ lý Freebuff): Trang bccn thêm bảng CUỐI "Báo cáo thống kê tình hình trả mũi đặt trước" — nguồn ĐÚNG f2, lọc kỳ job + STT xuyên suốt (2026-10-19)
+
+> **Yêu cầu của Đại ca (19/10):** trang "Báo cáo công nợ đặt trước" (app con)
+> thêm 1 bảng vào CUỐI cùng, SAU "Tổng hợp công nợ theo Gói và Đặt trước" —
+> tên "Báo cáo thống kê tình hình trả mũi đặt trước"; lấy số liệu từ ĐÚNG bảng
+> SMED cùng tên (File 2 / f2); thêm 2 cột đầu: **STT** + **Trung tâm** (viết
+> tắt TĐ/ĐX/ĐY/BH/TP...) + toàn bộ cột của bảng gốc. Hỏi chốt trước khi code.
+
+> **ĐH chốt 2 điểm (hỏi-đáp 19/10):** (1) **Lọc theo KỲ JOB** — Ngày trả mũi ∈
+> [Từ ngày, Đến ngày] của job bccn (file SMED gốc tải theo kỳ — bằng chứng
+> dòng 5 file mẫu kỳ 18/10); (2) **STT mới 1→n XUYÊN SUỐT** (19 trung tâm file
+> gốc STT riêng 1→n trùng số khi ghép — giống cn-tonghop GĐ 411).
+
+> **Nguồn:** f2 = "Báo cáo thống kê tình hình trả mũi đặt trước" — tool
+> `23_smed_DLGoi-Dtruoc.py` tải, ETL nạp `stg_10gdtvx_f2_tramui` (11 cột
+> nghiệp vụ) — trước giờ chỉ dùng ngầm map Ngày trả mũi (GĐ 330/338/361/396).
+
+> **Đã làm (chi tiết ở entry C.297 AGENTS.md repo con — code `141b541` +77/−7,
+> entry `5dce41d`+`e0e8751`):** builder bccn_dattruoc thêm khối `th_tra_mui_rows`
+> (đọc f2 đã dedupe GĐ 390/401, lọc kỳ, 12 cột = STT `_dedup_stt` + Trung tâm +
+> 11 cột SMED nguyên tên; sheet 'th-tra-mui' SAU 'cn-tonghop'; moneyCols =
+> ["Giá đặt trước"] — đơn giá, client isUnitPriceColumn chặn Subtotal — nguyên
+> tắc 3) + trang bc-congno-dattruoc.tsx order thêm CUỐI (job cũ tự skip — tiền
+> lệ GĐ 413) + test T24 (check 7 bảng).
+
+> **Verify:** unit T1-T24 PASS toàn bộ · tsc app con EXIT 0 · **builder thật
+> (Python310 máy công ty) kỳ 01/10→19/10/2026: 99 dòng / 15 trung tâm** — đối
+> chứng SQL thô 103 (trước dedupe), DISTINCT khóa dedupe = **99 = builder khớp
+> TỪNG DÒNG** (4 trùng lượt tải bỏ đúng GĐ 401). ⚠️ Probe: `ngay_tra_mui`
+> NVARCHAR ISO fraction giây ('2026-10-18 09:04:04.470000') — SQL so kỳ dùng
+> text compare, TRY_CONVERT datetime trả 0 (lesson kèm GĐ 471).
+
+> **Tiêu chí kiểm chứng (sau Push):** chạy lại job bccn → trang có 7 bảng, bảng
+> cuối đúng tên, STT xuyên suốt, chỉ lượt trả trong kỳ; 'Giá đặt trước' #,##0
+> căn phải không cộng Subtotal. Restart GIONG_SMED_Agent sau Push nạp builder.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.7.0** / repo con **9.9.0** (hiện hành).
