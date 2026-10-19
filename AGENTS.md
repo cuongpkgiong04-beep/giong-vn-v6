@@ -3927,3 +3927,53 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (ngoài repo — 0 code app đổi). App tổng **6.7.0** /
 > repo con **10.0.0**. KHÔNG push chờ lệnh.
+
+---
+
+### GĐ 482 (Trợ lý Freebuff): Đội AI Agents đi vào dự án — project scope .zcode/agents + 3 agent tiếng Việt + model đội = GLM key (2026-10-20)
+
+> **Phản hồi của Đại ca (20/10, sau GĐ 480):** (1) lên máy công ty có phải cài
+> lại đội 10 agent không (thấy em cài `C:/Users/cuong/.zcode/agents/` chỉ máy
+> DESKTOP dùng được)? (2) model nền GLM quota cạn nhanh — chuyển đội mặc định
+> sang **GLM CÓ KEY**, khai thác luôn không chờ PA-2; (3) viết thêm agent
+> tiếng Việt Nam. Ghi nhớ tất cả để dùng trên máy chủ công ty.
+
+> **Trả lời câu 1 (chuyển project scope — KHÔNG cài lại):** đội agent chuyển
+> vào repo `giong-vn-v6/.zcode/agents/` (ZCode nạp project scope khi mở đúng
+> project) — máy công ty chỉ cần **`git pull`** là có đủ 13 agent; máy khác
+> muốn dùng project khác → copy vào `~/.zcode/agents/` (global).
+
+> **Trả lời câu 2 (model đội = GLM key — probe ListModels):** host đã cấu hình
+> 5 model; xác định `new-provider-2/z-ai/glm-5.3` = GLM chạy **KEY riêng** của
+> Đại ca (khác `new-provider/z-ai/glm-5.3-flash` [current] chạy quota gói);
+> `new-provider/deepseek-ai/deepseek-v4.1-flash` = DeepSeek key. Chuẩn đội:
+> khi điều phối nhiều agent qua dynamic workflow đặt
+> **`subagent_model = "new-provider-2/z-ai/glm-5.3"`** (không hao quota);
+> DeepSeek luân phiên. Model PHIÊN chính là quyền Đại ca đổi trong model
+> picker của ZCode (chọn "Nvidia GLM 5.3" = provider-2/key) — agent không tự
+> đổi model phiên được.
+
+> **Đã làm (commit `97253d5` — 14 file +2.607 dòng, 0 xóa; KHÔNG đụng code app):**
+> 1. Copy 10 agent chuyên môn từ global vào `.zcode/agents/` (repo).
+> 2. Viết 3 agent **tiếng Việt** (suy nghĩ + trả lời tiếng Việt, xưng em/anh):
+>    - `tong-dai-giong` — tổng đài điều phối: quy trình 5 bước, phân vai 13
+>      agent, quy tắc ĐA AGENT (không push/bump tự động, claim GĐ), chuẩn model GLM key.
+>    - `chuyen-gia-giong` — kiến trúc GIONG: app tổng TanStack/Better Auth,
+>      app con phân quyền 3 nguồn, agent Python SMED/MISA 8777, GiondDB + tunnel
+>      + gist (đính chính GĐ 477), Download→ETL→Báo cáo, 4 nguyên tắc định dạng.
+>    - `kiem-tra-production` — quy trình GĐ 469: env Vercel 2 app (APP_JWT_SECRET
+>      cùng giá trị...), curl version + login + SSO + /api/auth/me, sửa ngay khi lỗi.
+> 3. `README-GIONG.md` — đội hình + model + cách dùng máy công ty + lịch sử.
+> 4. Mirror 3 agent tiếng Việt sang global máy DESKTOP (global giờ có 13).
+
+> **Verify:** 14 file format chuẩn (frontmatter name+description) · commit
+> stat 2.607 insertions / 0 deletions (chỉ thêm — quy tắc GĐ 470) · git status
+> còn lại chỉ file của phiên khác (GĐ 481 xuất kho + attachments cũ) — KHÔNG đụng.
+
+> **Tiêu chí kiểm chứng (Đại ca):** (1) máy công ty `git pull` repo → mở phiên
+> ZCode tại project → danh sách agent có đủ 13 (3 tiếng Việt); (2) giao việc
+> cho `tong-dai-giong` → trả lời tiếng Việt xưng em/anh, phân vai đúng;
+> (3) model picker của phiên chọn "Nvidia GLM 5.3" nếu muốn phiên chính chạy key.
+
+> **Version:** KHÔNG bump (không đụng code app — file cấu hình agent + docs).
+> App tổng **6.7.0** / repo con **10.0.0**. KHÔNG push chờ lệnh.
