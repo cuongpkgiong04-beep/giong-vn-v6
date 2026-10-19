@@ -200,11 +200,29 @@
 > trên production (không test local) → **AGENT phải tự kiểm tra trước và sau khi push,
 > tự sửa ngay nếu có lỗi, KHÔNG để Đại ca phải nhắc lại.**
 >
-> **Kiến trúc để hiểu đúng (không cần Neon làm nguồn chính):** production dùng
-> `TUNNEL_API_BASE_URL` → Cloudflare Tunnel → API Server (máy công ty) → **SQL Server
-> GiongDB = backend CHÍNH** (`dbSource="tunnel"`). `DATABASE_URL` (Neon) chỉ là **lớp
-> bảo hiểm khi tunnel chết** — thiếu nó thì lúc tunnel down sẽ rơi tiếp về PGLite
-> (mất sạch user → sai mật khẩu).
+> **Kiến trúc nguồn dữ liệu — HIỂU ĐÚNG (đính chính GĐ 477, ĐH chốt PA-1 sau khi
+> probe bằng chứng):** production dùng `TUNNEL_API_BASE_URL` → Cloudflare Tunnel →
+> API Server (máy công ty) → **SQL Server GiongDB = nguồn DUY NHẤT**. `db.ts` chốt
+> `dbSource` **MỘT LẦN lúc build** theo thứ tự: có biến tunnel → **tunnel**; không có
+> tunnel mà có `DATABASE_URL` → **Neon**; không có cả hai → **PGLite** (DB trong RAM,
+> mất sạch mỗi deploy).
+>
+> ⚠️ **KHÔNG có cơ chế "tunnel chết lúc chạy → tự nhảy sang Neon"** — tunnel chết thì
+> app BÁO LỖI (không đọc/ghi được), KHÔNG ghi gì vào Neon (đúng thực tế vụ tunnel
+> chết ngầm ~8 tiếng đêm 18/10 phải khôi phục khẩn, không có chuyện app tự chạy tiếp
+> bằng Neon). Vì vậy `DATABASE_URL` là **bảo hiểm CẤU HÌNH** — chống rơi xuống PGLite
+> khi biến tunnel bị thiếu lúc build (rơi PGLite = mất sạch tài khoản → "sai mật
+> khẩu" như GĐ 463) — **KHÔNG phải bảo hiểm lúc tunnel chết**.
+> Phụ chú: `DATABASE_URL` còn bật bước `db:migrate` lúc build (bài học GĐ 475: khi nó
+> xuất hiện, 4 file migration T-SQL nhầm chỗ trong `migrations/` lộ ra và chặn deploy
+> → đã `rm`).
+>
+> **Neon = ảnh chụp CŨ đóng băng ~16/09/2026** (probe 19/10: 27 bảng · `user` 11 dòng
+> mới nhất 16/09 15:19 · so với GiongDB có `smed_pull_jobs` 2.104 job + user mới nhất
+> 26/09 10:30:35) — **tách biệt hoàn toàn, KHÔNG đồng bộ với SQL Server**. Nếu app có
+> rơi về Neon thì dữ liệu mới ghi vào Neon cloud (Singapore), "biến mất" khỏi hệ thống
+> thật khi quay lại tunnel (agent/báo cáo đọc GiongDB không thấy), và tài khoản tạo
+> sau 16/09 KHÔNG đăng nhập được (Neon không có).
 
 > **A. TRƯỚC KHI PUSH — verify env Vercel của CẢ 2 APP:**
 > ```bash
@@ -216,7 +234,7 @@
 >   | grep -E "DATABASE_URL|APP_JWT_SECRET|TUNNEL_API_BASE_URL|ZAI_API_KEY"
 > ```
 > **Phải có — thiếu/lệch bất kỳ mục nào → DỪNG, BÁO ĐẠI CA, KHÔNG PUSH:**
-> - `DATABASE_URL` (Neon fallback) — **CẢ 2 app**
+> - `DATABASE_URL` (Neon — **bảo hiểm CẤU HÌNH** chống rơi PGLite, KHÔNG phải fallback tự động khi tunnel chết — xem khối "Kiến trúc nguồn dữ liệu" ở trên) — **CẢ 2 app**
 > - `APP_JWT_SECRET` (khoá ký SSO handoff) — **CẢ 2 app, PHẢI CÙNG MỘT GIÁ TRỊ**
 > - `TUNNEL_API_BASE_URL` + `TUNNEL_GIST_ID` — CẢ 2 app (backend chính)
 > - `BETTER_AUTH_SECRET` + `BETTER_AUTH_URL` — app tổng · `ZAI_API_KEY` — app con
@@ -3300,8 +3318,10 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > 2. **Fix sự cố đang tồn (đã verify sống):** cả 2 app Vercel THIẾU `DATABASE_URL`
 >    (→ Better Auth rơi PGLite, DB xoá mỗi deploy = "sai mật khẩu") và
 >    `APP_JWT_SECRET` lệch giữa 2 app (→ SSO app tổng → app con verify fail).
->    Dùng lệnh "C" ở trên: add `DATABASE_URL` (Neon pooled — org giong-vn/production,
->    chỉ là FALLBACK khi tunnel chết; SQL Server qua tunnel vẫn là primary) +
+>    Dùng lệnh "C" ở trên: add `DATABASE_URL` (Neon pooled — org giong-vn/production;
+>    ⚠️ cách gọi "FALLBACK khi tunnel chết" viết ở đây ban đầu là SAI — đã ĐÍNH CHÍNH
+>    ở GĐ 477: đây là bảo hiểm CẤU HÌNH chống rơi PGLite, xem khối "Kiến trúc nguồn
+>    dữ liệu" ở mục 4) +
 >    rm/add `APP_JWT_SECRET` cho khớp + redeploy cả 2.
 >
 > **Verify (chạy thật production, 19/10 sáng):** login app tổng trả user "Phạm
@@ -3695,3 +3715,49 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > (quy tắc GĐ 428).
 >
 > **Version:** KHÔNG bump (backend agent python — tiền lệ GĐ 422/468). 6.7.0 / 10.0.0.
+
+---
+
+### GĐ 477 (Trợ lý Freebuff): ĐÍNH CHÍNH kiến trúc nguồn dữ liệu — Neon là bảo hiểm CẤU HÌNH, KHÔNG phải fallback runtime (PA-1 ĐH chốt) (2026-10-19)
+
+> **Câu hỏi của Đại ca (19/10):** *"…Neon chỉ là fallback khi tunnel down. Phần này
+> giải thích thế nào? Khi DB nằm ở máy chủ tại công ty? Dữ liệu dùng qua Neon sẽ được
+> ghi vào đâu? Vì lúc đó không kết nối được với máy chủ của công ty?"*
+
+> **Phát hiện — câu em nói/ghi trước đó SAI về kỹ thuật** (kiểm chứng bằng code
+> `src/lib/db.ts` dòng 44 + `createSql` :366 và `src/lib/auth/server.ts` :177):
+> `dbSource` chốt **MỘT LẦN lúc build** theo thứ tự env `TUNNEL_API_BASE_URL` >
+> `DATABASE_URL` > PGLite; grep toàn repo **không tồn tại** đường "tunnel fail lúc
+> chạy → chuyển sang Neon". Nghĩa là tunnel chết thì app **BÁO LỖI, không ghi gì vào
+> Neon** (đúng thực tế vụ tunnel chết ngầm ~8 tiếng đêm 18/10 phải khôi phục khẩn —
+> nếu có fallback Neon thật thì đã không cần).
+
+> **Probe 2 bên (bằng chứng 19/10):** **Neon = ảnh chụp CŨ đóng băng ~16/09/2026** —
+> 27 bảng · `user` 11 dòng mới nhất 16/09 15:19 · employees 36 · attendance 95 ·
+> tasks 222 · `_migrations` dừng ở `0030_tasks_tombstone.sql`. **GiongDB (production
+> thật)** — `user` 9 dòng mới nhất **26/09 10:30:35.242** (KHỚP đúng `createdAt` mà
+> API đăng nhập production trả về hôm nay) · employees 35 · attendance 233 · tasks
+> 236 · **smed_pull_jobs 2.104 job**. → Neon tách biệt hoàn toàn, KHÔNG đồng bộ: rơi
+> về Neon = dữ liệu mới nằm ở Neon (biến mất khi quay lại tunnel) + tài khoản tạo
+> sau 16/09 không đăng nhập được (bệnh "sai mật khẩu" tái diễn).
+
+> **ĐH chốt PA-1** (giữ kiến trúc — tunnel = nguồn duy nhất; Neon chỉ là bảo hiểm cấu
+> hình) + đính chính tài liệu. **Đã làm (docs-only — 0 file code):**
+> 1. Mục 4 AGENTS.md — khối "Kiến trúc để hiểu đúng" viết lại thành "**Kiến trúc
+>    nguồn dữ liệu — HIỂU ĐÚNG (đính chính GĐ 477)**": 3 mức ưu tiên chốt lúc build ·
+>    cảnh báo ⚠️ KHÔNG có fallback runtime · `DATABASE_URL` = bảo hiểm CẤU HÌNH (chống
+>    rơi PGLite) + phụ chú bật `db:migrate` lúc build (bài học GĐ 475) · Neon = ảnh
+>    chụp cũ 16/09 kèm số probe.
+> 2. Bullet mục A ("Phải có") — `DATABASE_URL (Neon fallback)` → `(Neon — bảo hiểm
+>    CẤU HÌNH chống rơi PGLite, KHÔNG phải fallback tự động khi tunnel chết)`.
+> 3. Entry GĐ 470 — chỗ ghi "chỉ là FALLBACK khi tunnel chết" → ghi rõ đã đính chính
+>    ở GĐ 477 (giữ nguyên văn phần cũ để đối chiếu lịch sử).
+
+> **⚠️ Cảnh báo vận hành cho phiên sau:** 3 script tay `scripts/check-user.mjs` /
+> `reset-password.mjs` / `fix-password.mjs` đều nối theo `DATABASE_URL` → nếu trỏ Neon
+> thì chỉ sửa bản Neon (cũ 16/09), production VẪN không đăng nhập được; muốn đổi mật
+> khẩu cho production phải đổi trên GiongDB.
+
+> **Version:** KHÔNG bump (docs-only). App tổng 6.7.0 / repo con 10.0.0. Commit:
+> registry claim `ab7e5af` + commit này.
+
