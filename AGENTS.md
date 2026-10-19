@@ -3411,7 +3411,15 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > `45e2af7`) + test 37/37 PASS; `misa_banhang_api.py` — phiên GĐ 471 ĐÃ TỰ
 > SỬA g1 song song (commit `7376433`, docstring "bắt g1 HOẶC g2", probe
 > verify) — em KHÔNG đụng (tránh xung đột file). Rà lại toàn bộ agent/ còn
-> 0 filter g2 trong các builder chính. KHÔNG bump (6.7.0 / 9.9.0).
+> 0 filter g2 trong các builder chính.
+>
+> **Test thật xuất kho 18/10 (lệnh ĐH "tạo job xuất kho 1 ngày test — chọn
+> ngày 18/10/2026", job `a7458b7c` 12:49→13:52, repo con `c12be93`):**
+> builder filter mới **vượt qua bước headers** — hết "misa headers" ·
+> **170 phiếu đối soát "đã tồn tại trên MISA" — bỏ qua đúng** (Task đêm qua
+> đã đẩy đủ 18/10) · tạo mới 0 · lỗi nghiệp vụ 0 · **guard chống sai ngày
+> GĐ 464 chặn ĐÚNG tại LB** (SMED trả 10 phiếu 19/10 dù lọc 18/10 → DỪNG
+> an toàn — Task tối nay đẩy đúng kỳ). KHÔNG bump (6.7.0 / 9.9.0).
 ### GĐ 472 / C.296 (Trợ lý Freebuff): Hộp KPI MARKETING — số còn nợ HIỆN TẠI (không theo ngày) — cộng tập job bccn không giao (2026-10-19)
 
 > **Yêu cầu của Đại ca (19/10):** hộp MARKETING hiện 0 gói / 11 mũi /
