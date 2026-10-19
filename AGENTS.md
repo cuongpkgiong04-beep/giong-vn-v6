@@ -3406,7 +3406,12 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > anh bấm "Chạy báo cáo" lại trên /m/up-nhap-kho → cột "Trạng thái MISA"
 > đầy đủ; lần CDP chết sau này → job dừng nhanh + trang hiện hướng dẫn rõ.
 >
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
+> **Bổ sung 19/10 (lệnh ĐH "Đồng ý cho em sửa" — g2→g1 đủ 3/3 luồng):**
+> `misa_xuatkho_api.py` — ĐH duyệt → sửa filter g2→g1 (repo con
+> `45e2af7`) + test 37/37 PASS; `misa_banhang_api.py` — phiên GĐ 471 ĐÃ TỰ
+> SỬA g1 song song (commit `7376433`, docstring "bắt g1 HOẶC g2", probe
+> verify) — em KHÔNG đụng (tránh xung đột file). Rà lại toàn bộ agent/ còn
+> 0 filter g2 trong các builder chính. KHÔNG bump (6.7.0 / 9.9.0).
 ### GĐ 472 / C.296 (Trợ lý Freebuff): Hộp KPI MARKETING — số còn nợ HIỆN TẠI (không theo ngày) — cộng tập job bccn không giao (2026-10-19)
 
 > **Yêu cầu của Đại ca (19/10):** hộp MARKETING hiện 0 gói / 11 mũi /
