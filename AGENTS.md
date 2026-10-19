@@ -3577,3 +3577,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.7.0** / repo con **10.0.0** (hiện hành sau bump C.299 phiên song song —
 > code C.298 commit SAU bump → theo đợt Push tới).
+
+---
+
+### GĐ 475 / C.300 (Trợ lý Freebuff): Trang bccn thêm bảng "Danh sách chi tiết gói đặt trước" — nguồn ĐÚNG f4, lọc Ngày đăng ký gói ∈ kỳ + STT xuyên suốt (2026-10-19)
+
+> **Yêu cầu của Đại ca (19/10, sau C.298):** làm tiếp bảng "Danh sách chi tiết
+> gói đặt trước" đặt dưới "Danh sách đăng ký đặt trước Vắc xin" — kết cấu cột
+> tương tự 2 bảng trước.
+
+> **Nguồn:** f4 = "DanhSachChiTietGoiDatTruoc" — tool SMED tải, ETL nạp
+> `stg_10gdtvx_f4_chitietgoi`; dùng `_gdtvx_parse_f4` có sẵn (ghép block
+> khách/gói → 1 dòng = 1 dịch vụ, bỏ gói 'Đã hủy' + header rác — chuẩn
+> tool 24/GĐ 390/228l). Bảng **14 cột**: STT + Trung tâm + 12 cột gốc (Khách
+> hàng · Mã TC · Ngày sinh · Điện thoại · Tên gói · Ngày đăng ký · Ngày hết
+> hạn · Trạng thái gói · Dịch vụ · Giá · Trạng thái mũi · Ghi chú). Kế thừa 2
+> chốt: lọc kỳ job theo **Ngày đăng ký GÓI** (quy tắc GĐ 403 cho f4 — cùng
+> cách builder lọc f4_recs) + STT mới 1→n xuyên suốt.
+
+> **Đã làm (chi tiết ở entry C.300 AGENTS.md repo con — code `7e01721` +65/−6,
+> entry `1af8fb1`):** builder thêm khối `ds_ct_goi_rows` (sheet 'ds-ct-goi'
+> SAU 'ds-dt-vx'; moneyCols = ["Giá"] — đơn giá chặn Subtotal) + trang order
+> thêm CUỐI + test T26 (check 9 bảng).
+
+> **Verify:** unit T1-T26 PASS · tsc EXIT 0 · **builder thật kỳ
+> 01/10→19/10/2026: 0 dòng — ĐÚNG THỰC TẾ**: toàn bộ 30.012 records f4 mọi kỳ
+> max Ngày đăng ký = **31/12/2025** (f3 đối chiếu tương tự) → kỳ 10/2026
+> không có gói mới đăng ký; tái dựng độc lập SQL thô 40.073 → parse → lọc kỳ
+> = 0 = builder khớp. Trang web tự ẨN sheet rỗng — kỳ có gói mới sẽ tự hiện.
+
+> **Tiêu chí kiểm chứng (sau Push):** kỳ có gói mới đăng ký → bảng cuối hiện
+> dưới ds-dt-vx (14 cột, STT 1→n, Giá #,##0 không cộng Subtotal); kỳ không có
+> gói mới → tự ẩn. Restart GIONG_SMED_Agent sau Push.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.7.0** / repo con **10.0.0** (hiện hành).
