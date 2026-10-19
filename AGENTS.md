@@ -3348,3 +3348,59 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > ngày 18/10) · bấm dòng LB → 122 dòng khách + TỔNG CỘNG 85.905.600.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
+
+### GĐ 468 / C.292 (Trợ lý Freebuff): PA-3 — chạy lại Upload chứng từ mua hàng 01/10→17/10 + 2 nguyên nhân: Chrome CDP chết + MISA nâng cấp API g2→g1 (2026-10-19)
+
+> **ĐH báo (19/10 08:29, ảnh /m/up-nhap-kho):** cho chạy upload từ
+> 01/10→17/10 nhưng chưa thấy phiếu nào tạo trên MISA AMIS. **Điều tra (DB +
+> LOG JSON):** job `5A0A32B7` (08:07) lỗi **100% — 74 lỗi, 0 phiếu**. Trạng
+> thái thực tế kỳ: nguồn SMED **138 phiếu** · MISA có **48** (đồng bộ 17/10)
+> · **thiếu ~90**. Job "19/10" sáng nay "Hoàn thành" là hoàn thành RỖNG (chưa
+> có dữ liệu nhập kho 19/10).
+>
+> **2 NGUYÊN NHÂN (bậc thang điều tra):**
+> 1. **Chrome CDP port 9222 KHÔNG chạy** (Chrome profile `.secrets/chrome-cdp`
+>    bị đóng từ ~18/10 tối — `connect ECONNREFUSED ::1:9222`) → khôi phục bằng
+>    lệnh chuẩn CHECKPOINT-GD444.md; giữa đường còn gặp **CDP treo WebSocket**
+>    (bài học GĐ 466) → kill toàn bộ chrome-cdp + mở lại profile.
+> 2. **⚠️ MISA AMIS nâng cấp SPA gọi API từ `/g2/api/` sang `/g1/api/`**
+>    (build ver 2026-10-15 — SPA KHÔNG còn gọi g2; bằng chứng: bắt 22 POST sau
+>    khi mở lại — mọi API data `/g1/api/pu/v1/...`, 0 request g2) → filter
+>    listener `"actapp.misa.vn/g2/api/"` KHÔNG bao giờ thấy request → 74 lỗi
+>    **"misa headers"** mỗi job (job 08:07/09:04/09:30 đều fail vì này —
+>    KHÔNG phải phiên hết hạn). Server vẫn HTTP 200 cả g1 lẫn g2 (test song
+>    song) → builder giữ endpoint g2, CHỈ mở rộng filter: mọi request
+>    `actapp.misa.vn` chứa `/api/`. **⚠️ CẢ 3 builder (mua hàng + xuất kho +
+>    bán hàng) cùng filter g2 — cùng gãy** (job xuất kho + bán hàng 18/10 lỗi
+>    cũng vì thế); theo quy tắc "chỉ sửa phần được chỉ định" em chỉ sửa
+>    MUA HÀNG, 2 builder còn lại **chờ ĐH duyệt** sửa 1 dòng filter mỗi file
+>    (`misa_xuatkho_api.py` dòng 469 · `misa_banhang_api.py` dòng 556).
+>
+> **ĐH chốt PA-3:** (1) khôi phục CDP + chạy lại upload; (2) wrapper dừng sớm
+> + thông báo rõ khi CDP chết; (3) web hiện cảnh báo hướng dẫn. Chi tiết đầy
+> đủ ở entry C.292 AGENTS.md repo con.
+>
+> **Đã làm (repo con `a42f6d7` — 4 file +167/−5):**
+> 1. `misa_muahang_api.py`: (a) **fix g2→g1** — `attach_misa_api` filter mở
+>    rộng `actapp.misa.vn` + `/api/`; (b) fallback headers — bấm "Tiếp tục
+>    đăng nhập" nếu màn verify + reload trang.
+> 2. `misa_muahang_api_run.py`: exception `connect_over_cdp`/`ECONNREFUSED`
+>    → `cdp_dead` → break TẤT CẢ vòng (hết spam 74 lỗi) → in khối hướng dẫn
+>    CUỐI log (tail 30 dòng = hiện thẳng trên web).
+> 3. Web `sql-data-module.tsx` (dùng chung 3 trang upload): `uploadCdpDead` +
+>    `UploadMisaErrorNote` — job upload lỗi do CDP → khối cảnh báo vàng hướng
+>    dẫn mở Chrome từng bước; lỗi khác → chi tiết 400 ký tự; sửa luôn thông
+>    báo lỗi dẫn sai chỗ ("khối Lịch sử" → đúng khung upload).
+> 4. Vận hành: Chrome CDP mở lại + verify tay BH 01/10 (4/4 skip đúng — đã
+>    tồn tại, 0 lỗi, save_full HTTP 200) → job toàn kỳ chạy thật.
+>
+> **Verify:** unit `misa_muahang_api.test.py` PASS · tsc app con EXIT 0 ·
+> `py_compile` cả 2 file OK · test tay BH 01/10 sau fix: 0 lỗi · job toàn kỳ
+> `6e318e5b` chạy (kết quả ở `LOG/misa-mua-hang-api_*.json` + bảng
+> `misa_phieu_status`).
+>
+> **Tiêu chí kiểm chứng:** kỳ 01/10→17/10 đủ phiếu trên MISA (bấm "Chạy báo
+> cáo" lại trên /m/up-nhap-kho → cột "Trạng thái MISA" cập nhật); lần CDP
+> chết sau này → job dừng nhanh + trang hiện hướng dẫn rõ.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). 6.7.0 / 9.9.0.
