@@ -3977,3 +3977,15 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (không đụng code app — file cấu hình agent + docs).
 > App tổng **6.7.0** / repo con **10.0.0**. KHÔNG push chờ lệnh.
+
+> **⚠️ BỔ SUNG GĐ 482 — sự cố ghi đè registry ĐÃ KHÔI PHỤC (minh bạch):** bước
+> unlock bằng `node -e` viết SAI tham số — `fs.writeFileSync('AGENT_REGISTRY.md',
+> 'utf8')` (thiếu biến nội dung) → file registry bị ghi đè thành chuỗi 'utf8' 4
+> ký tự và bị commit (`743bcf9` — stat 1+/305-). **Đã khôi phục** (`263fdc8`):
+> lấy nguyên trạng từ commit claim `cf947e2` (305 dòng / 199 dòng bảng GĐ) +
+> apply đúng thay đổi unlock dòng 482 — script .cjs verify 5 check (số dòng =
+> nguồn · khác đúng 1 dòng · 199 bảng GĐ · 482 unlocked · không còn 🔒) trước
+> khi ghi. **Bài học (bổ sung quy tắc GĐ 470):** script sửa FILE DÙNG CHUNG
+> (AGENTS.md / AGENT_REGISTRY.md) PHẢI viết thành file .cjs/.py có VERIFY +
+> self-check trước khi ghi — CẤM `node -e` nhiều bước chuỗi lệnh dài; stat
+> commit bất thường (xóa > 0 khi chỉ unlock 1 dòng) → DỪNG, đối chiếu ngay.
