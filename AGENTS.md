@@ -4168,3 +4168,95 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.7.0** / repo con **10.0.0** (hiện hành).
 
+
+---
+
+### GĐ 485 / C.306 (Trợ lý Freebuff): SMED "Thống kê khách hàng" → Danh mục 4 Khách hàng — tool 33 (19 TT + ngày GD đầu từ nút "Chi tiết") + ETL dm_khach_hang + trang mới (2026-10-20)
+
+> **Yêu cầu của Đại Ca (20/10):** xây dựng cách lấy dữ liệu SMED phần "Thống kê
+> khách hàng" (mục báo cáo — file mẫu 24.747 khách TT Hương Mạc) cập nhật vào
+> "4. Danh mục khách hàng" (nhóm DANH MỤC app con): nút "Thêm mới" → "Làm mới"
+> (cập nhật khách mới) · bỏ cột "Thao tác" · 11 cột (STT · Trung tâm viết tắt 2
+> chữ · Họ tên · Mã tiêm chủng · CCCD/CMND · Ngày sinh · Giới tính · Địa chỉ ·
+> SĐT · Ngày giao dịch đầu tiên · Ngày giao dịch cuối) · cố định tiêu đề (+
+> dòng tổng nếu có) · gộp TẤT CẢ trung tâm.
+
+> **ĐH chốt 3 điểm (20/10, 4 ảnh):** (1) Làm mới = PA-1 job nền theo dõi tại
+> trang; (2) "Ngày giao dịch đầu tiên" = nút **"Chi tiết"** (cột Dịch vụ đã
+> sử dụng) trên SMED — popup xếp TĂNG DẦN → **bản ghi #1** = ngày đầu (bản
+> ghi cuối khớp Ngày giao dịch cuối — đối chứng anh: khách 106080320250117,
+> #1 = 29/11/2025 · cuối = 11/10/2026 10:33); (3) phân trang + tìm kiếm
+> SERVER-side + nút **"Tải Excel toàn bộ"** (xuất cả kết quả đang lọc, KHÔNG
+> chỉ trang hiện tại — **GHI NHẬN CHUNG: mọi bảng biểu ngắt nhiều trang phải
+> có nút tải toàn bộ** — đã ghi vào mục 13.5 bên dưới).
+
+> **Đã làm (repo con `75f61e5` — 6 file +1.426/−28):**
+> 1. **Tool mới `agent/33_smed_TKKH.py`:** lặp 19 tài khoản trung tâm (map
+>    CENTERS khớp SMED_CENTERS GĐ 444 — mã 2 chữ TD/HM/QO/LB/PY/TO/ML/TS/TP/
+>    CĐ/SĐ/BH/TĐ/TA/ĐX/LM/ĐY/NL/TT) → login → URL thẳng
+>    `Application#!/thongkekhachhang` (bằng chứng ảnh ĐH; fallback click menu
+>    "Báo cáo" → "Thống kê khách hàng") → TÌM KIẾM (lọc Tất cả mặc định) →
+>    nút EXCEL → `OUTPUT/20.TKKH/<từ ngày>/<mã>_ThongKeKhachHang_<ts>.xlsx`.
+>    **Pha 2 (SMED_TKKH_NGAYDAU=1 mặc định):** parse Excel → MTC (tách từ cột
+>    "Họ tên\nMTC") → hỏi GiondDB khách CHƯA có ngay_gd_dau → gõ MTC vào ô
+>    tìm kiếm → bấm "Chi tiết" → popup "Chi tiết dịch vụ đã sử dụng" → đọc
+>    dòng STT=1 → ngày đầu → ĐÓNG → checkpoint
+>    `ngaygd_dau_<mã>.json` (ghi mỗi 20 khách — chạy lại TIẾP khách còn
+>    thiếu, idempotent; lần đầu toàn chuỗi hàng chục nghìn khách × ~4-6s —
+>    job nền KHÔNG bị kill GĐ C.18, có thể Hủy rồi Làm mới lại).
+> 2. **ETL mới `agent/etl/dm_khach_hang_import.py`:** bảng tường minh
+>    `dm_khach_hang` (id · ma_tc UNIQUE · trung_tam · ho_ten · cccd ·
+>    ngay_sinh · gioi_tinh · dia_chi · dien_thoai · ngay_gd_dau · ngay_gd_cuoi
+>    · updated_at/by) — **UPSERT cộng dồn theo ma_tc** (#tmp + MERGE 1 phát
+>    500 dòng/lô): mới INSERT, cũ UPDATE thông tin + trung_tam (TT giao dịch
+>    gần nhất) + ngay_gd_cuoi; **ngay_gd_dau GIỮ NGUYÊN** — chỉ điền khi NULL
+>    từ JSON checkpoint. KHÔNG xóa dòng. Map TÊN TT đầy đủ (dòng 1 file) →
+>    mã 2 chữ + biến thể THANH THUỲ (Ỳ — GĐ C.56). Ngày chuẩn hóa dd/mm/yyyy
+>    (cắt giờ "21/05/2026 16:22"). **MTC 14-25 số** — phân bố thật file mẫu:
+>    15 số 24.251 · 17 số 360 · 21 số 108 · 16/18/20/14 số ít (SMED KHÔNG cố
+>    định chiều dài — nới dần qua 3 vòng test).
+> 3. **40_web_agent.py:** REPORT_MAP `"tkkh"` → OUTPUT/20.TKKH · DONE marker
+>    "✅ Đã tải: " + START "] Xử lý: " · cấp SMED_CENTER_PASS · ETL-sau-job
+>    → `dm_khach_hang_import.py` · retry từng phần scanable (file `<mã>_…`
+>    khớp regex prefix). JSON .json KHÔNG bị khối xóa `*.xls*` dính.
+> 4. **Web:** `-danh-muc.ts` — nguồn kind="khach-hang" đổi sang dm_khach_hang
+>    + 2 serverFn mới `loadKhachHangPage` (OFFSET/FETCH + search LIKE ghép cột
+>    1 param — escape wildcard) + `loadKhachHangChunk` (chunk 20K — Tải Excel
+>    toàn bộ client gom rồi downloadExcel — serverless chặn ~4.5MB/response).
+>    Trang `danh-muc-khach-hang.tsx` viết lại: nút **Làm mới** →
+>    createSmedJob report tkkh (hôm nay, totalCenters 19) + poll 10s + banner
+>    tiến độ TT + tự reload khi job done · 11 cột BỎ cột Thao tác · thead
+>    sticky + **tfoot "Tổng cộng: N khách" sticky** · phân trang 50/trang ·
+>    search debounce 400ms server-side · nút **Tải Excel toàn bộ** (progress
+>    "Đang gom x/N…").
+
+> **Verify:** tsc app con **EXIT 0** · npm test PASS · ETL test
+> `dm_khach_hang_import.test.py` **41/41 PASS** (parse TRÊN FILE MẪU THẬT anh
+> gửi: HM · 24.747 khách — STT cuối = 24747, số 24.746 đếm trước là XML bỏ 1
+> dòng sparse · 1.349 dòng CCCD · khách 1 khớp từng cột) · `40_web_agent.test.py`
+> 4/4 · py_compile 3 file Python OK. Index dùng chung: phiên GĐ 486 unstaged
+> 6 file dở của em (giữ working tree — minh bạch entry họ) → em add lại +
+> **commit `--only` 6 file** (không lôi sql_reports.py/-overview.ts/AGENTS.md
+> staged của họ — bài học nuốt chéo GĐ 409-411). EOL 40_web_agent.py CRLF→LF
+> normalize trước commit (diff 1.350 dòng → 17+/2− đúng phần em sửa).
+>
+> **Tiêu chí kiểm chứng (sau Push + restart agent):** (1) bấm "Làm mới" →
+> job tkkh chạy — banner tiến độ 1/19…19/19 trung tâm, file Excel rơi
+> OUTPUT\20.TKKH\<ngày>\; (2) ETL sau job → dm_khach_hang nạp ~150-300K khách,
+> trang mở ra đủ 11 cột + Tổng cộng đúng; (3) khách mới lần sau chỉ mất vài
+> phút (bấm Chi tiết từng khách mới); (4) "Tải Excel toàn bộ" xuất đủ N dòng
+> đang lọc (không chỉ 50 dòng trang).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.7.0** / repo con **10.0.0** (hiện hành).
+
+---
+
+### 13.5 QUY TẮC BẢNG BIỂU — TẢI EXCEL TOÀN BỘ (ĐH ghi nhận 20/10, GĐ 485/C.306):
+
+> Bảng biểu nào bị **ngắt nhiều trang** (phân trang client hoặc server) thì
+> nút tải Excel phải xuất **TOÀN BỘ dữ liệu đang lọc** — KHÔNG chỉ trang hiện
+> tại. Nguồn client-side (report-result-table): dùng `downloadExcel` với
+> `filtered`. Nguồn server-side (phân trang OFFSET/FETCH): gom theo CHUNK
+> (vd loadKhachHangChunk 20.000 dòng/lần) rồi build xlsx client — 1 response
+> serverless chặn ~4.5MB. Áp dụng cho MỌI bảng mới sắp làm.
