@@ -4260,3 +4260,25 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > `filtered`. Nguồn server-side (phân trang OFFSET/FETCH): gom theo CHUNK
 > (vd loadKhachHangChunk 20.000 dòng/lần) rồi build xlsx client — 1 response
 > serverless chặn ~4.5MB. Áp dụng cho MỌI bảng mới sắp làm.
+
+---
+
+### GĐ 484 / C.306 (Trợ lý Freebuff): PA-1 hoàn tất — Phiếu xuất kho tạo bằng IMPORT EXCEL qua API MISA — 29 phiếu + ghi sổ 29/29 · HIỆN trong danh sách (2026-10-20)
+
+> **Tiếp GĐ 481 (ĐH chốt PA-1).** Luồng import Excel qua API đã bắt đủ từ wizard
+> UI + tái tạo API thuần (7 bước — chi tiết entry C.306 repo con): upload
+> `file/multi` → `sheetname` → `step2` → **POLL `worker/check_step3`** (bắt buộc
+> chờ xong rồi mới step4 — gọi sớm task bị bỏ) → `step3` (body = mapping 31 cột)
+> → `step4` → **POLL `worker/check_step4`** (valid/invalid/skip).
+
+> **Kết quả thật:** 39 phiếu save_full XÓA SẠCH · **29 phiếu import Excel trên
+> MISA — 29/29 GHI SỔ · HIỆN trong danh sách Xuất kho** (17/10: 21 · 18/10: 8 ·
+> giá tròn từng đồng khớp SMED). Còn ~16 phiếu thiếu (scrape TimeoutError do
+> Chrome bị job bán hàng phiên khác chiếm 4+ đợt) — chạy lại
+> `gd478_pilot_pa1.py` (repo con agent/) khi Chrome rảnh — tự skip phiếu có
+> sẵn, chỉ điền thiếu. 3 phiếu TEST (`TEST_CUONG-XK-GD481-01` · `TEST481-02` ·
+> `TEST481-06`) chờ ĐH duyệt xóa (GĐ 428).
+> Bài học kỹ thuật: Số chứng từ ≤ 20 ký tự · sheet UPMISA ĐẦU TIÊN · ô trống =
+> None (không phải '') · ngày/HSD = DATETIME · list `paging_filter_v2` cần
+> `customFilter` khác rỗng (SPA: `summaryColumns:[5042]`, `loadMode:3`).
+> KHÔNG bump (agent-side). KHÔNG push chờ lệnh. App tổng **6.7.0** / repo con **10.0.0**.
