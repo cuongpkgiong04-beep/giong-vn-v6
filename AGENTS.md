@@ -4306,3 +4306,51 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Bổ sung GĐ 487 (lệnh ĐH "xóa các phiếu nháp"):** 3 phiếu TEST XÓA SẠCH trên
 > MISA (TEST_CUONG-XK-GD481-01 · TEST481-02 · TEST481-06). Verify: 29 phiếu
 > PX-SD 17-18/10 — 29/29 ghi sổ · 0 TEST còn lại. Chi tiết entry C.308 repo con.
+
+---
+
+### GĐ 488 / C.309 (Trợ lý Freebuff): ĐH kiểm 3 phiếu QO → fix phiếu CK '"'"'Chuyển khoản'"'"' (3537) + caba_amount_oc + lô/HSD + số HĐ — tạo lại 3 phiếu GHI SỔ 3/3 (2026-10-20)
+
+> **ĐH kiểm UI 3 phiếu (20/10 15:20-15:22):** `09952610190920390364` (19/10 TM
+> 1.000.000): ✅ Thu tiền ngay + Tiền mặt + Lập kèm HĐ — ❌ thiếu Số hóa đơn +
+> thiếu Số lô/HSD · `09952610180832440925` (18/10 TM 300.000): ✅ 3 nút + số HĐ
+> — ❌ thiếu lô/HSD · `09952610180746387160` (18/10 CK 1.240.000): ✅ Thu tiền
+> ngay + số HĐ — ❌ **dropdown "Tiền mặt" SAI (phải "Chuyển khoản")** — ❌ thiếu
+> lô/HSD.
+
+> **CHẨN ĐOÁN (đọc lại chính 3 phiếu từ MISA + diff 2 phiếu CHUẨN ĐH import UPMISA):**
+> - **CK sai "Tiền mặt":** phiếu chuẩn CK (`16272610081621199749`) có
+>   **reftype/monitor_type = 3537** + `bank_account_id/number/name`; chuẩn TM
+>   (`16272610081110318386`) = **3531** — code cũ để 3531 cho CẢ HAI.
+> - **`caba_amount_oc`:** builder có DÒNG GHI ĐÈ `master["caba_amount_oc"] = 0`
+>   sau dòng gán = tổng tiền → MISA lưu 0 (chuẩn UPMISA = tổng tiền).
+> - **Lô/HSD + số HĐ:** cơ chế ĐÚNG (phiếu 18/10 tạo 11:3x đọc lại MISA có lô/HSD
+>   13/14 mẫu + có số HĐ; verify hàm tra cứu trên dữ liệu BKCCN thật: QO
+>   NGUYỄN MẠNH DŨNG/Qdenga → `571550` · VƯƠNG THỊ DUNG/VAXIGRIP → `6DA63D1` ·
+>   19/10 NGUYỄN PHÚC AN/VARILRIX → `A70CD985A`) — 3 phiếu ĐH kiểm là **phiếu test
+>   tạo tay 15:10/15:21 không truyền `bkccn_idx`/`invno_map`**; riêng **197 phiếu
+>   19/10 (tạo 04:54) thiếu lô/HSD vì trước fix BKCCN 08:49**.
+
+> **ĐÃ SỬA (repo con `a28be2a` + entry `9ce5b72`):** reftype/monitor_type theo HTTT
+> (1121 → **3537**, 1111 → 3531) + `payload["RefType"]` đi cùng · BỎ dòng ghi đè
+> `caba_amount_oc = 0` · `post_ledger`/`build_ledger_post_body` nhận reftype thật
+> để ghi sổ (trước cứng 3530) · unit **71/71 PASS** (+11 test mới) ·
+> `gd488_tao_lai_3phieu.py` (bỏ ghi sổ → xóa → tạo → ghi sổ → đọc lại xác minh).
+
+> **VERIFY (đọc lại từ MISA sau khi tạo lại — GHI SỔ 3/3):**
+> | Phiếu | loại | reftype/monitor | Số HĐ | caba/caba_oc | Lô | HSD | TK |
+> |---|---|---|---|---|---|---|---|
+> | 09952610180746387160 | CK 1.240.000 | **3537/3537** | 00005081 | 1.240.000 | 571550 | 09/07/2027 | 1121_QO |
+> | 09952610180832440925 | TM 300.000 | 3531/3531 | 00005092 | 300.000 | 6DA63D1 | 31/12/2026 | 1111_QO |
+> | 09952610190920390364 | TM 1.000.000 | 3531/3531 | 00005131 | 1.000.000 | A70CD985A | 01/08/2027 | 1111_QO |
+> `sa_invoice.payment_method` = 'Chuyển khoản' (CK) / 'Tiền mặt' (TM) · refno 19/10
+> có **2 bản trùng cũ đã xóa sạch**. **Bài học:** xóa xong tạo NGAY cùng giây →
+> `InvalidRefno`/`InvalidInvno` (MISA chưa xử lý xong) — chờ vài phút rồi chạy lại
+> chỉ-tạo là được.
+
+> **TỒN ĐỌNG chờ ĐH chốt phạm vi chạy lại:** 18/10 còn **686 phiếu** (lô/HSD + số HĐ
+> ✅ nhưng reftype **3530 = "Chưa thu tiền"** + caba_oc = 0) và **197 phiếu 19/10**
+> (3530 + thiếu lô/HSD).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** /
+> repo con **10.0.0**.
