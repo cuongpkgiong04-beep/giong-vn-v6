@@ -4263,7 +4263,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 ---
 
-### GĐ 484 / C.306 (Trợ lý Freebuff): PA-1 hoàn tất — Phiếu xuất kho tạo bằng IMPORT EXCEL qua API MISA — 29 phiếu + ghi sổ 29/29 · HIỆN trong danh sách (2026-10-20)
+### GĐ 487 / C.308 (Trợ lý Freebuff): PA-1 hoàn tất — Phiếu xuất kho tạo bằng IMPORT EXCEL qua API MISA ⛔ đính chính số (từng ghi GĐ 484/C.306 — trùng phiên khác; chốt GĐ 487 / C.308) — 29 phiếu + ghi sổ 29/29 · HIỆN trong danh sách (2026-10-20)
 
 > **Tiếp GĐ 481 (ĐH chốt PA-1).** Luồng import Excel qua API đã bắt đủ từ wizard
 > UI + tái tạo API thuần (7 bước — chi tiết entry C.306 repo con): upload
