@@ -4459,3 +4459,49 @@ trường" → mcp__web-search__web_search; tắt agent → chat vẫn chạy 12
 
 **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** /
 repo con **10.1.0**.
+
+### GĐ 489 bổ sung (Trợ lý Freebuff): XÓA + LẬP LẠI toàn bộ phiếu bán hàng 18/10 & 19/10 theo chuẩn mới — 923 phiếu · GHI SỔ 923/923 (2026-10-21 00:45-01:40)
+
+> **Lệnh của Đại Ca (sau khi duyệt 3 phiếu):** "xóa hết các phiếu bán hàng theo
+> chuẩn cũ đã lập ngày 18/10, 19/10 và lập lại theo chuẩn mới".
+
+> **BƯỚC 1 — XÓA (`agent/gd489_xoa_2ngay.py`):** lấy 729 phiếu 18/10
+> (730.630.000) + 196 phiếu 19/10 (203.820.000) từ list API `/g1/` → **BỎ GHI SỔ
+> theo lô 25 phiếu/lần** (dùng `edit_version` + `reftype` ngay trong list — không
+> cần gọi detail từng phiếu) → XÓA theo lô → đọc lại xác nhận **0 phiếu cả 2
+> ngày** → reset cờ DB 947 dòng (`is_uploaded=0 · is_posted=0 · refid=''`).
+> - **Bài học:** DELETE xong đọc lại SAU 8 GIÂY vẫn thấy "còn 700/196 phiếu" —
+>   MISA xử lý xóa **bất đồng bộ**; đọc lại lần 2 (sau ~10 phút) mới thấy 0.
+>   (Khớp bài học GĐ 488: tạo lại ngay sau xóa → InvalidRefno/InvalidInvno.)
+> - Lô unpost + lô xóa đều trả `Success` 100% (ok 925 · lỗi 0).
+
+> **BƯỚC 2 — LẬP LẠI (`misa_banhang_api_run.py`, `MISA_AUTO_POST=1`,
+> `SMED_FROM_DATE=18/10/2026 → SMED_TO_DATE=19/10/2026`):**
+> | Ngày | Tạo mới | Ghi sổ | Tiền trên MISA |
+> |---|---|---|---|
+> | 18/10 | **733** | **733/733** | 733.315.000 |
+> | 19/10 | **190** | **190/190** | 200.720.000 |
+> | **TỔNG** | **923** | **923/923** | 934.035.000 |
+> (Trước khi xóa: 18/10 = 729 phiếu/730.630.000 · 19/10 = 190/203.820.000 —
+> riêng 19/10 lượt cũ có thêm 6 phiếu lệch chuẩn.)
+
+> **BƯỚC 3 — VERIFY (đọc lại từ MISA + mẫu rải đều 20 phiếu, 25 dòng hàng):**
+> - `reftype/monitor_type`: **Chuyển khoản = 3537 · Tiền mặt = 3531** — ĐÚNG 100%
+>   mẫu (khớp TK Nợ 1121_<TT> vs 1111_<TT>).
+> - Số hóa đơn (BKCT) · `caba_amount` = `caba_amount_oc` = tổng tiền — đủ 100% mẫu.
+> - **Số lô + Hạn sử dụng: 23/25 dòng (92%)** — 2 dòng còn lại không có dữ liệu
+>   BKCCN tương ứng (không bịa — đúng thiết kế "pop không khớp → rỗng").
+> - DB `sm_banhang_phieu`: 18/10 đã tạo 733 · ghi sổ 733 · 19/10 190 · 190 ✓.
+
+> **TỒN ĐỌNG 24 phiếu KHÔNG tạo được (giữ nguyên như lượt trước — cần soi tay):**
+> 17 phiếu "Số HĐ BKCT trùng/miss" (trong đó 8 phiếu có tổng tiền 0 đ trên SMED)
+> · 7 phiếu "hàng không khớp danh mục MISA" (LB 4 · ML 1 · PY 1 + 19/10 ML 1).
+> Danh sách chi tiết ở `sm_banhang_phieu` (`is_uploaded = 0`).
+
+> **Ghi chú vận hành:** đợt này chạy song song với chuỗi Task đêm (Task_02 đang
+> tải 20/10 — các tool tải mở Chromium RIÊNG nên không tranh Chrome CDP; em chờ
+> đúng lúc Chrome rảnh rồi mới chạy MISA/SMED). Đêm nay Task_06 (MISA bán hàng
+> 20/10) sẽ tự tạo phiếu 20/10 bằng code mới (đã có 3537/3531 + lô/HSD).
+
+> **Version:** app tổng **6.7.0** / repo con **10.1.0** (không đổi — thao tác dữ
+> liệu, không đụng code web).
