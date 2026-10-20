@@ -4407,3 +4407,46 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > caba_oc + lô/HSD + số HĐ).
 
 > **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
+
+---
+
+### GĐ 490 / C.311 (Trợ lý Freebuff): PA-2 MCP cho Trợ lý AI — host máy công ty + 2 MCP server stdio + bridge chat.ts (2026-10-21)
+
+> **ĐH chốt 20/10 tối (vòng hỏi-đáp 3 PA):** chọn **PA-2** — MCP host chạy trên
+> **máy công ty** (agent api_server :8777), app con bridge qua Cloudflare Tunnel;
+> mục đích: tự điều tra GiondDB sâu hơn / điều khiển browser SMED–MISA / đọc file
+> Excel / cắm tool ngoài (web-search); nguồn: TỰ VIẾT + THỊ TRƯỜNG; ưu tiên
+> **cắm MCP trước** (nền chat: memory đa lượt + streaming + lưu lịch sử — làm đợt
+> sau khi ĐH yêu cầu). Chi tiết kỹ thuật đầy đủ ở entry **C.311 AGENTS.md repo
+> con** (code repo con `f2550dc` — 9 file +978/−7).
+
+**Tóm tắt kiến trúc:**
+```
+[Chat ✨ app con] → POST /api/ai/chat (Vercel)
+  → loadMcpTools() cache 5 phút: GET {tunnel}/mcp/tools
+  → GLM + (12 tool nội bộ + tool MCP mcp__<server>__<tool>)
+  → execTool nhánh mcp__ → POST {tunnel}/mcp/call
+      └─ mcp_host.py (api_server :8777) ─ subprocess MCP stdio
+           ├─ giong-db:   giondb_sql (SELECT chỉ-đọc ≤200 dòng) · giondb_tables · giondb_columns
+           └─ web-search: web_search (DuckDuckGo) · web_fetch (đọc URL, guard SSRF)
+```
+- **Không pip thêm gì** — toàn bộ thuần thư viện chuẩn (Python 3.10 máy công ty +
+  3.13 dev). Config `agent/api_server/mcp_servers.json` cache 60s → thêm/bật/tắt
+  server (kể cả server thị trường `uvx ...`) KHÔNG cần restart api_server.
+- **Fallback an toàn:** tunnel chết / MCP lỗi → `loadMcpTools` trả rỗng → chat chạy
+  đúng như cũ với 12 tool nội bộ (không hỏng gì khi agent offline).
+- **Guard chặt hơn /db/query:** giong-db chặn thêm shutdown/sp_configure, mọi tool
+  MCP chỉ backend token; web-search chặn localhost/private IP/DNS-resolve-private.
+
+**Verify:** test offline 4/4 PASS (guard SQL 13 mẫu cấm · SSRF 10 mẫu · **E2E
+protocol spawn subprocess thật** handshake+list+call UTF-8 · config) · py_compile
+5 file OK · tsc app con EXIT 0 · commit registry claim `0ed82fa` → code `f2550dc`.
+Verify thật qua tunnel (/mcp/tools + /mcp/call sau restart api_server) — bổ sung
+trong commit unlock registry.
+
+**Tiêu chí kiểm chứng (sau Push):** hỏi trợ lý câu SQL sâu (VD "đếm job hôm nay
+theo report") → gọi mcp__giong-db__giondb_sql trả đúng số; "tra giá vắc xin thị
+trường" → mcp__web-search__web_search; tắt agent → chat vẫn chạy 12 tool nội bộ.
+
+**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** /
+repo con **10.1.0**.
