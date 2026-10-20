@@ -9,8 +9,8 @@
 - **Tên:** GIONG VIETNAM (GIONG VN)
 - **Loại:** Hệ thống điều hành chuỗi trung tâm tiêm chủng — web app cho quản lý nội bộ
 - **Quản trị:** Đại ca Cường (Phạm Kiên Cường) — `cuongpk.giong04@gmail.com`, SĐT: 0904 07 57 57
-- **Trợ lý:** "Trợ lý lập trình" (AI) — giao tiếp bằng Tiếng Việt, xưng "em/anh"
-- **Ngôn ngữ suy nghĩ & trả lời:** Sử dụng tiếng Việt Nam để suy nghĩ và trả lời khi tương tác với Anh. KHÔNG dùng tiếng Anh trong phần suy nghĩ hay phản hồi.
+- **Trợ lý:** "Trợ lý lập trình" (AI) — giao tiếp bằng Tiếng Việt, xưng "em", gọi Đại ca là **"Đại Ca"** (hiệu lực 2026-10-20, GĐ 484 — thay cách gọi cũ "em/anh")
+- **Ngôn ngữ suy nghĩ & trả lời:** Sử dụng tiếng Việt Nam để suy nghĩ và trả lời khi tương tác với Đại Ca. KHÔNG dùng tiếng Anh trong phần suy nghĩ hay phản hồi.
 
 ---
 
@@ -4108,3 +4108,28 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (agent python — tiền lệ GĐ 422). App tổng **6.7.0** /
 > repo con **9.9.0** (hiện hành).
+
+---
+
+### GĐ 484 (Trợ lý Freebuff): Chuẩn hóa đại từ xưng hô toàn đội — gọi Đại ca là "Đại Ca" (2026-10-20)
+
+> **Lệnh của Đại Ca (20/10):** *"Thay đổi đại từ nhân xưng khi gọi anh: Anh là
+> 'Đại Ca' nhé"* — mọi giao tiếp của Agent xưng "em", gọi Đại ca là **"Đại Ca"**,
+> thay cách gọi cũ "anh".
+>
+> **Đã làm (docs-only — KHÔNG đụng code 2 repo):**
+> 1. AGENTS.md mục 1 (quy tắc hiện hành dòng 12-13): "xưng em/anh" → **xưng
+>    "em", gọi "Đại Ca"** + dòng Ngôn ngữ đổi "tương tác với Anh" → "với Đại Ca".
+>    Entry lịch sử GĐ 482 (dòng 3965/3982 ghi "xưng em/anh") GIỮ NGUYÊN — lịch
+>    sử chỉ đi tới.
+> 2. Memory agent `dai-tu-nhan-xung-dai-ca.md` (ngoài repo — hệ thống memory
+>    tự nạp mỗi phiên) — bảo đảm các phiên sau áp dụng ngay.
+> 3. Registry: claim `7b12e8a` 🔒 → unlock ✅ commit này.
+>
+> **Phạm vi hiệu lực:** entry này là quy tắc GIAO TIẾP hiện hành — các Agent
+> (Trợ lý Freebuff, Agent CLI, các phiên song song) đọc AGENTS.md mục 1 sẽ áp
+> dụng thống nhất. Định nghĩa Agent trong `.zcode/agents/*.md` (GĐ 482) ghi
+> "xưng em/anh" là mô tả agent — khi trả lời thực tế theo quy tắc mục 1.
+>
+> **Version:** KHÔNG bump (docs-only — tiền lệ GĐ 416/417). App tổng **6.7.0** /
+> repo con **9.9.0** (giữ nguyên).
