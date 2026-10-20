@@ -4240,12 +4240,32 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > staged của họ — bài học nuốt chéo GĐ 409-411). EOL 40_web_agent.py CRLF→LF
 > normalize trước commit (diff 1.350 dòng → 17+/2− đúng phần em sửa).
 >
+> **BỔ SUNG (ĐH nhắc 20/10 — làm theo MŨI TÊN ĐỎ trong ảnh, bản đầu em sót —
+> fix repo con `e39751d`):**
+> - **Pha 1 tải Excel phải qua bộ lọc NÂNG CAO** trước: bấm NÂNG CAO → kéo
+>   thanh **ĐỘ TUỔI hết bên phải = 100 tuổi** (input[type=range] set max +
+>   fire events; fallback click track 99% phải) · các ô khác MẶC ĐỊNH, riêng
+>   **"Chi tiêu đến" = 100.000.000** (khách từng mua dịch vụ đến 100 triệu) →
+>   bấm **TÌM KIẾM trong popup** (pattern tool 20 `get_by_label("Nâng cao")`)
+>   → LÚC ĐÓ mới bấm nút EXCEL xuất file.
+> - **Pha 2 đọc CẢ 2 mốc từ popup "Chi tiết"**: bản ghi **SỐ 1** (trang 1) =
+>   Ngày giao dịch ĐẦU TIÊN · bản ghi **CUỐI CÙNG — kể cả phải sang TRANG
+>   CUỐI của popup** (phân trang 18 bản ghi/trang) = Ngày giao dịch CUỐI →
+>   checkpoint JSON mới `{ma_tc: {"dau": …, "cuoi": …}}` (ETL tương thích
+>   JSON cũ dạng string). ETL: ngay_gd_dau chỉ điền khi NULL (giữ mốc);
+>   **ngay_gd_cuoi GHI ĐÈ từ bản ghi cuối** (nguồn chuẩn ĐH chỉ thị — cột H
+>   file Excel làm mặc định ban đầu).
+> - Verify bổ sung: ETL test **43/43 PASS** (thêm case JSON {dau,cuoi} +
+>   JSON cũ string) · py_compile 2 file OK.
+
 > **Tiêu chí kiểm chứng (sau Push + restart agent):** (1) bấm "Làm mới" →
 > job tkkh chạy — banner tiến độ 1/19…19/19 trung tâm, file Excel rơi
 > OUTPUT\20.TKKH\<ngày>\; (2) ETL sau job → dm_khach_hang nạp ~150-300K khách,
 > trang mở ra đủ 11 cột + Tổng cộng đúng; (3) khách mới lần sau chỉ mất vài
 > phút (bấm Chi tiết từng khách mới); (4) "Tải Excel toàn bộ" xuất đủ N dòng
-> đang lọc (không chỉ 50 dòng trang).
+> đang lọc (không chỉ 50 dòng trang); (5) file Excel tải QUA BỘ LỌC NÂNG CAO
+> (tuổi ≤ 100 · chi tiêu đến 100 triệu) + ngay_gd_dau/ngay_gd_cuoi từ popup
+> Chi tiết (bản ghi #1 + bản ghi cuối).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.7.0** / repo con **10.0.0** (hiện hành).
