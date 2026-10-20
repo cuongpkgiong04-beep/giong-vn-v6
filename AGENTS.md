@@ -4440,9 +4440,18 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 **Verify:** test offline 4/4 PASS (guard SQL 13 mẫu cấm · SSRF 10 mẫu · **E2E
 protocol spawn subprocess thật** handshake+list+call UTF-8 · config) · py_compile
-5 file OK · tsc app con EXIT 0 · commit registry claim `0ed82fa` → code `f2550dc`.
-Verify thật qua tunnel (/mcp/tools + /mcp/call sau restart api_server) — bổ sung
-trong commit unlock registry.
+5 file OK · tsc app con EXIT 0 · npm test 4 bộ test lib chạy node trực tiếp
+PASS (12/62/10/15) · commit registry claim `0ed82fa` → code repo con `f2550dc`
+· **VERIFY THẬT QUA TUNNEL PASS:** restart GIONG_API_Server từ xa (WMI
+PowerShell — lesson: StartService lần 1 trả 10 "already running" khi status
+Stopped, start lần 2 = 0) → Quick Tunnel đổi URL (taxes-… chết, 530) → gist tự
+ghi URL mới `process-environments-pound-finished` (cơ chế tự hồi phục GĐ 426
+hoạt động thật lần đầu) → `scripts/update-tunnel-env.py` đồng bộ .env.local
+2 app (production Vercel tự lành qua fallback gist, không cần redeploy):
+`/mcp/tools` = 2 server OK · 5 tools đúng tên + mô tả UTF-8 · `/mcp/call`
+giondb_sql thật = 1.715 done/106 cancel/... trên GiondDB ✓ · guard chặn DELETE
+✓ ("chỉ nhận SELECT chỉ-đọc — từ khóa cấm: delete") · web_search thật trả
+3 kết quả bảng giá vắc-xin tiếng Việt ✓.
 
 **Tiêu chí kiểm chứng (sau Push):** hỏi trợ lý câu SQL sâu (VD "đếm job hôm nay
 theo report") → gọi mcp__giong-db__giondb_sql trả đúng số; "tra giá vắc xin thị
