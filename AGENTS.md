@@ -4354,3 +4354,56 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** /
 > repo con **10.0.0**.
+
+---
+
+### GĐ 489 / C.310 (Trợ lý Freebuff): PA Push đợt 20/10 tối — bump repo con 10.1.0 + LIVE production (2026-10-20)
+
+> **Lệnh "Push" của Đại Ca** (sau khi ĐH kiểm UI 3 phiếu QO đạt — xem GĐ 488).
+
+> **Rà trùng lặp (nguyên tắc 3):** nhánh phụ `agent-cli` + `pipeline-work` **RỖNG**
+> cả 2 repo (0 commit cần merge) · remote `origin/main` không có commit lạ ·
+> working tree repo con còn **5 file của phiên khác** (`.gitignore` ·
+> `misa_muahang_api.py` · `misa_xuatkho_api.py` · `gd-c184-verify-banhang-nav.mjs`
+> (đã xóa) · `src/routeTree.gen.ts` thêm route `/m/danh-muc-vi-tri`) → **KHÔNG
+> add, KHÔNG đụng** (phiên khác đang dở — đã kiểm route `danh-muc-khach-hang` của
+> C.306 ĐÃ có trong `main` nên không chặn build).
+
+> **Verify env Vercel TRƯỚC push (checklist GĐ 470 A):** cả 2 app đủ
+> `DATABASE_URL` · `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID`
+> (+ `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` app tổng · `ZAI_API_KEY` app con).
+> Giá trị đánh dấu **Secret → CLI không đọc được** (quirk GĐ 71) → em kiểm bằng
+> SSO thật sau deploy. **Cập nhật `TUNNEL_API_BASE_URL` cả 2 app về URL tunnel
+> hiện hành** (`taxes-embassy-char-particularly…` — env cũ set 7 ngày trước
+> trong khi tunnel đổi 1 ngày trước; code fallback gist GĐ 426/C.258 đã ở
+> `origin/main` nên trước đó production vẫn tự lành, nay đồng bộ luôn cho nhanh).
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** đợt push có **code web** (trang
+> `m/danh-muc-khach-hang.tsx` + `api/-danh-muc.ts` + `api/-overview.ts`) → repo con
+> **10.0.0 → 10.1.0 (minor)**: `apps/banhang/package.json` + `DEFAULT_VERSION`
+> (app-shell.tsx) ✓ checklist GĐ 138 (mọi thành phần 1 chữ số). **App tổng
+> docs-only → KHÔNG bump** (tiền lệ GĐ 416/417) — giữ **6.7.0**.
+
+> **Push:** app tổng `eeaedfc..e29e662` (19 commit: GĐ 471 · 481 · 484 · 485 ·
+> 486 · 487 · 488 + claim/bump) · repo con `00031fd..46fa9e3` (22 commit: C.295 ·
+> C.304 · C.305 · C.306 · C.307 · C.308 · C.309 · C.310).
+
+> **✅ Verify production (checklist GĐ 470 B — KHÔNG tin chữ "Ready"):**
+> - `curl --compressed`: app con = **10.1.0** · app tổng = **6.7.0** (lần curl đầu
+>   — không ghim deployment cũ).
+> - **Login app tổng thật:** `POST /api/auth/sign-in/email` → JSON có `user`
+>   (Phạm Kiên Cường, tạo 26/09 = đúng bản ghi GiongDB qua tunnel, không phải
+>   PGLite) · `get-session` → có `session`.
+> - **SSO:** ký JWT (iss `giong-vn-v6` · aud `giong-banhang`) bằng `APP_JWT_SECRET`
+>   → `GET /api/auth/sso?sso=…` trả **302 → https://giong-banhang.vercel.app/ +
+>   `Set-Cookie: bh_session=…`** (đúng nhánh PASS của checklist).
+> - **Luồng thật bằng trình duyệt:** mở `giong-vn-v6.vercel.app` → đăng nhập →
+>   bấm **"Bán hàng"** ở sidebar → tab app con mở **`giong-banhang.vercel.app`**
+>   hiện *"GIONG BÁN HÀNG … Phạm Kiên Cường · SuperAdmin · VP"* — **KHÔNG hiện
+>   "Chưa đăng nhập"** ⇒ `APP_JWT_SECRET` 2 app KHỚP.
+
+> **Việc tiếp (cùng lệnh ĐH):** xóa toàn bộ phiếu bán hàng chuẩn cũ ngày 18/10 +
+> 19/10 trên MISA rồi lập lại theo chuẩn mới (Thu tiền ngay TM 3531/CK 3537 +
+> caba_oc + lô/HSD + số HĐ).
+
+> **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
