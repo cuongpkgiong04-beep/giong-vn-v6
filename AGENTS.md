@@ -4282,3 +4282,7 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > None (không phải '') · ngày/HSD = DATETIME · list `paging_filter_v2` cần
 > `customFilter` khác rỗng (SPA: `summaryColumns:[5042]`, `loadMode:3`).
 > KHÔNG bump (agent-side). KHÔNG push chờ lệnh. App tổng **6.7.0** / repo con **10.0.0**.
+
+> **Bổ sung GĐ 487 (lệnh ĐH "xóa các phiếu nháp"):** 3 phiếu TEST XÓA SẠCH trên
+> MISA (TEST_CUONG-XK-GD481-01 · TEST481-02 · TEST481-06). Verify: 29 phiếu
+> PX-SD 17-18/10 — 29/29 ghi sổ · 0 TEST còn lại. Chi tiết entry C.308 repo con.
