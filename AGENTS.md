@@ -4133,3 +4133,38 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 >
 > **Version:** KHÔNG bump (docs-only — tiền lệ GĐ 416/417). App tổng **6.7.0** /
 > repo con **9.9.0** (giữ nguyên).
+
+---
+
+### GĐ 486 / C.307 (Trợ lý Freebuff): Thêm cột "Hạn sử dụng" — báo cáo nhập/xuất kho + chi tiết hộp KPI (2026-10-20)
+
+> **Lệnh của Đại Ca (20/10):** PA-1 chốt — "Báo cáo nhập kho" + "Báo cáo xuất
+> kho" (app con) thêm cột **"Hạn sử dụng"** bên phải cột "Số lô" + thêm cho
+> vào **chi tiết các hộp KPI**. Chi tiết kỹ thuật đầy đủ ở entry C.307
+> AGENTS.md repo con.
+>
+> **Tóm tắt (2 file code repo con +15/-9):** nk_by_date thêm col7 (text
+> dd/mm/yyyy nguyên văn — 8.650/8.650 dòng 100%) · xk_by_date thêm col5 serial
+> Excel → dd/mm/yyyy ngay trong SQL (241.600/241.600 dòng — CONVERT 103, serial
+> 0 → trống) · box=import "Chi tiết Nhập Vắc Xin" thêm MAX(col7) sau cột Lô
+> (web render động tự hưởng — hộp Xuất VX là bảng 4 loại phiếu không có lô,
+> hộp Cận hạn đã có HSD — không thuộc phạm vi).
+>
+> **Verify:** chạy thật builder kỳ 19/10 — NK 4 dòng SL 230 khớp Subtotal màn
+> hình (6DA63D1 → 31/12/2026 · Y3E07D1 → 30/04/2028) · XK 242 dòng SL 258 ·
+> 162.321.442 (13/11/2029 = serial max khớp BKN) · tsc EXIT 0 · unit 45/45.
+> KHÔNG sửa ETL (HSD đã nằm sẵn colN — ETL nạp đủ 30 cột). Job cũ giữ nguyên
+> (snapshot) — chạy lại job mới thấy cột.
+>
+> **Trùng số GĐ 485 (minh bạch 20/10):** phiên khác claim GĐ 485/C.306
+> (dbe00b6 — SMED Thống kê khách hàng) TRƯỚC em → em đổi số thành
+> **GĐ 486 / C.307** theo quy tắc GĐ 285 (claim 8f00282). Phiên khác đã add
+> sẵn 6 file dở của họ vào index dùng chung (33_smed_TKKH.py, 40_web_agent.py,
+> dm_khach_hang_* · -danh-muc.ts · danh-muc-khach-hang.tsx) → em UNSTAGE đúng 6
+> file đó (file working tree GIỮ NGUYÊN — họ chỉ cần add lại khi commit; gặp
+> index.lock 1 lần — chờ 20s nhả lock, lesson GĐ 418) rồi commit 3 file mình
+> (bài học GĐ 257 — không commit gom phần dở agent khác).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.7.0** / repo con **10.0.0** (hiện hành).
+
