@@ -352,6 +352,8 @@
 > python scripts/agents/shared-doc.py commit --entry "GĐ 495" --registry "GĐ 495" -m "docs(...): ..."
 > python scripts/agents/shared-doc.py commit --all-new -m "..."    # nếu chỉ có entry của mình
 > ```
+> **Sửa văn bản đã ghi (đính chính):** `shared-doc.py commit --replace-old "<đoạn cũ>" --replace-new "<đoạn mới>" --file AGENTS.md -m "..."` — thay đúng 1 đoạn, GIỮ NGUYÊN BYTE phần còn lại (dùng cho cả `AGENT_REGISTRY.md`).
+>
 > Cổng **ghép CHỈ entry/dòng registry mình khai lên bản HEAD** (bản đã có đủ bài mọi phiên)
 > rồi **trả lại nguyên vẹn bài dở của phiên khác** trong worktree ⇒ không bao giờ nuốt bài
 > người khác, không bao giờ xoá bài đã commit.
