@@ -4818,3 +4818,250 @@ repo con **10.1.0**.
 > cho job sau). **Chưa sửa code — chờ ĐH chốt PA.**
 
 > **Version:** KHÔNG bump (điều tra, 0 file web): app tổng **6.7.0** / repo con **10.1.0**.
+
+### GĐ 492 / C.313 (Trợ lý Freebuff): Fix trang "4. Danh mục khách hàng" — lỗi Tunnel SQL 500 `Invalid object name 'dm_khach_hang'` (ĐH chốt PA-1) (2026-10-21)
+
+> **Đại ca báo (21/10, ảnh desktop app):** trang "4. Danh mục Khách hàng" hiện lỗi đỏ
+> `Tunnel SQL 500: ... Invalid object name 'dm_khach_hang' (42S02)` + bảng trống.
+
+> **Chẩn đoán gốc (probe thật, không đoán):** bảng `dm_khach_hang` **CHƯA TỒN TẠI** trong
+> GiondDB — module GĐ 485/C.306 (tool 33 + ETL) từng chỉ test offline, **chưa chạy thật
+> lần nào**: 0 bảng trong sys.tables · 0 job tkkh trong smed_pull_jobs · 0 dòng "tkkh"
+> trong log agent/api_server · OUTPUT\20.TKKH chưa có. Agent/tunnel vẫn sống bình thường
+> (job MIA xong 08:32) — lỗi thuần "bảng chưa có + trang không thân thiện khi bảng thiếu".
+
+> **ĐH chốt PA-1** (fix trang + chạy job thật lần đầu). Đã làm:
+> 1. **`src/routes/api/-danh-muc.ts` (repo con):** thêm helper `isMissingDmKhachHang(err)`
+>    (khớp 42S02 + dm_khach_hang) — 2 serverFn `loadKhachHangPage`/`loadKhachHangChunk`
+>    gặp lỗi bảng chưa tồn tại → trả **RỖNG + cờ `chuaCoBang`** thay vì lỗi đỏ; UI có sẵn
+>    dòng "Chưa có dữ liệu — bấm Làm mới để tải Thống kê khách hàng từ SMED".
+> 2. **Kích job tkkh thật** (INSERT qua API /exec với đúng contract: date dd/mm/yyyy ·
+>    status pending · total/expected 19) — agent claim sau ~10s.
+>
+> **3 BUG THẬT phát hiện khi chạy live (đều đã sửa — bug chết người của bản GĐ 485):**
+> - **BUG 1 — URL sai (chặn cả tool):** `mo_bao_cao_tkkh` ghép `base + "/Application#!/thongkekhachhang"`
+>   nhưng `base` = URL LOGIN đầy đủ (`.../Account/Login`) → goto `.../Account/Login/Application#!…`
+>   → không ra grid, fallback menu "Báo cáo" cũng timeout (trang lỗi không có sidebar) →
+>   **19/19 TT lỗi, 0 file** (lượt chạy 10:08). Fix: cắt ORIGIN (`base.split("/Account/")[0]`)
+>   trước khi ghép → verify thật: URL thẳng ra grid + tải file ngay.
+> - **BUG 2 — tên DB sai trong connstr:** tool 33 + ETL dùng `Database=GiondDB` — tên chuẩn
+>   là **`GiongDB`** (khớp api_server + sql_reports + etl_import) → login fail 4060,
+>   tool Pha 2 **im lặng coi toàn bộ khách là mới** (warning bị bỏ qua). Fix 2 file → `GiongDB`.
+> - **BUG 3 — Pha 2 "Chi tiết" selector lỗi 100%:** chạy thật log `có mốc: 0` suốt 200 khách
+>   (không exception — mọi khách return None: không tìm thấy dòng MTC hoặc link 'Chi tiết'
+>   sau search). Cần debug DOM thật (browser-use) — xem việc treo bên dưới.
+>
+> **Xử lý Pha 2 trong lúc chờ debug — TẠM TẮT default** (`SMED_TKKH_NGAYDAU` default "1"→"0"
+> trong tool 33, comment rõ cách bật lại): Pha 2 chạy ~6.7s/khách × ~150-300K khách toàn
+> chuỗi ≈ hàng trăm giờ nếu để nguyên selector lỗi; đồng thời ETL chỉ chạy sau khi job
+> xong nên Pha 2 treo = bảng không bao giờ được tạo. Ngày GD cuối vẫn có (cột H file Excel);
+> ngày GD đầu để trống — điền dần khi Pha 2 fix xong (ETL chỉ điền khi NULL — thiết kế sẵn).
+>
+> **Kết quả chạy thật (job lần 2, 11:05-11:15):** Pha 1 **19/19 TT — 19 file Excel đủ**
+> trong `OUTPUT\20.TKKH\2026-10-21\` (~16 phút, mỗi TT ~50s; TĐ hiển thị "TD" qua console
+> không dấu — file tiếng Việt đúng). **Trang hết lỗi đỏ** (fix 1 + bảng chưa có → hiện
+> hướng dẫn bấm Làm mới thay vì SQL error).
+>
+> **⚠️ ETL lần 1 timeout 600s** (11:15:40→11:25:40 — nghi SQL bận khung 11:20-11:31:
+> api_server nghẽn loopback + tunnel Quick đổi URL 2 lần 11:14/11:53). **Lần 3
+> (12:13:20→12:14:11) TÌM RA GỐC THẬT — ETL CRASH `exit=1` với `duplicate key value
+> is (101532520240338) (2627)`: file CĐ (Chi Đông) chứa MTC TRÙNG trong CÙNG file →
+> MERGE nguồn trùng khóa = SQL 2627 → ETL chết ngay sau TT BH** (không phải treo —
+> lần 3 chạy chỉ ~50s; bảng đã tạo + BH 3.399 khách nạp OK). **FIX: dedupe ma_tc
+> trước MERGE (ROW_NUMBER — ưu tiên dòng có ngay_gd_cuoi)** → chạy job lần 4 verify.
+>
+> **Bonus phát hiện:** mã TT tiếng Việt trong tên file/tên bảng là ký tự Unicode
+> (CĐ/SĐ/ĐX/ĐY/TĐ có 'Đ' U+0110) — console cmd hiển thị mất dấu ("CD"/"TD"...) gây
+> nhầm file trùng; khi grep/so tên file phải dùng PowerShell full-name, không gõ tay.
+>
+> **Đã sửa sẵn cho lần chạy sau (CHỜ RESTART AGENT — không restart được từ xa):**
+> `40_web_agent.py` nhánh ETL tkkh riêng: **timeout 3600s** (thay 600) + ghi stdout
+> **REALTIME** ra `LOG/etl_tkkh_last.log` (thay capture — timeout cũ nuốt output, không
+> chẩn đoán được). ⚠️ Agent hiện trú khởi động 10:07:59 (GĐ 491 script) — code cũ trong
+> RAM; **PHẢI restart GIONG_SMED_Agent khi rảnh** để nhánh mới có hiệu lực.
+>
+> **✅ KẾT QUẢ CUỐI (job lần 4, 12:44→12:55):** Pha 1 19/19 file → **ETL `exit=0` 🏁 Xong
+> 12:55:24** → bảng `dm_khach_hang` = **67.941 khách / ĐỦ 19 trung tâm** (CĐ/SĐ/ĐX/ĐY/TĐ
+> đúng dấu; mỗi TT 1.437-5.812 khách — Σ từng TT = 67.941 khớp tổng). Query đúng như
+> trang chạy: 5 dòng đầu chuẩn (tên có dấu · ngày sinh/ngày GD cuối dd/mm/yyyy ·
+> ngay_gd_dau trống — Pha 2 tạm tắt, điền dần sau).
+>
+> **Cần làm tiếp:** (1) debug selector Pha 2 "Chi tiết" bằng browser-use (MTC search →
+> DOM link 'Chi tiết' thật trên SMED) rồi bật lại default + chạy nền bồi ngày_gd_dau
+> (ETL tự điền khi NULL — thiết kế sẵn); (2) restart GIONG_SMED_Agent khi rảnh để nạp
+> nhánh ETL timeout 3600 + log realtime (KHÔNG gấp — ETL nay chạy ~1 phút, timeout 600
+> cũ vẫn đủ cho tới khi có Pha 2).
+>
+> **Máy NHÀ không có git/node** — các file sửa trực tiếp qua Z: map (máy cty thấy ngay);
+> **commit theo đợt Push từ máy cty** (chưa commit: `-danh-muc.ts` · `33_smed_TKKH.py` ·
+> `dm_khach_hang_import.py` · `40_web_agent.py` app con + AGENTS.md/entry này + registry).
+> **tsc PASS tại máy nhà** — qua **Electron-as-Node của ZCode** (set `ELECTRON_RUN_AS_NODE=1`
+> + `"C:\Program Files\ZCode\ZCode.exe" <đường-dẫn>\typescript\bin\tsc --noEmit` → Node
+> v24.14.0 · EXIT 0 — cùng cách phiên GĐ 493 dùng): app con `-danh-muc.ts` **0 lỗi**.
+>
+> **Tiêu chí kiểm chứng (cho Đại ca):** mở trang "4. Danh mục Khách hàng" → KHÔNG còn lỗi
+> đỏ; khi bảng có dữ liệu → hiện danh sách khách (hiện "Chưa có dữ liệu — bấm Làm mới" là
+> ĐÚNG khi bảng chưa tạo). Bấm "Làm mới" → job chạy ~16 phút → danh sách đầy sau ETL.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** /
+> repo con **10.1.0**.
+
+---
+
+### GĐ 493 / C.314 (Trợ lý Freebuff): Hộp KPI "Xuất Vắc Xin" — bảng chi tiết theo Vắc xin khi bấm 4 dòng loại phiếu (2026-10-21)
+
+> **Yêu cầu của Đại ca (21/10):** hộp KPI "XUẤT KHO VẮC XIN" app con — hiện bấm chi tiết ra
+> "Xuất tiêm"/"Xuất hủy"; anh muốn bấm vào **thêm bảng chi tiết theo Vắc xin**: STT · Trung tâm
+> (viết tắt 2 chữ TT, BH,...) · Ngày tháng · Tên Vắc xin (A→Z) · Số Lô · Hạn sử dụng · Số lượng
+> (theo khoảng thời gian thì cộng) · Giá xuất · Thành tiền (SL × Giá xuất).
+
+> **ĐH chốt 3 điểm (vòng hỏi-đáp 21/10 — quy trình 5 bước):** (1) cộng theo **NGÀY × Trung tâm
+> × Vắc xin × Lô × HSD × Giá xuất** (nhiều phiếu cùng nhóm trong ngày → 1 dòng); (2) làm **CẢ
+> 4 loại phiếu** (Xuất tiêm PX-SD · Xuất hủy PH · Xuất khác XK · Xuất trả NCC XT — mở rộng hơn
+> yêu cầu gốc); (3) **200 dòng đầu (A→Z) + TỔNG CỘNG** tính trên TOÀN BỘ nhóm trong kỳ.
+
+> **Đã làm (repo con — 2 file, pattern tầng-2 GĐ 230/388/394, KHÔNG đụng agent/ETL):**
+> - `src/routes/api/-overview.ts`: + serverFn `loadOverviewXuatByVax` (kind=tiem|huy|khac|tra —
+>   LIKE pattern chọn TRONG SQL theo $3, KHÔNG ghép chuỗi — lesson GĐ 96; lọc `col1<>''+col4<>''`;
+>   `center` nguồn đã là MÃ 2 ký tự; HSD col5 serial Excel → dd/mm/yyyy qua helper
+>   `excelSerialToDmy` khớp `_excel_serial_to_date` agent GĐ 486 — serial 0 → rỗng; giá xuất
+>   ROUND(col8,0) khi GỘP + hiển thị, không tách nhóm oan vì nhiễu float 229500.0025/229499.998;
+>   **Thành tiền = SUM(col9)** = SL × Giá nguồn (SMED lưu đủ phân số) → TỔNG CỘNG khớp TỪNG ĐỒNG
+>   với dòng tầng 1) + note dialog đổi thành "…bấm 1 dòng để xem chi tiết theo Vắc xin".
+> - `src/components/overview-dashboard.tsx`: map `XUAT_KIND_OF`/`XUAT_KIND_LABEL` + state
+>   xuatKind/xuatDetail + effect tải theo kỳ chung + reset onClose + 4 dòng loại phiếu BẤM ĐƯỢC
+>   (cursor/hover như import/bank, TỔNG CỘNG vẫn không bấm) + block bảng phụ 9 cột (thead/tfoot
+>   sticky, Tên VX truncate + title — nguyên tắc 4; cột Giá xuất KHÔNG cộng Subtotal — nguyên
+>   tắc 3; ngày dd/mm/yyyy căn trái, số #,##0 căn phải — nguyên tắc 1/2) + dòng "Hiện 200/X nhóm".
+
+> **Verify:** tsc app con **EXIT 0** (chạy được NGAY TẠI MÁY NHÀ qua Electron-as-Node của ZCode:
+> `ELECTRON_RUN_AS_NODE=1 ZCode.exe node_modules/typescript/bin/tsc --noEmit` — **lesson: máy nhà
+> KHÔNG phải chờ tsc tới máy cty**) · unit test 4 bộ PASS (th-gbkm 12 nhóm · mua-hang 62/62 ·
+> danh-muc-ncc 10/10 · bang-gia-soi 15/15) · **ĐỐI CHỨNG SỐ LIỆU THẬT 3 kỳ qua tunnel (MCP
+> giondb_sql) — LỆCH qty=0 money=0 TOÀN BỘ:** 20/10 tiêm 184 phiếu → 124 nhóm/184 liều/105.868.635
+> · hủy 12 → 12/100/1.318.068; 01–20/10 tiêm 6.351 → 3.306 nhóm/6.351/3.772.331.099 · hủy 114 →
+> 114/1.013/18.026.520; 09/2026 tiêm 8.084 → 4.645 nhóm/8.084/5.231.694.700 · hủy 184 →
+> 184/1.652/29.674.032; bảng TOP 200 đúng + sắp A→Z (Abhayrab 0.5ml → Avaxim 80U); HSD serial
+> quy đổi đúng (46387 → 31/12/2026 · 0 → rỗng).
+
+> **⚠️ Sự cố vận hành gặp trong phiên (ĐH lưu ý):** Quick Tunnel CHẾT 2 lần giữa phiên
+> (~04:15 và ~04:39 UTC = ~11:15/11:39 giờ VN) — cả URL cũ `process-environments-...` lẫn URL
+> mới `basics-mary-...` trả Cloudflare 1033; **gist từng bị ghi URL RÁC
+> `https://api.trycloudflare.com`** (~04:51 UTC) rồi tự hồi đúng khi tunnel sống lại
+> (`encourage-europe-oclc-johnny`). Trong khoảng đó production app con KHÔNG nối được agent
+> (fallback gist cũng dính URL rác) → nếu lặp lại nhiều, cần soi cơ chế ghi gist lúc cloudflared
+> đang restart (đề xuất: chỉ ghi khi URL khớp format `*.trycloudflare.com` và KHÁC
+> `api.trycloudflare.com`). Truy cập Tailscale tới máy cty OK nhưng api_server bind 127.0.0.1
+> (đúng thiết kế) → chỉ tunnel đi được.
+
+> **Tiêu chí kiểm chứng (sau Push — Đại ca):** Tổng quan app con → bấm hộp vàng "Xuất Vắc Xin"
+> → dialog 4 dòng loại phiếu → bấm **"Xuất tiêm (PX-SD)"** → bảng chi tiết hiện ngay phía trên:
+> STT · Trung tâm (mã 2 chữ) · Ngày tháng · Tên Vắc xin A→Z · Số Lô · HSD · Số lượng · Giá xuất ·
+> Thành tiền + TỔNG CỘNG (cột Giá xuất để trống); bấm **"Xuất hủy (PH)"** / "Xuất khác (XK)" /
+> "Xuất trả NCC (XT)" tương tự; đổi kỳ tháng → số lượng cộng theo ngày; nút "Đóng" quay lại bảng
+> 4 loại. Kỳ 01–20/10 bảng tiêm hiện "200/3.306 nhóm" + TỔNG 6.351 liều/3.772.331.099.
+
+> **Máy NHÀ không có git** — file sửa trực tiếp qua Z: map (máy cty thấy ngay); commit theo đợt
+> Push từ máy cty (chưa commit: `-overview.ts` + `overview-dashboard.tsx` app con + entry này +
+> registry). Số claim: max=492 → **GĐ 493 / C.314**.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
+
+### GĐ 496 / C.317 (Trợ lý Freebuff): FIX upload trang Điều chuyển nội bộ Vắc Xin — web gửi nguyên data URL làm base64 lệch cột 4 (ĐH chốt PA-3: web cắt tiền tố + agent chống chịu) (2026-10-21)
+
+> **ĐH báo lỗi (21/10 kèm ảnh):** upload file trang Điều chuyển nội bộ Vắc Xin → banner đỏ
+> `agent /dieu-chuyen/upload HTTP 400: {"detail":"content_b64 giải mã lỗi: Invalid
+> base64-encoded string: number of data characters (417125) cannot be 1 more than a
+> multiple of 4"}`.
+
+> **CHẨN ĐOÁN (đủ bằng chứng — đi theo quy trình bậc thang):**
+> - **GỐC:** `nhap-dieu-chuyen.tsx` đọc file bằng `readAsDataURL` rồi gửi THẲNG `reader.result`
+>   (chuỗi `data:<mime>;base64,<payload>`) làm `content_b64` — trong khi agent chỉ nhận base64
+>   thuần. Python `base64.b64decode(validate=False)` KHÔNG bỏ qua ký tự tiền tố (chúng đều
+>   thuộc bảng base64 A-Za-z0-9+/) → 71 ký tự alphabet của tiền tố .xlsx bị tính vào chuỗi
+>   → lệch cột 4 → lỗi đúng như ảnh.
+> - **Đối chứng byte-đối-byte:** em port TRUNG THÀNH `binascii a2b_base64` từ source CPython
+>   (v3.10.13, logic y hệt v3.13.5) → (1) khớp ĐÚNG câu lỗi 417125 của ĐH (file .xlsx
+>   ~312.790B); (2) khớp ĐÚNG 16 bytes rác agent lưu cho 1 request THẬT em gửi lên tunnel
+>   (data URL text/plain) — cả 2 ca khớp từng ký tự.
+> - **Phân loại theo MIME** (số ký tự alphabet tiền tố mod 4 quyết định): **.xlsx (≡3) → LỖI
+>   400 MỌI cỡ file** (lý do ĐH luôn thấy lỗi); **.jpeg (≡0) → "upload thành công" nhưng lưu
+>   RÁC âm thầm MỌI cỡ** (nguy hiểm hơn — file vào kho nhưng hỏng).
+> - 2 module cùng chức năng (`mua-hang-page.tsx`, `banhang-chuong-trinh-khuyen-mai.tsx`) đã có
+>   `fileToBase64` cắt tiền tố — riêng module Điều chuyển (GĐ 430/475) thiếu bước này. Module
+>   này chưa từng upload được từ trình duyệt (GĐ 476 test bằng curl base64 thuần nên lọt).
+
+> **ĐH chốt PA-3 — ĐÃ LÀM (2 tầng):**
+> 1. **Web** `apps/banhang/src/components/dieu-chuyen/nhap-dieu-chuyen.tsx`: cắt tiền tố
+>    `dataUrl.slice(dataUrl.indexOf(",") + 1)` — đồng bộ pattern `fileToBase64` của 2 module kia.
+> 2. **Agent** `agent/api_server/api_server.py` (`dc_upload`): chống chịu client cũ —
+>    `if b64.startswith("data:") and ";base64," in b64: b64 = b64.split(";base64,", 1)[1]`
+>    (base64 thuần không hề chứa `,` nên không thể cắt nhầm).
+
+> **VERIFY (máy nhà — Electron-as-Node):** tsc EXIT 0 · 4 bộ unit test PASS (62/62 · 15/15 ·
+> 10/10 · 12/11) · repro port CPython khớp byte-đối-byte cả 2 ca · sau fix: strip → giải mã
+> sạch đúng 100% mọi cỡ (5.176B · 312.789B · 312.790B · 312.791B) · **probe ĐỎ qua tunnel
+> THẬT** (POST data URL .xlsx 3B → `Incorrect padding` đúng như code cũ — chính probe này sẽ
+> chuyển XANH sau khi restart api_server).
+
+> **CÒN 2 VIỆC (phiên sau không quên):**
+> 1. **Restart api_server** để nạp code agent — phải chạy TẠI MÁY CÔNG TY (em ở máy nhà đã
+>    thử hết kênh từ xa: WinRM bị chặn TrustedHosts · DCOM RPC unavailable · `sc \\` bị từ
+>    chối quyền · Tailscale SSH server chưa bật · sshd Windows cần mật khẩu — đều không qua).
+>    Chạy khi agent rảnh (log 30 phút 0 job) — quy trình 13.3 (dọn `__pycache__` trước):
+>    ```powershell
+>    Remove-Item -Recurse -Force "D:\DuLieuChung\CUONG_2026\giong-vn-v6\giong-apps\apps\banhang\agent\api_server\__pycache__" -ErrorAction SilentlyContinue
+>    Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
+>      Where-Object { $_.CommandLine -match 'api_server' } |
+>      ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+>    # → NSSM (service GIONG_API_Server) tự hồi sinh process với code mới — bài học GĐ 476
+>    Start-Sleep 10; curl.exe -s http://127.0.0.1:8777/health
+>    ```
+>    Verify quyết định: POST probe data-URL .xlsx (3B) qua tunnel → trước restart trả 400
+>    `Incorrect padding`, sau restart PHẢI trả 200 (em verify từ máy nhà qua tunnel).
+> 2. **Push web** (khi ĐH nói "Push"): sau deploy, web cắt tiền tố → upload chạy NGAY cả khi
+>    agent chưa restart (fix web đã đủ cho luồng thật).
+> - **Rác test chờ ĐH duyệt xóa (quy tắc GĐ 428):** `TEST_CUONG_dc_gd495.txt` (16B, id 3 —
+>    chứng cứ rác âm thầm) + 2 file test cũ id 1-2 (từ đợt GĐ 476) trong `INPUT\dieu_chuyen\`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
+
+### GĐ 498 / C.319 (Trợ lý Freebuff): PA Push hộ 3 GĐ máy nhà (492/493/496) + bump repo con 10.2.0 + verify production + restart agent (2026-10-21)
+
+> **Lệnh ĐH (21/10 đêm):** "Anh đặt lệnh Push trên máy này nhưng sau khi Push anh kiểm
+> tra lại vào thời điểm này thì không thấy có sự thay đổi? Em kiểm tra lại nếu có lỗi
+> hãy khắc phục nó." — Đại Ca hỏi 3 GĐ **492/C.313** (Danh mục khách hàng) ·
+> **493/C.314** (hộp KPI "Xuất Vắc Xin" tầng 2) · **496/C.317** (upload Điều chuyển)
+> làm trên MÁY KHÁC do Agent máy nhà.
+
+> **Chẩn đoán (nguyên nhân gốc):** Agent máy nhà KHÔNG có git — sửa file trực tiếp qua
+> ổ mạng Z: vào working tree máy cty → code 3 GĐ chỉ là **modified CHƯA TỪNG commit**
+> (cổng `check` xác nhận: AGENTS.md máy có 3 entry GĐ 492/493/496 chưa commit; git
+> status repo con có đúng các file code theo phạm vi registry). Đợt push GĐ 497 chỉ
+> gồm tool + docs → `git log origin/main..HEAD` = RỖNG cả 2 repo → không có gì mới lên
+> GitHub → production giữ 6.7.0/10.1.0 → Đại Ca không thấy thay đổi là ĐÚNG.
+
+> **Đã làm (khắc phục):**
+> 1. Claim GĐ 498/C.319 (dòng registry 🔒 + commit cổng).
+> 2. Commit hộ code repo con đúng phạm vi registry (add TỜNG MINH từng file — KHÔNG
+>    đụng routeTree.gen.ts / .gitignore / misa_*.py — không thuộc 3 GĐ): C.313
+>    `8d585e3` (-danh-muc.ts + 33_smed_TKKH.py + dm_khach_hang_import.py +
+>    40_web_agent.py) · C.314 `fde75d8` (-overview.ts + overview-dashboard.tsx) ·
+>    C.317 `3dafc61` (nhap-dieu-chuyen.tsx + api_server.py).
+> 3. Verify trước commit: tsc EXIT 0 · npm test PASS (4 bộ — bộ cuối 15/15) · ETL TKKH
+>    39/39 · dieu_chuyen_extract PASS.
+> 4. Bump repo con **10.1.0 → 10.2.0** (minor — feature KPI tầng 2) `ba295c6`; app tổng
+>    KHÔNG bump (docs-only — tiền lệ GĐ 416/417/422), giữ 6.7.0.
+> 5. Entry repo con C.317 (máy nhà, nguyên vẹn) + C.319 qua cổng `59acace` → push
+>    repo con `1cb7403..59acace`.
+> 6. Restart GIONG_SMED_Agent + api_server (xóa __pycache__ 4 thư mục · kill PID
+>    cmdline 6184 → NSSM hồi sinh 20824) nạp code mới trước Task_02 23:00 — Watchdog
+>    GĐ 491 nạp ✓ · tunnel mới `attachments-monroe-ventures-sample` ok ✓ · gist ghi
+>    URL mới ✓ · .env.local 2 app đồng bộ ✓.
+> 7. Unlock registry 492/493/496 kèm hash (commit cổng --replace-old giữ nguyên byte).
+
+> **Kết quả verify production:** app con **10.2.0** LIVE (curl lần đầu sau deploy) ·
+> app tổng 6.7.0 giữ nguyên — chi tiết login/SSO tại ô chú ý bên dưới (đang chạy).
+
+> **Version:** app tổng **6.7.0** (giữ nguyên — docs-only) / repo con **10.2.0** — ĐÃ
+> PUSH + LIVE.
