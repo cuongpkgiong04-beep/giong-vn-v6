@@ -4760,3 +4760,61 @@ repo con **10.1.0**.
 > dẫn. **Máy/worktree mới: `python scripts/agents/install-hooks.py` một lần.**
 
 > **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
+
+### GĐ 499 (Trợ lý Freebuff): Điều tra "UPLOAD Phiếu xuất kho 20/10 báo Đã ghi sổ nhưng MISA không có phiếu" — GỐC: kênh tạo `save_full` làm phiếu VÔ HÌNH với danh sách Xuất kho MISA (2026-10-21)
+
+> **Đại Ca báo (21/10 tối, 5 ảnh):** chạy UPLOAD Phiếu xuất kho kỳ 20/10/2026 → app hiện
+> 164 dòng hàng / 89.469.870đ, toàn bộ cột "Trạng thái MISA" = **Đã ghi sổ**, nhưng mở
+> MISA AMIS → Kho → Xuất kho (lọc "Hôm qua") = **"Không có dữ liệu"**.
+
+> **KẾT LUẬN: KHÔNG MẤT DỮ LIỆU — app báo ĐÚNG. Phiếu CÓ trên MISA và ĐÃ ghi sổ;
+> nhưng MISA KHÔNG đưa phiếu vào DANH SÁCH "Kho → Xuất kho" vì chúng được tạo qua kênh
+> API `save_full`. Đây chính là hiện tượng đã phát hiện ở GĐ 481; GĐ 487 đã có giải pháp
+> (import Excel → phiếu HIỆN danh sách) NHƯNG luồng import chưa được tích hợp vào builder
+> xuất kho → job hàng ngày vẫn tạo bằng `save_full` nên lỗi tái diễn.**
+
+> **Bằng chứng (probe thật, chỉ-đọc):**
+> 1. Job upload 20/10 chạy 21/10 **08:49:17 → 09:45:23** (log `web_agent_181026_151909.log`),
+>    **exit 0**; result `LOG/misa-xuat-kho-api_20261021_094521.json`: uploaded **136** ·
+>    posted **134** · skipped 4 (đã tồn tại) · failed 0.
+> 2. GiondDB `sm_xuatkho_phieu` ngày 20/10: **136 phiếu · 130 "Đã ghi sổ"** (khớp màn hình
+>    164 dòng hàng / 89.469.868đ) · 4 "Đã có (chưa ghi sổ)" (MISA trả InvalidRefno) · 2 chưa tạo.
+> 3. **MISA thật — phiếu TỒN TẠI:** `in_outward/detail_full` theo refid (5 mẫu) → HTTP 200,
+>    có phiếu, `refdate = 20/10/2026`, **`is_posted_finance = true`** ⇒ cột "Đã ghi sổ" trên
+>    app đúng sự thật dữ liệu.
+> 4. **Nhưng DANH SÁCH của chính màn Xuất kho KHÔNG có phiếu:** gọi API mà UI dùng
+>    (`g1/api/in/v1/in_inward_outward_list/paging_filter_v2`, body lấy NGUYÊN từ SPA qua Chrome
+>    CDP) → toàn kỳ 2026 chỉ trả **29 phiếu** (17/10: 21 · 18/10: 8) — TẤT CẢ `created_date`
+>    20/10 11:46–12:40 = đúng lúc chạy `gd478_pilot_pa1.py` (**luồng IMPORT EXCEL GĐ 487**),
+>    `journal_memo = "XBAN"`, tổng tiền 18.608.549 = `SummaryData` MISA trả. Phiếu 20/10 trong
+>    list = **0/136**.
+> 5. **Tổng phiếu "đã ghi sổ nhưng KHÔNG hiện danh sách": 218** — 20/10: 130 · 19/10: 78 ·
+>    17/10: 9 · 18/10: 1 (tất cả do `save_full` tạo).
+> 6. **Diff 2 phiếu (HIỆN 17/10-import vs ẨN 20/10-save_full): GIỐNG NHAU mọi trường quan
+>    trọng** — `reftype 2020` · cùng `branch_id` · `state 0` · `display_on_book 0` ·
+>    `publish_status 0` · `is_posted_finance true` · **`refno` rỗng CẢ HAI** ⇒ không phải do
+>    ngày/branch/ghi sổ/thiếu số chứng từ — **do KÊNH TẠO**.
+
+> **Vì sao vô hình:** phiếu tạo qua `save_full` không đi qua pipeline chuẩn hóa của MISA
+> (import/UI) nên không xuất hiện trong list `INOutwardList` — dù có trong sổ và tra được
+> theo refid. GĐ 487 đã chứng minh luồng **import Excel qua API** tạo phiếu HIỆN bình thường.
+
+> **3 PHƯƠNG ÁN trình Đại Ca chốt (CHƯA viết code):**
+> - **PA-1 (khuyến nghị):** tích hợp luồng **import Excel API** (đã có `gd478_import_api.py` +
+>   sinh file UPMISA 45 cột) vào builder xuất kho → job hàng ngày / Task_05 / nút Upload Misa
+>   tạo phiếu bằng import + ghi sổ; dọn dữ liệu: xóa & tạo lại các ngày đang vô hình
+>   (20/10 · 19/10 · 17-18/10 phần save_full) bằng luồng import. Dự đoán: hết vô hình vĩnh
+>   viễn; đổi builder ~1 buổi; phải chạy lại ~218 phiếu.
+> - **PA-2:** giữ `save_full`, thử tìm field còn thiếu để MISA hiện (tạo 1-2 phiếu TEST với
+>   biến thể `is_sale_with_outward_enum` / `account_object_name` / `refno` / `invoice_status`…)
+>   — nếu trúng thì fix 1 dòng payload, KHÔNG phải tạo lại phiếu. Dự đoán: chưa rõ cơ chế
+>   MISA → rủi ro tốn thời gian, có thể không tìm ra.
+> - **PA-3:** chỉ xử lý dữ liệu trước (xóa & tạo lại 20/10 + 19/10 bằng luồng import có sẵn),
+>   chưa tích hợp builder → mỗi ngày vẫn phải chạy tay.
+> - **Việc phụ (mọi PA):** 2 phiếu 20/10 chưa tạo (TA) · 4 phiếu báo "đã tồn tại" cần soi.
+
+> **Trạng thái phiên:** điều tra CHỈ-ĐỌC (probe qua api_server `/db/query` + MISA qua Chrome CDP
+> 9222 — đã mở lại Chrome phiên MISA profile `.secrets/chrome-cdp` để probe, nay đang chạy sẵn
+> cho job sau). **Chưa sửa code — chờ ĐH chốt PA.**
+
+> **Version:** KHÔNG bump (điều tra, 0 file web): app tổng **6.7.0** / repo con **10.1.0**.
