@@ -5066,9 +5066,18 @@ repo con **10.1.0**.
 > giờ trên code mới (21 phân hệ) · app tổng 6.7.0 giữ nguyên (docs-only).
 > ⚠️ **2 phát hiện vận hành — ĐÍNH CHÍNH LẦN 2 (23:15 probe lại):** (1) webhook
 > GitHub→Vercel **SỐNG — chỉ TRỄ 3-17 phút** (queue 1 concurrent build/team — Hobby):
-> bằng chứng 4/4 commit push đều có deployment git READY — 59acace → 22:50:36 (trễ 17\ browser đã load app con trong khung giờ lệch (khi
-> domain ghim deployment cũ) dính **cache 404 âm** của asset → tab đó "Chưa đăng nhập"
-> mãi dù cookie OK (fetch no-store = 200 cùng URL) — Ctrl+Shift+R 1 lần là sạch.
+> bằng chứng 4/4 commit push đều có deployment git READY — 59acace → 22:50:36 (trễ
+> 17 phút do 2 lần deploy thủ công của em 22:43-22:44 chiếm chỗ) · ec447a2 → 22:53:40
+> (trễ 15 phút) · 8d63ca7 → 23:12:19 (trễ 3 phút). KHÔNG cần ĐH vào dashboard; probe
+> lúc 22:43 thấy 'không có deployment' là QUÁ SỚM. Quy trình lần sau: push → chờ
+> 5-15 phút → kiểm `python scripts/gd498_probe_deploy.py` (in 5 deployment gần nhất
+> state/sha) · cần gấp → `npx vercel --prod` từ ROOT repo (Root Directory apps/banhang
+> — chạy từ apps/banhang sẽ lỗi Root Directory) + .vercelignore TẠM chặn agent/
+> (Chrome CDP khóa cookie → EBUSY), xong xóa ignore tạm; trigger qua API gitSource
+> cũng được (repoId: app tổng 1347487202 · repo con 1368782303); (2) browser đã load
+> app con trong khung giờ lệch (khi domain ghim deployment cũ) dính **cache 404 âm**
+> của asset → tab đó "Chưa đăng nhập" mãi dù cookie OK (fetch no-store = 200 cùng
+> URL) — Ctrl+Shift+R 1 lần là sạch.
 
 > **Version:** app tổng **6.7.0** (giữ nguyên — docs-only) / repo con **10.2.0** — ĐÃ
 > PUSH + LIVE.
