@@ -152,6 +152,34 @@ def apply_block(base: str, wt: str, name: str, after: str):
     return base[:at] + nl + blk_raw + nl + base[at:], True
 
 
+def lf_index_map(raw: str):
+    """Bảng ánh xạ vị trí ký tự bản LF-normalized -> vị trí trong bản RAW.
+    (file repo TRỘN CRLF+LF nên không thể replace thẳng trên bản raw)."""
+    idxs, i, n = [], 0, len(raw)
+    while i < n:
+        idxs.append(i)
+        if raw[i] == "\r" and i + 1 < n and raw[i + 1] == "\n":
+            i += 2
+        else:
+            i += 1
+    idxs.append(n)
+    return idxs
+
+
+def replace_in_raw(raw: str, old_lf: str, new_lf: str):
+    """Thay đúng MỘT đoạn văn bản (cho theo dạng LF) trong bản RAW, GIỮ NGUYÊN BYTE
+    của mọi phần khác. Trả (text_mới, ok)."""
+    old_n = to_lf(old_lf)
+    lf = to_lf(raw)
+    pos = lf.find(old_n)
+    if pos < 0:
+        return raw, False
+    mp = lf_index_map(raw)
+    a, b = mp[pos], mp[pos + len(old_n)]
+    nl = eol_of(raw)
+    return raw[:a] + to_lf(new_lf).replace(LF, nl) + raw[b:], True
+
+
 def find_key(store: dict, want: str):
     w = re.sub(r"\s+", " ", want.strip()).upper()
     for k in store:
@@ -229,8 +257,11 @@ def restore_from_backup(common: Path, path: str):
 def cmd_commit(a):
     keys = [k.strip() for k in (a.entry or [])]
     reg_keys = [k.strip() for k in (a.registry or [])] or keys
-    if not keys and not a.all_new and not a.block:
-        print('❌ Thiếu --entry "GĐ xxx" (hoặc --all-new / --block) — xem docstring.')
+    rep_old = getattr(a, "replace_old", None)
+    rep_new = getattr(a, "replace_new", None)
+    rep_file = getattr(a, "file", None) or "AGENTS.md"
+    if not keys and not a.all_new and not a.block and not rep_old:
+        print('❌ Thiếu --entry "GĐ xxx" (hoặc --all-new / --block / --replace-old) — xem docstring.')
         return 2
 
     common = Path(git("rev-parse", "--git-common-dir"))
@@ -263,6 +294,15 @@ def cmd_commit(a):
                 if not ok:
                     print(f"   ⚠️ {f}: không thấy khối '{a.block}' trong máy hoặc thiếu điểm neo — bỏ qua khối")
                     merged_blk = None
+
+        if rep_old and f == rep_file:          # áp cho MỌI file (kể cả AGENT_REGISTRY.md)
+            src = merged_blk if merged_blk is not None else h
+            fixed, ok = replace_in_raw(src, rep_old, rep_new or "")
+            if ok:
+                merged_blk = fixed
+                print(f"   ✏️ {f}: đã thay 1 đoạn văn bản (giữ nguyên byte phần còn lại)")
+            else:
+                print(f"   ⚠️ {f}: KHÔNG tìm thấy đoạn cần thay — bỏ qua (không sửa gì)")
 
         if not add_blocks and not add_rows and merged_blk is None:
             continue
@@ -337,6 +377,9 @@ def main():
     pc.add_argument("--registry", action="append", help="số dòng registry cần ghép (mặc định = --entry)")
     pc.add_argument("--all-new", action="store_true", help="ghép MỌI entry mới của file")
     pc.add_argument("--block", help="tên KHỐI QUY TẮC cần chèn/thay (dấu SHARED-BLOCK)")
+    pc.add_argument("--replace-old", help="đoạn văn bản (nhiều dòng OK) cần sửa trong bản HEAD")
+    pc.add_argument("--replace-new", help="nội dung thay thế")
+    pc.add_argument("--file", help="file áp --replace (mặc định AGENTS.md)")
     pc.add_argument("--after", help="điểm neo: chèn khối ngay SAU dòng chứa chuỗi này")
     pc.add_argument("-m", "--msg", help="commit message")
     pc.set_defaults(fn=cmd_commit)
