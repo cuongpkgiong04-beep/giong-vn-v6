@@ -4549,3 +4549,31 @@ repo con **10.1.0**.
 > sửa file CRLF bằng Python text-mode → diff toàn file (đã xử lý bằng hash-object).
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.7.0** / repo con **10.1.0**.
+
+### GĐ 491 / C.312 — BỔ SUNG 10:45 (Trợ lý Freebuff): NẠP CODE xong + Task_06 "Lỗi: 18" là báo oan → đã sửa (2026-10-21)
+
+> **NẠP CODE (đã xong):** `gd491_restart_when_idle.py` chờ chuỗi Task xong (Task_05
+> 09:45 · Task_06 10:06) → 10:07:59 `sc stop/start GIONG_SMED_Agent` → log mới
+> `web_agent_211026_100759.log` có dòng **`🛡️ Watchdog GĐ 491 nạp: job 'running' quá
+> 45 phút → bỏ qua (không chờ vô hạn)`** ⇒ code chống treo ĐÃ hoạt động.
+
+> **⚠️ Task_06 báo "❌ Lỗi: 18" — BÁO OAN (đã tìm ra + sửa `3009853`):** Task_06 chạy
+> lại 20/10 lúc 09:46 (sau khi em đã tạo tay 152 phiếu buổi sáng) → MISA trả
+> `InvalidInvno` cho 18 phiếu. **Kiểm chứng: CẢ 18 ĐÃ CÓ trên MISA đúng số chứng từ +
+> đúng số hóa đơn** (152 phiếu của lượt tạo tay) — MISA chặn theo *số hóa đơn* trước
+> nên trả `InvalidInvno` chứ không phải `InvalidRefno` → builder xếp nhầm vào nhánh
+> "lỗi" và còn ghi đè DB `is_uploaded=0` cho phiếu đã tạo (làm trang báo cáo hiện
+> như chưa tạo).
+> **Fix:** gặp `InvalidInvno` → **xác minh bằng danh sách MISA (cổng g1) theo số chứng
+> từ trong ngày**: CÓ → coi như đã tồn tại (bỏ qua êm + cập nhật lại DB) · KHÔNG →
+> lỗi thật. Thêm `InvalidInvno` vào nhóm KHÔNG retry (thử lại vô ích, chậm).
+> **Verify chạy lại 20/10:** `✅ 0 lỗi · ⏭️ 154 bỏ qua (152 xác minh đã tồn tại)` ·
+> **DB 20/10 = 152/152 phiếu đã tạo + ghi sổ** — còn đúng **2 phiếu cần soi tay**
+> (ML: hàng không khớp danh mục MISA · NL: không xác định được số HĐ từ Bảng kê chi
+> tiết HĐ GTGT).
+
+> **TỔNG KẾT 20/10:** 152 phiếu trên MISA (152 ghi sổ) · 2 phiếu cần soi tay · nguồn
+> dữ liệu đủ 3/3 · Task_02→03→05→06 của chuỗi 20/10 đã chạy xong (Task_06 báo lỗi oan
+> đã được sửa; lần chạy tới sẽ 0 lỗi).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.7.0** / repo con **10.1.0**.
