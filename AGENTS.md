@@ -5101,7 +5101,7 @@ repo con **10.1.0**.
 >
 > **Verify (chạy thật, không chỉ đọc code):**
 > - 7 vòng probe playwright (scripts/_gd500_probe_tpb_flow2→7) — soi DOM modal/dropdown/form/danh sách + **tải thật 1 file `TPBANK_HISTORY11698866789_21102026_231502088.xlsx` (15.489 bytes)** từ luồng mới.
-> - Chạy lại qua agent: **xuatkho 21/10 = 19 file + ETL 423 dòng ✅** · **xnkt 21/10 = 18 file + ETL 1.118 dòng ✅** (TIÊN DU bị bỏ im lặng — đã fix retry, chuỗi Task_02 23:00 chạy lại full) · **hddt 21/10 = 19 file ✅** (chuỗi tự chạy lại 23:00:29→23:05:48 dùng code fix).
+> - Chạy lại qua agent: **xuatkho 21/10 = 19 file + ETL 423 dòng ✅** · **xnkt 21/10 = 18 file + ETL 1.118 dòng ✅** (TIÊN DU bị bỏ im lặng — đã fix retry; chuỗi Task_02 chạy lại full 00:14:37 VẪN 18/19: nút THỐNG KÊ chưa hiện BỀN BỈ với riêng TT TIÊN DU qua 4 lần chạy 4 phiên browser, TT khác ăn ngay lần 1 → nghi lỗi phía SMED/TT đó, cần soi tay web SMED) · **hddt 21/10 = 19 file ✅** (chuỗi tự chạy lại 23:00:29→23:05:48 dùng code fix).
 > - **bank-tpb UI mới qua agent: 19/10 DONE 23:46:01 + 20/10 DONE 23:46:57** (1 file/ngày, ETL "1 rỗng" — 0 giao dịch, valid-empty theo C.131/GĐ 436) · 18/10: request xuất OK nhưng row không hiện trong 3 phút (2 lần — nghi TPB làm chậm/chặn request LẶP cùng kỳ) → dùng file **tải thật lúc 23:25** đặt vào OUTPUT/17.BANK_TPB/2026-10-18 + ETL ghi nhận rỗng hợp lệ → đủ 18-20/10.
 > - Chuỗi Task_02 23:00 (ngày 21/10, 19 download + 28 báo cáo): hddt ✅ 23:05:48 · dtdt ✅ 23:13:22 · dtthc ✅ 23:15:25 · bkccn ✅ 23:39:00 (19 file + 236 dòng) · nhapkho ✅ — các bước sau chạy tiếp với code fix.
 >
