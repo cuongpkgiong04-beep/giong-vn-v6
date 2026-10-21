@@ -4634,10 +4634,14 @@ repo con **10.1.0**.
 >    `AGENTS.md` repo con, chưa commit). Nội dung của họ **không mất** (đã nằm trong
 >    commit + đã push, chỉ bị gán vào commit của em). KHÔNG amend/rewrite lịch sử
 >    (quy tắc 3) — ghi nhận minh bạch tại đây.
-> 2. **File `AGENTS.md` app tổng của phiên song song đang LỆCH** so với HEAD
->    (diff 268 thêm / **118 xoá** — thiếu entry "GĐ 489 bổ sung" + entry GĐ 491 của
->    em). ⚠️ **Nếu phiên đó commit nguyên file AGENTS.md sẽ XOÁ entry của em** —
->    đề nghị Đại Ca nhắc phiên đó pull/rebase lại AGENTS.md trước khi commit.
+> 2. **ĐÍNH CHÍNH (GĐ 495):** cảnh báo trước đây ở đây — "file `AGENTS.md` app tổng của
+>    phiên song song LỆCH, thiếu entry của em" — là **BÁO ĐỘNG GIẢ**. Đã kiểm lại bằng
+>    cổng `shared-doc.py check` trên đúng bản đang làm việc: bản máy của phiên đó **đủ
+>    100% entry** (80 entry của HEAD ⊂ 83 entry trong máy). Con số `git diff` 268 thêm /
+>    118 xoá chỉ do **lệch kiểu xuống dòng CRLF↔LF** giữa 2 bản, không phải mất bài.
+>    ⇒ Muốn biết bản trong máy có thiếu bài phiên khác không thì dùng
+>    `python scripts/agents/shared-doc.py check` (so theo ENTRY), KHÔNG đọc `git diff`
+>    thô trên file lớn.
 
 > **Bump version: KHÔNG** — đợt push không có file web nào (app tổng docs-only; repo
 > con chỉ agent python + AGENTS.md) → tiền lệ GĐ 416/417/422. Giữ app tổng **6.7.0**
