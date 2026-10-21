@@ -54,9 +54,10 @@ def git(*args, check=True):
 
 
 def head_text(path: str) -> str:
-    p = subprocess.run(["git", "show", f"HEAD:{path}"], capture_output=True, text=True,
-                       encoding="utf-8", errors="replace")
-    return p.stdout if p.returncode == 0 else ""
+    """Bản HEAD dạng CHUỖI GIỮ NGUYÊN kiểu xuống dòng — đọc BYTES rồi tự decode
+    (KHÔNG dùng text=True vì Python đổi CRLF thành LF → mất CRLF → diff toàn file)."""
+    p = subprocess.run(["git", "show", f"HEAD:{path}"], capture_output=True)
+    return p.stdout.decode("utf-8", "replace") if p.returncode == 0 else ""
 
 
 def read(path: str) -> str:
@@ -76,12 +77,23 @@ def uses_crlf(t: str) -> bool:
     return CRLF in t
 
 
-def write_like(path: str, text_lf: str, like: str):
-    """Ghi `text_lf` (dạng LF) theo ĐÚNG kiểu xuống dòng của bản tham chiếu `like`."""
-    t = to_lf(text_lf)
-    if uses_crlf(like):
-        t = t.replace(LF, CRLF)
-    open(path, "w", encoding="utf-8", newline="").write(t)
+def write_like(path: str, text_raw: str, like: str):
+    """Ghi nguyên văn `text_raw` — KHÔNG đổi kiểu xuống dòng của các dòng cũ.
+    (Repo có file TRỘN CRLF+LF: đổi hết sang một kiểu làm git báo diff hàng trăm dòng
+    tưởng như bị sửa — bài học GĐ 491/495. Phần MỚI nối vào dùng eol_of().)"""
+    open(path, "w", encoding="utf-8", newline="").write(text_raw)
+
+
+def eol_of(text: str) -> str:
+    """Kiểu xuống dòng dùng cho phần MỚI nối vào — theo dòng cuối của bản gốc."""
+    if text.endswith(CRLF):
+        return CRLF
+    if text.endswith(CR):
+        return CR
+    if text.endswith(LF):
+        # file trộn: chọn kiểu xuất hiện nhiều hơn
+        return CRLF if text.count(CRLF) >= (text.count(LF) - text.count(CRLF)) else LF
+    return LF
 
 
 # ------------------------------------------------------------------ phân tích
@@ -119,19 +131,25 @@ def block_of(text: str, name: str) -> str:
 
 
 def apply_block(base: str, wt: str, name: str, after: str):
-    """Chèn/thay KHỐI QUY TẮC dau <!-- SHARED-BLOCK:name START/END -->.
-    Có sẵn trong base -> thay tại chỗ; chưa có -> chèn ngay SAU dòng chứa `after`."""
+    """Chèn/thay KHỐI QUY TẮC <!-- SHARED-BLOCK:name START/END -->.
+    Có sẵn trong base -> thay tại chỗ; chưa có -> chèn ngay SAU dòng chứa `after`.
+    Giữ NGUYÊN BYTE mọi dòng cũ (chỉ cắt/ghép tại đúng vị trí chèn)."""
     blk = block_of(wt, name)
     if not blk:
         return base, False
+    nl = eol_of(base)
+    blk_raw = to_lf(blk).replace(LF, nl)
     cur = block_of(base, name)
     if cur:
-        return base.replace(cur, blk, 1), True
-    lines = base.splitlines()
-    idx = next((i for i, ln in enumerate(lines) if after and after in ln), None)
-    if idx is None:
+        return base.replace(cur, blk_raw, 1), True
+    idx = base.find(after) if after else -1
+    if idx < 0:
         return base, False
-    return LF.join(lines[:idx + 1] + ["", blk, ""] + lines[idx + 1:]), True
+    eol = base.find(nl, idx)
+    if eol < 0:
+        return base, False
+    at = eol + len(nl)
+    return base[:at] + nl + blk_raw + nl + base[at:], True
 
 
 def find_key(store: dict, want: str):
@@ -251,11 +269,12 @@ def cmd_commit(a):
 
         backups[f] = snapshot(f)                     # bảo hiểm bài dở phiên khác
         merged = merged_blk if merged_blk is not None else h
+        nl = eol_of(merged)
         for b in add_blocks:
-            merged = merged.rstrip(LF) + LF + LF + b + LF
+            merged = merged.rstrip(LF + CR) + nl + nl + to_lf(b).replace(LF, nl) + nl
         for r in add_rows:
-            merged = merged.rstrip(LF) + LF + r + LF
-        write_like(f, merged, h if h else w)         # giữ nguyên CRLF/LF của bản HEAD
+            merged = merged.rstrip(LF + CR) + nl + to_lf(r).replace(LF, nl) + nl
+        write_like(f, merged, h if h else w)         # KHÔNG đổi kiểu xuống dòng dòng cũ
         print(f"   🔀 {f}: ghép {len(add_blocks)} entry + {len(add_rows)} dòng registry"
               f"{' + 1 khối quy tắc' if merged_blk is not None else ''} lên bản HEAD"
               f" (backup bài dở phiên khác: {Path(backups[f]).name})")
