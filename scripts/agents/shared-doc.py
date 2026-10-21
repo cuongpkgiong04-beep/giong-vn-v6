@@ -139,9 +139,11 @@ def apply_block(base: str, wt: str, name: str, after: str):
         return base, False
     nl = eol_of(base)
     blk_raw = to_lf(blk).replace(LF, nl)
-    cur = block_of(base, name)
-    if cur:
-        return base.replace(cur, blk_raw, 1), True
+    if block_of(base, name):
+        # ĐÃ có khối trong bản gốc -> THAY tại chỗ, PHẢI qua replace_in_raw: bản gốc
+        # TRỘN CRLF+LF nên so chuỗi thẳng không khớp -> im lặng không sửa (lỗi thật
+        # gặp 21/10: cập nhật khối quy tắc mà git báo 'nothing to commit').
+        return replace_in_raw(base, block_of(base, name), to_lf(blk))
     idx = base.find(after) if after else -1
     if idx < 0:
         return base, False
