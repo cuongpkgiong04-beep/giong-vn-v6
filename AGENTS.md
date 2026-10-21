@@ -4723,3 +4723,40 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (script công cụ + docs — chờ lệnh Push). App tổng **6.7.0** /
 > repo con **10.1.0**.
+
+### GĐ 497 / C.318 (Trợ lý Freebuff): PA Push đợt 21/10 tối — CỔNG COMMIT FILE DÙNG CHUNG (lên production) (2026-10-21)
+
+> **Lệnh "Push" của Đại Ca** (sau khi dựng + test xong cơ chế chống nuốt/xoá bài phiên
+> song song — xem GĐ 495/C.316).
+
+> **Rà trùng lặp (nguyên tắc 3) — 2 phát hiện thật, đã xử lý TRƯỚC khi push:**
+> 1. **Dòng registry số `495 / C.316` trong HEAD đang là BÀI CỦA PHIÊN KHÁC** (claim
+>    "FIX upload trang Điều chuyển" — 🔒). Nguyên nhân: lúc em chạy cổng `--registry
+>    "GĐ 495"`, phiên đó CHƯA đổi số nên cổng khớp vào dòng của họ trước. Phiên đó sau
+>    đó tự đổi sang **496 / C.317** (đúng quy tắc GĐ 285: em commit entry 495 trước).
+>    → Em **sửa đúng 1 dòng** registry (495/C.316 = CỔNG COMMIT ✅) bằng chế độ
+>    `--replace-old/--replace-new` của cổng — commit `47b257d`, diff 1 dòng.
+> 2. **3 entry + 1 dòng registry đang dở của phiên khác** (GĐ 492/493/496) trong
+>    worktree → **giữ nguyên, không đụng**; kiểm chứng sau push: bản máy phiên đó
+>    vẫn **đủ entry** (HEAD 80 ⊆ máy 83), md5 khớp bản backup ⇒ nguyên vẹn.
+
+> **KHÔNG bump version:** đợt push toàn bộ là công cụ agent + tài liệu (app tổng
+> `scripts/agents/*` + AGENTS.md/registry; repo con chỉ AGENTS.md) — không có file web
+> → giữ app tổng **6.7.0** / repo con **10.1.0** (tiền lệ GĐ 416/417/422).
+
+> **Push:** app tổng `9eae56d..47b257d` (10 commit: `85a01b0` cổng + `6538e6f`/`6fe2e28`/
+> `d56b592`/`795b383` sửa cổng + `d459e3b` entry/quy tắc + `78c65e1`/`c7b9993` đính chính
+> GĐ 494 + `170c12b` quy tắc --replace + `47b257d` sửa dòng registry) · repo con
+> `3d3e9bc..1cb7403` (1 commit: entry C.316 + hướng dẫn cổng cho repo con).
+
+> **✅ Verify production (checklist GĐ 470 B):** env 2 app đủ (6/6 · 5/5) · login app
+> tổng thật → JSON có `user` · SSO ký token → **302 + `Set-Cookie: bh_session`** ·
+> `/api/auth/me` app con → user + **14 nhóm quyền** (tunnel + GiongDB OK) · version app
+> con **10.1.0** / app tổng **6.7.0**.
+
+> **Từ đợt này, mọi phiên/agent:** commit file dùng chung PHẢI qua cổng —
+> `python scripts/agents/shared-doc.py commit --entry "GĐ xxx" -m "..."`; hook đã cài
+> sẵn ở cả 2 repo (mọi worktree dùng chung) nên commit trực tiếp sẽ bị CHẶN kèm hướng
+> dẫn. **Máy/worktree mới: `python scripts/agents/install-hooks.py` một lần.**
+
+> **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
