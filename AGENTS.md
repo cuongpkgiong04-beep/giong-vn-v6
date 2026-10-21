@@ -5107,6 +5107,6 @@ repo con **10.1.0**.
 >
 > **Ghi nhận thêm (không phải lỗi mới):** (1) OUTPUT/6.BKX/2026-10-20 đang RỖNG dù job 20/10 done 23:42 — data 20/10 đã trong DB (sm_xuatkho_phieu 136 dòng), nghi phiên khác dọn khi đối chiếu (GĐ 499 đang soi Xuất kho MISA) — cần phiên đó xác nhận; (2) xuất kho MISA 17-19/10 còn nhiều phiếu chưa ghi sổ (18/10: 9/179 · 19/10: 78/111) — GĐ 499 đang điều tra; (3) xuất sao kê TPB LẶP cùng kỳ có thể không ra row — tránh chạy lại trùng ngày.
 >
-> **Tiêu chí kiểm chứng:** (1) báo cáo XNKT/BKX 21/10 đủ 19 TT (sau khi chuỗi chạy lại xnkt); (2) OUTPUT/17.BANK_TPB đủ 3 ngày 18-20/10 + báo cáo bank-tpb kỳ đó ra số 0 hợp lệ; (3) chuỗi 23:00 hoàn tất 19 download + 28 báo cáo không needsData oan.
+> **Tiêu chí kiểm chứng:** (1) báo cáo XNKT/BKX 21/10 đủ 18/19 TT (TT TIÊN DU chờ soi tay SMED); (2) OUTPUT/17.BANK_TPB đủ 3 ngày 18-20/10 + báo cáo bank-tpb kỳ đó ra số 0 hợp lệ; (3) chuỗi 23:00 hoàn tất 19 download + 28 báo cáo không needsData oan.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.2.0**.
