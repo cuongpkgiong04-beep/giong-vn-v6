@@ -4577,3 +4577,48 @@ repo con **10.1.0**.
 > đã được sửa; lần chạy tới sẽ 0 lỗi).
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.7.0** / repo con **10.1.0**.
+
+### GĐ 494 / C.315 (Trợ lý Freebuff): PA Push đợt 21/10 — chống treo chuỗi Task + phân loại InvalidInvno (2026-10-21)
+
+> **Lệnh "Push" của Đại Ca** (sau khi xử lý sự cố 21/10 — xem GĐ 491/C.312).
+
+> **Rà trùng lặp (nguyên tắc 3):** 2 repo **0 nhánh phụ** cần merge (`agent-cli`,
+> `pipeline-work` rỗng) · working tree có file dở của **phiên song song** (app tổng:
+> `AGENTS.md` + `AGENT_REGISTRY.md`; repo con: `.gitignore`, `40_web_agent.py`,
+> `33_smed_TKKH.py`, `dm_khach_hang_import.py`, `misa_muahang_api.py`,
+> `misa_xuatkho_api.py`, `overview-dashboard.tsx`, `-danh-muc.ts`, `-overview.ts`,
+> `routeTree.gen.ts`) → **KHÔNG add, KHÔNG đụng** — commit của em tách riêng bằng
+> cách lưu bản dở của họ ra file tạm → `git checkout --` file dùng chung → thêm
+> entry của mình → commit+push → **hoàn trả nguyên văn bản dở của họ** vào worktree.
+
+> **⚠️ CẢNH BÁO TRÙNG LẶP (minh bạch — bài học GĐ 470/GĐ 285):**
+> 1. **Commit repo con `3d3e9bc` (entry đợt Push) VÔ TÌNH chứa thêm entry `C.314` —
+>    "Hộp KPI Xuất Vắc Xin" của PHIÊN SONG SONG** (họ đang viết dở trong worktree
+>    `AGENTS.md` repo con, chưa commit). Nội dung của họ **không mất** (đã nằm trong
+>    commit + đã push, chỉ bị gán vào commit của em). KHÔNG amend/rewrite lịch sử
+>    (quy tắc 3) — ghi nhận minh bạch tại đây.
+> 2. **File `AGENTS.md` app tổng của phiên song song đang LỆCH** so với HEAD
+>    (diff 268 thêm / **118 xoá** — thiếu entry "GĐ 489 bổ sung" + entry GĐ 491 của
+>    em). ⚠️ **Nếu phiên đó commit nguyên file AGENTS.md sẽ XOÁ entry của em** —
+>    đề nghị Đại Ca nhắc phiên đó pull/rebase lại AGENTS.md trước khi commit.
+
+> **Bump version: KHÔNG** — đợt push không có file web nào (app tổng docs-only; repo
+> con chỉ agent python + AGENTS.md) → tiền lệ GĐ 416/417/422. Giữ app tổng **6.7.0**
+> / repo con **10.1.0**.
+
+> **Push:** app tổng 4 commit (`4bef5a2` claim · `7fec8e8`+`534a88d` entry GĐ 491 ·
+> `d02b28a` entry GĐ 489 bổ sung trước đó) · repo con 6 commit (`e9e1186` chống treo +
+> tên nguồn · `37ec4f1` log watchdog · `2cbf689` tool restart-when-idle · `3009853`
+> phân loại InvalidInvno · `9ec9323`/`962094b` entry) + `3d3e9bc` (entry Push).
+
+> **✅ Verify production (checklist GĐ 470 B — KHÔNG tin chữ "Ready"):**
+> - Env 2 app đủ: app tổng 6/6 (`DATABASE_URL`, `APP_JWT_SECRET`,
+>   `TUNNEL_API_BASE_URL`, `TUNNEL_GIST_ID`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`) ·
+>   app con 5/5 (+ `ZAI_API_KEY`).
+> - Login app tổng thật → JSON có `user` (Phạm Kiên Cường) ✓
+> - SSO ký token (`iss giong-vn-v6` · `aud giong-banhang`) → **302 app con +
+>   `Set-Cookie: bh_session`** ✓
+> - `/api/auth/me` app con → `user` + **14 nhóm quyền** (đọc qua tunnel → GiongDB) ✓
+> - Version: app con **10.1.0** · app tổng **6.7.0** (đúng — không bump).
+
+> **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
