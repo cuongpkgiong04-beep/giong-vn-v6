@@ -4505,3 +4505,47 @@ repo con **10.1.0**.
 
 > **Version:** app tổng **6.7.0** / repo con **10.1.0** (không đổi — thao tác dữ
 > liệu, không đụng code web).
+
+### GĐ 491 / C.312 (Trợ lý Freebuff): Sự cố 21/10 — "UPLOAD Hóa đơn GTGT bán hàng 20/10 báo thiếu nguồn" + Task_02 treo 8 tiếng → gỡ treo + fix 3 việc (2026-10-21)
+
+> **ĐH báo (7:54):** trang UPLOAD Hóa đơn GTGT bán hàng (20/10) báo "Chưa đủ dữ liệu
+> thực hiện — thiếu nguồn: Chứng từ bán hàng quét SMED HĐĐT + BKCT (Task_06…)";
+> Task_02 trên trang NHIỆM VỤ "Đang chạy" từ 23:00 hôm qua. ĐH hỏi 3 câu: (1) "SMED
+> HĐĐT" có phải "Thống kê tình hình sử dụng HĐĐT"? (2) "BKCT" có phải "Bảng kê chung
+> cuối ngày"? (3) Task_06 tắc vì Task_02 chạy mãi?
+
+> **TRẢ LỜI (kèm bằng chứng):**
+> 1. **"SMED HĐĐT" KHÔNG phải** file "Thống kê tình hình sử dụng HĐĐT" (1.HDDT) —
+>    mà là **quét TRỰC TIẾP webapp SMED** (trang Danh sách hóa đơn `#!/hoadondientu`
+>    lọc 'Đã gửi' + Lịch sử gửi hóa đơn) qua API nội bộ, KHÔNG cần file tải trước.
+> 2. **"BKCT" KHÔNG phải** "Bảng kê chung cuối ngày" — đó là **Bảng kê chi tiết hóa
+>    đơn GTGT đã sử dụng, tải từ MISA meInvoice** (`OUTPUT	.BKCT_HDGTGT` → nguồn
+>    SỐ HÓA ĐƠN). Còn "Bảng kê chung cuối ngày" là **BKCCN** (`4.BKCCN`, tải từ SMED
+>    → nguồn SỐ LÔ + HSD). **CẢ HAI đã tải tự động cho 20/10** (23:11 và 00:18-00:19)
+>    — `stg_4BKCCN` 184 dòng · `stg_11BKCT` 183 dòng ⇒ nguồn dữ liệu KHÔNG thiếu.
+> 3. **Task_02 treo — nhưng KHÔNG phải vì bước TPB** (bước TPB đã tự bỏ qua sau 3
+>    lần theo đúng luật). **Gốc thật:** `api_server` (127.0.0.1:8777) ngắt ~20 giây
+>    lúc **00:29:24** → agent không ghi được trạng thái kết thúc của job MIA
+>    (`390AF3D0`) → job kẹt `running` → task chờ VÔ HẠN 8 tiếng → Task_03/05/06 không
+>    chạy → 20/10 không có phiếu.
+
+> **XỬ LÝ NGAY:** gỡ treo job (đánh dấu done theo đúng thực tế file+ETL đã xong) →
+> **Task_02 kết thúc 08:32:55 · Task_03 xong 08:48 · Task_05/06 chạy tiếp** · chạy
+> quét + lập chứng từ 20/10: **152 phiếu · GHI SỔ 152/152** (131.510.000).
+
+> **FIX 3 VIỆC (ĐH chốt PA-1, repo con `e9e1186` + entry `9ec9323`):**
+> - **Chống treo:** watchdog `_wait_job_done` (45 phút, env `TASK_JOB_STALE_MIN`) +
+>   dọn job/nhiệm vụ treo khi agent khởi động + `report_progress` retry 3 lần (5s) +
+>   **fallback ghi thẳng GiondDB** khi api_server không tới được.
+> - **Kiểm nguồn đúng bản chất:** báo cáo `misa-bh-chitiet` nay kiểm ĐỦ 3 nguồn —
+>   Bảng kê chi tiết HĐ GTGT (MISA · số HĐ) + Bảng kê chung cuối ngày (SMED · lô/HSD)
+>   + kết quả quét Task_06 (verify: kỳ 20/10 đủ 3 · kỳ 21/10 thiếu đúng 3).
+> - **Đổi tên hiển thị:** "BKCT" → *Bảng kê chi tiết hóa đơn GTGT đã sử dụng (MISA
+>   meInvoice)* · "Bảng kê chứng từ cuối ngày" → *Bảng kê chung cuối ngày (SMED)* ·
+>   "SMED HĐĐT" → *quét HĐĐT SMED (trang Danh sách hóa đơn 'Đã gửi')* — KHÔNG đổi
+>   tên bảng/thư mục/key kỹ thuật.
+
+> **BÀI HỌC:** mọi đường ghi TRẠNG THÁI job phải có retry + fallback + watchdog;
+> sửa file CRLF bằng Python text-mode → diff toàn file (đã xử lý bằng hash-object).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.7.0** / repo con **10.1.0**.
