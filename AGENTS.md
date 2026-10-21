@@ -330,6 +330,43 @@
 >
 > **Lệnh cơ bản (Agent đọc khi cần):** `git worktree list` (xem các working tree) · `git -C <worktree> log --oneline -5` (xem commit Agent kia) · merge khi Push: `git checkout main && git merge agent-cli`.
 
+<!-- SHARED-BLOCK:GD495-CONG-FILE-DUNG-CHUNG START -->
+### 🚧 CỔNG COMMIT FILE DÙNG CHUNG — CHỐNG NUỐT/XOÁ BÀI PHIÊN SONG SONG (hiệu lực GĐ 495, 21/10/2026)
+
+> **Sự cố thật (2 lần):** GĐ 470 — phiên A `git add AGENTS.md` khi file đang chứa bài dở
+> của phiên B → commit **NUỐT** bài của B · GĐ 494 — bản trong máy của B **lệch** (thiếu
+> entry của A) → B commit nguyên file → **XOÁ** bài của A. ĐH yêu cầu cơ chế TỰ ĐỘNG,
+> không phải nhắc tay mỗi lần.
+
+> **1) Khi nào BỊ CHẶN (hook `pre-commit` — dùng chung mọi worktree của repo):**
+> - Commit vào `AGENTS.md` / `AGENT_REGISTRY.md` / `AGENTS_ARCHIVE.md` mà **không** đi qua
+>   cổng an toàn bên dưới → **CHẶN** (in hướng dẫn ngay trong terminal).
+> - Mọi commit **XOÁ** dòng entry (`### GĐ …` / `### C.…`) hoặc dòng bảng registry
+>   (`| GĐ …` / `| C.…`) → **CHẶN TUYỆT ĐỐI** (đây là dấu hiệu commit bản lệch làm mất bài
+>   phiên khác). Cố ý dọn/tách archive → thêm `[shared-approved]` vào commit message.
+
+> **2) Cách commit file dùng chung (BẮT BUỘC — cổng an toàn):**
+> ```bash
+> python scripts/agents/shared-doc.py check                       # xem 2 đầu lệch gì (HEAD vs máy)
+> python scripts/agents/shared-doc.py list                        # entry mới chưa commit
+> python scripts/agents/shared-doc.py commit --entry "GĐ 495" --registry "GĐ 495" -m "docs(...): ..."
+> python scripts/agents/shared-doc.py commit --all-new -m "..."    # nếu chỉ có entry của mình
+> ```
+> Cổng **ghép CHỈ entry/dòng registry mình khai lên bản HEAD** (bản đã có đủ bài mọi phiên)
+> rồi **trả lại nguyên vẹn bài dở của phiên khác** trong worktree ⇒ không bao giờ nuốt bài
+> người khác, không bao giờ xoá bài đã commit.
+> **Muốn thêm/sửa QUY TẮC (mục 1-13, không phải entry):** bọc đoạn mình viết bằng dấu
+> `<!-- SHARED-BLOCK:<tên> START -->` … `<!-- SHARED-BLOCK:<tên> END -->` rồi chạy
+> `--block "<tên>" --after "<dòng neo>"` — cổng tự chèn vào đúng vị trí trên bản HEAD.
+
+> **3) Backup tự động:** mọi lần commit file dùng chung đều snapshot vào
+> `.git/giong-shared-snapshots/` (50 bản gần nhất) + `.git/giong-shared-wip/` (bài dở của
+> phiên khác) ⇒ không bao giờ mất bài. Xem/khôi phục: `python scripts/agents/shared-doc.py restore`.
+
+> **4) Máy/worktree mới:** chạy 1 lần `python scripts/agents/install-hooks.py`
+> (`--check` để kiểm tra). Hook tự in hướng dẫn khi chặn ⇒ phiên sau không cần nhớ luật.
+<!-- SHARED-BLOCK:GD495-CONG-FILE-DUNG-CHUNG END -->
+
 ### Cách tăng Version:
 
 > ⚠️ **THỜI ĐIỂM bump (2026-09-26):** chỉ bump khi **Đại ca nói "Push"** (nguyên tắc ĐA AGENT bên trên) — KHÔNG bump ngay khi commit. Quy tắc tính số bên dưới vẫn nguyên hiệu lực.
@@ -4622,3 +4659,61 @@ repo con **10.1.0**.
 > - Version: app con **10.1.0** · app tổng **6.7.0** (đúng — không bump).
 
 > **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
+
+### GĐ 495 / C.316 (Trợ lý Freebuff): CỔNG COMMIT FILE DÙNG CHUNG — cơ chế TỰ ĐỘNG chống nuốt/xoá bài phiên song song (2026-10-21)
+
+> **Lệnh của ĐH (21/10, sau sự cố GĐ 494):** *"Anh không thể nhắc phiên đó pull về / gộp
+> lại. Em phải có cách để tránh trường hợp này xảy ra lần tiếp theo khi các phiên song song
+> hoặc 4 phiên đồng thời làm việc. Anh không muốn trường hợp này xảy ra lần sau."*
+
+> **GỐC 2 TAI NẠN (đã ghi trong registry):**
+> 1. **GĐ 470** — phiên A `git add AGENTS.md` khi file đang chứa bài dở phiên B → commit
+>    A **NUỐT** entry của B (nội dung không mất nhưng gán nhầm commit + B hoang mang).
+> 2. **GĐ 494 (21/10)** — đúng vậy: commit repo con `3d3e9bc` nuốt entry `C.314` của phiên
+>    song song; và **file `AGENTS.md` app tổng của phiên đó LỆCH** (thiếu entry "GĐ 489 bổ
+>    sung" + GĐ 491) → nếu họ commit nguyên file thì **XOÁ** bài của em.
+
+> **CƠ CHẾ ĐÃ LÀM (3 lớp, KHÔNG phụ thuộc việc nhớ luật):**
+> 1. **Git hook `pre-commit`** (`scripts/agents/pre-commit`, cài bằng
+>    `scripts/agents/install-hooks.py` vào `$(git rev-parse --git-common-dir)/hooks` →
+>    **mọi worktree của repo dùng chung** nên mọi agent trên máy đều được bảo vệ):
+>    - **CHẶN** mọi commit vào `AGENTS.md` / `AGENT_REGISTRY.md` / `AGENTS_ARCHIVE.md` khi
+>      không đi qua cổng an toàn (in hướng dẫn ngay trong terminal).
+>    - **CHẶN TUYỆT ĐỐI** mọi commit XOÁ dòng entry (`### GĐ …` / `### C.…`) hoặc dòng bảng
+>      registry (`| GĐ …` / `| C.…`) — đây đúng là dấu hiệu "commit bản lệch làm mất bài
+>      phiên khác". Cố ý dọn/tách archive → thêm `[shared-approved]` vào commit message.
+>    - **Snapshot tự động** mọi lần commit file dùng chung vào
+>      `.git/giong-shared-snapshots/` (giữ 50 bản) ⇒ bài dở không bao giờ mất.
+> 2. **Cổng gộp an toàn `scripts/agents/shared-doc.py`** — `check` (so 2 đầu HEAD ↔ máy,
+>    cảnh báo entry có ở HEAD mà thiếu trong máy) · `list` (entry chưa commit) ·
+>    `commit --entry "GĐ 495" --registry "GĐ 495" -m …` — **ghép CHỈ entry/dòng registry
+>    mình khai lên bản HEAD**, KHÔNG lấy nguyên file worktree, rồi **trả lại nguyên vẹn bài
+>    dở của phiên khác** trong worktree. Hỗ trợ thêm `--block "<tên>" --after "<dòng neo>"`
+>    để chèn/sửa KHỐI QUY TẮC (mục 1-13) an toàn bằng dấu
+>    `<!-- SHARED-BLOCK:<tên> START/END -->`.
+> 3. **Quy tắc nghiệp vụ** đã ghi vào **mục 4 AGENTS.md** (khối có dấu, hiển thị cho mọi
+>    phiên đọc) — hook in hướng dẫn ngay khi chặn nên phiên sau không cần ai nhắc.
+
+> **VERIFY — test thật 5 ca trong repo tạm (`/tmp/giong-hook-test`), mô phỏng đúng 2 tai nạn:**
+> | Test | Tình huống | Kết quả |
+> |---|---|---|
+> | 1 | Phiên B có bài dở, phiên A `git add AGENTS.md` + commit trực tiếp | ✅ **CHẶN** (in hướng dẫn cổng) |
+> | 2 | Bản máy LỆCH thiếu entry A, commit qua cổng (`GIONG_SHARED_OK=1`) | ✅ **CHẶN** — báo "XOÁ 1 dòng ENTRY/REGISTRY"; HEAD vẫn còn entry A |
+> | 3 | Commit qua cổng `--entry "GĐ 999"` khi file có bài dở phiên B | ✅ HEAD = entry A + **chỉ entry của mình** (KHÔNG có bài B) · worktree **giữ nguyên bài dở B** |
+> | 4/5 | Chèn KHỐI QUY TẮC có dấu + entry mới khi file lộn xộn nhiều phiên | ✅ Khối vào **đúng vị trí neo** · bài dở phiên khác còn nguyên · backup tự động |
+
+> **📌 ĐÍNH CHÍNH cảnh báo ở GĐ 494 (đã kiểm lại bằng cổng):** file `AGENTS.md` app tổng
+> của phiên song song **KHÔNG thiếu entry của em** — `shared-doc.py check` xác nhận
+> "entry có ở HEAD mà thiếu trong worktree = 0". Con số `git diff` 268/118 hôm đó là
+> **báo động giả do lệch kiểu xuống dòng (CRLF ↔ LF)** giữa 2 bản, không phải mất bài.
+> ⇒ Từ nay muốn biết bản máy có thiếu bài phiên khác hay không thì **dùng
+> `python scripts/agents/shared-doc.py check`** (so theo ENTRY), đừng đọc `git diff` thô
+> trên file lớn vì lệch CRLF/LF làm mọi dòng trông như bị sửa.
+
+> **FILE:** `scripts/agents/shared-doc.py` + `scripts/agents/pre-commit` +
+> `scripts/agents/install-hooks.py` (app tổng — repo con cài hook trỏ về cùng script qua
+> entry C.316 repo con). **Máy/worktree mới: chạy `python scripts/agents/install-hooks.py`
+> một lần.**
+
+> **Version:** KHÔNG bump (script công cụ + docs — chờ lệnh Push). App tổng **6.7.0** /
+> repo con **10.1.0**.
