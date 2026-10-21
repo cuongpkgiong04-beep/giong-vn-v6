@@ -5060,8 +5060,19 @@ repo con **10.1.0**.
 >    URL mới ✓ · .env.local 2 app đồng bộ ✓.
 > 7. Unlock registry 492/493/496 kèm hash (commit cổng --replace-old giữ nguyên byte).
 
-> **Kết quả verify production:** app con **10.2.0** LIVE (curl lần đầu sau deploy) ·
-> app tổng 6.7.0 giữ nguyên — chi tiết login/SSO tại ô chú ý bên dưới (đang chạy).
+> **Kết quả verify production (22:40→23:05):** app con **10.2.0** LIVE — HTML 10.2.0 ·
+> 6/6 assets 200 (python từ máy sạch) · login thật UI app tổng ✓ · SSO chuẩn 302→/ ✓ ·
+> /api/auth/me 200 Phạm Kiên Cường SuperAdmin + 14 nhóm ✓ · Task_02 23:00 tự chạy đúng
+> giờ trên code mới (21 phân hệ) · app tổng 6.7.0 giữ nguyên (docs-only).
+> ⚠️ **2 phát hiện vận hành:** (1) **webhook GitHub→Vercel KHÔNG tự build** từ ~19:21
+> (0 deployment cho commit mới cả 2 repo — push 22:33/22:38 không sinh deployment; GH
+> thiếu scope admin:repo_hook nên không soi được webhook — cần ĐH kiểm Git Integration
+> trong dashboard Vercel). Lần này em deploy thủ công `npx vercel --prod` từ ROOT repo
+> con (Root Directory apps/banhang — chạy từ apps/banhang sẽ lỗi Root Directory) +
+> .vercelignore TẠM chặn agent/ (Chrome CDP khóa cookie → EBUSY) — READY + domain
+> 10.2.0, rồi xóa ignore tạm; (2) browser đã load app con trong khung giờ lệch (khi
+> domain ghim deployment cũ) dính **cache 404 âm** của asset → tab đó "Chưa đăng nhập"
+> mãi dù cookie OK (fetch no-store = 200 cùng URL) — Ctrl+Shift+R 1 lần là sạch.
 
 > **Version:** app tổng **6.7.0** (giữ nguyên — docs-only) / repo con **10.2.0** — ĐÃ
 > PUSH + LIVE.
