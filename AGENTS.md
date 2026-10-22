@@ -5110,3 +5110,20 @@ repo con **10.1.0**.
 > **Tiêu chí kiểm chứng:** (1) báo cáo XNKT/BKX 21/10 đủ 18/19 TT (TT TIÊN DU chờ soi tay SMED); (2) OUTPUT/17.BANK_TPB đủ 3 ngày 18-20/10 + báo cáo bank-tpb kỳ đó ra số 0 hợp lệ; (3) chuỗi 23:00 hoàn tất 19 download + 28 báo cáo không needsData oan.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.2.0**.
+
+### GĐ 502 (Trợ lý Freebuff): Giảm độ sáng camera 1 bậc — brightness 1.15 → 1.07 cho preview + ảnh lưu (2 trang check-in + chấm công) (2026-10-22)
+
+> **Yêu cầu của Đại Ca (22/10):** "tại app tổng phần chụp ảnh điểm danh và check-in. điều chỉnh giảm độ sáng của camera xuống 1 bậc." — điểm cần chỉnh ở 3 chỗ cùng mức **1.15** (mức VỪA của GĐ 400): lớp BASE ánh sáng trong `camera-frame.ts` (ảnh/video lưu) + filter CSS preview từng trang 2.
+
+> **ĐH chốt PA-1 + phạm vi ("ok" — gộp vòng hỏi-đáp):** giá trị **1.15 → 1.07** (giảm ~7%, về mức "vừa" trước GĐ 400) + áp dụng cả **preview live + ảnh/video lưu** cho CẢ 2 trang Check-in + Chấm công (dùng chung `camera-frame.ts`) — preview đồng bộ với ảnh chụp cùng 1 mức.
+
+> **Đã làm (app tổng `f0b7f8c` — 3 file +14/−7):**
+> - `camera-frame.ts` — lightingFilter `brightness(1.15)` → `brightness(1.07)` + comments GĐ 502 (dòng 24/205/208).
+> - `check-in.tsx` + `cham-cong.tsx` — filter CSS preview `<video>` giảm cùng ánh sáng + comment BEAUTY_FILTER ghi chú rõ.
+> - **GIỮ nguyên 100%:** contrast 1.08 · saturate 0.82 · auto white-balance gray-world · soft-light xanh · mịn da/tăng nét · mirror · chiều chữ đóng dấu.
+
+> **Verify:** tsc app tổng EXIT 0 · npm test **58/58 PASS** (camera-frame 9 test vẫn xanh — không có literal 1.15) · khớp preview + ảnh lưu cùng áp dụng 1 mức chuẩn.
+
+> **Tiêu chí kiểm chứng (sau Push):** mở trang Check-in hoặc Chấm công trên điện thoại → preview + ảnh/video lưu nhạt sáng hơn đúng 1 bậc, không còn cháy sáng; màu da + chữ đóng dấu giữ nguyên chuẩn cũ.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.2.0**. Registry: claim `71d4b4e` — unlock kèm hash code.
