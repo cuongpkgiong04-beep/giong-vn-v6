@@ -5274,3 +5274,17 @@ repo con **10.1.0**.
 > → hướng dẫn upload (không nút Có) · up-xuat-kho/up-hoadon-gtgt hiện khối nguồn · hộp
 > lịch sử đúng 5 dòng + cuộn · bc-lich-hen job mới hiện "nạp lúc …" · SmedPull ~5 mục.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** / repo con **10.3.0**.
+
+### GĐ 506 / C.324 (Trợ lý Freebuff): Thêm Task_07 — Upload chứng từ mua hàng MISA (PA-1) (2026-10-22)
+
+> **Yêu cầu của Đại Ca:** thiếu Task "Upload chứng từ mua hàng" trong Nhiệm vụ — thêm vào như Task_05 (xuất kho) và Task_06 (bán hàng); báo cáo chi tiết phải hiện trong phần Upload.
+
+> **Đã làm (repo con `656a10f`):**
+> 1. `agent/task_runner.py`: thêm `_spawn_misa_mh_task`, `_maybe_spawn_misa_mh`, `_run_misa_mh_only` — spawn Task_07 sau Task_02, kind `misa-mua-hang`, tạo job `misa-mua-hang-api` (ghi sổ tự động) + retry; dispatch `_run_task` kind mới. Task_07 tự spawn sau Task_02 như Task_05/06.
+> 2. `src/routes/api/-tasks.ts`: validator kind thêm `misa-mua-hang`.
+> 3. `src/components/tasks-page.tsx`: `KIND_NAMES` + chip + `cfgDesc` cho Task_07.
+> 4. Báo cáo chi tiết: job `misa-mua-hang-api` đã có report `misa-nk-chitiet` + trang `/m/up-nhap-kho` (lịch sử + bảng chi tiết từng phiếu + Trạng thái MISA + Upload Misa) — Task_07 dùng đúng luồng đó, không cần tạo trang mới.
+
+> **Verify:** py_compile OK · tsc EXIT 0 · task_runner_quick 40/40 PASS · code commit `656a10f`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** / repo con **10.3.0** (hiện hành).
