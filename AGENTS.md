@@ -5227,3 +5227,50 @@ repo con **10.1.0**.
 > phiếu xuất kho mới **tự HIỆN danh sách Xuất kho MISA**.
 
 > **Version:** app tổng **6.7.1** / repo con **10.2.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 505 / C.323 (Trợ lý Freebuff): PA-3 ĐH chốt — đồng bộ sâu luồng báo cáo app con sau audit 28 trang (2026-10-22)
+
+> **Yêu cầu của Đại Ca (22/10):** (1) hộp "Lịch sử chạy báo cáo" tối đa 5 dòng, dư cuộn
+> dọc; (2) kiểm tra TẤT CẢ các báo cáo có đúng luồng "chọn kỳ → đã có dữ liệu hiện mốc
+> 'nạp lúc …' · chưa có → cảnh báo vàng 'Chưa có dữ liệu kỳ này' + nút chạy cho phép
+> download dữ liệu thiếu" — sai thì cảnh báo + xin ý kiến sửa.
+
+> **Kết quả audit 28 trang app con:** **23 ĐÚNG chuẩn** (22 sqlreport + bc-truyxuat/txds —
+> khối nguồn mốc nạp + stale chấm vàng + needsData → khung vàng hỏi download → 3 bước tự
+> động GĐ C.45) · **3 KHÔNG đồng nhất:** (a) **bc-dieu-chuyen-matrix** — web map
+> `SQL_SOURCES_BY_QUERY` thiếu key (agent CÓ ở REPORT_SOURCE_TABLES GĐ 430/C.260) → không
+> hiện khối nguồn; khi thiếu data, bấm "Có" treo job download report `dieu-chuyen` mà
+> agent không có tool → **luồng gãy** (nguồn = upload tay AI, không tải được); (b)
+> **up-xuat-kho + up-hoadon-gtgt** — thiếu 2 key misa-xk-chitiet/misa-bh-chitiet → không
+> hiện mốc (agent check đủ 3 nguồn — GĐ 490); (c) **bc-lich-hen** — theo thiết kế C.189
+> nguồn = file OUTPUT không qua GiondDB → không mốc (needsData vẫn đúng). 2 placeholder
+> (bc-bank-vtb/bc-chietkhau-th) không áp. 6 trang mkt-*/misa-bkth = module DOWNLOAD khác
+> bản chất. **ĐH chốt PA-3** (PA-1 + PA-2 + mở rộng).
+
+> **Đã làm (repo con code `2a6194c` — 8 file +168/−44; chi tiết đầy đủ ở entry C.323
+> AGENTS.md repo con):**
+> 1. Khung lịch sử **340px → 200px** (≈5 dòng, dư cuộn) — cả SqlDataModule + SqlReportModule
+>    (file này dead code GĐ C.43b — giữ + sửa kèm).
+> 2. Thêm 3 key web map + **freshness riêng cho 3 bảng tường minh KHÔNG ghi import_log**
+>    (`LOCAL_TS_TABLES` — dieu_chuyen_noi_bo/ngay_giao_nhan+created_at · sm_xuatkho_phieu ·
+>    sm_banhang_phieu — mốc = MAX(cột mốc) dòng có ngày trong kỳ, stale '0') — nhánh chính
+>    union-all (params pn+=3) + fallback + valid filter + 3 mã code().
+> 3. **UPLOAD_ONLY_SOURCES** — nguồn upload tay: khung vàng hiện hướng dẫn upload thay nút
+>    "Có" (downloadMissing lọc; dl=0 → return) — hết luồng gãy.
+> 4. bc-lich-hen: builder gd348 stats **mtime** + `loaded_at_from_stats()` + sheet
+>    `dataLoadedAt` → SubSheets truyền meta → dòng "nạp lúc N file · HH:MM dd/mm" như bảng
+>    GiondDB (40_web_agent.py hook truyền mốc — **cần restart agent khi rảnh sau Push**).
+> 5. SmedPullModule: hộp "Lịch sử lấy dữ liệu" **max-h 450px** (≈5 job card, dư cuộn).
+
+> **Đính chính so với báo cáo audit:** agent **đã có guard GĐ C.114** (40_web_agent.py
+> raise "Agent chưa biết report …" cho report lạ) → job dieu-chuyen KHÔNG rơi về tool hddt
+> như em dự đoán ban đầu (chỉ message gợi ý chưa sát trường hợp upload-only) — KHÔNG cần
+> sửa agent; web chặn trước nên job không bao giờ được tạo.
+>
+> **Verify:** tsc EXIT 0 · test builder **11/11 PASS** (4 check mốc mới) · tra-no 8/8 ·
+> npm test PASS (12/11 nhóm · 62/62 · 10/10 · 15/15) · py_compile OK.
+>
+> **Tiêu chí kiểm chứng (sau Push):** bc-dieu-chuyen-matrix hiện khối nguồn + thiếu data
+> → hướng dẫn upload (không nút Có) · up-xuat-kho/up-hoadon-gtgt hiện khối nguồn · hộp
+> lịch sử đúng 5 dòng + cuộn · bc-lich-hen job mới hiện "nạp lúc …" · SmedPull ~5 mục.
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** / repo con **10.3.0**.
