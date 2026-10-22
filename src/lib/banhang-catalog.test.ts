@@ -12,9 +12,9 @@ import { BH_GROUPS, BH_GROUP_KEYS, BH_LEAF_KEYS, getBanhangDetailAccess } from "
 const groupOf = (key: string) => BH_GROUPS.find((g) => g.key === key);
 const routesOf = (key: string) => (groupOf(key)?.leaves ?? []).map((l) => l.to);
 
-test("GĐ 420 — cấu trúc: 15 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số lá, banhang-misa còn 6 lá", () => {
-  assert.equal(BH_GROUPS.length, 15, "phải có đủ 15 nhóm (10 cũ + 4 nhập dữ liệu + 1 GĐ 438)");
-  assert.equal(new Set(BH_GROUP_KEYS).size, 15, "key nhóm không được trùng");
+test("GĐ 420 — cấu trúc: 16 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số lá, banhang-misa còn 6 lá", () => {
+  assert.equal(BH_GROUPS.length, 16, "phải có đủ 16 nhóm (10 cũ + 4 nhập dữ liệu + 1 GĐ 438 + 1 ĐỐI CHIẾU GĐ 504)");
+  assert.equal(new Set(BH_GROUP_KEYS).size, 16, "key nhóm không được trùng");
   assert.deepEqual(routesOf("bh-nhap-danh-muc"), [
     "/m/danh-muc-vac-xin",
     "/m/danh-muc-nha-cung-cap",
@@ -52,6 +52,8 @@ test("GĐ 420 — cấu trúc: 15 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số 
     "/m/mia-banra-tongquan",
     "/m/mia-banra-chitiet",
   ]);
+  // GĐ 504/C.322 (22/10 — yêu cầu Đại ca): nhóm ĐỐI CHIẾU SỐ LIỆU — mục 1 nhập kho
+  assert.deepEqual(routesOf("bh-doi-chieu-so-lieu"), ["/m/doi-chieu-nhap-kho"]);
 });
 
 test("GĐ 420 — mọi lá chỉ thuộc MỘT nhóm duy nhất (không route trùng giữa nhóm)", () => {
@@ -60,7 +62,7 @@ test("GĐ 420 — mọi lá chỉ thuộc MỘT nhóm duy nhất (không route t
   assert.equal(new Set(all).size, all.length, "route bị lặp giữa 2 nhóm");
 });
 
-test("GĐ 420 — Admin: đủ 15 nhóm + mọi lá (kể cả 10 lá NHẬP DỮ LIỆU)", () => {
+test("GĐ 420 — Admin: đủ 16 nhóm + mọi lá (kể cả 10 lá NHẬP DỮ LIỆU)", () => {
   const { groups, leaves } = getBanhangDetailAccess("Admin", {});
   for (const k of BH_GROUP_KEYS) assert.equal(groups[k], true, `nhóm ${k} phải bật`);
   for (const k of BH_LEAF_KEYS) assert.equal(leaves[k], true, `lá ${k} phải bật`);

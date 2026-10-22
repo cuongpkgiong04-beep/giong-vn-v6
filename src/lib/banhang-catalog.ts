@@ -227,6 +227,16 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/up-hoadon-dauvao", label: "UPLOAD Hóa đơn đầu vào" },
     ],
   },
+  // GĐ 504/C.322 (22/10/2026 — yêu cầu Đại ca): nhóm ĐỐI CHIẾU SỐ LIỆU — ngang
+  // hàng BÁO CÁO / UPLOAD - MISA AMIS (sidebar app con). Mục 1: Đối chiếu nhập
+  // kho MISA ↔ SMED ↔ MIA TOOL (builder dc-nhap-kho agent — 3 khối cột _MS/_SM/_MI).
+  {
+    key: "bh-doi-chieu-so-lieu",
+    label: "ĐỐI CHIẾU SỐ LIỆU",
+    leaves: [
+      { to: "/m/doi-chieu-nhap-kho", label: "Đối chiếu nhập kho MISA-SMED-MIATOOL" },
+    ],
+  },
   // GĐ 229 (26/09/2026 — yêu cầu Đại ca): nhóm ĐIỀU HÀNH — NHIỆM VỤ (bậc 0
   // app con). Trước đây /m/tasks hardcode mở cho mọi user có quyền Bán hàng →
   // thiếu phân quyền ở App Tổng. Nay đưa vào BH_GROUPS — nguyên tắc chung:
