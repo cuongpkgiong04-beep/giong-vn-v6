@@ -107,8 +107,9 @@ function ChamCongPage() {
   // da tươi tự nhiên). Cân bằng sáng/tương phản chạy LỚP BASE riêng trong
   // camera-frame.ts; blur mịn da 9px + tăng nét unsharp-mask cũng trong đó.
   // GĐ 400 (12/10): bỏ phần brightness/contrast/saturate rò vào chuỗi (lớp smooth
-  // trước đây nhân đôi base → quá sáng) — chỉ còn lớp màu mịn da. Base mới mức
-  // VỪA chốt: sáng 1.15 + bớt vàng 0.82 + white-balance soft-light #9ecbff —
+  // trước đây nhân đôi base → quá sáng) — chỉ còn lớp màu mịn da. Base mức
+  // GĐ 400 → GĐ 502 (22/10): sáng 1.07 (giảm 1 bậc theo yêu cầu Đại Ca —
+  // trước đây 1.15) + bớt vàng 0.82 + white-balance soft-light #9ecbff —
   // xem camera-frame.ts (preview live khớp: video filter base + div soft-light).
   const BEAUTY_FILTER = "brightness(1.013) saturate(1.12)";
   // GĐ 273: isIOS/bản ghi iOS-specific đã bỏ — preview + ảnh lưu dùng chung khung
@@ -1153,7 +1154,7 @@ function ChamCongPage() {
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.15) contrast(1.08) saturate(0.82)" : undefined, transform: facingMode === "user" ? "scaleX(-1)" : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.07) contrast(1.08) saturate(0.82)" : undefined, transform: facingMode === "user" ? "scaleX(-1)" : undefined }}
                   />
                   {/* GĐ 400: lớp white-balance soft-light — khớp pipeline canvas (base
                       + fillRect soft-light #9ecbff 0.35): preview live thấy đúng độ

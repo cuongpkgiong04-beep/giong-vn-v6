@@ -110,7 +110,9 @@ function CheckInPage() {
   // camera-frame.ts; blur mịn da 9px + tăng nét unsharp-mask cũng trong đó.
   // GĐ 400 (12/10): bỏ phần brightness/contrast/saturate rò vào chuỗi (đã chạy
   // lớp BASE riêng — trước đây lớp smooth nhân đôi base → quá sáng): giờ chuỗi
-  // chỉ còn lớp màu mịn da. Base mới mức VỪA chốt: sáng 1.15 + bớt vàng 0.82
+  // chỉ còn lớp màu mịn da. Base mức GĐ 400 → GĐ 502 (22/10): sáng 1.07
+  // (giảm 1 bậc theo yêu cầu Đại Ca — trước đây 1.15)
+  // + bớt vàng 0.82
   // + white-balance soft-light — xem camera-frame.ts (preview live khớp: video
   // filter base + 1 lớp div soft-light xanh nhạt).
   const BEAUTY_FILTER = "brightness(1.013) saturate(1.12)";
@@ -924,7 +926,7 @@ function CheckInPage() {
                     playsInline
                     muted
                     className="w-full rounded-2xl"
-                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.15) contrast(1.08) saturate(0.82)" : undefined, transform: facingMode === "user" ? "scaleX(-1)" : undefined }}
+                    style={{ aspectRatio: "3 / 4", objectFit: "cover", filter: beauty ? "brightness(1.07) contrast(1.08) saturate(0.82)" : undefined, transform: facingMode === "user" ? "scaleX(-1)" : undefined }}
                   />
                   {/* GĐ 400: lớp white-balance soft-light — khớp pipeline canvas (base
                       + fillRect soft-light #9ecbff 0.35): preview live thấy đúng độ

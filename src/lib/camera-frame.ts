@@ -21,7 +21,7 @@
 //       người di chuyển thì 4 lớp lấy 4 frame khác nhau → ảnh mờ nhòe ghosting.
 //    b) mirror (camera trước): lật gương đồng bộ preview ↔ ảnh/video lưu —
 //       thấy gì ảnh ra nấy như camera điện thoại, người đứng giữa preview = giữa ảnh.
-//    c) BASE mức mới: sáng hơn + bớt ám vàng (brightness 1.15 + contrast 1.08 +
+//    c) BASE mức GĐ 400 (nay GĐ 502 giảm 1 bậc): sáng hơn + bớt ám vàng (brightness 1.15 → 1.07 + contrast 1.08 +
 //       saturate 0.82) + lớp WHITE BALANCE (soft-light xanh nhạt #9ecbff 35%)
 //       làm nhạt ánh vàng đèn phòng một cách tự nhiên, da không bị khô xám.
 
@@ -205,7 +205,11 @@ export function drawCameraFrame(
   // GĐ 400 mức VỪA (đại ca chốt 12/10): brightness 1.07→1.15 (sáng hơn),
   // contrast 1.06→1.08, saturate 0.97→0.82 (vàng là màu bão hòa thấp của
   // ánh đèn vàng — giảm saturation làm nhạt ám vàng, da trung tính hơn).
-  const lightingFilter = "brightness(1.15) contrast(1.08) saturate(0.82)";
+  // GĐ 502 (22/10 — Đại Ca: "giảm độ sáng của camera xuống 1 bậc"): brightness
+  // 1.15 → 1.07 (về mức "vừa" Đại Ca từng chốt trước GĐ 400) — preview live 2
+  // trang (check-in/cham-cong) đổi đồng bộ số để preview khớp ảnh lưu; giữ
+  // contrast 1.08 + saturate 0.82 + auto WB nhận chữ từ (GĐ 408 a) + màu.
+  const lightingFilter = "brightness(1.07) contrast(1.08) saturate(0.82)";
   const base = buildLightingLayer(snap, lightingFilter, w, h);
   ctx.filter = "none";
   ctx.globalAlpha = 1;
