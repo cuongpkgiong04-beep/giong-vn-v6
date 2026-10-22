@@ -4313,6 +4313,15 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 ### 13.5 QUY TẮC BẢNG BIỂU — TẢI EXCEL TOÀN BỘ (ĐH ghi nhận 20/10, GĐ 485/C.306):
 
+<!-- SHARED-BLOCK:BAN-TU-DONG-BAO-CAO-UPLOAD START -->
+### 13.6 NGUYÊN TẮC BÁN TỰ ĐỘNG — Báo cáo & Upload Misa (ĐH chốt 22/10/2026)
+
+> **Nguyên tắc xuyên suốt (áp dụng MỌI module báo cáo/Upload Misa mới):**
+> - **Bán tự động**: (1) người dùng có thể chạy **thủ công** bất kỳ báo cáo/module Upload nào, và có thể lấy dữ liệu từ các năm/tháng trước để phục vụ năm/tháng hiện tại; (2) **tự động chạy ẩn** khi có Task tạo để làm việc trong ngày (Task_02/Task_04 + Task_03/05/06/07 spawn sau Task_02).
+> - Khi viết code mới/điều chỉnh module báo cáo hoặc Upload Misa: luôn hỗ trợ **cả 2 đường** — chạy thủ công (chọn kỳ bất kỳ, tải dữ liệu thiếu theo chuỗi 3 bước GĐ C.45) và chạy tự động trong Task (download → ETL → báo cáo/upload). Không được chỉ làm 1 đường.
+> - Báo cáo/upload phải có lịch sử chạy, cảnh báo thiếu dữ liệu rõ ràng, và không tự chạy ngầm nếu người dùng chưa tạo Task.
+<!-- SHARED-BLOCK:BAN-TU-DONG-BAO-CAO-UPLOAD END -->
+
 > Bảng biểu nào bị **ngắt nhiều trang** (phân trang client hoặc server) thì
 > nút tải Excel phải xuất **TOÀN BỘ dữ liệu đang lọc** — KHÔNG chỉ trang hiện
 > tại. Nguồn client-side (report-result-table): dùng `downloadExcel` với
