@@ -5189,3 +5189,41 @@ repo con **10.1.0**.
 > Job/Task_05 hàng ngày giờ dùng luồng import — phiếu mới tự HIỆN danh sách.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
+
+### GĐ 503 (Trợ lý Freebuff): PA Push đợt 22/10 — GĐ 500 + GĐ 501 + GĐ 502 + bump app tổng 6.7.1 · LIVE (2026-10-22)
+
+> **Lệnh "Push" của Đại ca (22/10).** Rà trùng lặp nguyên tắc 3: nhánh phụ `agent-cli` +
+> `pipeline-work` = RỖNG (0 commit chưa merge); remote 0 commit mới (fetch); working tree
+> chỉ file dở phiên khác (AGENTS.md/AGENT_REGISTRY.md — cổng trả lại nguyên vẹn;
+> misa_muahang_api.py/routeTree.gen.ts/.gitignore của phiên khác — KHÔNG đụng).
+
+> **Nội dung đợt push:** **GĐ 500** (phiên khác — rà 84 job 21/10 + fix tool SMED/THỐNG KÊ/TPB,
+> python agent-side) · **GĐ 501 / C.321** (của em — builder xuất kho IMPORT EXCEL API + dọn
+> dữ liệu 17-20/10, python agent-side + docs) · **GĐ 502** (phiên khác — giảm brightness
+> camera 1.15→1.07, **code web** check-in + chấm công).
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** app tổng **6.7.0 → 6.7.1** (patch — GĐ 502
+> fix nhỏ camera) — package.json + DEFAULT_VERSION; package-lock 6.4.0 lệch từ trước — giữ
+> nguyên (lesson GĐ 328). **Repo con KHÔNG bump** — đợt C.320/C.321 100% python agent-side
+> (không nằm trong bundle web — tiền lệ GĐ 422), giữ **10.2.0** (GĐ 498 đã bump LIVE).
+
+> **Push:** app tổng `0770bfa..c36fbed` (12 commit: GĐ 500 + GĐ 501 + GĐ 502 + bump GĐ 503)
+> · repo con `59acace..d7ba5d2` (6 commit: C.320 + C.321).
+
+> **✅ Verify production (checklist GĐ 470 — PASS toàn bộ):**
+> - **Env 2 app** (checklist A): app tổng đủ 6 · app con đủ 4 (TUNNEL_API_BASE_URL + APP_JWT_SECRET
+>   + DATABASE_URL đồng bộ cùng đợt — secret KHỚP).
+> - **Version curl lần đầu:** app tổng **6.7.1** ✓ · app con **10.2.0** ✓ (deploy mới, không ghim).
+> - **Login thật** app tổng: HTTP 200 · user `cuongpk.giong04@gmail.com` + token ✓.
+> - **get-session**: HTTP 200 · user + session ✓.
+> - **SSO** (ký HS256 iss=giong-vn-v6 aud=giong-banhang bằng APP_JWT_SECRET, empId từ bảng
+>   employees): HTTP **302 → `https://giong-banhang.vercel.app/`** + **`Set-Cookie: bh_session`** ✓
+>   (KHÔNG redirect /login?next=bahang — APP_JWT_SECRET 2 app KHỚP).
+> - **/api/auth/me** app con: HTTP 200 · user Phạm Kiên Cường · SuperAdmin · VP · **mods 90**
+>   (14 nhóm + lá) ✓.
+
+> **Ghi chú vận hành:** builder python mới (misa_xuatkho_import.py) được agent spawn mỗi job
+> → nạp code từ đĩa tự động — KHÔNG cần restart agent. Job/Task_05 giờ dùng luồng import —
+> phiếu xuất kho mới **tự HIỆN danh sách Xuất kho MISA**.
+
+> **Version:** app tổng **6.7.1** / repo con **10.2.0** — ĐÃ PUSH + ĐÃ LIVE.
