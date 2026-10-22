@@ -5127,3 +5127,65 @@ repo con **10.1.0**.
 > **Tiêu chí kiểm chứng (sau Push):** mở trang Check-in hoặc Chấm công trên điện thoại → preview + ảnh/video lưu nhạt sáng hơn đúng 1 bậc, không còn cháy sáng; màu da + chữ đóng dấu giữ nguyên chuẩn cũ.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.2.0**. Registry: claim `71d4b4e` — unlock kèm hash code.
+
+### GĐ 501 / C.321 (Trợ lý Freebuff): PA-1 ĐH chốt — builder xuất kho chuyển sang IMPORT EXCEL API (thay save_full) + DỌN DỮ LIỆU 17-20/10 → danh sách MISA ĐỦ 100% phiếu (2026-10-21/22)
+
+> **Bối cảnh:** sau điều tra GĐ 499 (phiếu save_full TỒN TẠI + ghi sổ được nhưng VÔ HÌNH
+> với danh sách "Kho → Xuất kho" — 218 phiếu ẩn), **ĐH chốt PA-1**: tích hợp luồng import
+> Excel API (GĐ 487 đã chứng minh phiếu HIỆN danh sách) vào builder xuất kho + dọn dữ liệu.
+
+> **Code đã làm (repo con `misa_xuatkho_import.py` + 3 file, app tổng entry commit này):**
+> 1. `agent/misa_xuatkho_import.py` (MỚI): luồng 1 NGÀY — quét SMED từng TT (giữ guard
+>    ngày GĐ 464 + retry scrape) → kiểm hàng hóa + ĐVT theo danh mục MISA → bỏ phiếu
+>    ĐÃ CÓ (tra **`ai/v1/ai_search/search_all`** — ô tìm kiếm thông minh MISA, tìm được
+>    CẢ phiếu vô hình; `search_refno` cũ đã chết) → sinh Excel 45 cột UPMISA (1 file/ngày,
+>    ĐVT từ danh mục — bỏ phụ thuộc file mẫu ổ G:) → import 7 bước (gd478_import_api) →
+>    **KIỂM CHỨNG sau import: số dòng + tổng tiền phiếu MISA phải khớp scrape** (MISA
+>    CỘNG DÒNG khi số CT trùng phiếu chưa xóa xong — xóa bất đồng bộ GĐ 488) → ghi sổ
+>    → upsert DB.
+> 2. `agent/misa_xuatkho_api_run.py`: runner mới — giữ nguyên CLI/env/tổng kết/JSON
+>    (job 'misa-xuat-kho-api' + nút Upload Misa + Task_05 không đổi), thêm env
+>    `MISA_ONLY_PHIEUS` (retry từng phần). CDP chết → in hướng dẫn (GĐ 468).
+> 3. `agent/gd501_don_phieu_vo_hinh.py` (MỚI): dọn dữ liệu — unpost (bỏ ghi sổ)
+>    **TRƯỚC** khi delete (GĐ 471) + reset DB; **guard `refno_finance == mã phiếu DB`**
+>    (chống xóa nhầm); auto-tra refid qua ai_search cho mã DB rỗng; `--only` test từng phần.
+> 4. `agent/misa_xuatkho_api.py` — `make_fetcher`: fetch **AbortController 30s** (thật:
+>    request kẹt treo builder 30+ phút lúc 05:53 — evaluate không có timeout).
+> 5. Unit test mới `misa_xuatkho_import.test.py` **33/33 PASS** + builder cũ 41/41 PASS.
+
+> **Dọn + import lại 17-20/10 (4 lượt dọn: 210 + 263 + 75 + 5 phiếu — 0 lỗi · guard 0 chặn ·
+> import lại 601 phiếu SMED, ~5 giờ):**
+> | Ngày | Danh sách MISA | Trước đây | Tiền MISA vs DB |
+> |---|---|---|---|
+> | 17/10 | **174** | 21 | khớp (lệch 4đ làm tròn) |
+> | 18/10 | **177** | 8 | khớp (lệch 4đ) |
+> | 19/10 | **152** | 0 | khớp (lệch 2đ) |
+> | 20/10 | **135** | 0 | lệch +8.316 — phiếu trùng mã (bên dưới) |
+
+> **5 phát hiện mới (bằng chứng thật):**
+> 1. **ai_search tìm được cả phiếu vô hình** → dùng làm kiểm tra "đã có" — chống tạo trùng
+>    tuyệt đối (dù phiếu ẩn hay hiện).
+> 2. **MISA import CỘNG DÒNG** khi số chứng từ trùng phiếu còn trên hệ thống (không từ
+>    chối): 5 phiếu bị 2 dòng y hệt — đã xóa + import lại; builder giờ tự bắt (kiểm chứng).
+> 3. **SMED mã phiếu TRÙNG giữa 2 trung tâm**: `PX-SD-2026102010282` = SĐ (BCG-TCDV 8.316)
+>    VÀ ĐX (Prevenar 20 1.371.006) — DB sm_xuatkho_phieu UNIQUE(ma_phieu) chỉ giữ 1 row;
+>    MISA import gộp 1 phiếu 2 dòng 1.379.322 (đúng TỔNG tiền, sai cấu trúc). **Trình ĐH
+>    chốt cách xử lý** (giữ phiếu gộp / tách bằng hậu tố TT / soi tay).
+> 4. **SMED grid cắt mã phiếu dài** (hiển thị thiếu ký tự cuối — mã 20 ký tự: đúng; dài hơn:
+>    cắt) → DB có thể có row "mã cắt" trùng nội dung (đã xóa 4: 1816223/181012/181752/201051
+>    — cùng tiền từng đồng với mã đủ). Cần soi `smed_list_phieu` lấy mã từ attribute (việc sau).
+> 5. **MISA Total (paging_filter_v2 loadMode 3) theo ngày dùng được để đếm phiếu hiện**;
+>    loadMode 2 + phân trang trả ROWS (không honor filter to-date — tự lọc theo refdate).
+
+> **⚠️ 9 phiếu TỒN TẠI trên MISA (hiện trong danh sách) nhưng CHƯA ghi sổ — MISA chặn
+> "Số lượng xuất kho của lô vượt quá tồn kho" (tồn lô ÂM):** Morcvax M0-041025 kho
+> **BH**×2 (14.344 + 14.347) · **TT** (16.851) · **HM** (111.021) · **TD** 19/10 (99.543.8) ·
+> BCG-TCDV 659-10-25 kho **TA** còn tồn **(80,00) liều** (20.102.131 + PH-20.153.342).
+> Hệ thống cũ cũng không ghi sổ được các phiếu này → **cần ĐH soi NHẬP KHO** các lô/TT trên
+> (em KHÔNG tự bỏ cảnh báo tồn kho — dữ liệu kế toán).
+
+> **Tiêu chí kiểm chứng (đã chạy):** MISA → Kho → Xuất kho lọc từng ngày 17-20/10 → đủ
+> phiếu (trước đây 20/10 = "Không có dữ liệu"); cột Trạng thái MISA trên app khớp.
+> Job/Task_05 hàng ngày giờ dùng luồng import — phiếu mới tự HIỆN danh sách.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
