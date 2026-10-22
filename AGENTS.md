@@ -5357,3 +5357,36 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** /
 > repo con **10.2.0**. KHÔNG push chờ lệnh.
+
+### GĐ 508 (Trợ lý Freebuff): PA Push đợt 23/10 — GĐ 504/C.322 ĐỐI CHIẾU SỐ LIỆU + GĐ 505/506/507 phiên khác + bump 6.8.0 (2026-10-23)
+
+> **Lệnh "Push" của ĐH (23/10).** Rà trùng lặp nguyên tắc 3: nhánh phụ RỖNG · code
+> GĐ 505 (repo con `2a6194c`) + GĐ 506 Task_07 (`656a10f`) đã trên origin từ phiên
+> khác · file dở phiên khác (AGENTS.md + AGENT_REGISTRY.md modified) KHÔNG đụng.
+>
+> **Bump (lúc Push):** app tổng **6.7.1 → 6.8.0** (minor — nhóm phân quyền ĐỐI CHIẾU
+> SỐ LIỆU `bh-doi-chieu-so-lieu` + catalog 16 nhóm) — package.json + DEFAULT_VERSION;
+> repo con **giữ 10.3.0** (đã bump C.321 `8c6e6b5`, chưa từng verify prod — lên cùng
+> đợt này) · package-lock lệch giữ nguyên (lesson GĐ 328). Checklist GĐ 138 ✓.
+>
+> **Push:** app tổng `2a00a68..efffc33` (12 commit) · repo con `f9f5525..7bb3a81`
+> (2 commit C.322).
+>
+> **✅ Verify production PASS (checklist GĐ 470 B):** env 2 app đủ (DATABASE_URL ·
+> APP_JWT_SECRET · TUNNEL_* · BETTER_AUTH_* · ZAI_API_KEY · GH_GIST_TOKEN) · version
+> **6.8.0 / 10.3.0** curl lần đầu (không ghim deployment) · login app tổng thật →
+> user + get-session ✓ · SSO ký JWT secret máy → **302 về app con + Set-Cookie:
+> bh_session** (secret 2 app KHỚP — không về login?next=bahang) · /api/auth/me:
+> SuperAdmin + mods có `bh-doi-chieu-so-lieu` ✓.
+>
+> **⚠️ Lưu ý ĐH:** dòng registry **GĐ 506 / C.324** (Task_07) vẫn 🔒 "đang làm" dù
+> code (`656a10f`) + entry đã commit + đã trên origin — em KHÔNG tự unlock (không
+> phải claim của em) → phiên GĐ 506 tự unlock, hoặc ĐH nhắc.
+>
+> **Tiêu chí kiểm chứng của ĐH:** (1) app con sidebar có nhóm "ĐỐI CHIẾU SỐ LIỆU"
+> → "Đối chiếu nhập kho MISA-SMED-MIATOOL" — chạy kỳ 16/10 thấy bảng 3 khối cột,
+> 34 dòng khớp SMED↔MISA; lần đầu 1 kỳ mới chạy `python agent/misa_pu_detail_sync.py
+> <from> <to>` (CDP 9222 login MISA) trước; (2) trang Phân quyền app tổng thấy nhóm
+> "ĐỐI CHIẾU SỐ LIỆU" (1 lá); (3) Task_07 Upload chứng từ mua hàng spawn sau Task_02.
+>
+> **Version:** app tổng **6.8.0** / repo con **10.3.0** — ĐÃ PUSH + ĐÃ LIVE.
