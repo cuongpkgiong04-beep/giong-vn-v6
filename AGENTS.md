@@ -5297,3 +5297,63 @@ repo con **10.1.0**.
 > **Verify:** py_compile OK · tsc EXIT 0 · task_runner_quick 40/40 PASS · code commit `656a10f`.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** / repo con **10.3.0** (hiện hành).
+
+### GĐ 504 / C.322 (Trợ lý Freebuff): ĐỐI CHIẾU SỐ LIỆU — mục 1 Đối chiếu nhập kho MISA↔SMED↔MIA TOOL (2026-10-22)
+
+> **Yêu cầu ĐH (22/10):** nhóm sidebar MỚI **"ĐỐI CHIẾU SỐ LIỆU"** ngang hàng BÁO CÁO /
+> UPLOAD-MISA AMIS (app con) — đối chiếu số liệu giữa MISA AMIS · SMED · MIA TOOL.
+> Mục 1: **Đối chiếu nhập kho** — chạy theo ngày/khoảng, bảng 3 khối cột
+> (_MS: Số HĐ/Ngày HĐ/NCC/Số phiếu nhập kho/Tên Vắc xin/SL/Đơn giá/Thành tiền/Trung tâm
+> · _SM: 9 cột như MISA · _MI: 8 cột không có số phiếu) + STT + cột "Kết quả đối chiếu".
+
+> **ĐH chốt 6 điểm (2 vòng hỏi-đáp — vòng 2 CHỐT LẠI sau bằng chứng thật):**
+> (1) Nguồn MISA = đồng bộ CHI TIẾT dòng hàng từ API MISA (khuyến nghị); (2) ghép dòng
+> 3 nguồn, nguồn thiếu → cột trống; (3) ~~kỳ theo ngày HĐ~~ → **KỲ = NGÀY LẬP PHIẾU**
+> (bằng chứng 22/10: ngày lập ≠ ngày HĐ — phiếu SMED lập 16/10 có HĐ 15/10, lọc theo
+> ngày HĐ cắt 1 phiếu vào 2 kỳ → 34 dòng "Thiếu SMED" oan); (4) mục 1 nhập kho trước;
+> (5) MISA lọc theo **NGÀY TRONG MÃ PHIẾU** (PN-YYYYMMDD = ngày lập SMED — bằng chứng
+> 100%: SMED PN-20261016090810/HĐ 0141509 = MISA cùng mã + cùng HĐ); (6) MIA khớp theo
+> **NCC + tên hàng chuẩn hóa + SL** — bằng chứng 21/10: số HĐ SMED↔MIA KHÔNG GIAO
+> (SMED 310875/00057159/00012615 vs MIA 1448xx/312xxx/4xxx — MIA đánh số theo hồ sơ
+> HĐĐT, gồm cả HĐ nội bộ GIONG); tiền MIA = chưa thuế ≠ SMED đã thuế → không so.
+
+> **Đã làm (repo con `5ecb1ff` 8 file + app tổng `216d5b6` 2 file):**
+> 1. **`misa_pu_detail_sync.py` (mới)** — đồng bộ CHI TIẾT phiếu Mua hàng MISA:
+>    list theo inv_date (cửa sổ lùi 10 ngày — HĐ thường trước ngày nhập) + GET
+>    `pu_voucher/detail_full` từng refid (CDP 9222, tab guard GĐ 466) → bảng mới
+>    `misa_pu_detail` (mức DÒNG HÀNG: ma_phieu/refid/inv_no/inv_date/ncc/total/
+>    posted/line/item/quantity/unit_price/amount/statistic_code); idempotent theo
+>    refid (phiếu khớp mức đầu → skip). Bài học thật: SỐ HĐ + NGÀY HĐ nằm ở DÒNG
+>    chi tiết (master để trống); mã trung tâm = `list_item_code` (= stock_code:
+>    TD/LB/TS/LM… — "mã thống kê = mã TT" GĐ 446).
+> 2. **Builder `dc_nhap_kho`** (`dc-nhap-kho`) trong sql_reports.py: 3 SELECT →
+>    ghép `dc_merge_rows` (thuần) → 28 cột + STT xuyên suốt; `_dc_num` (Decimal
+>    trực tiếp — Decimal('20.000')=20, chuỗi '1.371.006'=1371006), `_dc_norm_mia_name`
+>    (cắt đuôi kỹ thuật 'BEXSERO 0.5ML 1DOSE'→'bexsero' + DC_MIA_NAME_MAP bổ sung
+>    dần), `_dc_ymd`; đăng ký đủ 5 điểm (QUERY_KEYS · _REPORT_BUILDERS ·
+>    REPORT_SOURCE_TABLES 3 nguồn · check_source_data SUBSTRING ma_phieu ·
+>    _sync_misa_pu_detail subprocess 900s lỗi bỏ qua, MISA_SKIP_SYNC=1 tắt).
+> 3. **Web app con**: nav.ts nhóm ĐỐI CHIẾU SỐ LIỆU CUỐI CAY_BAC1 (icon Scale) +
+>    trang `/m/doi-chieu-nhap-kho` (mới — SqlDataModule queryKey dc-nhap-kho +
+>    SubSheets phân trang 1000 dòng pattern C.170) + routeTree.gen.ts (vite dev
+>    25s sinh) + smed-auth.ts (nhóm `bh-doi-chieu-so-lieu` — 15 nhóm, 4 chỗ) +
+>    -smed.ts (SQL_SOURCES_BY_QUERY/SQL_QUERY_GROUP/SQL_QUERY_LEAF).
+> 4. **App tổng**: BH_GROUPS thêm nhóm (16 nhóm) + test catalog 9/9 PASS.
+> 5. **Test**: `gd504-doi-chieu.test.py` (mới) **15/15 PASS** offline; tsc app
+>    tổng + app con EXIT 0.
+>
+> **Chạy thật (kỳ 16/10 — bằng chứng đối chứng):** sync MISA 15/10 45 phiếu/46
+> dòng (mẫu Prevenar 20 10×1.356.264=13.562.640 — khớp bằng chứng GĐ 412); builder
+> 16/10: **38 dòng — 34/34 khớp SMED↔MISA từng đồng** (SL + tiền, mẫu Bexsero
+> 10×1.612.411=16.124.114 cả 2) + 4 dòng "Chỉ có trên MIA TOOL" (HĐ nội bộ GIONG
+> kỳ HĐ 16/10 — không phải nhập kho NCC) + dòng SMED 15/10 hiện "Thiếu MIA TOOL"
+> (HĐ NCC ntao lệch ngày — đúng thực tế HĐ trước nhập sau; bảng ánh xạ tên MIA
+> bổ sung dần theo lượt chạy).
+>
+> **Tiêu chí kiểm chứng (sau Push):** app con sidebar có nhóm "ĐỐI CHIẾU SỐ LIỆU"
+> → mục "Đối chiếu nhập kho MISA-SMED-MIATOOL" → chọn kỳ (ngày lập phiếu) → bảng
+> 3 khối cột + Kết quả đối chiếu; lần đầu chạy cần `python agent/misa_pu_detail_
+> sync.py <from> <to>` đầy đủ (CDP 9222 login MISA) trước — lần sau tự sync delta.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** /
+> repo con **10.2.0**. KHÔNG push chờ lệnh.
