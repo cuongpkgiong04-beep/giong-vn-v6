@@ -5365,3 +5365,21 @@ repo con **10.1.0**.
 > "ĐỐI CHIẾU SỐ LIỆU" (1 lá); (3) Task_07 Upload chứng từ mua hàng spawn sau Task_02.
 >
 > **Version:** app tổng **6.8.0** / repo con **10.3.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 509 / C.325 (Trợ lý Freebuff): Sửa bảng chi tiết hộp KPI Nhập Vắc Xin — thu hẹp cột Vắc xin 50%, tràn cột thì ẩn, cố định tiêu đề + tổng cộng (2026-10-23)
+
+> **Yêu cầu của Đại Ca (23/10):** Trong phần chi tiết hộp KPI Nhập Vắc Xin, cột Vắc xin rộng quá nên thu hẹp lại 50%, nếu dữ liệu dòng dài quá thì ẩn không cho chèn lên cột bên phải. Cố định dòng tiêu đề và dòng tổng cộng. Kiểm tra lại các chi tiết của các hộp khác nếu bị tình trạng trên thì cũng phải sửa lại như vậy. Kể cả xem trên điện thoại cũng đảm bảo không bị chèn chữ sang các cột khác, hoặc điện thoại cho chế độ cuộn ngang để nhìn được hết dữ liệu.
+>
+> **ĐH chốt PA-2:** chỉ sửa các bảng có cột Vắc xin dài (Nhập Vắc Xin cấp 1, Xuất Vắc Xin cấp 2, Tồn kho, Lượt tiêm), bỏ qua Ngân hàng/Hóa đơn (không có cột Vắc xin).
+>
+> **Đã làm (repo con `overview-dashboard.tsx` — 5 edit):**
+> 1. **Nhập Vắc Xin cấp 1 (fallback block, dòng 2243):** thêm `table-fixed` + colgroup (cột đầu 40% · cột số cuối 20% · còn lại chia đều) + các ô text `truncate text-left text-ink` + `title={full}` (hiện chỉ cột "Nội dung" có truncate) + `tfoot` sticky bottom-0 với dòng TỔNG CỘNG (cộng cột số theo `isNumCol`).
+> 2. **Xuất Vắc Xin cấp 2 (dòng 1849-1919):** thêm `table-fixed` + colgroup (Tên Vắc xin 26% · STT 8% · các cột khác chia đều) — cột Tên Vắc xin đã có `max-w-[220px] truncate` giữ nguyên, bây giờ có colgroup chính thức.
+> 3. **Tồn kho (dòng 2010-2061):** đổi colgroup cột Vắc xin từ 62% xuống 40% (cột Số lượng tồn 60%).
+> 4. **Lượt tiêm (dòng 2146-2241):** đã có `table-fixed` + colgroup (Vắc xin 25%) + `truncateCols` + sticky thead/tfoot — giữ nguyên.
+>
+> **Verify:** tsc không thể chạy local (máy nhà không có node) — các pattern đã được dùng sẵn trong block HSD/Tồn kho/Lượt tiêm. Edit tool xác nhận oldString khớp chính xác.
+>
+> **Tiêu chí kiểm chứng (sau Push):** mở hộp Chi tiết Nhập Vắc Xin → cột "Vắc xin" hẹp lại (~50%), tên dài bị cắt (…), không chèn vào cột "Lô"/"Hạn sử dụng" bên phải; hover xem đầy đủ. Header (STT/Ngày/Vắc xin/…) và dòng TỔNG CỘNG dính khi cuộn dọc. Các hộp khác (Ngân hàng, Xuất Vắc Xin, Tồn kho, Lượt tiêm) cùng hành vi. Trên điện thoại: dữ liệu không bị chèn letras cột bên phải; có thể cuộn ngang xem hết.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** / repo con **10.3.0**.
