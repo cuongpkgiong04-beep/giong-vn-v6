@@ -5425,3 +5425,38 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.3.1**.
+
+### GĐ 511 (Trợ lý Freebuff): Điều tra 3 lỗi UPLOAD Hóa đơn GTGT bán hàng lên MISA AMIS kỳ 22/10 — TRÌNH PA CHỜ ĐH CHỘT (2026-10-23)
+
+> **Đại Ca báo (23/10, 2 ảnh MISA + app):** (1) phiếu lên MISA có "Ngày hóa đơn"
+> 18/10/2026 thay vì 22/10/2026; (2) cột "Ký hiệu hóa đơn" trống trên MISA dù app
+> có ký hiệu (1C26MAD…); (3) bấm "Upload Misa" từ app chờ rất lâu, không thấy
+> webapp MISA AMIS.
+>
+> **Điều tra (bằng chứng thật — chưa sửa code):**
+> - **LỖI 1 — GỐC: template UI `LOG/gd463/ui_save_full_BH_body.json` (chụp 18/10,
+>   phiếu mẫu TEST_CUONG_BH-005) có `inv_date = '2026-10-18T03:39:07.068Z'` CỨNG
+>   trong Object + Links[0]**; builder `misa_banhang_api.py` cập nhật refdate/
+>   posted_date thành ngày bán hàng nhưng QUÊN `inv_date` → MISA hiển thị
+>   "Ngày hóa đơn" 18/10 mãi trên MỌI phiếu. Dữ liệu phiếu ĐÚNG phiếu 22/10
+>   (số HĐ 00006621-48 khớp BKCT 22/10 — BKCT 22/10 đủ 17 series × ngày 22/10).
+> - **LỖI 2 — GỐC: dòng 792 `master["inv_series"] = ""`** (template mẫu có
+>   '1C26MAS' nhưng bị ghi đè rỗng; builder mua hàng misa_muahang_api.py:691
+>   ĐÚNG chuẩn — gửi `inv_series = ky_hieu`).
+> - **LỖI 3 — GỐC: `make_fetcher` (dòng 568) fetch trong page.evaluate KHÔNG CÓ
+>   timeout** — đúng bệnh GĐ 501 đã fix cho XUẤT KHO (AbortController 30s) nhưng
+>   bán hàng chưa fix. So sánh: kỳ 21/10 = 185 phiếu / 11 phút; kỳ 22/10 =
+>   167 phiếu / 23 phút 28 giây (job A26BCABF) — cùng cỡ phiếu, chậm gấp đôi
+>   → kẹt từng request khi MISA chậm. Nền job bán hàng ~11-12 phút (18 login
+>   SMED + 167 phiếu) là bình thường.
+> - **Toàn cảnh data kỳ 22/10:** 167 phiếu / 18 trung tâm — DB ghi 167/167
+>   up + ghi sổ THÀNH CÔNG; ảnh MISA Đại Ca = 28 phiếu trung tâm LB (cột Vị
+>   trí "LB" + refno tiền tố 0637 — khớp DB LB n=28).
+>
+> **Trình 3 PA (chờ ĐH chốt):** PA-1 sửa builder (inv_date + inv_series +
+> timeout 30s) — phiếu MỚI đúng, phiếu ĐÃ tạo giữ nguyên sai; PA-2 = PA-1 +
+> dọn tạo lại 167 phiếu 22/10; PA-3 = PA-1 + dọn các kỳ trước. Chi tiết ở
+> báo cáo phiên.
+>
+> **Version:** KHÔNG bump (điều tra + chờ ĐH chốt — quy tắc ĐA AGENT). App tổng
+> **6.8.0** / repo con **10.3.1**.
