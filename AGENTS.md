@@ -369,6 +369,7 @@
 > (`--check` để kiểm tra). Hook tự in hướng dẫn khi chặn ⇒ phiên sau không cần nhớ luật.
 <!-- SHARED-BLOCK:GD495-CONG-FILE-DUNG-CHUNG END -->
 
+
 ### Cách tăng Version:
 
 > ⚠️ **THỜI ĐIỂM bump (2026-09-26):** chỉ bump khi **Đại ca nói "Push"** (nguyên tắc ĐA AGENT bên trên) — KHÔNG bump ngay khi commit. Quy tắc tính số bên dưới vẫn nguyên hiệu lực.
@@ -4313,15 +4314,6 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 
 ### 13.5 QUY TẮC BẢNG BIỂU — TẢI EXCEL TOÀN BỘ (ĐH ghi nhận 20/10, GĐ 485/C.306):
 
-<!-- SHARED-BLOCK:BAN-TU-DONG-BAO-CAO-UPLOAD START -->
-### 13.6 NGUYÊN TẮC BÁN TỰ ĐỘNG — Báo cáo & Upload Misa (ĐH chốt 22/10/2026)
-
-> **Nguyên tắc xuyên suốt (áp dụng MỌI module báo cáo/Upload Misa mới):**
-> - **Bán tự động**: (1) người dùng có thể chạy **thủ công** bất kỳ báo cáo/module Upload nào, và có thể lấy dữ liệu từ các năm/tháng trước để phục vụ năm/tháng hiện tại; (2) **tự động chạy ẩn** khi có Task tạo để làm việc trong ngày (Task_02/Task_04 + Task_03/05/06/07 spawn sau Task_02).
-> - Khi viết code mới/điều chỉnh module báo cáo hoặc Upload Misa: luôn hỗ trợ **cả 2 đường** — chạy thủ công (chọn kỳ bất kỳ, tải dữ liệu thiếu theo chuỗi 3 bước GĐ C.45) và chạy tự động trong Task (download → ETL → báo cáo/upload). Không được chỉ làm 1 đường.
-> - Báo cáo/upload phải có lịch sử chạy, cảnh báo thiếu dữ liệu rõ ràng, và không tự chạy ngầm nếu người dùng chưa tạo Task.
-<!-- SHARED-BLOCK:BAN-TU-DONG-BAO-CAO-UPLOAD END -->
-
 > Bảng biểu nào bị **ngắt nhiều trang** (phân trang client hoặc server) thì
 > nút tải Excel phải xuất **TOÀN BỘ dữ liệu đang lọc** — KHÔNG chỉ trang hiện
 > tại. Nguồn client-side (report-result-table): dùng `downloadExcel` với
@@ -4626,207 +4618,7 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.7.0** / repo con **10.1.0**.
 
-### GĐ 494 / C.315 (Trợ lý Freebuff): PA Push đợt 21/10 — chống treo chuỗi Task + phân loại InvalidInvno (2026-10-21)
-
-> **Lệnh "Push" của Đại Ca** (sau khi xử lý sự cố 21/10 — xem GĐ 491/C.312).
-
-> **Rà trùng lặp (nguyên tắc 3):** 2 repo **0 nhánh phụ** cần merge (`agent-cli`,
-> `pipeline-work` rỗng) · working tree có file dở của **phiên song song** (app tổng:
-> `AGENTS.md` + `AGENT_REGISTRY.md`; repo con: `.gitignore`, `40_web_agent.py`,
-> `33_smed_TKKH.py`, `dm_khach_hang_import.py`, `misa_muahang_api.py`,
-> `misa_xuatkho_api.py`, `overview-dashboard.tsx`, `-danh-muc.ts`, `-overview.ts`,
-> `routeTree.gen.ts`) → **KHÔNG add, KHÔNG đụng** — commit của em tách riêng bằng
-> cách lưu bản dở của họ ra file tạm → `git checkout --` file dùng chung → thêm
-> entry của mình → commit+push → **hoàn trả nguyên văn bản dở của họ** vào worktree.
-
-> **⚠️ CẢNH BÁO TRÙNG LẶP (minh bạch — bài học GĐ 470/GĐ 285):**
-> 1. **Commit repo con `3d3e9bc` (entry đợt Push) VÔ TÌNH chứa thêm entry `C.314` —
->    "Hộp KPI Xuất Vắc Xin" của PHIÊN SONG SONG** (họ đang viết dở trong worktree
->    `AGENTS.md` repo con, chưa commit). Nội dung của họ **không mất** (đã nằm trong
->    commit + đã push, chỉ bị gán vào commit của em). KHÔNG amend/rewrite lịch sử
->    (quy tắc 3) — ghi nhận minh bạch tại đây.
-> 2. **ĐÍNH CHÍNH (GĐ 495):** cảnh báo trước đây ở đây — "file `AGENTS.md` app tổng của
->    phiên song song LỆCH, thiếu entry của em" — là **BÁO ĐỘNG GIẢ**. Đã kiểm lại bằng
->    cổng `shared-doc.py check` trên đúng bản đang làm việc: bản máy của phiên đó **đủ
->    100% entry** (80 entry của HEAD ⊂ 83 entry trong máy). Con số `git diff` 268 thêm /
->    118 xoá chỉ do **lệch kiểu xuống dòng CRLF↔LF** giữa 2 bản, không phải mất bài.
->    ⇒ Muốn biết bản trong máy có thiếu bài phiên khác không thì dùng
->    `python scripts/agents/shared-doc.py check` (so theo ENTRY), KHÔNG đọc `git diff`
->    thô trên file lớn.
-
-> **Bump version: KHÔNG** — đợt push không có file web nào (app tổng docs-only; repo
-> con chỉ agent python + AGENTS.md) → tiền lệ GĐ 416/417/422. Giữ app tổng **6.7.0**
-> / repo con **10.1.0**.
-
-> **Push:** app tổng 4 commit (`4bef5a2` claim · `7fec8e8`+`534a88d` entry GĐ 491 ·
-> `d02b28a` entry GĐ 489 bổ sung trước đó) · repo con 6 commit (`e9e1186` chống treo +
-> tên nguồn · `37ec4f1` log watchdog · `2cbf689` tool restart-when-idle · `3009853`
-> phân loại InvalidInvno · `9ec9323`/`962094b` entry) + `3d3e9bc` (entry Push).
-
-> **✅ Verify production (checklist GĐ 470 B — KHÔNG tin chữ "Ready"):**
-> - Env 2 app đủ: app tổng 6/6 (`DATABASE_URL`, `APP_JWT_SECRET`,
->   `TUNNEL_API_BASE_URL`, `TUNNEL_GIST_ID`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`) ·
->   app con 5/5 (+ `ZAI_API_KEY`).
-> - Login app tổng thật → JSON có `user` (Phạm Kiên Cường) ✓
-> - SSO ký token (`iss giong-vn-v6` · `aud giong-banhang`) → **302 app con +
->   `Set-Cookie: bh_session`** ✓
-> - `/api/auth/me` app con → `user` + **14 nhóm quyền** (đọc qua tunnel → GiongDB) ✓
-> - Version: app con **10.1.0** · app tổng **6.7.0** (đúng — không bump).
-
-> **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
-
-### GĐ 495 / C.316 (Trợ lý Freebuff): CỔNG COMMIT FILE DÙNG CHUNG — cơ chế TỰ ĐỘNG chống nuốt/xoá bài phiên song song (2026-10-21)
-
-> **Lệnh của ĐH (21/10, sau sự cố GĐ 494):** *"Anh không thể nhắc phiên đó pull về / gộp
-> lại. Em phải có cách để tránh trường hợp này xảy ra lần tiếp theo khi các phiên song song
-> hoặc 4 phiên đồng thời làm việc. Anh không muốn trường hợp này xảy ra lần sau."*
-
-> **GỐC 2 TAI NẠN (đã ghi trong registry):**
-> 1. **GĐ 470** — phiên A `git add AGENTS.md` khi file đang chứa bài dở phiên B → commit
->    A **NUỐT** entry của B (nội dung không mất nhưng gán nhầm commit + B hoang mang).
-> 2. **GĐ 494 (21/10)** — đúng vậy: commit repo con `3d3e9bc` nuốt entry `C.314` của phiên
->    song song; và **file `AGENTS.md` app tổng của phiên đó LỆCH** (thiếu entry "GĐ 489 bổ
->    sung" + GĐ 491) → nếu họ commit nguyên file thì **XOÁ** bài của em.
-
-> **CƠ CHẾ ĐÃ LÀM (3 lớp, KHÔNG phụ thuộc việc nhớ luật):**
-> 1. **Git hook `pre-commit`** (`scripts/agents/pre-commit`, cài bằng
->    `scripts/agents/install-hooks.py` vào `$(git rev-parse --git-common-dir)/hooks` →
->    **mọi worktree của repo dùng chung** nên mọi agent trên máy đều được bảo vệ):
->    - **CHẶN** mọi commit vào `AGENTS.md` / `AGENT_REGISTRY.md` / `AGENTS_ARCHIVE.md` khi
->      không đi qua cổng an toàn (in hướng dẫn ngay trong terminal).
->    - **CHẶN TUYỆT ĐỐI** mọi commit XOÁ dòng entry (`### GĐ …` / `### C.…`) hoặc dòng bảng
->      registry (`| GĐ …` / `| C.…`) — đây đúng là dấu hiệu "commit bản lệch làm mất bài
->      phiên khác". Cố ý dọn/tách archive → thêm `[shared-approved]` vào commit message.
->    - **Snapshot tự động** mọi lần commit file dùng chung vào
->      `.git/giong-shared-snapshots/` (giữ 50 bản) ⇒ bài dở không bao giờ mất.
-> 2. **Cổng gộp an toàn `scripts/agents/shared-doc.py`** — `check` (so 2 đầu HEAD ↔ máy,
->    cảnh báo entry có ở HEAD mà thiếu trong máy) · `list` (entry chưa commit) ·
->    `commit --entry "GĐ 495" --registry "GĐ 495" -m …` — **ghép CHỈ entry/dòng registry
->    mình khai lên bản HEAD**, KHÔNG lấy nguyên file worktree, rồi **trả lại nguyên vẹn bài
->    dở của phiên khác** trong worktree. Hỗ trợ thêm `--block "<tên>" --after "<dòng neo>"`
->    để chèn/sửa KHỐI QUY TẮC (mục 1-13) an toàn bằng dấu
->    `<!-- SHARED-BLOCK:<tên> START/END -->`.
-> 3. **Quy tắc nghiệp vụ** đã ghi vào **mục 4 AGENTS.md** (khối có dấu, hiển thị cho mọi
->    phiên đọc) — hook in hướng dẫn ngay khi chặn nên phiên sau không cần ai nhắc.
-
-> **VERIFY — test thật 5 ca trong repo tạm (`/tmp/giong-hook-test`), mô phỏng đúng 2 tai nạn:**
-> | Test | Tình huống | Kết quả |
-> |---|---|---|
-> | 1 | Phiên B có bài dở, phiên A `git add AGENTS.md` + commit trực tiếp | ✅ **CHẶN** (in hướng dẫn cổng) |
-> | 2 | Bản máy LỆCH thiếu entry A, commit qua cổng (`GIONG_SHARED_OK=1`) | ✅ **CHẶN** — báo "XOÁ 1 dòng ENTRY/REGISTRY"; HEAD vẫn còn entry A |
-> | 3 | Commit qua cổng `--entry "GĐ 999"` khi file có bài dở phiên B | ✅ HEAD = entry A + **chỉ entry của mình** (KHÔNG có bài B) · worktree **giữ nguyên bài dở B** |
-> | 4/5 | Chèn KHỐI QUY TẮC có dấu + entry mới khi file lộn xộn nhiều phiên | ✅ Khối vào **đúng vị trí neo** · bài dở phiên khác còn nguyên · backup tự động |
-
-> **📌 ĐÍNH CHÍNH cảnh báo ở GĐ 494 (đã kiểm lại bằng cổng):** file `AGENTS.md` app tổng
-> của phiên song song **KHÔNG thiếu entry của em** — `shared-doc.py check` xác nhận
-> "entry có ở HEAD mà thiếu trong worktree = 0". Con số `git diff` 268/118 hôm đó là
-> **báo động giả do lệch kiểu xuống dòng (CRLF ↔ LF)** giữa 2 bản, không phải mất bài.
-> ⇒ Từ nay muốn biết bản máy có thiếu bài phiên khác hay không thì **dùng
-> `python scripts/agents/shared-doc.py check`** (so theo ENTRY), đừng đọc `git diff` thô
-> trên file lớn vì lệch CRLF/LF làm mọi dòng trông như bị sửa.
-
-> **FILE:** `scripts/agents/shared-doc.py` + `scripts/agents/pre-commit` +
-> `scripts/agents/install-hooks.py` (app tổng — repo con cài hook trỏ về cùng script qua
-> entry C.316 repo con). **Máy/worktree mới: chạy `python scripts/agents/install-hooks.py`
-> một lần.**
-
-> **Version:** KHÔNG bump (script công cụ + docs — chờ lệnh Push). App tổng **6.7.0** /
-> repo con **10.1.0**.
-
-### GĐ 497 / C.318 (Trợ lý Freebuff): PA Push đợt 21/10 tối — CỔNG COMMIT FILE DÙNG CHUNG (lên production) (2026-10-21)
-
-> **Lệnh "Push" của Đại Ca** (sau khi dựng + test xong cơ chế chống nuốt/xoá bài phiên
-> song song — xem GĐ 495/C.316).
-
-> **Rà trùng lặp (nguyên tắc 3) — 2 phát hiện thật, đã xử lý TRƯỚC khi push:**
-> 1. **Dòng registry số `495 / C.316` trong HEAD đang là BÀI CỦA PHIÊN KHÁC** (claim
->    "FIX upload trang Điều chuyển" — 🔒). Nguyên nhân: lúc em chạy cổng `--registry
->    "GĐ 495"`, phiên đó CHƯA đổi số nên cổng khớp vào dòng của họ trước. Phiên đó sau
->    đó tự đổi sang **496 / C.317** (đúng quy tắc GĐ 285: em commit entry 495 trước).
->    → Em **sửa đúng 1 dòng** registry (495/C.316 = CỔNG COMMIT ✅) bằng chế độ
->    `--replace-old/--replace-new` của cổng — commit `47b257d`, diff 1 dòng.
-> 2. **3 entry + 1 dòng registry đang dở của phiên khác** (GĐ 492/493/496) trong
->    worktree → **giữ nguyên, không đụng**; kiểm chứng sau push: bản máy phiên đó
->    vẫn **đủ entry** (HEAD 80 ⊆ máy 83), md5 khớp bản backup ⇒ nguyên vẹn.
-
-> **KHÔNG bump version:** đợt push toàn bộ là công cụ agent + tài liệu (app tổng
-> `scripts/agents/*` + AGENTS.md/registry; repo con chỉ AGENTS.md) — không có file web
-> → giữ app tổng **6.7.0** / repo con **10.1.0** (tiền lệ GĐ 416/417/422).
-
-> **Push:** app tổng `9eae56d..47b257d` (10 commit: `85a01b0` cổng + `6538e6f`/`6fe2e28`/
-> `d56b592`/`795b383` sửa cổng + `d459e3b` entry/quy tắc + `78c65e1`/`c7b9993` đính chính
-> GĐ 494 + `170c12b` quy tắc --replace + `47b257d` sửa dòng registry) · repo con
-> `3d3e9bc..1cb7403` (1 commit: entry C.316 + hướng dẫn cổng cho repo con).
-
-> **✅ Verify production (checklist GĐ 470 B):** env 2 app đủ (6/6 · 5/5) · login app
-> tổng thật → JSON có `user` · SSO ký token → **302 + `Set-Cookie: bh_session`** ·
-> `/api/auth/me` app con → user + **14 nhóm quyền** (tunnel + GiongDB OK) · version app
-> con **10.1.0** / app tổng **6.7.0**.
-
-> **Từ đợt này, mọi phiên/agent:** commit file dùng chung PHẢI qua cổng —
-> `python scripts/agents/shared-doc.py commit --entry "GĐ xxx" -m "..."`; hook đã cài
-> sẵn ở cả 2 repo (mọi worktree dùng chung) nên commit trực tiếp sẽ bị CHẶN kèm hướng
-> dẫn. **Máy/worktree mới: `python scripts/agents/install-hooks.py` một lần.**
-
-> **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
-
-### GĐ 499 (Trợ lý Freebuff): Điều tra "UPLOAD Phiếu xuất kho 20/10 báo Đã ghi sổ nhưng MISA không có phiếu" — GỐC: kênh tạo `save_full` làm phiếu VÔ HÌNH với danh sách Xuất kho MISA (2026-10-21)
-
-> **Đại Ca báo (21/10 tối, 5 ảnh):** chạy UPLOAD Phiếu xuất kho kỳ 20/10/2026 → app hiện
-> 164 dòng hàng / 89.469.870đ, toàn bộ cột "Trạng thái MISA" = **Đã ghi sổ**, nhưng mở
-> MISA AMIS → Kho → Xuất kho (lọc "Hôm qua") = **"Không có dữ liệu"**.
-
-> **KẾT LUẬN: KHÔNG MẤT DỮ LIỆU — app báo ĐÚNG. Phiếu CÓ trên MISA và ĐÃ ghi sổ;
-> nhưng MISA KHÔNG đưa phiếu vào DANH SÁCH "Kho → Xuất kho" vì chúng được tạo qua kênh
-> API `save_full`. Đây chính là hiện tượng đã phát hiện ở GĐ 481; GĐ 487 đã có giải pháp
-> (import Excel → phiếu HIỆN danh sách) NHƯNG luồng import chưa được tích hợp vào builder
-> xuất kho → job hàng ngày vẫn tạo bằng `save_full` nên lỗi tái diễn.**
-
-> **Bằng chứng (probe thật, chỉ-đọc):**
-> 1. Job upload 20/10 chạy 21/10 **08:49:17 → 09:45:23** (log `web_agent_181026_151909.log`),
->    **exit 0**; result `LOG/misa-xuat-kho-api_20261021_094521.json`: uploaded **136** ·
->    posted **134** · skipped 4 (đã tồn tại) · failed 0.
-> 2. GiondDB `sm_xuatkho_phieu` ngày 20/10: **136 phiếu · 130 "Đã ghi sổ"** (khớp màn hình
->    164 dòng hàng / 89.469.868đ) · 4 "Đã có (chưa ghi sổ)" (MISA trả InvalidRefno) · 2 chưa tạo.
-> 3. **MISA thật — phiếu TỒN TẠI:** `in_outward/detail_full` theo refid (5 mẫu) → HTTP 200,
->    có phiếu, `refdate = 20/10/2026`, **`is_posted_finance = true`** ⇒ cột "Đã ghi sổ" trên
->    app đúng sự thật dữ liệu.
-> 4. **Nhưng DANH SÁCH của chính màn Xuất kho KHÔNG có phiếu:** gọi API mà UI dùng
->    (`g1/api/in/v1/in_inward_outward_list/paging_filter_v2`, body lấy NGUYÊN từ SPA qua Chrome
->    CDP) → toàn kỳ 2026 chỉ trả **29 phiếu** (17/10: 21 · 18/10: 8) — TẤT CẢ `created_date`
->    20/10 11:46–12:40 = đúng lúc chạy `gd478_pilot_pa1.py` (**luồng IMPORT EXCEL GĐ 487**),
->    `journal_memo = "XBAN"`, tổng tiền 18.608.549 = `SummaryData` MISA trả. Phiếu 20/10 trong
->    list = **0/136**.
-> 5. **Tổng phiếu "đã ghi sổ nhưng KHÔNG hiện danh sách": 218** — 20/10: 130 · 19/10: 78 ·
->    17/10: 9 · 18/10: 1 (tất cả do `save_full` tạo).
-> 6. **Diff 2 phiếu (HIỆN 17/10-import vs ẨN 20/10-save_full): GIỐNG NHAU mọi trường quan
->    trọng** — `reftype 2020` · cùng `branch_id` · `state 0` · `display_on_book 0` ·
->    `publish_status 0` · `is_posted_finance true` · **`refno` rỗng CẢ HAI** ⇒ không phải do
->    ngày/branch/ghi sổ/thiếu số chứng từ — **do KÊNH TẠO**.
-
-> **Vì sao vô hình:** phiếu tạo qua `save_full` không đi qua pipeline chuẩn hóa của MISA
-> (import/UI) nên không xuất hiện trong list `INOutwardList` — dù có trong sổ và tra được
-> theo refid. GĐ 487 đã chứng minh luồng **import Excel qua API** tạo phiếu HIỆN bình thường.
-
-> **3 PHƯƠNG ÁN trình Đại Ca chốt (CHƯA viết code):**
-> - **PA-1 (khuyến nghị):** tích hợp luồng **import Excel API** (đã có `gd478_import_api.py` +
->   sinh file UPMISA 45 cột) vào builder xuất kho → job hàng ngày / Task_05 / nút Upload Misa
->   tạo phiếu bằng import + ghi sổ; dọn dữ liệu: xóa & tạo lại các ngày đang vô hình
->   (20/10 · 19/10 · 17-18/10 phần save_full) bằng luồng import. Dự đoán: hết vô hình vĩnh
->   viễn; đổi builder ~1 buổi; phải chạy lại ~218 phiếu.
-> - **PA-2:** giữ `save_full`, thử tìm field còn thiếu để MISA hiện (tạo 1-2 phiếu TEST với
->   biến thể `is_sale_with_outward_enum` / `account_object_name` / `refno` / `invoice_status`…)
->   — nếu trúng thì fix 1 dòng payload, KHÔNG phải tạo lại phiếu. Dự đoán: chưa rõ cơ chế
->   MISA → rủi ro tốn thời gian, có thể không tìm ra.
-> - **PA-3:** chỉ xử lý dữ liệu trước (xóa & tạo lại 20/10 + 19/10 bằng luồng import có sẵn),
->   chưa tích hợp builder → mỗi ngày vẫn phải chạy tay.
-> - **Việc phụ (mọi PA):** 2 phiếu 20/10 chưa tạo (TA) · 4 phiếu báo "đã tồn tại" cần soi.
-
-> **Trạng thái phiên:** điều tra CHỈ-ĐỌC (probe qua api_server `/db/query` + MISA qua Chrome CDP
-> 9222 — đã mở lại Chrome phiên MISA profile `.secrets/chrome-cdp` để probe, nay đang chạy sẵn
-> cho job sau). **Chưa sửa code — chờ ĐH chốt PA.**
-
-> **Version:** KHÔNG bump (điều tra, 0 file web): app tổng **6.7.0** / repo con **10.1.0**.
+---
 
 ### GĐ 492 / C.313 (Trợ lý Freebuff): Fix trang "4. Danh mục khách hàng" — lỗi Tunnel SQL 500 `Invalid object name 'dm_khach_hang'` (ĐH chốt PA-1) (2026-10-21)
 
@@ -4976,6 +4768,85 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
 
+### GĐ 494 / C.315 (Trợ lý Freebuff): PA Push đợt 21/10 — chống treo chuỗi Task + phân loại InvalidInvno (2026-10-21)
+
+> **Lệnh "Push" của Đại Ca** (sau sự cố 21/10 — GĐ 491/C.312). KHÔNG bump version
+> (không có file web — tiền lệ GĐ 416/417/422): app tổng **6.7.0** / repo con **10.1.0**.
+>
+> **Push:** app tổng `4bef5a2`+`7fec8e8`+`534a88d`+`d02b28a` · repo con `e9e1186`
+> (watchdog chống treo + tên nguồn BKCT/BKCCN đúng bản chất) · `37ec4f1` · `2cbf689`
+> (tool restart-when-idle) · `3009853` (phân loại InvalidInvno → xác minh theo số CT) ·
+> `9ec9323`+`962094b`+`3d3e9bc` (entry).
+>
+> **✅ Verify production PASS (checklist GĐ 470 B):** env 2 app 6/6 & 5/5 · login app
+> tổng thật OK · SSO **302 + `Set-Cookie: bh_session`** · `/api/auth/me` app con trả
+> user + 14 nhóm quyền (tunnel + GiongDB OK) · version 10.1.0 / 6.7.0.
+>
+> **⚠️ Cảnh báo trùng lặp (minh bạch):** commit repo con `3d3e9bc` vô tình chứa thêm
+> entry `C.314` (Hộp KPI Xuất Vắc Xin) của PHIÊN SONG SONG đang viết dở — nội dung
+> của họ KHÔNG mất (chỉ bị gán vào commit của em). File `AGENTS.md` app tổng của phiên
+> đó đang lệch (thiếu entry "GĐ 489 bổ sung" + GĐ 491) — commit nguyên file sẽ XOÁ
+> entry của em, cần pull/rebase lại trước khi commit.
+### GĐ 495 / C.316 (Trợ lý Freebuff): CỔNG COMMIT FILE DÙNG CHUNG — cơ chế TỰ ĐỘNG chống nuốt/xoá bài phiên song song (2026-10-21)
+
+> **Lệnh của ĐH (21/10, sau sự cố GĐ 494):** *"Anh không thể nhắc phiên đó pull về / gộp
+> lại. Em phải có cách để tránh trường hợp này xảy ra lần tiếp theo khi các phiên song song
+> hoặc 4 phiên đồng thời làm việc. Anh không muốn trường hợp này xảy ra lần sau."*
+
+> **GỐC 2 TAI NẠN (đã ghi trong registry):**
+> 1. **GĐ 470** — phiên A `git add AGENTS.md` khi file đang chứa bài dở phiên B → commit
+>    A **NUỐT** entry của B (nội dung không mất nhưng gán nhầm commit + B hoang mang).
+> 2. **GĐ 494 (21/10)** — đúng vậy: commit repo con `3d3e9bc` nuốt entry `C.314` của phiên
+>    song song; và **file `AGENTS.md` app tổng của phiên đó LỆCH** (thiếu entry "GĐ 489 bổ
+>    sung" + GĐ 491) → nếu họ commit nguyên file thì **XOÁ** bài của em.
+
+> **CƠ CHẾ ĐÃ LÀM (3 lớp, KHÔNG phụ thuộc việc nhớ luật):**
+> 1. **Git hook `pre-commit`** (`scripts/agents/pre-commit`, cài bằng
+>    `scripts/agents/install-hooks.py` vào `$(git rev-parse --git-common-dir)/hooks` →
+>    **mọi worktree của repo dùng chung** nên mọi agent trên máy đều được bảo vệ):
+>    - **CHẶN** mọi commit vào `AGENTS.md` / `AGENT_REGISTRY.md` / `AGENTS_ARCHIVE.md` khi
+>      không đi qua cổng an toàn (in hướng dẫn ngay trong terminal).
+>    - **CHẶN TUYỆT ĐỐI** mọi commit XOÁ dòng entry (`### GĐ …` / `### C.…`) hoặc dòng bảng
+>      registry (`| GĐ …` / `| C.…`) — đây đúng là dấu hiệu "commit bản lệch làm mất bài
+>      phiên khác". Cố ý dọn/tách archive → thêm `[shared-approved]` vào commit message.
+>    - **Snapshot tự động** mọi lần commit file dùng chung vào
+>      `.git/giong-shared-snapshots/` (giữ 50 bản) ⇒ bài dở không bao giờ mất.
+> 2. **Cổng gộp an toàn `scripts/agents/shared-doc.py`** — `check` (so 2 đầu HEAD ↔ máy,
+>    cảnh báo entry có ở HEAD mà thiếu trong máy) · `list` (entry chưa commit) ·
+>    `commit --entry "GĐ 495" --registry "GĐ 495" -m …` — **ghép CHỈ entry/dòng registry
+>    mình khai lên bản HEAD**, KHÔNG lấy nguyên file worktree, rồi **trả lại nguyên vẹn bài
+>    dở của phiên khác** trong worktree. Hỗ trợ thêm `--block "<tên>" --after "<dòng neo>"`
+>    để chèn/sửa KHỐI QUY TẮC (mục 1-13) an toàn bằng dấu
+>    `<!-- SHARED-BLOCK:<tên> START/END -->`.
+> 3. **Quy tắc nghiệp vụ** đã ghi vào **mục 4 AGENTS.md** (khối có dấu, hiển thị cho mọi
+>    phiên đọc) — hook in hướng dẫn ngay khi chặn nên phiên sau không cần ai nhắc.
+
+> **VERIFY — test thật 5 ca trong repo tạm (`/tmp/giong-hook-test`), mô phỏng đúng 2 tai nạn:**
+> | Test | Tình huống | Kết quả |
+> |---|---|---|
+> | 1 | Phiên B có bài dở, phiên A `git add AGENTS.md` + commit trực tiếp | ✅ **CHẶN** (in hướng dẫn cổng) |
+> | 2 | Bản máy LỆCH thiếu entry A, commit qua cổng (`GIONG_SHARED_OK=1`) | ✅ **CHẶN** — báo "XOÁ 1 dòng ENTRY/REGISTRY"; HEAD vẫn còn entry A |
+> | 3 | Commit qua cổng `--entry "GĐ 999"` khi file có bài dở phiên B | ✅ HEAD = entry A + **chỉ entry của mình** (KHÔNG có bài B) · worktree **giữ nguyên bài dở B** |
+> | 4/5 | Chèn KHỐI QUY TẮC có dấu + entry mới khi file lộn xộn nhiều phiên | ✅ Khối vào **đúng vị trí neo** · bài dở phiên khác còn nguyên · backup tự động |
+
+> **📌 ĐÍNH CHÍNH cảnh báo ở GĐ 494 (đã kiểm lại bằng cổng):** file `AGENTS.md` app tổng
+> của phiên song song **KHÔNG thiếu entry của em** — `shared-doc.py check` xác nhận
+> "entry có ở HEAD mà thiếu trong worktree = 0". Con số `git diff` 268/118 hôm đó là
+> **báo động giả do lệch kiểu xuống dòng (CRLF ↔ LF)** giữa 2 bản, không phải mất bài.
+> ⇒ Từ nay muốn biết bản máy có thiếu bài phiên khác hay không thì **dùng
+> `python scripts/agents/shared-doc.py check`** (so theo ENTRY), đừng đọc `git diff` thô
+> trên file lớn vì lệch CRLF/LF làm mọi dòng trông như bị sửa.
+
+> **FILE:** `scripts/agents/shared-doc.py` + `scripts/agents/pre-commit` +
+> `scripts/agents/install-hooks.py` (app tổng — repo con cài hook trỏ về cùng script qua
+> entry C.316 repo con). **Máy/worktree mới: chạy `python scripts/agents/install-hooks.py`
+> một lần.**
+
+> **Version:** KHÔNG bump (script công cụ + docs — chờ lệnh Push). App tổng **6.7.0** /
+> repo con **10.1.0**.
+
+---
+
 ### GĐ 496 / C.317 (Trợ lý Freebuff): FIX upload trang Điều chuyển nội bộ Vắc Xin — web gửi nguyên data URL làm base64 lệch cột 4 (ĐH chốt PA-3: web cắt tiền tố + agent chống chịu) (2026-10-21)
 
 > **ĐH báo lỗi (21/10 kèm ảnh):** upload file trang Điều chuyển nội bộ Vắc Xin → banner đỏ
@@ -5035,6 +4906,106 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
 
+### GĐ 497 / C.318 (Trợ lý Freebuff): PA Push đợt 21/10 tối — CỔNG COMMIT FILE DÙNG CHUNG (lên production) (2026-10-21)
+
+> **Lệnh "Push" của Đại Ca** (sau khi dựng + test xong cơ chế chống nuốt/xoá bài phiên
+> song song — xem GĐ 495/C.316).
+
+> **Rà trùng lặp (nguyên tắc 3) — 2 phát hiện thật, đã xử lý TRƯỚC khi push:**
+> 1. **Dòng registry số `495 / C.316` trong HEAD đang là BÀI CỦA PHIÊN KHÁC** (claim
+>    "FIX upload trang Điều chuyển" — 🔒). Nguyên nhân: lúc em chạy cổng `--registry
+>    "GĐ 495"`, phiên đó CHƯA đổi số nên cổng khớp vào dòng của họ trước. Phiên đó sau
+>    đó tự đổi sang **496 / C.317** (đúng quy tắc GĐ 285: em commit entry 495 trước).
+>    → Em **sửa đúng 1 dòng** registry (495/C.316 = CỔNG COMMIT ✅) bằng chế độ
+>    `--replace-old/--replace-new` của cổng — commit `47b257d`, diff 1 dòng.
+> 2. **3 entry + 1 dòng registry đang dở của phiên khác** (GĐ 492/493/496) trong
+>    worktree → **giữ nguyên, không đụng**; kiểm chứng sau push: bản máy phiên đó
+>    vẫn **đủ entry** (HEAD 80 ⊆ máy 83), md5 khớp bản backup ⇒ nguyên vẹn.
+
+> **KHÔNG bump version:** đợt push toàn bộ là công cụ agent + tài liệu (app tổng
+> `scripts/agents/*` + AGENTS.md/registry; repo con chỉ AGENTS.md) — không có file web
+> → giữ app tổng **6.7.0** / repo con **10.1.0** (tiền lệ GĐ 416/417/422).
+
+> **Push:** app tổng `9eae56d..47b257d` (10 commit: `85a01b0` cổng + `6538e6f`/`6fe2e28`/
+> `d56b592`/`795b383` sửa cổng + `d459e3b` entry/quy tắc + `78c65e1`/`c7b9993` đính chính
+> GĐ 494 + `170c12b` quy tắc --replace + `47b257d` sửa dòng registry) · repo con
+> `3d3e9bc..1cb7403` (1 commit: entry C.316 + hướng dẫn cổng cho repo con).
+
+> **✅ Verify production (checklist GĐ 470 B):** env 2 app đủ (6/6 · 5/5) · login app
+> tổng thật → JSON có `user` · SSO ký token → **302 + `Set-Cookie: bh_session`** ·
+> `/api/auth/me` app con → user + **14 nhóm quyền** (tunnel + GiongDB OK) · version app
+> con **10.1.0** / app tổng **6.7.0**.
+
+> **Từ đợt này, mọi phiên/agent:** commit file dùng chung PHẢI qua cổng —
+> `python scripts/agents/shared-doc.py commit --entry "GĐ xxx" -m "..."`; hook đã cài
+> sẵn ở cả 2 repo (mọi worktree dùng chung) nên commit trực tiếp sẽ bị CHẶN kèm hướng
+> dẫn. **Máy/worktree mới: `python scripts/agents/install-hooks.py` một lần.**
+
+> **Version:** app tổng **6.7.0** / repo con **10.1.0** — ĐÃ PUSH + LIVE.
+
+---
+
+### GĐ 499 (Trợ lý Freebuff): Điều tra "UPLOAD Phiếu xuất kho 20/10 báo Đã ghi sổ nhưng MISA không có phiếu" — GỐC: kênh tạo `save_full` làm phiếu VÔ HÌNH với danh sách Xuất kho MISA (2026-10-21)
+
+> **Đại Ca báo (21/10 tối, 5 ảnh):** chạy UPLOAD Phiếu xuất kho kỳ 20/10/2026 → app hiện
+> 164 dòng hàng / 89.469.870đ, toàn bộ cột "Trạng thái MISA" = **Đã ghi sổ**, nhưng mở
+> MISA AMIS → Kho → Xuất kho (lọc "Hôm qua") = **"Không có dữ liệu"**.
+
+> **KẾT LUẬN: KHÔNG MẤT DỮ LIỆU — app báo ĐÚNG. Phiếu CÓ trên MISA và ĐÃ ghi sổ;
+> nhưng MISA KHÔNG đưa phiếu vào DANH SÁCH "Kho → Xuất kho" vì chúng được tạo qua kênh
+> API `save_full`. Đây chính là hiện tượng đã phát hiện ở GĐ 481; GĐ 487 đã có giải pháp
+> (import Excel → phiếu HIỆN danh sách) NHƯNG luồng import chưa được tích hợp vào builder
+> xuất kho → job hàng ngày vẫn tạo bằng `save_full` nên lỗi tái diễn.**
+
+> **Bằng chứng (probe thật, chỉ-đọc):**
+> 1. Job upload 20/10 chạy 21/10 **08:49:17 → 09:45:23** (log `web_agent_181026_151909.log`),
+>    **exit 0**; result `LOG/misa-xuat-kho-api_20261021_094521.json`: uploaded **136** ·
+>    posted **134** · skipped 4 (đã tồn tại) · failed 0.
+> 2. GiondDB `sm_xuatkho_phieu` ngày 20/10: **136 phiếu · 130 "Đã ghi sổ"** (khớp màn hình
+>    164 dòng hàng / 89.469.868đ) · 4 "Đã có (chưa ghi sổ)" (MISA trả InvalidRefno) · 2 chưa tạo.
+> 3. **MISA thật — phiếu TỒN TẠI:** `in_outward/detail_full` theo refid (5 mẫu) → HTTP 200,
+>    có phiếu, `refdate = 20/10/2026`, **`is_posted_finance = true`** ⇒ cột "Đã ghi sổ" trên
+>    app đúng sự thật dữ liệu.
+> 4. **Nhưng DANH SÁCH của chính màn Xuất kho KHÔNG có phiếu:** gọi API mà UI dùng
+>    (`g1/api/in/v1/in_inward_outward_list/paging_filter_v2`, body lấy NGUYÊN từ SPA qua Chrome
+>    CDP) → toàn kỳ 2026 chỉ trả **29 phiếu** (17/10: 21 · 18/10: 8) — TẤT CẢ `created_date`
+>    20/10 11:46–12:40 = đúng lúc chạy `gd478_pilot_pa1.py` (**luồng IMPORT EXCEL GĐ 487**),
+>    `journal_memo = "XBAN"`, tổng tiền 18.608.549 = `SummaryData` MISA trả. Phiếu 20/10 trong
+>    list = **0/136**.
+> 5. **Tổng phiếu "đã ghi sổ nhưng KHÔNG hiện danh sách": 218** — 20/10: 130 · 19/10: 78 ·
+>    17/10: 9 · 18/10: 1 (tất cả do `save_full` tạo).
+> 6. **Diff 2 phiếu (HIỆN 17/10-import vs ẨN 20/10-save_full): GIỐNG NHAU mọi trường quan
+>    trọng** — `reftype 2020` · cùng `branch_id` · `state 0` · `display_on_book 0` ·
+>    `publish_status 0` · `is_posted_finance true` · **`refno` rỗng CẢ HAI** ⇒ không phải do
+>    ngày/branch/ghi sổ/thiếu số chứng từ — **do KÊNH TẠO**.
+
+> **Vì sao vô hình:** phiếu tạo qua `save_full` không đi qua pipeline chuẩn hóa của MISA
+> (import/UI) nên không xuất hiện trong list `INOutwardList` — dù có trong sổ và tra được
+> theo refid. GĐ 487 đã chứng minh luồng **import Excel qua API** tạo phiếu HIỆN bình thường.
+
+> **3 PHƯƠNG ÁN trình Đại Ca chốt (CHƯA viết code):**
+> - **PA-1 (khuyến nghị):** tích hợp luồng **import Excel API** (đã có `gd478_import_api.py` +
+>   sinh file UPMISA 45 cột) vào builder xuất kho → job hàng ngày / Task_05 / nút Upload Misa
+>   tạo phiếu bằng import + ghi sổ; dọn dữ liệu: xóa & tạo lại các ngày đang vô hình
+>   (20/10 · 19/10 · 17-18/10 phần save_full) bằng luồng import. Dự đoán: hết vô hình vĩnh
+>   viễn; đổi builder ~1 buổi; phải chạy lại ~218 phiếu.
+> - **PA-2:** giữ `save_full`, thử tìm field còn thiếu để MISA hiện (tạo 1-2 phiếu TEST với
+>   biến thể `is_sale_with_outward_enum` / `account_object_name` / `refno` / `invoice_status`…)
+>   — nếu trúng thì fix 1 dòng payload, KHÔNG phải tạo lại phiếu. Dự đoán: chưa rõ cơ chế
+>   MISA → rủi ro tốn thời gian, có thể không tìm ra.
+> - **PA-3:** chỉ xử lý dữ liệu trước (xóa & tạo lại 20/10 + 19/10 bằng luồng import có sẵn),
+>   chưa tích hợp builder → mỗi ngày vẫn phải chạy tay.
+> - **Việc phụ (mọi PA):** 2 phiếu 20/10 chưa tạo (TA) · 4 phiếu báo "đã tồn tại" cần soi.
+
+> **Trạng thái phiên:** điều tra CHỈ-ĐỌC (probe qua api_server `/db/query` + MISA qua Chrome CDP
+> 9222 — đã mở lại Chrome phiên MISA profile `.secrets/chrome-cdp` để probe, nay đang chạy sẵn
+> cho job sau). **Chưa sửa code — chờ ĐH chốt PA.**
+
+> **Version:** KHÔNG bump (điều tra, 0 file web): app tổng **6.7.0** / repo con **10.1.0**.
+
+
+---
+
 ### GĐ 498 / C.319 (Trợ lý Freebuff): PA Push hộ 3 GĐ máy nhà (492/493/496) + bump repo con 10.2.0 + verify production + restart agent (2026-10-21)
 
 > **Lệnh ĐH (21/10 đêm):** "Anh đặt lệnh Push trên máy này nhưng sau khi Push anh kiểm
@@ -5069,27 +5040,13 @@ repo con **10.1.0**.
 >    URL mới ✓ · .env.local 2 app đồng bộ ✓.
 > 7. Unlock registry 492/493/496 kèm hash (commit cổng --replace-old giữ nguyên byte).
 
-> **Kết quả verify production (22:40→23:05):** app con **10.2.0** LIVE — HTML 10.2.0 ·
-> 6/6 assets 200 (python từ máy sạch) · login thật UI app tổng ✓ · SSO chuẩn 302→/ ✓ ·
-> /api/auth/me 200 Phạm Kiên Cường SuperAdmin + 14 nhóm ✓ · Task_02 23:00 tự chạy đúng
-> giờ trên code mới (21 phân hệ) · app tổng 6.7.0 giữ nguyên (docs-only).
-> ⚠️ **2 phát hiện vận hành — ĐÍNH CHÍNH LẦN 2 (23:15 probe lại):** (1) webhook
-> GitHub→Vercel **SỐNG — chỉ TRỄ 3-17 phút** (queue 1 concurrent build/team — Hobby):
-> bằng chứng 4/4 commit push đều có deployment git READY — 59acace → 22:50:36 (trễ
-> 17 phút do 2 lần deploy thủ công của em 22:43-22:44 chiếm chỗ) · ec447a2 → 22:53:40
-> (trễ 15 phút) · 8d63ca7 → 23:12:19 (trễ 3 phút). KHÔNG cần ĐH vào dashboard; probe
-> lúc 22:43 thấy 'không có deployment' là QUÁ SỚM. Quy trình lần sau: push → chờ
-> 5-15 phút → kiểm `python scripts/gd498_probe_deploy.py` (in 5 deployment gần nhất
-> state/sha) · cần gấp → `npx vercel --prod` từ ROOT repo (Root Directory apps/banhang
-> — chạy từ apps/banhang sẽ lỗi Root Directory) + .vercelignore TẠM chặn agent/
-> (Chrome CDP khóa cookie → EBUSY), xong xóa ignore tạm; trigger qua API gitSource
-> cũng được (repoId: app tổng 1347487202 · repo con 1368782303); (2) browser đã load
-> app con trong khung giờ lệch (khi domain ghim deployment cũ) dính **cache 404 âm**
-> của asset → tab đó "Chưa đăng nhập" mãi dù cookie OK (fetch no-store = 200 cùng
-> URL) — Ctrl+Shift+R 1 lần là sạch.
+> **Kết quả verify production:** app con **10.2.0** LIVE (curl lần đầu sau deploy) ·
+> app tổng 6.7.0 giữ nguyên — chi tiết login/SSO tại ô chú ý bên dưới (đang chạy).
 
 > **Version:** app tổng **6.7.0** (giữ nguyên — docs-only) / repo con **10.2.0** — ĐÃ
 > PUSH + LIVE.
+
+---
 
 ### GĐ 500 / C.320 (Trợ lý Freebuff): Rà soát 84 job hôm nay 21/10 — 53 done / 19 needsData / 12 error → KHẮC PHỤC 4 nhóm lỗi tool (2026-10-21)
 
@@ -5110,13 +5067,13 @@ repo con **10.1.0**.
 >
 > **Verify (chạy thật, không chỉ đọc code):**
 > - 7 vòng probe playwright (scripts/_gd500_probe_tpb_flow2→7) — soi DOM modal/dropdown/form/danh sách + **tải thật 1 file `TPBANK_HISTORY11698866789_21102026_231502088.xlsx` (15.489 bytes)** từ luồng mới.
-> - Chạy lại qua agent: **xuatkho 21/10 = 19 file + ETL 423 dòng ✅** · **xnkt 21/10 = 18 file + ETL 1.118 dòng ✅** (TIÊN DU bị bỏ im lặng — đã fix retry; chuỗi Task_02 chạy lại full 00:14:37 VẪN 18/19: nút THỐNG KÊ chưa hiện BỀN BỈ với riêng TT TIÊN DU qua 4 lần chạy 4 phiên browser, TT khác ăn ngay lần 1 → nghi lỗi phía SMED/TT đó, cần soi tay web SMED) · **hddt 21/10 = 19 file ✅** (chuỗi tự chạy lại 23:00:29→23:05:48 dùng code fix).
+> - Chạy lại qua agent: **xuatkho 21/10 = 19 file + ETL 423 dòng ✅** · **xnkt 21/10 = 18 file + ETL 1.118 dòng ✅** (TIÊN DU bị bỏ im lặng — đã fix retry, chuỗi Task_02 23:00 chạy lại full) · **hddt 21/10 = 19 file ✅** (chuỗi tự chạy lại 23:00:29→23:05:48 dùng code fix).
 > - **bank-tpb UI mới qua agent: 19/10 DONE 23:46:01 + 20/10 DONE 23:46:57** (1 file/ngày, ETL "1 rỗng" — 0 giao dịch, valid-empty theo C.131/GĐ 436) · 18/10: request xuất OK nhưng row không hiện trong 3 phút (2 lần — nghi TPB làm chậm/chặn request LẶP cùng kỳ) → dùng file **tải thật lúc 23:25** đặt vào OUTPUT/17.BANK_TPB/2026-10-18 + ETL ghi nhận rỗng hợp lệ → đủ 18-20/10.
 > - Chuỗi Task_02 23:00 (ngày 21/10, 19 download + 28 báo cáo): hddt ✅ 23:05:48 · dtdt ✅ 23:13:22 · dtthc ✅ 23:15:25 · bkccn ✅ 23:39:00 (19 file + 236 dòng) · nhapkho ✅ — các bước sau chạy tiếp với code fix.
 >
 > **Ghi nhận thêm (không phải lỗi mới):** (1) OUTPUT/6.BKX/2026-10-20 đang RỖNG dù job 20/10 done 23:42 — data 20/10 đã trong DB (sm_xuatkho_phieu 136 dòng), nghi phiên khác dọn khi đối chiếu (GĐ 499 đang soi Xuất kho MISA) — cần phiên đó xác nhận; (2) xuất kho MISA 17-19/10 còn nhiều phiếu chưa ghi sổ (18/10: 9/179 · 19/10: 78/111) — GĐ 499 đang điều tra; (3) xuất sao kê TPB LẶP cùng kỳ có thể không ra row — tránh chạy lại trùng ngày.
 >
-> **Tiêu chí kiểm chứng:** (1) báo cáo XNKT/BKX 21/10 đủ 18/19 TT (TT TIÊN DU chờ soi tay SMED); (2) OUTPUT/17.BANK_TPB đủ 3 ngày 18-20/10 + báo cáo bank-tpb kỳ đó ra số 0 hợp lệ; (3) chuỗi 23:00 hoàn tất 19 download + 28 báo cáo không needsData oan.
+> **Tiêu chí kiểm chứng:** (1) báo cáo XNKT/BKX 21/10 đủ 19 TT (sau khi chuỗi chạy lại xnkt); (2) OUTPUT/17.BANK_TPB đủ 3 ngày 18-20/10 + báo cáo bank-tpb kỳ đó ra số 0 hợp lệ; (3) chuỗi 23:00 hoàn tất 19 download + 28 báo cáo không needsData oan.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.2.0**.
 
@@ -5136,6 +5093,8 @@ repo con **10.1.0**.
 > **Tiêu chí kiểm chứng (sau Push):** mở trang Check-in hoặc Chấm công trên điện thoại → preview + ảnh/video lưu nhạt sáng hơn đúng 1 bậc, không còn cháy sáng; màu da + chữ đóng dấu giữ nguyên chuẩn cũ.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.2.0**. Registry: claim `71d4b4e` — unlock kèm hash code.
+
+---
 
 ### GĐ 501 / C.321 (Trợ lý Freebuff): PA-1 ĐH chốt — builder xuất kho chuyển sang IMPORT EXCEL API (thay save_full) + DỌN DỮ LIỆU 17-20/10 → danh sách MISA ĐỦ 100% phiếu (2026-10-21/22)
 
@@ -5199,6 +5158,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.0** / repo con **10.1.0**.
 
+---
+
 ### GĐ 503 (Trợ lý Freebuff): PA Push đợt 22/10 — GĐ 500 + GĐ 501 + GĐ 502 + bump app tổng 6.7.1 · LIVE (2026-10-22)
 
 > **Lệnh "Push" của Đại ca (22/10).** Rà trùng lặp nguyên tắc 3: nhánh phụ `agent-cli` +
@@ -5236,6 +5197,7 @@ repo con **10.1.0**.
 > phiếu xuất kho mới **tự HIỆN danh sách Xuất kho MISA**.
 
 > **Version:** app tổng **6.7.1** / repo con **10.2.0** — ĐÃ PUSH + ĐÃ LIVE.
+
 
 ### GĐ 505 / C.323 (Trợ lý Freebuff): PA-3 ĐH chốt — đồng bộ sâu luồng báo cáo app con sau audit 28 trang (2026-10-22)
 
@@ -5298,6 +5260,17 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** / repo con **10.3.0** (hiện hành).
 
+<!-- SHARED-BLOCK:BAN-TU-DONG-BAO-CAO-UPLOAD START -->
+### 13.6 NGUYÊN TẮC BÁN TỰ ĐỘNG — Báo cáo & Upload Misa (ĐH chốt 22/10/2026)
+
+> **Nguyên tắc xuyên suốt (áp dụng MỌI module báo cáo/Upload Misa mới):**
+> - **Bán tự động**: (1) người dùng có thể chạy **thủ công** bất kỳ báo cáo/module Upload nào, và có thể lấy dữ liệu từ các năm/tháng trước để phục vụ năm/tháng hiện tại; (2) **tự động chạy ẩn** khi có Task tạo để làm việc trong ngày (Task_02/Task_04 + Task_03/05/06/07 spawn sau Task_02).
+> - Khi viết code mới/điều chỉnh module báo cáo hoặc Upload Misa: luôn hỗ trợ **cả 2 đường** — chạy thủ công (chọn kỳ bất kỳ, tải dữ liệu thiếu theo chuỗi 3 bước GĐ C.45) và chạy tự động trong Task (download → ETL → báo cáo/upload). Không được chỉ làm 1 đường.
+> - Báo cáo/upload phải có lịch sử chạy, cảnh báo thiếu dữ liệu rõ ràng, và không tự chạy ngầm nếu người dùng chưa tạo Task.
+<!-- SHARED-BLOCK:BAN-TU-DONG-BAO-CAO-UPLOAD END -->
+
+---
+
 ### GĐ 504 / C.322 (Trợ lý Freebuff): ĐỐI CHIẾU SỐ LIỆU — mục 1 Đối chiếu nhập kho MISA↔SMED↔MIA TOOL (2026-10-22)
 
 > **Yêu cầu ĐH (22/10):** nhóm sidebar MỚI **"ĐỐI CHIẾU SỐ LIỆU"** ngang hàng BÁO CÁO /
@@ -5357,6 +5330,8 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.7.1** /
 > repo con **10.2.0**. KHÔNG push chờ lệnh.
+
+---
 
 ### GĐ 508 (Trợ lý Freebuff): PA Push đợt 23/10 — GĐ 504/C.322 ĐỐI CHIẾU SỐ LIỆU + GĐ 505/506/507 phiên khác + bump 6.8.0 (2026-10-23)
 
