@@ -5453,10 +5453,15 @@ repo con **10.1.0**.
 >   up + ghi sổ THÀNH CÔNG; ảnh MISA Đại Ca = 28 phiếu trung tâm LB (cột Vị
 >   trí "LB" + refno tiền tố 0637 — khớp DB LB n=28).
 >
-> **Trình 3 PA (chờ ĐH chốt):** PA-1 sửa builder (inv_date + inv_series +
-> timeout 30s) — phiếu MỚI đúng, phiếu ĐÃ tạo giữ nguyên sai; PA-2 = PA-1 +
-> dọn tạo lại 167 phiếu 22/10; PA-3 = PA-1 + dọn các kỳ trước. Chi tiết ở
-> báo cáo phiên.
+> **ĐH chốt PA-1 (23/10).** Đã sửa `misa_banhang_api.py` (code repo con
+> `64986b8` +46/−12 · docs C.328 `90ef1eb`): (1) `inv_date = ngay_iso` ở
+> Object + Links[0] — ngày hóa đơn = ngày bán hàng SMED (template cứng 18/10
+> hết tác dụng); (2) `master.inv_series = ky_hieu` + đồng bộ link_inv
+> (bỏ fallback rỗng ×2) — ký hiệu 1C26Mxx lên MISA; (3) `make_fetcher`
+> AbortController 30s (bản chuẩn GĐ 501). **Verify:** unit 75/75 PASS
+> (thêm 4 assert) · py_compile OK · node --check 2 đoạn JS OK. Phiếu MỚI
+> đúng — 167 phiếu 22/10 ĐÃ tạo giữ nguyên sai 2 trường (PA-2/PA-3 chờ ĐH
+> nếu cần dọn).
 >
 > **Version:** KHÔNG bump (điều tra + chờ ĐH chốt — quy tắc ĐA AGENT). App tổng
 > **6.8.0** / repo con **10.3.1**.
