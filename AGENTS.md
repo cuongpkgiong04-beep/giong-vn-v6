@@ -5383,3 +5383,45 @@ repo con **10.1.0**.
 > **Tiêu chí kiểm chứng (sau Push):** mở hộp Chi tiết Nhập Vắc Xin → cột "Vắc xin" hẹp lại (~50%), tên dài bị cắt (…), không chèn vào cột "Lô"/"Hạn sử dụng" bên phải; hover xem đầy đủ. Header (STT/Ngày/Vắc xin/…) và dòng TỔNG CỘNG dính khi cuộn dọc. Các hộp khác (Ngân hàng, Xuất Vắc Xin, Tồn kho, Lượt tiêm) cùng hành vi. Trên điện thoại: dữ liệu không bị chèn letras cột bên phải; có thể cuộn ngang xem hết.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** / repo con **10.3.0**.
+
+### GĐ 510 / C.327 (Trợ lý Freebuff): PA-1 — CHIA SẺ DỮ LIỆU GIỮA USER — bỏ lọc created_by, mọi user xem được lịch sử + kết quả của nhau (2026-10-23)
+
+> **Yêu cầu của Đại Ca (23/10, kèm ảnh trang MiaTool "Mua vào - Chi tiết"):**
+> user "Trần Mạnh Hùng" không xem được dữ liệu admin lấy ngày hôm qua — "Cho
+> phép các user khác xem và sử dụng được các dữ liệu đã thực hiện của nhau...
+> cập nhật cho TẤT CẢ". Sau vòng phân tích + 3 PA, **ĐH chốt PA-1** (mở mặc
+> định cho MỌI user — không cần cấp quyền từng người).
+
+> **Chẩn đoán gốc:** 3 server fn app con `src/routes/api/-smed.ts` lọc theo user
+> (GĐ C.66 + GĐ 438/C.267): `loadSmedJobs` (SQL `created_by=$2`, job DOWNLOAD
+> không thuộc phần mở của quyền "Xem báo cáo của mọi người") · `loadReportResult`
+> · `checkReportFreshness` — → user thường chỉ thấy job mình tạo.
+
+> **Đã làm (repo con `733f32a` — 2 file +79/−77; chi tiết đầy đủ entry C.327
+> AGENTS.md repo con):** (1) loadSmedJobs bỏ hẳn lọc created_by — mọi user thấy
+> TOÀN BỘ job mọi loại trên TẤT CẢ trang (SMED/MIA/MISA/BANK/báo cáo SQL/TX-DS —
+> sửa 1 chỗ ăn tất cả); (2) loadReportResult + checkReportFreshness bỏ guard chủ
+> job; (3) bỏ import canViewAllReports (hết chỗ dùng — hàm smed-auth.ts giữ
+> nguyên); (4) UI smed-pull-module: Hủy/Xóa bỏ lệnh bọc `j.canManage` (chủ job +
+> Admin), "Thử chạy lại"/"Chạy lại bổ sung file" bọc `j.canManage || canCreate`
+> (mọi user có quyền tạo job — khớp server retrySmedJob vốn chỉ check
+> canCreateJobs); (5) Upload MISA AMIS (mua hàng + điều chuyển) đã dùng chung
+> sẵn — không đụng.
+
+> **Lỗi tool MiaTool (ảnh ĐH) — lỗi PHÍA CỔNG HĐĐT QUỐC GIA, KHÔNG sửa code:**
+> probe thật 3 lượt 23/10 (job Hùng 01/10→22/10 lỗi 14:37 · em retry giúp 15:12
+> · job phép thử 1 ngày 22/10 = 11 hóa đơn 15:26) — cả 3 login OK + lấy được
+> trang danh sách rồi request kế tiếp GĐT trả HTTP 500/504 (requestId của GĐT),
+> retry 15s→60s đủ 4 lần. Cổng bền từ ~00:45 đến 15:31 (nhịp sống lại ngắn
+> 00:52). Cổng sống lại → bấm "Thử chạy lại" là xong.
+
+> **Verify:** tsc app con EXIT 0 · npm test 4/4 file PASS (12/11 + 62/62 +
+> 10/10 + 15/15) · SQL giữ nguyên pattern $n/limit cũ (chỉ bỏ điều kiện).
+>
+> **Tiêu chí kiểm chứng (sau Push):** login user thường (Hùng) → trang MiaTool
+> LẪN mọi trang download/báo cáo → thấy toàn bộ lịch sử job mọi người (kể job
+> 22/10 admin) · mở được kết quả người khác · banner "có dữ liệu mới hơn" hoạt
+> động · nút Hủy/Xóa chỉ hiện với job của mình (Admin thấy hết nút).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.3.1**.
