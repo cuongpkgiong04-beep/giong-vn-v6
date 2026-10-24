@@ -5850,3 +5850,28 @@ repo con **10.1.0**.
 > (fix nằm phía web).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.5.0**.
+
+### GĐ 524 (Trợ lý Freebuff): PA Push đợt 24/10 đêm — GĐ 523 fix nút Upload Misa + bump repo con 10.5.1 + LIVE (2026-10-24)
+
+> **Lệnh "Push" của Đại Ca (24/10 đêm, sau khi kỳ 22/10 đã lên MISA đủ).**
+> Rà trùng lặp: 0 nhánh phụ · working tree chỉ file dở phiên khác — KHÔNG
+> đụng · commit chưa push: GĐ 523 (fix nút) — 1 commit mỗi repo.
+>
+> **Bump:** repo con **10.5.0 → 10.5.1** (patch — fix nhỏ). App tổng KHÔNG
+> bump (docs-only) giữ 6.8.0. Checklist GĐ 470-A: env 2 app 6/6 ✓.
+>
+> **Push:** app tổng `c782005..72a4624` · repo con `d5fac31..106e1cf`.
+>
+> **✅ Verify production (GĐ 470-B — lần đầu curl):** app con = **10.5.1** ·
+> app tổng = **6.8.0** · login thật ✓ · SSO 302 + bh_session ✓ · me 92 mods ✓.
+> **Verify nút (quan trọng):** CDP bấm nút "Upload Misa" trên production →
+> job tạo ra có `report = misa-ban-hang-api` ✓ (trước fix bị `hddt` — đúng
+> bệnh ĐH báo). Job verify (71D89C7A kỳ 22/10) chạy lại idempotent — dự kiến
+> "bỏ qua 167" (phiếu đã đủ), vô hại.
+>
+> **Tiêu chí kiểm chứng của Đại Ca:** kỳ 22/10 đã đủ 4 chuẩn (167 phiếu ·
+> inv_date · ký hiệu · tên khách dòng hàng · tham chiếu — verify GĐ 523) ·
+> giờ bấm nút "Upload Misa" cho kỳ MỚI (23/10, 24/10) → job chạy đúng + bảng
+> tự cập nhật trạng thái MISA.
+>
+> **Version:** app tổng **6.8.0** (giữ) / repo con **10.5.1** — ĐÃ PUSH + ĐÃ LIVE.
