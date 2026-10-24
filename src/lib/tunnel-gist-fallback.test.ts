@@ -10,6 +10,11 @@ import assert from "node:assert/strict";
 // env phải set TRƯỚC import — db.ts đọc env tại module load
 process.env.GH_GIST_TOKEN = "token-da-chet-mo-phong";
 process.env.TUNNEL_GIST_ID = "gist123test";
+// dbSource chốt lúc module load: thiếu TUNNEL_API_BASE_URL/DATABASE_URL → "pglite"
+// → eager bootstrap cuối db.ts gọi import.meta.glob (API Vite) trong Node thuần
+// → unhandledRejection làm fail cả file. Chỉ định tunnel để bỏ qua bootstrap —
+// test này chỉ cần fetchTunnelUrlFromGist (hàm thuần chạy trên fake fetch).
+process.env.TUNNEL_API_BASE_URL = "https://fake-tunnel-khong-dung.trycloudflare.com";
 
 const { fetchTunnelUrlFromGist } = await import("./db.ts");
 
