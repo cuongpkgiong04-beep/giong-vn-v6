@@ -5516,3 +5516,26 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con
 > **10.3.1**.
+
+### GĐ 514 (Trợ lý Freebuff): Fix lỗi "Ngày phải dạng DD/MM/YYYY" chặn nút Upload Misa — GĐ 512 phiên khác dính bệnh định dạng (2026-10-24)
+
+> **Đại Ca báo (24/10 sáng, ảnh):** bấm "Upload Misa" kỳ 22/10 → lỗi đỏ
+> "Ngày phải dạng DD/MM/YYYY" — job KHÔNG được tạo, không có tiến trình.
+>
+> **Gốc:** commit `0915e69` (GĐ 512, phiên khác — KHÔNG ghi registry) đồng bộ
+> dateFrom/dateTo từ job gần nhất trong DB — giá trị DB là DD/MM/YYYY
+> ("22/10/2026") — set thẳng vào state; khi bấm Upload, `isoToDdmmyyyy()` (kỳ
+> vọng ISO) sinh "undefined/undefined/22/10/2026" → server chặn. Ô chọn ngày
+> (type=date) nhận DD/MM → hiển thị trống.
+>
+> **Đã sửa (code `73a3551` — sql-data-module.tsx +18/−4):** (1) `isoToDdmmyyyy`
+> nhận cả DD/MM/YYYY (trả nguyên); (2) đồng bộ 2 chỗ (GĐ C.326 + job upload)
+> qua `ddmmyyyyToIso` — state luôn ISO chuẩn cho input type=date. SqlReport-
+> Module KHÔNG đồng bộ job → không dính — KHÔNG đụng (minimal change).
+>
+> **Verify:** tsc EXIT 0. **Workaround cho Đại Ca chạy ngay trên production
+> chưa có fix:** chọn lại ngày trong ô chọn kỳ (22/10/2026) → state ISO →
+> nút hoạt động. Fix lên production khi Đại Ca nói Push.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con
+> **10.3.1**.
