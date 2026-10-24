@@ -5760,3 +5760,36 @@ repo con **10.1.0**.
 > upload mới xong hiện tổng kết đủ 3 loại (lệnh cũ chỉ mua hàng có tổng kết).
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.4.0**.
+
+### GĐ 521 / C.335 (Trợ lý Freebuff): PA-1 fix 2 lỗi upload HĐ GTGT bán hàng — tên khách dòng hàng + tham chiếu hóa đơn (2026-10-24)
+
+> **ĐH chốt PA-1 (sau điều tra GĐ 520):** sửa builder 2 chỗ, áp dụng từ kỳ
+> tiếp theo; phiếu đã tạo giữ nguyên. Code `e4d12c5` (+112/−2, test 82/82).
+>
+> **Fix 1 — sổ chi tiết trống "Tên khách hàng":** thêm `account_object_name
+> = tên khách` vào TỪNG dòng hàng (dict detail_objs) — sổ chi tiết bán hàng
+> lấy tên khách từ dòng hàng, phiếu UI MISA luôn có, builder trước None.
+>
+> **Fix 2 — "Tham chiếu" trống:** khảo sát JS bundle MISA (chunk
+> `pjs.ReferenceAPI` + `pjs.addReference`) tìm ra API + shape: **POST
+> /g1/api/ref/v1/reference** với body array 1 row `{refid1=phiếu, refid2=hóa
+> đơn, reftype1, reftype2=3560, refno_finance1/2 + refno_management1/2,
+> reference_id=uuid, reference_type=1, state:1}` — **state=1 =
+> EnumModelState.Insert là chìa khóa** (state=0 bị server bỏ qua IM LẶNG —
+> probe đầu tưởng Success mà không ghi). Thêm `save_reference()` gọi sau khi
+> tạo phiếu (inv_refid từ response tạo phiếu, fallback detail_full; lỗi chỉ
+> log — không fail phiếu). **Verify thật: đã ghi thành công reference cho
+> phiếu 23/10 `06372610230911001576`** (GET /ref/v1/reference/<refid> trả 1
+> bản ghi đầy đủ) — ĐH mở phiếu 23/10 xem ô "Tham chiếu" có hóa đơn 00006651.
+>
+> **Verify:** py_compile OK · unit **82/82 PASS** (thêm 7 assert: dòng hàng
+> account_object_name + build_reference_body shape state=1...).
+>
+> **Tiêu chí kiểm chứng (khi chạy kỳ mới — vd 22/10 ĐH chạy lại):** Sổ chi
+> tiết bán hàng có cột "Tên khách hàng" đủ; chứng từ có ô "Tham chiếu" link
+> hóa đơn. Phiếu 23/10: 1/166 phiếu đã bổ sung tham chiếu (em test API) —
+> 165 còn lại + các kỳ cũ CHƯA có reference (PA-1 giữ nguyên; muốn bổ sung
+> hàng loạt — chỉ THÊM link, không sửa phiếu — em làm script riêng nếu ĐH yêu cầu).
+>
+> **Version:** KHÔNG bump (python agent-side — chờ lệnh Push). App tổng
+> **6.8.0** / repo con **10.4.0**.
