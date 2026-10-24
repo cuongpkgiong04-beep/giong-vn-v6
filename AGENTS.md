@@ -6078,3 +6078,64 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.5.3**.
+
+### GĐ 530 / C.338 (Trợ lý Freebuff): Nhãn công việc CỤ THỂ toàn hệ thống — hết "Báo cáo SQL · 22/10/2026" (2026-10-24)
+
+> **Yêu cầu của Đại Ca (24/10, kèm ảnh chụp thanh trạng thái):** *"Anh xem các phần
+> chú thích đang chạy báo cáo nào thì thấy có phần báo cáo ghi rõ đang làm cụ thể
+> việc gì còn có phần lại ghi chung chung như 'Báo cáo SQL 22/10/2026'. Anh không
+> thể biết nó đang chạy báo cáo gì và có phải anh yêu cầu không? Em hãy rà soát lại
+> TOÀN BỘ những chỗ ghi chung chung này để ghi chi tiết cụ thể..."*
+
+> **GỐC (bằng chứng — probe thẳng GiondDB):** nhãn job do WEB tự ghép từ 4 map khai
+> rời rạc, đều đã cũ: `header-jobs-bar.tsx` chỉ 13 queryKey + 15 mã phân hệ (báo cáo
+> thêm sau GĐ C.52 rơi về chữ chung **"Báo cáo SQL"**; phân hệ thiếu map thì hiện
+> **mã thô** `blth`/`bkth-hdgtgt`/`misa-ban-hang-api`); `-tasks.ts` 29 key không nhãn;
+> `tasks-page.tsx` in thẳng mã queryKey; `ai/chat.ts` trả "Báo cáo SQL (queryKey: …)".
+> Probe GiondDB 12 job mới nhất: **toàn bộ job `sqlreport` (tkgvvxdt · bccn-dattruoc ·
+> mia-banra-*) đều hiện "Báo cáo SQL"** — đúng như ảnh ĐH.
+
+> **Đã làm (repo con `d66f14f` — 9 file +515/−97):**
+> 1. **MỚI `src/lib/job-labels.ts` — MỘT nguồn nhãn**: 36 queryKey + 29 mã phân hệ
+>    (tên người đọc được) + `jobTitle()` (báo cáo SQL → tên theo queryKey; key lạ →
+>    nêu ĐÚNG mã; thiếu key → lấy `result.title` builder trả về) — thêm báo cáo mới
+>    chỉ khai 1 chỗ.
+> 2. **`header-jobs-bar.tsx`**: bỏ 2 map cũ; thanh trạng thái hiện **`<Tên báo cáo> ·
+>    <kỳ> · <tiến độ>`** (trước chỉ "<tiến độ>"); dropdown thêm **người tạo job**
+>    (trả lời "có phải anh yêu cầu không" — job tự động hiện `Task-runner`); đơn vị
+>    tiến độ ĐÚNG (MISA/MIA/Bank = *file* theo `expected_files`; upload MISA = *phiếu*)
+>    — hết cảnh "Đã export 176/19 trung tâm"; "Chờ tải dữ liệu" nêu **tên nguồn thiếu**.
+> 3. **`sql-data-module.tsx`**: "Đang tổng hợp: `<tên báo cáo>`"; cảnh báo tải cũ nêu
+>    **tên nguồn**; lịch sử upload MISA fallback qua `reportLabel`.
+> 4. **`tasks-page.tsx` + `-tasks.ts`**: bù nhãn 2 kind thiếu (Task_05 xuất kho ·
+>    Task_06 bán hàng) + tên nhiệm vụ rõ việc; danh sách báo cáo chọn hiện **TÊN**
+>    (hover thấy mã); bảng kết quả dịch mã → tên.
+> 5. **`ai/chat.ts`**: Trợ lý AI trả "Báo cáo: `<tên>`" / "Tải dữ liệu: `<tên>`"
+>    thay vì mã thô; `list_jobs` đơn vị tiến độ đúng; mô tả tool sinh từ job-labels.
+> 6. **`agent/task_runner.py`**: bước nhiệm vụ ghi **"Báo cáo 3/29: `<TÊN>` (mã …)"**
+>    thay mã; lý do thất bại nêu rõ báo cáo/phân hệ + kỳ; ghi thêm `label` vào
+>    `results` cho web/Excel.
+> 7. **SỬA BUG chính tả mã phân hệ** (phát hiện khi rà): `tkgvvvxdt` (3 chữ v — 5 chỗ
+>    `task_runner.py` + `-tasks.ts`) → **`tkgvvxdt`** khớp `REPORT_MAP` agent / trang
+>    `/m/bc-tkgvvxdt` / `sql_reports.py` — trước đây job download phân hệ này CHẾT với
+>    "Agent chưa biết report"; config cũ trong DB vẫn được nhận (alias).
+> 8. **MỚI `src/lib/job-labels.test.ts` (21 nhóm check — chặn tái diễn)**: QUÉT MÃ
+>    NGUỒN, mọi queryKey/report dùng thật + whitelist server + key nội bộ PHẢI có tên;
+>    canh **BẢNG NHÃN AGENT PYTHON KHỚP WEB** (key + tên). Đã đăng ký vào `npm test`.
+
+> **Đã làm app tổng (`1336706`)**: lá `/m/tasks` trên trang Phân quyền
+> "Nhiệm vụ định kỳ (Task_01 + Task_02)" → **"Nhiệm vụ định kỳ (Task_01→07): tải dữ
+> liệu · báo cáo · upload MISA"** (trước thiếu Task_03→07).
+
+> **Verify:** tsc app con + app tổng **EXIT 0** · `npm test` PASS (4 test cũ + job-labels
+> 21 nhóm) · catalog app tổng 9/9 · **đối chiếu DỮ LIỆU THẬT GiondDB** (20 job gần nhất,
+> script tạm đã xoá): "Báo cáo SQL · 24/10/2026" → "Thống kê gói và Vắc xin đặt trước ·
+> 24/10/2026 · Đang tổng hợp báo cáo · Task-runner"; mã thô `bank-tcb` → "Sao kê ngân
+> hàng TCB"; `mia-banra-tongquan` → "MiaTool bán ra — tổng quan".
+
+> **Tiêu chí kiểm chứng (sau Push):** mở app con → thanh trạng thái đọc được TÊN báo
+> cáo + kỳ + người tạo; trang Nhiệm vụ danh sách báo cáo hiện TÊN; hỏi Trợ lý AI "job
+> đang chạy có gì?" → trả tên cụ thể.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.5.3**.
