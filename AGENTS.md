@@ -5583,3 +5583,39 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (python agent-side — chờ lệnh Push). App tổng
 > **6.8.0** / repo con **10.3.1**.
+
+### GĐ 515 / C.331 (Trợ lý Freebuff): Khôi phục HIỆN cửa sổ MISA AMIS khi đẩy dữ liệu — canh cửa sổ mỗi lượt job + công tắc chạy ẩn (ĐH chốt PA-1) (2026-10-24)
+
+> **Yêu cầu của Đại Ca (24/10):** "khôi phục lại phần chạy ẩn web khi đẩy dữ
+> liệu lên Misa Amis… hiện không hiện cửa sổ website trang Misa Amis… muốn hiện
+> ra để theo dõi. Sau này chương trình chạy ổn định thì anh sẽ yêu cầu chạy ẩn sau."
+> (Chi tiết đầy đủ ở entry C.331 — AGENTS.md GỐC repo con.)
+
+> **Chẩn đoán (bằng chứng thật):** cửa sổ Chrome CDP (PID 2256, profile
+> `.secrets/chrome-cdp`) mở kèm **`--window-position=-32000,-32000`** → bounds
+> left/top **−21845** (NGOÀI màn hình) ⇒ vẫn chạy + đủ tab MISA/SMED nhưng ĐH
+> không thấy. Cờ này **không có trong repo** (git grep 3 worktree + toàn ổ dự án
+> + shortcut + scheduled task = 0) → do **mở Chrome thủ công**. Em đã kéo cửa sổ
+> về màn hình ngay (4,4 · 1268×700, KHÔNG tắt Chrome — job `misa_muahang_api_run`
+> đang chạy lúc đó vẫn xong 08:36 bình thường: 36 skip đúng / 0 lỗi).
+
+> **ĐH chốt PA-1** (3 phương án trình kèm dự đoán): tự canh cửa sổ mỗi lượt job +
+> công tắc ẩn/hiện, thay vì chỉ kéo cửa sổ một lần.
+
+> **Đã làm (repo con `5e80335` — chi tiết kỹ thuật ở entry C.331):** guard
+> `ensure_window_bounds` trong `misa_tab_guard.py` (module DÙNG CHUNG 3 runner MISA:
+> mua hàng · xuất kho · bán hàng — gọi tự động trong `cleanup_via_cdp` đầu + cuối
+> mỗi lượt) · mặc định **HIỆN**, công tắc `MISA_CHROME_HIDDEN=1` để bật lại CHẠY ẨN
+> khi ĐH yêu cầu sau · `misa_tab_guard.test.py` +9 nhóm test.
+
+> **Verify:** unit **62/62 PASS** · `py_compile` OK · **kiểm chứng THẬT trên CDP
+> sống**: giả lập đẩy cửa sổ ra −32000 → `cleanup_via_cdp()` (đúng đường code
+> runner dùng) kéo về (4,4) ✓ · `MISA_CHROME_HIDDEN=1` → đẩy ra ngoài màn hình ✓ ·
+> tắt công tắc → về màn hình ✓ (kết thúc ở trạng thái HIỆN cho ĐH theo dõi).
+
+> **Tiêu chí kiểm chứng của ĐH:** lượt "Upload Misa" kế tiếp (hoặc job 17:15/23:00)
+> → cửa sổ Chrome **"SMED - Phần mềm quản lý tiêm chủng - Google Chrome"** (chứa cả
+> tab MISA AMIS) HIỆN trên màn hình máy chủ, tự kéo về màn hình nếu bị ẩn.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.3.1**.
