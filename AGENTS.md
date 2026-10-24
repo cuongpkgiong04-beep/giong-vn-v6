@@ -5877,3 +5877,31 @@ repo con **10.1.0**.
 > tự cập nhật trạng thái MISA.
 >
 > **Version:** app tổng **6.8.0** (giữ) / repo con **10.5.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 525 (Trợ lý Freebuff): Bộ đếm + % hoàn thành upload HĐ GTGT bán hàng — marker sai chuỗi từ GĐ 463 (2026-10-24)
+
+> **ĐH báo (24/10 17:14, 2 ảnh):** đang chạy upload 21/10 — MISA đã 135 hóa
+> đơn nhưng app hiện "0% · 0 phiếu tạo mới"; hỏi khắc phục bộ đếm + % để user
+> biết tiến độ không cần mở MISA.
+>
+> **GỐC:** marker tiến độ agent cấu hình `"✅ PHIẾU BÁN HÀNG ĐÃ TẠO"` nhưng
+> builder in THẬT `"✅ CHỨNG TỪ BÁN HÀNG ĐÃ TẠO"` (PHIẾU≠CHỨNG TỪ) — chuỗi
+> không bao giờ khớp → doneCenters = 0 mãi; thêm nữa đơn vị hiển thị là
+> "trung tâm" (total 19) không phải "phiếu"; job upload bán hàng không set
+> tổng phiếu kỳ.
+>
+> **Đã sửa (code `3f5ec5b`, tsc 0):**
+> 1. Agent 40_web_agent.py: marker misa-ban-hang-api = TUPLE 2 chuỗi đúng
+>    ("✅ CHỨNG TỪ BÁN HÀNG ĐÃ TẠO" + "⏭️ Phiếu " = phiếu đã tồn tại) —
+>    done = số phiếu ĐÃ TRÊN MISA; `_count_progress` hỗ trợ marker list.
+> 2. -smed.ts createSmedJob: total_centers = COUNT(sm_banhang_phieu kỳ) —
+>    % = phiếu đã trên MISA / tổng phiếu kỳ.
+> 3. header-jobs-bar + sql-data-module: nhãn "Đã tạo X/Y phiếu trên MISA · Z%".
+>
+> **Verify:** job 21/10 của ĐH (463F38CB) XONG 17:17 — **tạo 176 · ghi sổ 176 ·
+> bỏ qua 9 · lỗi 0 = 185/185 phiếu kỳ 21/10** (lúc ĐH xem 135 — giờ đủ).
+> Marker fix cần RESTART agent (script gd491_restart_when_idle chạy nền, chờ
+> Task_04 + chietkhau xong); web fix cần PUSH để hiển thị trên production.
+> Job cũ đã done giữ done_centers theo marker cũ — không sửa (PA giữ nguyên).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.5.1**.
