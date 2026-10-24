@@ -5619,3 +5619,33 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.3.1**.
+
+### GĐ 517 / C.333 (Trợ lý Freebuff): GC FLU "hàng không khớp" — đối chiếu 3 nguồn ra cùng sản phẩm KHÁC TÊN + alias match + 3 phiếu 22/10 LÊN MISA + cảnh báo danh mục (2026-10-24)
+
+> **ĐH giao:** 3 phiếu 22/10 skip "hàng không khớp: GC FLU Pre-filled Syringe" — đối
+> chiếu thực sự chưa có thì thêm sản phẩm vào danh mục MISA + cảnh báo người dùng.
+>
+> **Đối chiếu 3 nguồn → KHÁC TÊN chứ KHÔNG thiếu (không thêm mới — tránh trùng danh
+> mục):** danh mục MISA có duy nhất `GC FLU Quadrivalent pre-filled syringe inj` ·
+> HÓA ĐƠN THUẾ 00012611 (của chính phiếu TD) ghi `"GC FLU pre-filled syringe inj"`
+> 30×215.000 + 6 tặng = 36 liều khớp SMED (215.000 − CK 12,5% = 188.124,993) · SMED
+> `GC FLU Pre-filled Syringe`.
+>
+> **Đã làm (repo con code `6be4859` + fix `d8cbffa`/`808b1c3`/`ad73d5b` + entry
+> `e63d4ae` — chi tiết đầy đủ ở entry C.330 AGENTS.md repo con):** alias match lỏng
+> (subset token, chỉ nhận khi DUY NHẤT 1 ứng viên) + report aliasMatched/missingItems
+> → wrapper JSON → agent result (uploadSummary.aliasCount/missingCount + chi tiết) →
+> UI 2 chip cảnh báo (vàng khớp tương đương / đỏ cần thêm danh mục). 3 bug tự phát
+> hiện qua chạy thật (shadow `m`; thiếu `.lower()`; Excel ghi tên SMED → MISA INVALID)
+> đã fix + test.
+>
+> **Verify:** unit **14/14 PASS** · **3 phiếu 22/10 ĐÃ LÊN MISA + GHI SỔ** (TD
+> 6.772.500 · HM 15.115.758 · TS 11.287.500 — khớp SMED từng đồng,
+> is_posted_finance=true) · chạy qua luồng IMPORT EXCEL nên phiếu HIỆN danh sách.
+>
+> **⚠️ Số đối chiếu:** ĐH ghi tổng 3 phiếu 17.844.381đ nhưng số MISA thật 33.175.758đ
+> — trình ĐH xem lại nguồn số (có thể từ báo cáo khác). Cơ chế TỰ ĐỘNG THÊM sản phẩm
+> mới vào danh mục (khi thật sự chưa có) chưa làm — cần endpoint tạo hàng hóa MISA +
+> test an toàn; hiện cảnh báo đỏ để người dùng thêm rồi chạy lại — chờ ĐH chốt.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.3.0**.
