@@ -5649,3 +5649,43 @@ repo con **10.1.0**.
 > test an toàn; hiện cảnh báo đỏ để người dùng thêm rồi chạy lại — chờ ĐH chốt.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.3.0**.
+
+### GĐ 518 (Trợ lý Freebuff): PA Push đợt 24/10 — GĐ 510→517 + bump repo con 10.4.0 + LIVE (2026-10-24)
+
+> **Lệnh "Push" của Đại Ca (24/10 sáng).** Rà trùng lặp nguyên tắc 3: nhánh phụ
+> agent-cli + pipeline-work RỖNG (0 commit riêng) · working tree chỉ file dở
+> phiên khác (overview-dashboard · -danh-muc · danh-muc-khach-hang · AGENTS.md/
+> REGISTRY qua cổng) — KHÔNG add, KHÔNG đụng. Commit chưa push = GĐ 510 (chia
+> sẻ dữ liệu user) + 511/C.328 (PA-1 builder bán hàng 3 lỗi) + 512/C.329 (PA-3
+> mua hàng Import Excel API) + 514 (fix validate ngày — sau đổi số 513→514 theo
+> GĐ 285) + 515/C.331 (cửa sổ MISA HIỆN) + 516/C.332 (Task_04 spam) + 517/C.333
+> (GC FLU alias — phiên khác) — đã hợp nhất tuần tự trên main, 0 conflict.
+>
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** repo con **10.3.1 → 10.4.0**
+> (minor — GĐ 510 + 512 + 513/C.330 có feature mới) — package.json +
+> DEFAULT_VERSION (2/2 chỗ, checklist GĐ 138 ✓). **App tổng KHÔNG bump**
+> (docs-only — entry + registry — tiền lệ GĐ 416/422) giữ 6.8.0.
+>
+> **Checklist GĐ 470-A (env 2 app):** app tổng 6/6 ✓ (DATABASE_URL ·
+> APP_JWT_SECRET · TUNNEL_API_BASE_URL/GIST_ID · BETTER_AUTH_*) · app con 6/6
+> ✓ (DATABASE_URL · APP_JWT_SECRET · TUNNEL_* · ZAI_API_KEY · GH_GIST_TOKEN).
+>
+> **Push:** app tổng `f0cdc9e..398bf51` (20 commit) · repo con
+> `0915e69..634c8a7` (19 commit).
+>
+> **✅ Verify production (checklist GĐ 470-B — lần đầu curl):** app con
+> `giong-banhang.vercel.app` = **10.4.0** · app tổng = **6.8.0** · login thật
+> (sign-in/email → user Phạm Kiên Cường) ✓ · get-session ✓ · SSO ký
+> APP_JWT_SECRET → **302 về app con + Set-Cookie bh_session** ✓ ·
+> /api/auth/me → SuperAdmin + 92 mods (có bh-doi-chieu-so-lieu + các lá) ✓.
+> Agent: không cần restart thêm (task_runner mới đã nạp lúc restart 09:12 GĐ
+> 516; builder spawn nạp mới tự động).
+>
+> **Tiêu chí kiểm chứng của Đại Ca:** (1) trang UPLOAD Hóa đơn GTGT bán hàng —
+> ô chọn ngày hiển thị đúng, bấm Upload Misa KHÔNG còn lỗi "Ngày phải dạng
+> DD/MM/YYYY" (không cần chọn lại ngày thủ công nữa); (2) phiếu bán hàng lên
+> MISA có Ngày hóa đơn = ngày bán + Ký hiệu HĐ đủ; (3) log agent không còn
+> spam "spawn Task_04"; (4) cửa sổ MISA AMIS HIỆN khi đẩy dữ liệu (GĐ 515).
+>
+> **Version:** app tổng **6.8.0** (giữ — docs-only) / repo con **10.4.0** —
+> ĐÃ PUSH + ĐÃ LIVE.
