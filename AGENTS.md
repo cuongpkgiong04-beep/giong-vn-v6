@@ -5966,7 +5966,9 @@ repo con **10.1.0**.
 > trên SMED (Lịch sử gửi HĐ) kiểm nội dung — trống thì gửi lại HĐ rồi chạy
 > lại**. Tổng kết kỳ 21/10: **180/185 lên MISA** (176 + 4) — còn đúng 5 TĐ chờ SMED.
 
-### GĐ 528 (Trợ lý Freebuff / máy LAN-1): 🔒 KHẢO SÁT kiến trúc phân tải download/upload đa máy — ĐH CHỐT PA-1, thiết kế chi tiết XONG (2026-10-24/25)
+---
+
+### GĐ 528 (Trợ lý Freebuff / máy LAN-1): ✅ Phân tải download/upload đa máy — ĐH CHỐT PA-1, CODE XONG (C.338) (2026-10-24/25)
 
 > **Yêu cầu của Đại ca (24/10):** khảo sát tổng thể app con + Database → đề xuất
 > giải pháp giảm tải cho máy chủ: phân việc cho 4 máy tính trong phòng (LAN +
