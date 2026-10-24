@@ -6038,3 +6038,43 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.5.3**.
+
+---
+
+### GĐ 529 (Trợ lý Freebuff): Cài môi trường máy Z: (git + node qua winget) + fix tsc TS18046 + fix test tunnel-gist-fallback (2026-10-25)
+
+> **Bối cảnh — máy LAN mới (Z: = \\192.168.1.250\DuLieuChung — máy thiếu môi trường):**
+> shell cmd PATH hạn chế — không git/npm/node/python/grep. ĐH hỏi → em khảo sát bằng
+> chứng (PATH + where) → trình 3 PA (winget / portable zip / không cài) → **ĐH chốt
+> PA-1: winget cài Git + Node LTS.**
+>
+> **Đã cài (winget, UAC 2 prompt):** Git for Windows **2.56.0.windows.3**
+> (C:\Program Files\Git — kèm bash + grep + sed: hook GĐ 495 là sh script chạy
+> được ngay, hết nỗi thiếu grep) · Node.js LTS **v24.22.1** + npm **11.19.1**
+> (C:\Program Files\nodejs) · `git config --global user.email
+> cuongpk.giong04@gmail.com` (GĐ 285) + `safe.directory "*"`. **Lưu ý phiên sau:**
+> phiên ZCode MỚI trên máy này tự nhận git/npm (PATH user/machine đã có); phiên
+> khởi động TRƯỚC khi cài phải prepend `C:\Program Files\Git\cmd` +
+> `C:\Program Files\nodejs` đầu mỗi lệnh. Máy KHÔNG có python → commit file dùng
+> chung qua cơ chế ghép THỦ CÔNG đúng cổng (snapshot .git/giong-shared-snapshots +
+> ghép entry mình lên bản HEAD + `--no-verify` + trả lại bài dở phiên khác).
+>
+> **2 lỗi code CÓ SẴN phát hiện khi verify (fix trong GĐ này, code `b3cc4f2`):**
+> 1. **tsc TS18046** `error-component.tsx:17` — `'error' is of type 'unknown'`
+>    (TanStack ErrorComponentProps + TS 5.7 strict; file nguyên trạng từ First
+>    commit): fix `error instanceof Error ? error.message : ""` + fallback text.
+> 2. **npm test 58/59 fail** `tunnel-gist-fallback.test.ts` — KHÔNG phải logic
+>    (3/3 test case PASS): eager bootstrap cuối db.ts chạy khi
+>    `dbSource === 'pglite'` (máy test thiếu env tunnel/neon) → `import.meta.glob`
+>    (API Vite) KHÔNG có trong Node thuần → unhandledRejection SAU khi test xong
+>    → fail cả file. Fix test-only: set `TUNNEL_API_BASE_URL` TRƯỚC import →
+>    dbSource='tunnel' → bỏ qua bootstrap — **không đụng db.ts** (file nhạy cảm).
+>
+> **Verify:** `tsc --noEmit` **EXIT 0** · `npm test` **58/58 PASS, 0 fail**
+> (6.6s — nhanh hơn trước 15.7s vì không còn bootstrap PGLite).
+>
+> **Tiêu chí kiểm chứng:** phiên mới trên máy Z: git/npm tự nhận; `npm test` xanh
+> cả trên máy này lẫn máy chủ (máy chủ vốn có env → không bị bootstrap nền).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.5.3**.
