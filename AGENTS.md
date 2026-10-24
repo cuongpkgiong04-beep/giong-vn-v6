@@ -5966,17 +5966,75 @@ repo con **10.1.0**.
 > trên SMED (Lịch sử gửi HĐ) kiểm nội dung — trống thì gửi lại HĐ rồi chạy
 > lại**. Tổng kết kỳ 21/10: **180/185 lên MISA** (176 + 4) — còn đúng 5 TĐ chờ SMED.
 
-### GĐ 528 (Trợ lý Freebuff): 🔒 KHẢO SÁT kiến trúc phân tải download/upload đa máy — ĐANG LÀM (2026-10-24)
+### GĐ 528 (Trợ lý Freebuff): Khảo sát kiến trúc phân tải download/upload đa máy — kết quả + 3 phương án chờ ĐH chốt (2026-10-24)
 
-> **Yêu cầu của Đại ca (24/10):** khảo sát tổng thể app con + Database → đề xuất
-> giải pháp giảm tải cho máy chủ: phân việc cho 4 máy tính trong phòng (kết nối
-> LAN, đều có Internet) cùng tham gia download (SMED / MISA meInvoice / Bank /
-> MIA) + upload (MISA AMIS); GiondDB vẫn đặt tại máy chủ; mở rộng được cho máy
-> ngoài LAN (máy ở nhà). Tham chiếu mô hình MISA AMIS (1 máy chủ + nhiều công ty
-> ghi dữ liệu từ nhiều điểm).
->
-> **Trạng thái:** 🔒 ĐANG KHẢO SÁT — entry này sẽ cập nhật kết quả + phương án
-> trình ĐH khi xong. Chưa viết code.
->
+> **Yêu cầu ĐH (24/10):** khảo sát tổng thể app con + Database → đề xuất giải
+> pháp giảm tải máy chủ: phân việc 4 máy tính trong phòng LAN (đều có Internet)
+> cùng download (SMED / MISA meInvoice / BANK / MIA) + upload (MISA AMIS);
+> GiongDB đặt tại máy chủ — người đọc báo cáo vẫn thấy tổng thể; mở rộng được
+> cho máy ngoài LAN (máy ở nhà — đã có Tailscale tới giongpc).
+
+> **HIỆN TRẠNG (khảo sát thật — 3 chuyên gia song song, bằng chứng file:line):**
+> Browser → Vercel (app con) → Cloudflare Tunnel → **api_server FastAPI**
+> (bind 127.0.0.1:8777 — service GIONG_API_Server, máy chủ) → **SQL Server
+> Express `.\SQLEXPRESS` / DB `GiongDB`** (Trusted_Connection — máy chủ; tên
+> "GiondDB" chỉ là cách gọi/lỗi chính tả lịch sử — từng gây login fail 4060,
+> xem 33_smed_TKKH.py:162-165 + dm_khach_hang_import.py:38-41). Worker
+> **40_web_agent.py** (service GIONG_SMED_Agent — CÙNG máy chủ) poll
+> `/agent/claim` 20s → chạy tool theo REPORT_MAP → `/agent/report` ghi
+> result/result_full → ETL NGAY sau job → builder. Task định kỳ:
+> `task_runner.py` + bảng `scheduled_tasks` (Task_02 3 slot/ngày → Task_03…).
+> File tải về: `banhang/OUTPUT/<số.tên>/<ngày>` — đĩa CỤC BỘ máy chủ; tunnel
+> URL phát tán qua gist (1 slot base_url).
+
+> **3 ĐIỂM NGHẼN CHÍNH khi muốn nhiều máy:**
+> 1. **Claim job KHÔNG nguyên tử** — api_server.py:1038-1052 `select top1
+>    pending` rồi `update ... where id=?` (2 transaction rời, không
+>    UPDLOCK/READPAST, không guard `status='pending'`, không worker_id/lease)
+>    → 2 máy poll cùng lúc CHẮC CHẮN chạy trùng job khi tải cao. Cùng lỗi ở
+>    `/task/claim` (api_server.py:1182-1200). Nhánh Vercel cũ
+>    (`for update skip locked` → dịch `WITH (READPAST,UPDLOCK,ROWLOCK)`,
+>    api_server.py:355-376) AN TOÀN — nhưng production đi đường internal
+>    không khóa.
+> 2. **DB + OUTPUT gắn cứng máy chủ** — 33-34 chuỗi connstr
+>    `Server=.\SQLEXPRESS, Trusted_Connection` hardcode toàn repo (chỉ
+>    api_server.py:59-63 có env `API_SQL_CONN`); OUTPUT là đĩa cục bộ
+>    (builder LHT đọc file trực tiếp); `import_log` dedupe theo file_hash PK;
+>    stg_* chỉ có src_file — KHÔNG cột máy. Máy trạm workgroup (không AD)
+>    KHÔNG dùng được Trusted_Connection qua LAN → phải tạo SQL login riêng.
+> 3. **Ràng buộc SESSION 1 tài khoản/thiết bị** (xác minh từ code +
+>    CHECKPOINT-GD444.md:25): MISA AMIS (Chrome CDP 9222 + profile
+>    `.secrets/chrome-cdp` — login mới ĐÁ phiên máy kia; misa_tab_guard.py:52-53),
+>    MISA meInvoice 30/31 (chung `misa_state.json`), BANK VCB/TCB/TPB (headful,
+>    login mới mỗi lượt — ngân hàng 1 phiên). → Nhóm MISA AMIS + meInvoice +
+>    mỗi ngân hàng phải GHIM 1 máy (hoặc tạo tài khoản thứ 2). SMED (13 tool
+>    active — login mới mỗi lượt) + MIA (tự login lại khi 401) chia nhiều máy
+>    được.
+
+> **BA PHƯƠNG ÁN (chờ ĐH chốt — CHƯA viết code):**
+> - **PA-1 (khuyến nghị) — Queue chung + phân vai mềm:** mở GiongDB cho LAN
+>   (TCP 1433 + SQL login cho máy trạm); api_server/tunnel/gist giữ 1 bản ở
+>   máy chủ; 3 máy trạm chạy worker cùng code, mỗi máy ghim nhóm job theo env
+>   (role). Sửa: claim atomic 2 chỗ + cột worker_id/heartbeat/lease + guard
+>   chủ sở hữu ở report/cancel + reaper chỉ máy chủ + scheduler chỉ máy chủ +
+>   connstr đọc ENV chung + OUTPUT share SMB chung (\\máy-chủ\...) + script
+>   cài máy trạm. Dự đoán: giảm tải máy chủ rõ (nhóm SMED 13 tool + BANK
+>   chuyển máy khác — rút ngắn task đêm); 4 máy chạy song song; máy tắt → job
+>   nhóm đó chờ (không mất dữ liệu); máy nhà vào qua Tailscale (đã sẵn).
+> - **PA-2 — Phân vai cứng tối thiểu:** chỉ sửa claim filter report theo máy
+>   + env role + cài máy trạm; KHÔNG thêm lease/worker_id. Dự đoán: giảm tải
+>   tương tự khi chạy bình thường nhưng máy chết = việc đứng; không truy vết
+>   job máy nào.
+> - **PA-3 — Orchestrator đầy đủ (chuẩn MISA AMIS hơn):** như PA-1 + worker
+>   register/heartbeat + dashboard máy + auto-update code (git pull) + token
+>   riêng từng worker + web hiện cột "Máy chạy". Dự đoán: bền vững mở rộng
+>   5-10 máy nhưng công sức lớn hơn (nhiều ngày), rủi ro regression cao hơn.
+
+> **Câu hỏi chờ ĐH chốt:** (1) chọn PA nào; (2) máy nào giữ vai MISA AMIS
+> (1 session — đề xuất máy chủ vì đang có Chrome CDP + phiên ĐH); (3) OK tạo
+> SQL login cho máy trạm (workgroup không dùng Windows auth qua LAN);
+> (4) OUTPUT share SMB chung hay giữ local từng máy (ảnh hưởng builder đọc
+> file); (5) có tạo tài khoản MISA/BANK thứ 2 để chia tải thêm không.
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.5.3**.
