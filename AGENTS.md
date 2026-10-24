@@ -5957,3 +5957,11 @@ repo con **10.1.0**.
 > missing_out rỗng → KHÔNG phải tên hàng) → **GĐ 526b**: builder ghi LÝ DO kỹ
 > thuật chi tiết (parse Lịch sử gửi / thiếu data / entity) + job chạy lại lần 3
 > `021bd5bd` (đọc log xác định) — code `ae348d0`, bump **10.5.3**.
+>
+> **KẾT QUẢ LOG lần 3 (21:14):** tạo 0 · bỏ qua 185 · lỗi 0 — 5 phiếu TĐ lỗi
+> **`payload: thiếu entity 'Data' trong Lịch sử gửi`** → SMED trả mục Lịch sử
+> gửi nhưng NỘI DUNG chứng từ TRỐNG cho 5 HĐ này (quét 3 lượt 17:06/20:24/21:05
+> đều trống; KHÔNG phải phân trang — 185 HĐ ≤ 200/lượt, 0 skip 'không có
+> lichsugui') → **bất thường phía SMED/nội dung hóa đơn: ĐH/team KT mở 5 HĐ
+> trên SMED (Lịch sử gửi HĐ) kiểm nội dung — trống thì gửi lại HĐ rồi chạy
+> lại**. Tổng kết kỳ 21/10: **180/185 lên MISA** (176 + 4) — còn đúng 5 TĐ chờ SMED.
