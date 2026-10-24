@@ -5539,3 +5539,47 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con
 > **10.3.1**.
+
+### GĐ 516 / C.332 (Trợ lý Freebuff): DỪNG + SỬA Task_04 spawn lặp mỗi 30 giây từ nửa đêm — GĐ 509 renumbering lộn tên (2026-10-24)
+
+> **Đại Ca ra lệnh (24/10 sáng):** "Task_04 lặp liên tục lỗi nên tạo rác. Dừng
+> lại và sửa luôn." — log agent in `[task] đã spawn Task_04 (chỉ báo cáo) kỳ
+> 22/10/2026` MỖI 30 GIÂY từ ~00:00 24/10 (hơn 1.000 dòng/tối).
+>
+> **Gốc (bằng chứng git + DB):** commit renumbering GĐ 509 (`f1bd0e7`) đổi
+> nhãn hiển thị Task_02(quick 17:15)/Task_03(daily 23:00)/Task_04(report)
+> NHƯNG trong `_maybe_spawn_task04` + `_spawn_report_task` lộn 4 chỗ:
+> (1) rows2 nhầm lấy REPORT (Task_03%) làm "daily đã xong"; (2) rows3
+> `name = 'Task_02'` chính xác — daily 23:00 thật là "Task_02 · 23:00" → mốc
+> so dính bản 02/10 → điều kiện LUÔN pass; (3) INSERT 'Task_03' nhưng NOT
+> EXISTS đổi kiểm 'Task_02' — 2 bảng lệch → INSERT 0 dòng (may — DB 0 rác,
+> đã probe) nhưng log "đã spawn" in VÔ ĐIỀU KIỆN; (4) run_date lấy config
+> của report (kỳ cũ 22/10 thay vì daily mới nhất). Guard C.326 lệch đối tượng.
+>
+> **Đã sửa (`task_runner.py` — 2 hàm):** khôi phục logic GĐ C.223 + guard
+> C.326 với ĐÚNG đối tượng DB thực tế: daily = LIKE 'Task_02%' (status
+> done/error) · report = name 'Task_03' (guard "hôm nay đã có report → dừng")
+> · quick = LIKE 'Task_04%' <> draft · run_date = config $.date của daily
+> mới nhất. `_spawn_report_task`: COUNT TRƯỚC — đã có Task_03 cùng kỳ →
+> return im (không INSERT, không log); log đúng tên Task_03. Py_compile OK.
+>
+> **Verify (sau restart 09:12 qua gd491_restart_when_idle.py):** log mới
+> `đã spawn Task_03 (chỉ báo cáo) kỳ 23/10/2026` đúng 1 LẦN (kỳ 23/10 bị lỡ
+> từ tối qua — hệ thống tự lành) · Task_03 chạy 29 báo cáo (job SQL 219-220
+> dòng xong lượt lượt) · **spam "spawn Task_04" = 0 dòng trong log mới**.
+>
+> **⚠️ Bài học + tồn đọng (KHÔNG sửa — ngoài phạm vi):** (a) renumbering GĐ
+> 509 chỉ đổi nhãn log/docstring — DB + web vẫn tên cũ (Task_02 · 23:00 /
+> Task_03 report / Task_04 · 17:15) — phiên sau cần thống nhất 1 lần; (b)
+> `_load_quick_config` dùng `LIMIT 1` — SQL Server không có LIMIT → config
+> web bản Task_04 (quick) không áp dụng được (luôn dùng mặc định cứng) + test
+> 39 fail có sẵn (stub match chuỗi SQL cũ); (c) log ETL có lỗi "dataLoadedAt
+> 42000 Cannot find data type 10.2026" tồn từ trước (không chặn báo cáo);
+> (d) test task_runner_quick 39/40 — 1 fail có sẵn.
+>
+> **Trùng phạm vi:** task_runner.py thuộc GĐ 506/C.324 🔒 (Task_07 phiên
+> khác) — em chỉ sửa 2 hàm spawn report, KHÔNG đụng vùng Task_07. Test 39
+> fail có sẵn (không do GĐ 515).
+>
+> **Version:** KHÔNG bump (python agent-side — chờ lệnh Push). App tổng
+> **6.8.0** / repo con **10.3.1**.
