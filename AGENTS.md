@@ -5698,3 +5698,40 @@ repo con **10.1.0**.
 > 06372610230911001576 (23/10 — không lên sổ) tìm khác biệt.
 >
 > **Điều tra + trình PA — CHỜ ĐH CHỐT, CHƯA sửa code.**
+
+### GĐ 519 / C.334 (Trợ lý Freebuff): PA-1 ĐH chốt — khung "Lịch sử upload MISA" riêng (2026-10-24)
+
+> **Bối cảnh (hỏi-đáp 24/10):** Đại Ca hỏi "các nhiệm vụ chạy ẩn như upload lên
+> MISA thì tự chạy nhưng chưa cho ra báo cáo trong phần Lịch sử chạy báo cáo đúng
+> không?" — em xác nhận ĐÚNG: khung "Lịch sử chạy báo cáo" lọc cứng
+> `report='sqlreport'` (GĐ 239) nên job upload (`misa-*-api`) không bao giờ vào;
+> tiến độ upload chỉ hiện tạm trên thanh trên cùng (khi đang chạy) + dòng "Job
+> gần nhất" dưới nút Upload Misa. Trình 3 PA — **ĐH chốt PA-1**: thêm khung
+> "Lịch sử upload MISA" riêng dưới khung lịch sử báo cáo.
+
+> **Đã làm (repo con code `521026e` — 3 file +197/−6):**
+> 1. `sql-data-module.tsx` — khung "Lịch sử upload MISA" NGAY SAU khung "Lịch
+>    sử chạy báo cáo" (chỉ trang có nút Upload Misa): 30 lệnh misa-*-api mới
+>    nhất (nhãn Mua hàng / Xuất kho / Bán hàng (HĐ GTGT) + kỳ + giờ + người tạo
+>    + badge), dòng ngắn "tạo X · ghi sổ Y · bỏ qua Z · lỗi W" (+ chip khớp
+>    tương đương/thiếu danh mục khi có); bấm dòng mở rộng chi tiết (mã lệnh ·
+>    trạng thái · phiếu tạo mới · file LOG); làm mới 60s + nút Làm mới + ngay
+>    sau bấm Upload.
+> 2. `-smed.ts` — server fn `loadUploadHistory`: SQL `report IN (3 loại)` limit
+>    30 + cột result (JSON tổng kết VÀI KB — an toàn egress). Không lọc
+>    created_by (GĐ 510).
+> 3. `agent/40_web_agent.py` — mở rộng khối đọc file LOG uploadSummary (trước
+>    chỉ mua hàng) cho cả 3 loại: runner xuất kho/bán hàng ghi
+>    `LOG/{report}_*.json` cùng schema → job.result.uploadSummary đồng nhất.
+
+> **Verify:** tsc 2 repo EXIT 0 · py_compile OK · unit 4 file PASS (12/11 ·
+> 62/62 · 10/10 · 15/15) · diff 3 file chỉ chứa thay đổi GĐ này (3 file
+> modified khác của phiên KHÁC — overview-dashboard / -danh-muc /
+> danh-muc-khach-hang — KHÔNG đụng). Agent restart 11:28 qua
+> `gd491_restart_when_idle.py` (chờ rảnh tự chạy) — code mở rộng ĐÃ NẠP.
+
+> **Tiêu chí kiểm chứng (sau Push):** trang UPLOAD (mua hàng / xuất kho / HĐ
+> GTGT) → khung "Lịch sử upload MISA" hiện dưới khung lịch sử báo cáo; lệnh
+> upload mới xong hiện tổng kết đủ 3 loại (lệnh cũ chỉ mua hàng có tổng kết).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.4.0**.
