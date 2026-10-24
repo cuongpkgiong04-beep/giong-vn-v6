@@ -5648,6 +5648,8 @@ repo con **10.1.0**.
 > mới vào danh mục (khi thật sự chưa có) chưa làm — cần endpoint tạo hàng hóa MISA +
 > test an toàn; hiện cảnh báo đỏ để người dùng thêm rồi chạy lại — chờ ĐH chốt.
 >
+> **BỔ SUNG 24/10 chiều (repo con `52e0a85`):** 2 job verify kẹt 'cancelRequested' hiện 'Đang chạy' mãi (ĐH báo) — gỡ (status='cancel' ×2) + fix gốc `/jobs/cancel` api_server: job PENDING đặt 'cancel' THẲNG (cancelRequested không bao giờ được xử lý — agent chỉ claim 'pending') + restart api_server nạp fix. Tunnel đổi URL `wav-finder-operates-celebration` — cập nhật env Vercel TUNNEL_API_BASE_URL + GH_GIST_TOKEN **2 app** (gist giờ SECRET — đọc cần token sống; fallback GĐ 426 hoạt động lại) + redeploy Ready + .env.local đồng bộ. Verify production: **6.8.0 / 10.5.1** (curl lần đầu) + login OK.
+>
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.3.0**.
 
 ### GĐ 518 (Trợ lý Freebuff): PA Push đợt 24/10 — GĐ 510→517 + bump repo con 10.4.0 + LIVE (2026-10-24)
