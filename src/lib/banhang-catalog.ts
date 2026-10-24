@@ -245,7 +245,13 @@ export const BH_GROUPS: BhGroup[] = [
     key: "bh-dieu-hanh-nhiem-vu",
     label: "ĐIỀU HÀNH — NHIỆM VỤ",
     leaves: [
-      { to: "/m/tasks", label: "Nhiệm vụ định kỳ (Task_01 + Task_02)" },
+      // GĐ 530 (ĐH yêu cầu 24/10): nhãn ghi RÕ GỒM VIỆC GÌ + đủ dải nhiệm vụ —
+      // trước đây chỉ "Task_01 + Task_02" (thiếu Task_03→Task_07 nên ĐH không biết
+      // trong đó có tải dữ liệu hàng ngày / chạy báo cáo / upload MISA).
+      {
+        to: "/m/tasks",
+        label: "Nhiệm vụ định kỳ (Task_01→07): tải dữ liệu · báo cáo · upload MISA",
+      },
     ],
   },
   // GĐ 253 (29/09/2026 — yêu cầu Đại ca): nhóm DỮ LIỆU TỪ BANK — 4 sao kê
