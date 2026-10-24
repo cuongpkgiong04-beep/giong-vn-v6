@@ -5793,3 +5793,33 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (python agent-side — chờ lệnh Push). App tổng
 > **6.8.0** / repo con **10.4.0**.
+
+### GĐ 522 (Trợ lý Freebuff): PA Push đợt 24/10 chiều — GĐ 519→521 + bump repo con 10.5.0 + LIVE (2026-10-24)
+
+> **Lệnh "Push" của Đại Ca (24/10 chiều).** Rà trùng lặp nguyên tắc 3: nhánh
+> phụ agent-cli + pipeline-work RỖNG · working tree chỉ file dở phiên khác
+> (overview-dashboard · -danh-muc · danh-muc-khach-hang) — KHÔNG đụng. Commit
+> chưa push = GĐ 519/C.334 (khung Lịch sử upload MISA — phiên khác) + GĐ
+> 520 (điều tra 3 điểm) + GĐ 521/C.335 (PA-1 fix tên khách dòng hàng + tham
+> chiếu hóa đơn) — 2 phiên KHÁC file (C.334 đụng -smed.ts/40_web_agent ·
+> C.335 đụng misa_banhang_api) — 0 xung đột.
+>
+> **Bump version:** repo con **10.4.0 → 10.5.0** (minor — C.334 có feature
+> khung lịch sử upload + C.335 fix) — 2/2 chỗ (checklist GĐ 138 ✓). App tổng
+> KHÔNG bump (docs-only) giữ 6.8.0.
+>
+> **Checklist GĐ 470-A:** env 2 app đủ 6/6 mỗi app ✓.
+>
+> **Push:** app tổng `97af713..9c1a7dd` (6 commit) · repo con
+> `634c8a7..d5fac31` (5 commit).
+>
+> **✅ Verify production (GĐ 470-B — lần đầu curl):** app con = **10.5.0** ·
+> app tổng = **6.8.0** · login thật ✓ · SSO 302 + bh_session ✓ ·
+> /api/auth/me SuperAdmin 92 mods ✓.
+>
+> **Tiêu chí kiểm chứng của Đại Ca:** (1) kỳ 22/10 bấm Upload Misa → phiếu
+> đủ ngày HĐ + ký hiệu + **Sổ chi tiết có Tên khách hàng** + **ô "Tham chiếu"
+> có hóa đơn**; (2) khung "Lịch sử upload MISA" (C.334) hiển thị trên trang
+> upload; (3) phiếu 23/10 `06372610230911001576` đã có tham chiếu (test GĐ 521).
+>
+> **Version:** app tổng **6.8.0** (giữ) / repo con **10.5.0** — ĐÃ PUSH + ĐÃ LIVE.
