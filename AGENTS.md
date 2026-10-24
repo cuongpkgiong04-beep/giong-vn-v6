@@ -5697,7 +5697,32 @@ repo con **10.1.0**.
 > (3) đối chiếu phiếu 06372610080846334867 (08/10 — tốt) vs
 > 06372610230911001576 (23/10 — không lên sổ) tìm khác biệt.
 >
-> **Điều tra + trình PA — CHỜ ĐH CHỐT, CHƯA sửa code.**
+> **KẾT QUẢ ĐIỀU TRA (bằng chứng thật — CHỜ ĐH CHỐT PA, CHƯA sửa code):**
+>
+> **LỖI 1 — "Tham chiếu" trống:** MISA lưu liên kết chứng từ↔hóa đơn ở BẢNG
+> RIÊNG `reference` (GET `/g1/api/ref/v1/reference/<refid>`): phiếu UI (08/10)
+> → 1 bản ghi `{refid1=phiếu, refid2=hóa đơn, reftype2=3560, refno1, refno2}`;
+> phiếu builder (23/10) → **Data rỗng** (cả refid phiếu lẫn refid hóa đơn).
+> MISA UI lưu reference qua bước RIÊNG sau khi lưu chứng từ (JS bundle
+> BaseVoucherDetail: `saveReference → buildReferenceData → API save`) — builder
+> gọi API tạo chứng từ nhưng BỎ QUA bước này.
+>
+> **LỖI 2 — Sổ chi tiết trống "Tên khách hàng":** sổ lấy tên khách từ DÒNG HÀNG
+> (`sa_voucher_detail.account_object_name`): phiếu UI 08/10 dòng hàng =
+> 'LÊ BẢO NGỌC'; phiếu builder 23/10 dòng hàng = **None** (dict dòng hàng
+> builder không set tên khách — chỉ master có). Fix = thêm 1 dòng vào dict
+> detail.
+>
+> **Câu 3 (so 2 phiếu):** 2 khác biệt QUYẾT ĐỊNH = dòng hàng thiếu tên khách +
+> bảng reference thiếu. Khác phụ: phiếu builder có cost_account 632_BH /
+> stock_account 156_LB (do yêu cầu ghi sổ), phiếu tay có main_unit_price /
+> unit_price_after_discount / vat_rate. Ghi chú: phiếu 23/10 (166 phiếu, Task
+> tự động sáng nay) — **fix GĐ 511 ĐÃ HIỆU LỰC: inv_date = 23/10 + inv_series
+> 1C26Mxx đầy đủ** ✓.
+>
+> **3 PA trình ĐH:** PA-1 sửa builder (2 fix) áp dụng từ kỳ sau — phiếu đã tạo
+> giữ nguyên · PA-2 = PA-1 + dọn tạo lại 22/10 + 23/10 (333 phiếu) · PA-3 =
+> PA-1 + dọn tạo lại toàn bộ từ 08/10. Trình bày chi tiết trong phiên.
 
 ### GĐ 519 / C.334 (Trợ lý Freebuff): PA-1 ĐH chốt — khung "Lịch sử upload MISA" riêng (2026-10-24)
 
