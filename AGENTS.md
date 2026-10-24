@@ -5465,3 +5465,31 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (điều tra + chờ ĐH chốt — quy tắc ĐA AGENT). App tổng
 > **6.8.0** / repo con **10.3.1**.
+
+### GĐ 512 / C.329 (Trợ lý Freebuff): PA-3 — Upload mua hàng chuyển IMPORT EXCEL API (phiếu HIỆN danh sách MISA) + check ai_search trước + UI up-nhap-kho rõ kỳ/tiến độ (2026-10-23)
+
+> **Bối cảnh:** ĐH báo 3 hiện tượng khi Upload Misa kỳ 22/10: cảnh báo hiện
+> ngày 23/10 (phải sửa tay), job "0%" lâu, MISA không thấy phiếu. **Điều tra:**
+> job `17F96194` done 19/19 ĐÚNG — 33/33 phiếu ĐÃ CÓ trên MISA (ai_search thấy +
+> detail is_posted_finance=True; tạo bởi `recreate_2210.py` untracked 10:35 sáng)
+> nhưng **VÔ HÌNH với danh sách** (save_full — GĐ 481/499); "0%" = total_centers=0;
+> ngày reset theo job báo cáo (không tính job upload). **ĐH chốt PA-3.**
+>
+> **Đã làm (repo con `c1eede5` code + `ab06d55` entry C.329 — chi tiết đầy đủ ở
+> entry C.329 AGENTS.md repo con):** (1) builder mua hàng `misa_muahang_api.py`
+> chuyển sang **Import Excel API** (`gd478_import_api.py` tham số hóa
+> refType=302/table_name=pu_voucher — phiếu import HIỆN danh sách) + template
+> MUA HÀNG 25 cột (`sinh_excel_mua_hang` — mapping theo tên cột) + **check tồn
+> tại ai_search TRƯỚC** (bỏ blind save_full/diễn giải InvalidInvno) + kiểm chứng
+> số dòng/tiền sau import + ghi sổ; (2) agent 40_web_agent ghi tổng kết job
+> (tạo/ghi sổ/bỏ qua/lỗi) vào job.result; (3) UI sql-data-module: sync ngày ưu
+> tiên job upload gần nhất + nhãn cảnh báo khác kỳ + tiến độ "Đang tạo phiếu +
+> ghi sổ (N phiếu)" + tổng kết khi xong.
+>
+> **Verify:** unit repo con **11/11 + 4/4 PASS** · tsc EXIT 0 · chạy thật 22/10:
+> NL 3 phiếu skip đúng · job full `bd32a36a` (23 phút) **36 skip (33 đã có + 3 GC
+> FLU) · 0 tạo mới · 0 lỗi** — không tạo trùng. Agent restart 16:50 + lần 2 nạp
+> code (job verify result nền chạy sau).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0**
+> / repo con **10.3.0**.
