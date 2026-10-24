@@ -5689,3 +5689,12 @@ repo con **10.1.0**.
 >
 > **Version:** app tổng **6.8.0** (giữ — docs-only) / repo con **10.4.0** —
 > ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 520 (Trợ lý Freebuff): ĐIỀU TRA 3 điểm sau upload HĐ GTGT bán hàng kỳ 23/10 — TRÌNH ĐH CHỐT (2026-10-24)
+
+> **Đại Ca giao (24/10, 4 ảnh):** (1) chứng từ không có "Tham chiếu" đến hóa đơn;
+> (2) Sổ chi tiết bán hàng 23/10 cột "Tên khách hàng" TRỐNG (08/10 có tên);
+> (3) đối chiếu phiếu 06372610080846334867 (08/10 — tốt) vs
+> 06372610230911001576 (23/10 — không lên sổ) tìm khác biệt.
+>
+> **Điều tra + trình PA — CHỜ ĐH CHỐT, CHƯA sửa code.**
