@@ -5965,3 +5965,18 @@ repo con **10.1.0**.
 > lichsugui') → **bất thường phía SMED/nội dung hóa đơn: ĐH/team KT mở 5 HĐ
 > trên SMED (Lịch sử gửi HĐ) kiểm nội dung — trống thì gửi lại HĐ rồi chạy
 > lại**. Tổng kết kỳ 21/10: **180/185 lên MISA** (176 + 4) — còn đúng 5 TĐ chờ SMED.
+
+### GĐ 528 (Trợ lý Freebuff): 🔒 KHẢO SÁT kiến trúc phân tải download/upload đa máy — ĐANG LÀM (2026-10-24)
+
+> **Yêu cầu của Đại ca (24/10):** khảo sát tổng thể app con + Database → đề xuất
+> giải pháp giảm tải cho máy chủ: phân việc cho 4 máy tính trong phòng (kết nối
+> LAN, đều có Internet) cùng tham gia download (SMED / MISA meInvoice / Bank /
+> MIA) + upload (MISA AMIS); GiondDB vẫn đặt tại máy chủ; mở rộng được cho máy
+> ngoài LAN (máy ở nhà). Tham chiếu mô hình MISA AMIS (1 máy chủ + nhiều công ty
+> ghi dữ liệu từ nhiều điểm).
+>
+> **Trạng thái:** 🔒 ĐANG KHẢO SÁT — entry này sẽ cập nhật kết quả + phương án
+> trình ĐH khi xong. Chưa viết code.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.5.3**.
