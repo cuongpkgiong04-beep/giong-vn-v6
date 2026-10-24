@@ -5905,3 +5905,55 @@ repo con **10.1.0**.
 > Job cũ đã done giữ done_centers theo marker cũ — không sửa (PA giữ nguyên).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.5.1**.
+
+### GĐ 526 / C.336 (Trợ lý Freebuff): ĐH 24/10 — 9 phiếu kỳ 21/10: tra số HĐ mở rộng + alias tên hàng bán hàng (2026-10-24)
+
+> **ĐH báo (24/10 tối, ảnh):** 9 phiếu 21/10 không lên MISA — hỏi 2 loại Ghi chú
+> nghĩa gì + "Số hóa đơn trùng là sao" (ĐH gợi ý: 19 TT có thể trùng số HĐ khác
+> ký hiệu → đối chiếu CẢ số HĐ + ký hiệu) + "hàng không khớp MISA" có cần chạy
+> lại dữ liệu không. Yêu cầu: PA tối ưu + Push luôn.
+>
+> **ĐIỀU TRA (bằng chứng BKCT + DB 21/10):**
+> - **4 phiếu "Số HĐ BKCT trùng/miss":** (a) LB PHẠM AN KHÔI — SMED tổng **0đ**
+>   ↔ BKCT HĐ 00006598 thật 1.617.000đ; LM LÊ MINH NHẬT — SMED **300.000** ↔
+>   BKCT 00004102 thật 950.000đ → **lệch tổng tiền giữa 2 nguồn → khóa join
+>   (ký hiệu+khách+tổng) trượt = MISS**; (b) TA LƯƠNG PHƯƠNG NHI — **2 HĐ cùng
+>   khách + cùng 2.850.000đ** (SMED 2 phiếu ↔ BKCT 00002166+00002167) → 2 ứng
+>   viên cùng khóa = TRÙNG (không ai đặt trùng SỐ HĐ — ĐH gợi ý đúng, ký hiệu
+>   ĐÃ nằm trong khóa join; cái thiếu là tiêu chí phân biệt 2 HĐ giống nhau).
+> - **5 phiếu TĐ "hàng không khớp MISA":** số HĐ tra ĐƯỢC (00004936-941) —
+>   lỗi ở TÊN HÀNG không có trong danh mục MISA (tra 3 bước cũ chưa bắt được)
+>   → **KHÔNG cần tải lại dữ liệu** (builder quét SMED trực tiếp mỗi lượt) —
+>   cần: alias khớp tên tương đương + hiện TÊN HÀNG thiếu lên UI.
+>
+> **ĐÃ SỬA (code `2283525`, test 86/86):**
+> 1. `build_bkct_cust_map` + fallback **khách-duy-nhất** (SMED lệch tổng nhưng
+>    khách chỉ có 1 HĐ trong ngày — nhận; sai thì MISA chặn trùng số HĐ → skip
+>    an toàn) + `build_dup_assign` ghép nhóm **trùng theo THỜI GIAN** (số HĐ cấp
+>    tuần tự theo giờ phát hành; CHỈ ghép khi số lượng 2 bên bằng nhau).
+> 2. `tra_hang_hoa` bán hàng + **alias match** (như mua hàng GĐ 513/C.330 —
+>    subset token, duy nhất 1 ứng viên).
+> 3. missingItems/aliasMatched ghi **LOG JSON** (runner) + UI **2 chip** đỏ/vàng
+>    (sql-data-module đã đọc sẵn từ GĐ 513) + ghi chú DB "thiếu danh mục MISA: X".
+>
+> **Verify THẬT (dữ liệu BKCT 21/10):** LB→**00006598** · LM→**00004102** ·
+> TA→**00002166/00002167** (đúng thứ tự thời gian) — cả 4 phiếu ra ĐÚNG số HĐ.
+> Job chạy lại 21/10 `4319fe5e` đã xếp hàng (agent đang bận Task_04 — chạy khi rảnh).
+>
+> **Trả lời ĐH:** (1) "trùng" = nhiều HĐ cùng (ký hiệu + khách + tiền) — không
+> phải trùng số HĐ; đã thêm tiêu chí THỜI GIAN để phân biệt. (2) "hàng không
+> khớp" = tên hàng SMED không có trong danh mục MISA — không cần tải lại, cần
+> thêm alias/danh mục; giờ tên hàng thiếu hiện thẳng trên UI (chip đỏ).
+>
+> **Ghi chú:** commit message ghi "C.337" — số đúng theo dải C.x = **C.336**
+> (C.336 trống; C.337 cũng trống — lệch 1 do đếm nhanh; entry/registry ghi đúng,
+> không amend commit theo lệnh đã push).
+>
+> **Version:** bump + Push theo lệnh ĐH (PA Push riêng).
+
+> **KẾT QUẢ JOB chạy lại 21/10 `4319fe5e` (20:33):** tạo **4** · ghi sổ 4 · bỏ
+> qua 181 · lỗi 0 — **4 phiếu fix join ĐÃ LÊN MISA** (LB 00006598 · LM 00004102 ·
+> TA 00002166/00002167). Còn 5 phiếu TĐ chưa rõ nhánh lỗi (payload None nhưng
+> missing_out rỗng → KHÔNG phải tên hàng) → **GĐ 526b**: builder ghi LÝ DO kỹ
+> thuật chi tiết (parse Lịch sử gửi / thiếu data / entity) + job chạy lại lần 3
+> `021bd5bd` (đọc log xác định) — code `ae348d0`, bump **10.5.3**.
