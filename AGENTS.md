@@ -6019,9 +6019,22 @@ repo con **10.1.0**.
 > LAN làm việc git cục bộ, KHÔNG đụng worktree Z:/máy chủ của Agent Desktop) ·
 > hooks shared-doc ĐÃ cài (`scripts/agents/install-hooks.py`).
 >
-> **Trạng thái:** 🔒 Thiết kế XONG — chờ phiên máy LAN-1 code theo spec
-> (migration → api_server claim atomic → worker_node → test claim 2 client →
-> pilot SMED 1 job) + verify + commit. Chưa viết code điều phối.
+> **Trạng thái:** ✅ **CODE PA-1 XONG (C.338 — cùng phiên)** — 6 file repo con:
+> migration 0009 (claimed_by + ix_jobs_pending) · api_server claim ATOMIC
+> (CTE UPDATE..OUTPUT + UPDLOCK/READPAST + workerId/groups + stale reclaim
+> 45' + LỌC accounts theo nhóm + bind API_HOST 0.0.0.0) · 40_web_agent
+> tách process_job 238 dòng (main + worker dùng chung) + env WORKER_ID/
+> WORKER_GROUPS/AGENT_SQL_CONN · etl_import ETL_SQL_CONN · worker_node.py
+> máy LAN (importlib — không nhân bản logic) · test_claim_gd528.py
+> **12/12 PASS** (offline + HTTP TestClient; Test B DB thật tự skip — chạy
+> lại trên máy chủ). Probe LAN: ping 0ms OK — SQL Server máy chủ chưa bật
+> TCP/IP + firewall 1433 (việc hạ tầng mục 6 checkpoint). Commit repo con:
+> code + entry C.338 (quá cổng shared-doc).
+>
+> **Còn lại để LIVE:** (1) máy chủ — chạy migration 0009 + restart api_server
+> + agent + chạy lại Test B (atomic thật); (2) máy LAN — copy 2 secret
+> (agent_token + center_pass) + 6 biến env + ODBC Driver 18 (winget MSI cần
+> admin) + pilot 1 job SMED; (3) sau pilot ổn → push.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.8.0** / repo con **10.5.3**.
