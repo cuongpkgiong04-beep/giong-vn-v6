@@ -6040,8 +6040,8 @@ repo con **10.1.0**.
 > repo con **10.5.3**.
 >
 > **Việc kèm sau Push:** restart agent (lúc rảnh — quy tắc 13.3) để nạp
->  mới (nhãn bước nhiệm vụ + fix mã ); phần web hiện ngay
-> sau khi Vercel deploy.
+> `task_runner.py` mới (nhãn bước nhiệm vụ + fix mã `tkgvvxdt`); phần web hiện
+> ngay sau khi Vercel deploy.
 
 ---
 
