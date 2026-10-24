@@ -5965,3 +5965,63 @@ repo con **10.1.0**.
 > lichsugui') → **bất thường phía SMED/nội dung hóa đơn: ĐH/team KT mở 5 HĐ
 > trên SMED (Lịch sử gửi HĐ) kiểm nội dung — trống thì gửi lại HĐ rồi chạy
 > lại**. Tổng kết kỳ 21/10: **180/185 lên MISA** (176 + 4) — còn đúng 5 TĐ chờ SMED.
+
+### GĐ 528 (Trợ lý Freebuff / máy LAN-1): 🔒 KHẢO SÁT kiến trúc phân tải download/upload đa máy — ĐH CHỐT PA-1, thiết kế chi tiết XONG (2026-10-24/25)
+
+> **Yêu cầu của Đại ca (24/10):** khảo sát tổng thể app con + Database → đề xuất
+> giải pháp giảm tải cho máy chủ: phân việc cho 4 máy tính trong phòng (LAN +
+> Internet) cùng tham gia download (SMED / MISA meInvoice / Bank / MIA) + upload
+> (MISA AMIS); GiondDB vẫn đặt tại máy chủ; mở rộng được cho máy ngoài LAN
+> (máy ở nhà). Tham chiếu mô hình MISA AMIS (1 máy chủ + nhiều điểm ghi).
+>
+> **ĐH chốt (25/10, sau vòng hỏi-đáp 3 PA):** **PA-1** — điểm vào web duy nhất
+> + worker đa máy chia GiondDB; máy nhà ngoài LAN pilot SAU.
+>
+> **Hiện trạng (đọc code thật):** MỘT máy duy nhất gánh tất cả — api_server
+> FastAPI :8777 (bind 127.0.0.1, cloudflared Quick Tunnel + gist + watchdog,
+> pyodbc GiondDB `.\SQLEXPRESS` cùng máy) · `40_web_agent.py` 1 process chạy
+> **TUẦN TỰ** while True: claim_job → chạy 1 job → report (auto-ETL 60' +
+> task_runner Task_01..07 cùng process) · tool download Playwright (SMED 19 TT
+> — **19 tài khoản riêng** center_pass.txt · MISA meInvoice — **1 TK** +
+> OTP Gmail IMAP + storage_state · VCB/TCB/TPB — **1 TK/NGH** + WAF headful ·
+> MIA — API + ddddocr) · upload MISA AMIS = Chrome CDP 9222 phiên AMIS login
+> sẵn · file Excel trung gian OUTPUT\ nằm trên máy.
+>
+> **Ràng buộc phân tải (bằng chứng .secrets + code):** SMED 19 TK → chia nhóm
+> TT nhiều máy được (LAN NAT chung 1 IP public — WAF an toàn); MISA meInvoice
+> 1 TK + OTP → ĐỘC QUYỀN 1 máy; Bank 1 TK/NGH + WAF → cố định 1 máy/NGH; AMIS
+> upload SaaS nhiều điểm ghi được nhưng cần queue tránh đụng cùng kỳ/TT;
+> GiondDB máy khác nối pyodbc qua LAN / máy nhà qua Tailscale (SQL 1433).
+>
+> **3 PA đã trình + dự đoán:** PA-1 (khuyến nghị) — giữ web + api_server +
+> tunnel NGUYÊN, thêm cột `worker_group` điều phối + worker rút gọn 4 máy poll
+> claim trực tiếp GiondDB theo nhóm → pipeline nhanh ~3x, web không đổi ·
+> PA-2 — mỗi máy 1 api_server + tunnel riêng → web đổi nhiều + lặp lại chaos
+> Quick Tunnel (GĐ 244/424) — KHÔNG khuyến nghị · PA-3 — song song hóa N thread
+> trong 1 máy → nhanh làm 1-2 phiên, giảm 2-3x nhưng không đạt mục tiêu 4 máy.
+>
+> **Thiết kế chi tiết PA-1 (đã lập):** `giong-apps/apps/banhang/agent/
+> CHECKPOINT-GD528-PA1.md` — migration SQL `claimed_by` + index · claim ATOMIC
+> theo nhóm (UPDATE...OUTPUT thay select-then-update — chống race đa worker) ·
+> stale reclaim 45' (máy LAN chết job không kẹt) · LỌC accounts theo nhóm
+> (máy SMED không nhận password MISA/bank — an toàn hơn hiện tại) ·
+> `worker_node.py` máy LAN import 40_web_agent (không nhân bản code, KHÔNG
+> task_runner/auto-ETL chung) · phân nhóm: core (máy chủ = MISA + Bank + AMIS
+> upload + scheduler) / smed (máy LAN) · thứ tự triển khai 6 bước + tiêu chí
+> kiểm chứng từng bước + rollback. PA-1b (chia TT trong 1 job) + máy nhà +
+> token riêng worker = mở rộng SAU.
+>
+> **Môi trường máy LAN-1 (25/10 — ĐH chỉ thị "cài đủ công cụ để làm việc"):**
+> Git 2.56.0 (user.email `cuongpk.giong04@gmail.com` đúng GĐ 285) · Python
+> 3.12.10 + pip 25.0.1 + playwright/pyodbc/requests + chromium (winget cài) ·
+> Node v24.22.1 + npm 11.19.1 (có sẵn từ trước) · **clone riêng**
+> `C:\CUONG_2026\giong-vn-v6-agent-lan` + `giong-apps` (quy ước GĐ 242 — máy
+> LAN làm việc git cục bộ, KHÔNG đụng worktree Z:/máy chủ của Agent Desktop) ·
+> hooks shared-doc ĐÃ cài (`scripts/agents/install-hooks.py`).
+>
+> **Trạng thái:** 🔒 Thiết kế XONG — chờ phiên máy LAN-1 code theo spec
+> (migration → api_server claim atomic → worker_node → test claim 2 client →
+> pilot SMED 1 job) + verify + commit. Chưa viết code điều phối.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.8.0** / repo con **10.5.3**.
