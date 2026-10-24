@@ -5823,3 +5823,30 @@ repo con **10.1.0**.
 > upload; (3) phiếu 23/10 `06372610230911001576` đã có tham chiếu (test GĐ 521).
 >
 > **Version:** app tổng **6.8.0** (giữ) / repo con **10.5.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 523 (Trợ lý Freebuff): GỐC "nút Upload Misa bán hàng không chạy" = map createSmedJob THIẾU misa-ban-hang-api (từ GĐ 463) (2026-10-24)
+
+> **ĐH báo 24/10 tối:** "Ấn nút Upload Misa kỳ 22/10 nhưng chưa thấy hiện tượng
+> gì xảy ra." Điều tra: DB 0 job misa-ban-hang-api; chỉ có hddt + sqlreport
+> (21:45/21:46 VN) — em tái hiện trên production (CDP mở trang, chọn 22/10,
+> bấm nút → confirm → response createSmedJob ok=true + id) — **job tạo ra có
+> report = `hddt`**!
+>
+> **GỐC RỄ (git log -S chứng minh chưa từng có):** server fn
+> `createSmedJob` (-smed.ts) map chuỗi if-else report → **THIẾU
+> `misa-ban-hang-api`** → rơi về mặc định `"hddt"` → nút "Upload Misa" trang
+> /m/up-hoadon-gtgt TỪ GĐ 463 ĐẾN NAY luôn tạo job tải HĐĐT thay vì tạo phiếu
+> (job A26BCABF 23/10 có report đúng là do Task_06 tự động qua api_server,
+> không qua nút). `smed-expected.ts` cũng thiếu 2 chỗ → job nếu có cũng bị
+> báo "thiếu 18 file" oan.
+>
+> **Đã sửa (code `d04203c`, tsc EXIT 0):** (1) -smed.ts map + dòng
+> `misa-ban-hang-api`; (2) smed-expected.ts expected_files=1 (nhóm MISA API)
+> + isNonCenterReport + misa-ban-hang-api.
+>
+> **Xử lý cho ĐH ngay (không chờ Push):** tạo job TRỰC TIẾP qua api_server
+> POST /jobs (đúng cách Task_06) — job `B290C706` kỳ 22/10 **đang chạy**
+> builder mới (4 fix GĐ 511/521). ĐH muốn bấm nút web thì **cần Push**
+> (fix nằm phía web).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.8.0** / repo con **10.5.0**.
