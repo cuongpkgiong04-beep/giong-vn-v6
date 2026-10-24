@@ -6038,6 +6038,10 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.5.3**.
+>
+> **Việc kèm sau Push:** restart agent (lúc rảnh — quy tắc 13.3) để nạp
+>  mới (nhãn bước nhiệm vụ + fix mã ); phần web hiện ngay
+> sau khi Vercel deploy.
 
 ---
 
