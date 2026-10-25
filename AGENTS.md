@@ -6034,12 +6034,12 @@ repo con **10.1.0**.
 > code + entry C.338 (quá cổng shared-doc).
 >
 > **C.339 — chuẩn bị vận hành XONG (cùng phiên):** script
->  (chạy máy chủ, tách batch GO + verify) · hướng
-> dẫn vận hành 2 máy **** (A. máy chủ: pull →
+> "apply_migration_0009.py" (chạy máy chủ, tách batch GO + verify) · hướng
+> dẫn vận hành 2 máy "agent/HUONG-DAN-CHAY-PA1.md" (A. máy chủ: pull →
 > migration → restart → bật SQL TCP + firewall 1433 → T-SQL tạo login
 > giong_worker → Test B kỳ vọng 17/17 · B. máy LAN: driver 18/LEGACY → env
 > → pilot SMED · C. rollback) · máy LAN-1 cấu hình sẵn: 2 secret copy qua
-> SMB + file env  (chứa
+> SMB + file env "C:\CUONG_2026\worker-lan1\worker-lan1.env.bat" (chứa
 > SECRET ngoài repo — ĐH điền mật khẩu giong_worker).
 >
 > **Còn lại để LIVE:** (1) máy chủ — A1-A6 hướng dẫn; (2) máy LAN — B1-B4
