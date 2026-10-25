@@ -6143,3 +6143,53 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
 > repo con **10.5.3**.
+
+### GĐ 531 / C.339 (Trợ lý Freebuff): PA-3 — "job chạy ẩn từ hôm qua" = job Đối chiếu nhập kho kẹt **Chờ dữ liệu** vĩnh viễn; bỏ vòng lặp chết + chặn nguồn không có tool + UI tách nhãn (2026-10-25)
+
+> **ĐH báo (25/10 7:36, ảnh thanh trên cùng):** "Có một nhiệm vụ chạy ẩn trên ứng dụng chạy từ
+> hôm qua đến giờ vẫn chưa xong? Đây là gì? Tại sao lại chạy lâu thế? Khắc phục tình trạng này
+> thế nào?" → điều tra ra 4 lỗi xâu chuỗi → **ĐH chốt PA-3**.
+
+> **"Chạy ẩn" là gì (bằng chứng probe GiondDB):** job **`dc-nhap-kho`** kỳ 22/10/2026 — status
+> `waitdownload` ("Chờ dữ liệu nguồn") từ 24/10 17:43, `claimed_at = NULL` → **KHÔNG chạy**, chỉ
+> đứng chờ (0 tài nguyên); UI xếp waitdownload chung nhóm "đang chạy" nên hiện "Đang tải dữ liệu:
+> 0/1 nguồn xong · 0%" mãi.
+> 1. Nguồn thiếu = `misa_pu_detail` (chi tiết phiếu Mua hàng MISA, sync Chrome CDP) — 0 dòng cho 22/10.
+> 2. ĐH bấm "Có — tải dữ liệu còn thiếu" 20:42 → web gửi report `misa-nk-chitiet` → **map
+>    createSmedJob THIẾU nhánh → rơi mặc định `hddt`** → job A59C61D1 tải HĐĐT 19 TT (vô ích) —
+>    cùng loại bug GĐ 523.
+> 3. Bước "download xong → tự chạy lại" so khóa `<source>|<kỳ>` = cần job tên `misa-nk-chitiet`
+>    done — KHÔNG BAO GIỜ tồn tại → treo vĩnh viễn.
+> 4. Deadlock agent: check thiếu dữ liệu là báo thiếu ngay, chỉ builder mới gọi `_sync_misa_pu_detail`
+>    → không bao giờ tới builder → không bao giờ tự sync (chỉ thoát bằng CLI tay).
+
+> **Đã làm (PA-3 — chi tiết đầy đủ ở entry C.339 AGENTS.md repo con):**
+> 1. **Agent** `sql_reports.py`: check `misa_pu_detail` trống → TỰ gọi `_sync_misa_pu_detail`
+>    (Chrome CDP) → đếm lại; vẫn trống mới báo thiếu (bỏ vòng lặp chết).
+> 2. **Web** `src/lib/no-tool-sources.ts` (MỚI — một nguồn sự thật): `NO_TOOL_SOURCE_KEYS`
+>    (`misa-nk-chitiet`, `dieu-chuyen`); `createSmedJob` CHẶN + trả hướng dẫn (hết rơi `hddt`);
+>    sửa reportKey nguồn misa_pu_detail `misa-muavao-chitiet` → `misa-nk-chitiet` (khớp agent).
+> 3. **Web** `sql-data-module.tsx`: bỏ nguồn no-tool khỏi bước "Có" + khỏi điều kiện chờ tự-chạy-lại
+>    (`waitFor`); thêm nút "Chạy lại ngay — tự đồng bộ dữ liệu"; lọc `srcsDl` luồng tải-mới.
+> 4. **UI** `header-jobs-bar.tsx`: tách "Chờ dữ liệu nguồn (không phải đang chạy)" — thanh hổ phách
+>    + chip "⚠️ kẹt N giờ" (>2h) + nút "Chạy lại" trên thanh; `mapJob` thêm `updatedAt`.
+> 5. **Test** `src/lib/source-tool-map.test.ts` (MỚI — 19 nhóm): canh map nguồn↔tool 2 đầu
+>    (REPORT_SOURCE_TABLES ↔ -smed.ts) — thêm nguồn mới mà quên là FAIL.
+
+> **VẬN HÀNH (đã làm — báo cáo kỳ 22/10 CHẠY XONG trong phiên này):**
+> - Chrome CDP 9222 **treo WebSocket** (đúng dấu hiệu làm Task_05/Task_06 lỗi 03:25) → restart
+>   Chrome profile `.secrets/chrome-cdp` (tab MISA vẫn đăng nhập).
+> - `misa_pu_detail_sync.py 22/10/2026 22/10/2026` → 131 phiếu list · 86 phiếu chi tiết · 126 dòng hàng.
+> - Verify THẬT code mới: `check_source_data('dc-nhap-kho','22/10/2026','22/10/2026')` → in "🔄 … tự
+>   đồng bộ qua Chrome CDP (GĐ 531)" → sau sync trả **RỖNG = đủ 3 nguồn** ✅.
+> - Restart agent (gd491) nạp code → requeue job `41D32CF1` → **done sau 18 giây · 55 dòng kết quả**
+>   ("Đối chiếu nhập kho MISA – SMED – MIA TOOL") — job kẹt từ 24/10 đã xong.
+
+> **Verify:** tsc repo con EXIT 0 · npm test PASS 6/6 (gồm 19 nhóm test mới) · py_compile OK ·
+> check_source_data thật ✅ · job 22/10 done 55 dòng.
+
+> **Tiêu chí kiểm chứng (sau Push):** job CHỜ DỮ LIỆU hiện nhãn hổ phách "(không phải đang chạy)"
+> + nút "Chạy lại"; kỳ mới chưa sync → báo cáo Đối chiếu nhập kho chạy được ngay (agent tự đồng bộ);
+> bấm "Có" cho báo cáo chỉ có nguồn tự đồng bộ → KHÔNG còn tạo job `hddt` nhầm.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** / repo con **10.5.3**.
