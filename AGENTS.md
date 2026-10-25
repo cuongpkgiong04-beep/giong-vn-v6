@@ -6193,3 +6193,40 @@ repo con **10.1.0**.
 > bấm "Có" cho báo cáo chỉ có nguồn tự đồng bộ → KHÔNG còn tạo job `hddt` nhầm.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** / repo con **10.5.3**.
+
+### GĐ 532 / C.340 (Trợ lý Freebuff): PA Push đợt 25/10 — push 2 repo (GĐ 528/529/530/531) + bump 6.9.0 / 10.6.0 + LIVE (2026-10-25)
+
+> **Lệnh ĐH "push"** (sau khi GĐ 531 xong). Rà trùng lặp (nguyên tắc 3): nhánh phụ
+> `agent-cli` + `pipeline-work` **RỖNG cả 2 repo** · remote `origin/main` **0 commit mới**
+> (không ai push trước) · registry 3 dòng 🔒 cũ của phiên khác (GĐ 514/520/528) KHÔNG đụng
+> · working tree còn file dở phiên khác (app tổng: AGENTS.md/registry/package-lock · repo con:
+> 3 file danh mục) → **KHÔNG add**.
+
+> **⚠️ CẢNH BÁO (đã báo ĐH kèm theo):** đợt push này chứa luôn công việc CHƯA PUSH của
+> **3 phiên khác**: GĐ 528 (khảo sát kiến trúc phân tải đa máy — docs, chờ ĐH chốt PA) ·
+> GĐ 529 (fix tsc TS18046 + test tunnel-gist-fallback — code app tổng) · GĐ 530/C.338
+> (nhãn công việc cụ thể toàn hệ thống — code cả 2 app). Không có TRÙNG LẶP/SỬA ĐÈ.
+
+> **Push:** app tổng `1c7468f..8b4da84` (17 commit: GĐ 528×3 + 529×5 + 530×4 + 531×3
+> + claim GĐ 532 + bump) · repo con `3b33788..c65fad4` (5 commit: C.338 code+entry +
+> C.339 code+entry + bump)
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** nội dung đợt = fix code (GĐ 529) + feature
+> (nhãn công việc GĐ 530, chống treo "Chờ dữ liệu" GĐ 531) → **minor**: app tổng
+> **6.8.0 → 6.9.0** (package.json + DEFAULT_VERSION app-shell.tsx) · repo con
+> **10.5.3 → 10.6.0** (package.json + DEFAULT_VERSION). Checklist: mọi thành phần 1 chữ số ✓.
+
+> **✅ Verify production (checklist GĐ 470 — curl --compressed lần đầu):** app tổng
+> `giong-vn-v6.vercel.app` = **6.9.0** · app con `giong-banhang.vercel.app` = **10.6.0**
+> (deploy Vercel tự build từ push, deployment mới nhất Ready) · **login app tổng thật** →
+> JSON user "Phạm Kiên Cường" ✓ · `get-session` → session token ✓ · **SSO thật:** ký JWT
+> (iss=giong-vn-v6, aud=giong-banhang) bằng `APP_JWT_SECRET` → `302 → app con + Set-Cookie:
+> bh_session` ✓ (secret 2 app KHỚP — hết rủi ro lỗi login kiểu GĐ 463) · `/api/auth/me`
+> app con → user + 16+ nhóm/leaf quyền ✓.
+
+> **Tiêu chí kiểm chứng của ĐH:** mở app con → thanh trên cùng KHÔNG còn job "chạy ẩn 0%"
+> (0 job waitdownload trên hệ thống); job chờ nếu có hiện thanh hổ phách + nút "Chạy lại";
+> báo cáo Đối chiếu nhập kho kỳ MỚI chạy được ngay (agent tự đồng bộ nguồn MISA qua Chrome
+> CDP); nhãn công việc cụ thể toàn app (GĐ 530) đã LIVE.
+
+> **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + ĐÃ LIVE.
