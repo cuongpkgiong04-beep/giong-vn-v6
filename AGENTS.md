@@ -6033,10 +6033,17 @@ repo con **10.1.0**.
 > TCP/IP + firewall 1433 (việc hạ tầng mục 6 checkpoint). Commit repo con:
 > code + entry C.338 (quá cổng shared-doc).
 >
-> **Còn lại để LIVE:** (1) máy chủ — chạy migration 0009 + restart api_server
-> + agent + chạy lại Test B (atomic thật); (2) máy LAN — copy 2 secret
-> (agent_token + center_pass) + 6 biến env + ODBC Driver 18 (winget MSI cần
-> admin) + pilot 1 job SMED; (3) sau pilot ổn → push.
+> **C.339 — chuẩn bị vận hành XONG (cùng phiên):** script
+>  (chạy máy chủ, tách batch GO + verify) · hướng
+> dẫn vận hành 2 máy **** (A. máy chủ: pull →
+> migration → restart → bật SQL TCP + firewall 1433 → T-SQL tạo login
+> giong_worker → Test B kỳ vọng 17/17 · B. máy LAN: driver 18/LEGACY → env
+> → pilot SMED · C. rollback) · máy LAN-1 cấu hình sẵn: 2 secret copy qua
+> SMB + file env  (chứa
+> SECRET ngoài repo — ĐH điền mật khẩu giong_worker).
+>
+> **Còn lại để LIVE:** (1) máy chủ — A1-A6 hướng dẫn; (2) máy LAN — B1-B4
+> pilot 1 job SMED; (3) sau pilot ổn → push.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.8.0** / repo con **10.5.3**.
