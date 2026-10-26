@@ -7058,3 +7058,22 @@ repo con **10.1.0**.
 > tra) ⇒ bump repo con **10.7.0 → 10.8.0** (minor: 2 hộp KPI + gộp lịch sử 2 máy); app tổng
 > **KHÔNG bump** (đợt này app tổng chỉ docs/registry — tiền lệ GĐ 417). App tổng **6.9.0** /
 > repo con **10.8.0**.
+
+> **✅ PA PUSH (26/10 ~19:20 — ĐH cho phép ngoại lệ "anh đi ngủ, mai kiểm tra"):** ĐÃ PUSH
+> cả 2 repo — app con `9d2aedb..5e30637` (11 commit: C.344→C.349 + gộp lịch sử 2 máy) ·
+> app tổng `cb86861..804b07c` (9 commit: GĐ 537-542/C.344-C.349 + merge union). **Bump repo
+> con 10.7.0 → 10.8.0** (2 nơi: `package.json` + `DEFAULT_VERSION`) · app tổng giữ **6.9.0**
+> (đợt này app tổng chỉ docs/registry).
+>
+> **Verify production sau push:** app con `giong-banhang.vercel.app` = **10.8.0** (curl lần
+> đầu ✓) · app tổng `giong-vn-v6.vercel.app` = **6.9.0** ✓ · **login app tổng HTTP 200 +
+> `get-session` trả session** (⇒ tunnel + GiongDB chạy; gist-fallback GĐ 426 tự dùng URL mới
+> `vegetarian-…` vì URL trong env đã chết — `/health`: jobs 3.209 · tunnel_ok true) ·
+> **SSO sang app con: 302 → `https://giong-banhang.vercel.app/` + `Set-Cookie: bh_session`**
+> (⇒ `APP_JWT_SECRET` 2 app TRÙNG) · **`/api/auth/me` app con trả `user`** ✓. KHÔNG phải sửa
+> env Vercel.
+>
+> ⚠️ **Việc còn lại cho phiên tại máy cty:** `.env.local` 2 app còn URL tunnel CŨ (đã chết)
+> — production không ảnh hưởng (nhờ fallback gist) nhưng nên chạy
+> `scripts/update-tunnel-env.py` khi rảnh; và xử **trùng số giữa 2 máy** (C.341/GĐ 533) theo
+> quy tắc GĐ 285.
