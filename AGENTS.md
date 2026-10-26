@@ -6230,3 +6230,26 @@ repo con **10.1.0**.
 > CDP); nhãn công việc cụ thể toàn app (GĐ 530) đã LIVE.
 
 > **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 533 / C.341 (Trợ lý Freebuff): Đổi nhãn kỳ "Ngày hôm qua" → "Hôm qua" trong dropdown trang Tổng quan app con (2026-10-26)
+
+> **Yêu cầu của Đại ca (26/10, kèm ảnh chụp dropdown):** đổi chữ "Ngày hôm qua" thành
+> "Hôm qua" trong phần dropdown chọn kỳ của trang dashboard app con (chi tiết đầy đủ ở
+> AGENTS.md repo con C.341).
+
+> **Đã làm (repo con 1 file, +3/−2 — code `474650d` + entry `e02034a`):**
+> `apps/banhang/src/lib/dashboard-data.ts` — nhãn kỳ `yesterday` trong `PERIOD_OPTIONS`:
+> "Ngày hôm qua" → **"Hôm qua"**. Nhãn này là NGUỒN DÙNG CHUNG (dropdown kỳ chung góc
+> phải + dropdown từng thẻ KPI như Thu tiền / Top 10 vắc xin + dòng 1 của KPI) → đổi
+> đồng nhất 1 chỗ. **KHÔNG đụng** 3 file phiên khác đang sửa dở
+> (`overview-dashboard.tsx`, `-danh-muc.ts`, `danh-muc-khach-hang.tsx`).
+
+> **Verify (máy nhà — Electron-as-Node của ZCode, không cần chờ máy cty):** tsc app con
+> **EXIT 0** · bộ test app con **6/6 PASS** · **probe thật** import `dashboard-data.ts`:
+> `yesterday="Hôm qua"` (các nhãn khác nguyên), range kỳ vẫn đúng (26/10 → 25/10).
+
+> **Tiêu chí kiểm chứng (sau Push):** mở app con → dropdown chọn kỳ hiện "Hôm qua"
+> (không còn "Ngày hôm qua"); chọn vẫn ra đúng kỳ ngày hôm trước.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
+> repo con **10.6.0**.
