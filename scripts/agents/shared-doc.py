@@ -184,9 +184,12 @@ def replace_in_raw(raw: str, old_lf: str, new_lf: str):
 
 def find_key(store: dict, want: str):
     w = re.sub(r"\s+", " ", want.strip()).upper()
-    for k in store:
+    for k in store:                       # ưu tiên KHỚP CHÍNH XÁC trước (GĐ 535 không nhầm GĐ 53)
+        if re.sub(r"\s+", " ", k.strip()).upper() == w:
+            return k
+    for k in store:                       # rồi mới khớp prefix (giữ hành vi cũ)
         kk = re.sub(r"\s+", " ", k.strip()).upper()
-        if kk == w or kk.startswith(w) or w.startswith(kk):
+        if kk.startswith(w) or w.startswith(kk):
             return k
     return None
 
