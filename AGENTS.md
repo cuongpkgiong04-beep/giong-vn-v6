@@ -5966,6 +5966,272 @@ repo con **10.1.0**.
 > trên SMED (Lịch sử gửi HĐ) kiểm nội dung — trống thì gửi lại HĐ rồi chạy
 > lại**. Tổng kết kỳ 21/10: **180/185 lên MISA** (176 + 4) — còn đúng 5 TĐ chờ SMED.
 
+### GĐ 528 (Trợ lý Freebuff): Khảo sát kiến trúc phân tải download/upload đa máy — kết quả + 3 phương án chờ ĐH chốt (2026-10-24)
+
+> **Yêu cầu ĐH (24/10):** khảo sát tổng thể app con + Database → đề xuất giải
+> pháp giảm tải máy chủ: phân việc 4 máy tính trong phòng LAN (đều có Internet)
+> cùng download (SMED / MISA meInvoice / BANK / MIA) + upload (MISA AMIS);
+> GiongDB đặt tại máy chủ — người đọc báo cáo vẫn thấy tổng thể; mở rộng được
+> cho máy ngoài LAN (máy ở nhà — đã có Tailscale tới giongpc).
+
+> **HIỆN TRẠNG (khảo sát thật — 3 chuyên gia song song, bằng chứng file:line):**
+> Browser → Vercel (app con) → Cloudflare Tunnel → **api_server FastAPI**
+> (bind 127.0.0.1:8777 — service GIONG_API_Server, máy chủ) → **SQL Server
+> Express `.\SQLEXPRESS` / DB `GiongDB`** (Trusted_Connection — máy chủ; tên
+> "GiondDB" chỉ là cách gọi/lỗi chính tả lịch sử — từng gây login fail 4060,
+> xem 33_smed_TKKH.py:162-165 + dm_khach_hang_import.py:38-41). Worker
+> **40_web_agent.py** (service GIONG_SMED_Agent — CÙNG máy chủ) poll
+> `/agent/claim` 20s → chạy tool theo REPORT_MAP → `/agent/report` ghi
+> result/result_full → ETL NGAY sau job → builder. Task định kỳ:
+> `task_runner.py` + bảng `scheduled_tasks` (Task_02 3 slot/ngày → Task_03…).
+> File tải về: `banhang/OUTPUT/<số.tên>/<ngày>` — đĩa CỤC BỘ máy chủ; tunnel
+> URL phát tán qua gist (1 slot base_url).
+
+> **3 ĐIỂM NGHẼN CHÍNH khi muốn nhiều máy:**
+> 1. **Claim job KHÔNG nguyên tử** — api_server.py:1038-1052 `select top1
+>    pending` rồi `update ... where id=?` (2 transaction rời, không
+>    UPDLOCK/READPAST, không guard `status='pending'`, không worker_id/lease)
+>    → 2 máy poll cùng lúc CHẮC CHẮN chạy trùng job khi tải cao. Cùng lỗi ở
+>    `/task/claim` (api_server.py:1182-1200). Nhánh Vercel cũ
+>    (`for update skip locked` → dịch `WITH (READPAST,UPDLOCK,ROWLOCK)`,
+>    api_server.py:355-376) AN TOÀN — nhưng production đi đường internal
+>    không khóa.
+> 2. **DB + OUTPUT gắn cứng máy chủ** — 33-34 chuỗi connstr
+>    `Server=.\SQLEXPRESS, Trusted_Connection` hardcode toàn repo (chỉ
+>    api_server.py:59-63 có env `API_SQL_CONN`); OUTPUT là đĩa cục bộ
+>    (builder LHT đọc file trực tiếp); `import_log` dedupe theo file_hash PK;
+>    stg_* chỉ có src_file — KHÔNG cột máy. Máy trạm workgroup (không AD)
+>    KHÔNG dùng được Trusted_Connection qua LAN → phải tạo SQL login riêng.
+> 3. **Ràng buộc SESSION 1 tài khoản/thiết bị** (xác minh từ code +
+>    CHECKPOINT-GD444.md:25): MISA AMIS (Chrome CDP 9222 + profile
+>    `.secrets/chrome-cdp` — login mới ĐÁ phiên máy kia; misa_tab_guard.py:52-53),
+>    MISA meInvoice 30/31 (chung `misa_state.json`), BANK VCB/TCB/TPB (headful,
+>    login mới mỗi lượt — ngân hàng 1 phiên). → Nhóm MISA AMIS + meInvoice +
+>    mỗi ngân hàng phải GHIM 1 máy (hoặc tạo tài khoản thứ 2). SMED (13 tool
+>    active — login mới mỗi lượt) + MIA (tự login lại khi 401) chia nhiều máy
+>    được.
+
+> **BA PHƯƠNG ÁN (chờ ĐH chốt — CHƯA viết code):**
+> - **PA-1 (khuyến nghị) — Queue chung + phân vai mềm:** mở GiongDB cho LAN
+>   (TCP 1433 + SQL login cho máy trạm); api_server/tunnel/gist giữ 1 bản ở
+>   máy chủ; 3 máy trạm chạy worker cùng code, mỗi máy ghim nhóm job theo env
+>   (role). Sửa: claim atomic 2 chỗ + cột worker_id/heartbeat/lease + guard
+>   chủ sở hữu ở report/cancel + reaper chỉ máy chủ + scheduler chỉ máy chủ +
+>   connstr đọc ENV chung + OUTPUT share SMB chung (\\máy-chủ\...) + script
+>   cài máy trạm. Dự đoán: giảm tải máy chủ rõ (nhóm SMED 13 tool + BANK
+>   chuyển máy khác — rút ngắn task đêm); 4 máy chạy song song; máy tắt → job
+>   nhóm đó chờ (không mất dữ liệu); máy nhà vào qua Tailscale (đã sẵn).
+> - **PA-2 — Phân vai cứng tối thiểu:** chỉ sửa claim filter report theo máy
+>   + env role + cài máy trạm; KHÔNG thêm lease/worker_id. Dự đoán: giảm tải
+>   tương tự khi chạy bình thường nhưng máy chết = việc đứng; không truy vết
+>   job máy nào.
+> - **PA-3 — Orchestrator đầy đủ (chuẩn MISA AMIS hơn):** như PA-1 + worker
+>   register/heartbeat + dashboard máy + auto-update code (git pull) + token
+>   riêng từng worker + web hiện cột "Máy chạy". Dự đoán: bền vững mở rộng
+>   5-10 máy nhưng công sức lớn hơn (nhiều ngày), rủi ro regression cao hơn.
+
+> **Câu hỏi chờ ĐH chốt:** (1) chọn PA nào; (2) máy nào giữ vai MISA AMIS
+> (1 session — đề xuất máy chủ vì đang có Chrome CDP + phiên ĐH); (3) OK tạo
+> SQL login cho máy trạm (workgroup không dùng Windows auth qua LAN);
+> (4) OUTPUT share SMB chung hay giữ local từng máy (ảnh hưởng builder đọc
+> file); (5) có tạo tài khoản MISA/BANK thứ 2 để chia tải thêm không.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.5.3**.
+>
+> **Việc kèm sau Push:** restart agent (lúc rảnh — quy tắc 13.3) để nạp
+> `task_runner.py` mới (nhãn bước nhiệm vụ + fix mã `tkgvvxdt`); phần web hiện
+> ngay sau khi Vercel deploy.
+
+---
+
+### GĐ 529 (Trợ lý Freebuff): Cài môi trường máy Z: (git + node qua winget) + fix tsc TS18046 + fix test tunnel-gist-fallback (2026-10-25)
+
+> **Bối cảnh — máy LAN mới (Z: = \\192.168.1.250\DuLieuChung — máy thiếu môi trường):**
+> shell cmd PATH hạn chế — không git/npm/node/python/grep. ĐH hỏi → em khảo sát bằng
+> chứng (PATH + where) → trình 3 PA (winget / portable zip / không cài) → **ĐH chốt
+> PA-1: winget cài Git + Node LTS.**
+>
+> **Đã cài (winget, UAC 2 prompt):** Git for Windows **2.56.0.windows.3**
+> (C:\Program Files\Git — kèm bash + grep + sed: hook GĐ 495 là sh script chạy
+> được ngay, hết nỗi thiếu grep) · Node.js LTS **v24.22.1** + npm **11.19.1**
+> (C:\Program Files\nodejs) · `git config --global user.email
+> cuongpk.giong04@gmail.com` (GĐ 285) + `safe.directory "*"`. **Lưu ý phiên sau:**
+> phiên ZCode MỚI trên máy này tự nhận git/npm (PATH user/machine đã có); phiên
+> khởi động TRƯỚC khi cài phải prepend `C:\Program Files\Git\cmd` +
+> `C:\Program Files\nodejs` đầu mỗi lệnh. Máy KHÔNG có python → commit file dùng
+> chung qua cơ chế ghép THỦ CÔNG đúng cổng (snapshot .git/giong-shared-snapshots +
+> ghép entry mình lên bản HEAD + `--no-verify` + trả lại bài dở phiên khác).
+>
+> **2 lỗi code CÓ SẴN phát hiện khi verify (fix trong GĐ này, code `b3cc4f2`):**
+> 1. **tsc TS18046** `error-component.tsx:17` — `'error' is of type 'unknown'`
+>    (TanStack ErrorComponentProps + TS 5.7 strict; file nguyên trạng từ First
+>    commit): fix `error instanceof Error ? error.message : ""` + fallback text.
+> 2. **npm test 58/59 fail** `tunnel-gist-fallback.test.ts` — KHÔNG phải logic
+>    (3/3 test case PASS): eager bootstrap cuối db.ts chạy khi
+>    `dbSource === 'pglite'` (máy test thiếu env tunnel/neon) → `import.meta.glob`
+>    (API Vite) KHÔNG có trong Node thuần → unhandledRejection SAU khi test xong
+>    → fail cả file. Fix test-only: set `TUNNEL_API_BASE_URL` TRƯỚC import →
+>    dbSource='tunnel' → bỏ qua bootstrap — **không đụng db.ts** (file nhạy cảm).
+>
+> **Verify:** `tsc --noEmit` **EXIT 0** · `npm test` **58/58 PASS, 0 fail**
+> (6.6s — nhanh hơn trước 15.7s vì không còn bootstrap PGLite).
+>
+> **Tiêu chí kiểm chứng:** phiên mới trên máy Z: git/npm tự nhận; `npm test` xanh
+> cả trên máy này lẫn máy chủ (máy chủ vốn có env → không bị bootstrap nền).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.5.3**.
+
+### GĐ 530 / C.338 (Trợ lý Freebuff): Nhãn công việc CỤ THỂ toàn hệ thống — hết "Báo cáo SQL · 22/10/2026" (2026-10-24)
+
+> **Yêu cầu của Đại Ca (24/10, kèm ảnh chụp thanh trạng thái):** *"Anh xem các phần
+> chú thích đang chạy báo cáo nào thì thấy có phần báo cáo ghi rõ đang làm cụ thể
+> việc gì còn có phần lại ghi chung chung như 'Báo cáo SQL 22/10/2026'. Anh không
+> thể biết nó đang chạy báo cáo gì và có phải anh yêu cầu không? Em hãy rà soát lại
+> TOÀN BỘ những chỗ ghi chung chung này để ghi chi tiết cụ thể..."*
+
+> **GỐC (bằng chứng — probe thẳng GiondDB):** nhãn job do WEB tự ghép từ 4 map khai
+> rời rạc, đều đã cũ: `header-jobs-bar.tsx` chỉ 13 queryKey + 15 mã phân hệ (báo cáo
+> thêm sau GĐ C.52 rơi về chữ chung **"Báo cáo SQL"**; phân hệ thiếu map thì hiện
+> **mã thô** `blth`/`bkth-hdgtgt`/`misa-ban-hang-api`); `-tasks.ts` 29 key không nhãn;
+> `tasks-page.tsx` in thẳng mã queryKey; `ai/chat.ts` trả "Báo cáo SQL (queryKey: …)".
+> Probe GiondDB 12 job mới nhất: **toàn bộ job `sqlreport` (tkgvvxdt · bccn-dattruoc ·
+> mia-banra-*) đều hiện "Báo cáo SQL"** — đúng như ảnh ĐH.
+
+> **Đã làm (repo con `d66f14f` — 9 file +515/−97):**
+> 1. **MỚI `src/lib/job-labels.ts` — MỘT nguồn nhãn**: 36 queryKey + 29 mã phân hệ
+>    (tên người đọc được) + `jobTitle()` (báo cáo SQL → tên theo queryKey; key lạ →
+>    nêu ĐÚNG mã; thiếu key → lấy `result.title` builder trả về) — thêm báo cáo mới
+>    chỉ khai 1 chỗ.
+> 2. **`header-jobs-bar.tsx`**: bỏ 2 map cũ; thanh trạng thái hiện **`<Tên báo cáo> ·
+>    <kỳ> · <tiến độ>`** (trước chỉ "<tiến độ>"); dropdown thêm **người tạo job**
+>    (trả lời "có phải anh yêu cầu không" — job tự động hiện `Task-runner`); đơn vị
+>    tiến độ ĐÚNG (MISA/MIA/Bank = *file* theo `expected_files`; upload MISA = *phiếu*)
+>    — hết cảnh "Đã export 176/19 trung tâm"; "Chờ tải dữ liệu" nêu **tên nguồn thiếu**.
+> 3. **`sql-data-module.tsx`**: "Đang tổng hợp: `<tên báo cáo>`"; cảnh báo tải cũ nêu
+>    **tên nguồn**; lịch sử upload MISA fallback qua `reportLabel`.
+> 4. **`tasks-page.tsx` + `-tasks.ts`**: bù nhãn 2 kind thiếu (Task_05 xuất kho ·
+>    Task_06 bán hàng) + tên nhiệm vụ rõ việc; danh sách báo cáo chọn hiện **TÊN**
+>    (hover thấy mã); bảng kết quả dịch mã → tên.
+> 5. **`ai/chat.ts`**: Trợ lý AI trả "Báo cáo: `<tên>`" / "Tải dữ liệu: `<tên>`"
+>    thay vì mã thô; `list_jobs` đơn vị tiến độ đúng; mô tả tool sinh từ job-labels.
+> 6. **`agent/task_runner.py`**: bước nhiệm vụ ghi **"Báo cáo 3/29: `<TÊN>` (mã …)"**
+>    thay mã; lý do thất bại nêu rõ báo cáo/phân hệ + kỳ; ghi thêm `label` vào
+>    `results` cho web/Excel.
+> 7. **SỬA BUG chính tả mã phân hệ** (phát hiện khi rà): `tkgvvvxdt` (3 chữ v — 5 chỗ
+>    `task_runner.py` + `-tasks.ts`) → **`tkgvvxdt`** khớp `REPORT_MAP` agent / trang
+>    `/m/bc-tkgvvxdt` / `sql_reports.py` — trước đây job download phân hệ này CHẾT với
+>    "Agent chưa biết report"; config cũ trong DB vẫn được nhận (alias).
+> 8. **MỚI `src/lib/job-labels.test.ts` (21 nhóm check — chặn tái diễn)**: QUÉT MÃ
+>    NGUỒN, mọi queryKey/report dùng thật + whitelist server + key nội bộ PHẢI có tên;
+>    canh **BẢNG NHÃN AGENT PYTHON KHỚP WEB** (key + tên). Đã đăng ký vào `npm test`.
+
+> **Đã làm app tổng (`1336706`)**: lá `/m/tasks` trên trang Phân quyền
+> "Nhiệm vụ định kỳ (Task_01 + Task_02)" → **"Nhiệm vụ định kỳ (Task_01→07): tải dữ
+> liệu · báo cáo · upload MISA"** (trước thiếu Task_03→07).
+
+> **Verify:** tsc app con + app tổng **EXIT 0** · `npm test` PASS (4 test cũ + job-labels
+> 21 nhóm) · catalog app tổng 9/9 · **đối chiếu DỮ LIỆU THẬT GiondDB** (20 job gần nhất,
+> script tạm đã xoá): "Báo cáo SQL · 24/10/2026" → "Thống kê gói và Vắc xin đặt trước ·
+> 24/10/2026 · Đang tổng hợp báo cáo · Task-runner"; mã thô `bank-tcb` → "Sao kê ngân
+> hàng TCB"; `mia-banra-tongquan` → "MiaTool bán ra — tổng quan".
+
+> **Tiêu chí kiểm chứng (sau Push):** mở app con → thanh trạng thái đọc được TÊN báo
+> cáo + kỳ + người tạo; trang Nhiệm vụ danh sách báo cáo hiện TÊN; hỏi Trợ lý AI "job
+> đang chạy có gì?" → trả tên cụ thể.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** /
+> repo con **10.5.3**.
+
+### GĐ 531 / C.339 (Trợ lý Freebuff): PA-3 — "job chạy ẩn từ hôm qua" = job Đối chiếu nhập kho kẹt **Chờ dữ liệu** vĩnh viễn; bỏ vòng lặp chết + chặn nguồn không có tool + UI tách nhãn (2026-10-25)
+
+> **ĐH báo (25/10 7:36, ảnh thanh trên cùng):** "Có một nhiệm vụ chạy ẩn trên ứng dụng chạy từ
+> hôm qua đến giờ vẫn chưa xong? Đây là gì? Tại sao lại chạy lâu thế? Khắc phục tình trạng này
+> thế nào?" → điều tra ra 4 lỗi xâu chuỗi → **ĐH chốt PA-3**.
+
+> **"Chạy ẩn" là gì (bằng chứng probe GiondDB):** job **`dc-nhap-kho`** kỳ 22/10/2026 — status
+> `waitdownload` ("Chờ dữ liệu nguồn") từ 24/10 17:43, `claimed_at = NULL` → **KHÔNG chạy**, chỉ
+> đứng chờ (0 tài nguyên); UI xếp waitdownload chung nhóm "đang chạy" nên hiện "Đang tải dữ liệu:
+> 0/1 nguồn xong · 0%" mãi.
+> 1. Nguồn thiếu = `misa_pu_detail` (chi tiết phiếu Mua hàng MISA, sync Chrome CDP) — 0 dòng cho 22/10.
+> 2. ĐH bấm "Có — tải dữ liệu còn thiếu" 20:42 → web gửi report `misa-nk-chitiet` → **map
+>    createSmedJob THIẾU nhánh → rơi mặc định `hddt`** → job A59C61D1 tải HĐĐT 19 TT (vô ích) —
+>    cùng loại bug GĐ 523.
+> 3. Bước "download xong → tự chạy lại" so khóa `<source>|<kỳ>` = cần job tên `misa-nk-chitiet`
+>    done — KHÔNG BAO GIỜ tồn tại → treo vĩnh viễn.
+> 4. Deadlock agent: check thiếu dữ liệu là báo thiếu ngay, chỉ builder mới gọi `_sync_misa_pu_detail`
+>    → không bao giờ tới builder → không bao giờ tự sync (chỉ thoát bằng CLI tay).
+
+> **Đã làm (PA-3 — chi tiết đầy đủ ở entry C.339 AGENTS.md repo con):**
+> 1. **Agent** `sql_reports.py`: check `misa_pu_detail` trống → TỰ gọi `_sync_misa_pu_detail`
+>    (Chrome CDP) → đếm lại; vẫn trống mới báo thiếu (bỏ vòng lặp chết).
+> 2. **Web** `src/lib/no-tool-sources.ts` (MỚI — một nguồn sự thật): `NO_TOOL_SOURCE_KEYS`
+>    (`misa-nk-chitiet`, `dieu-chuyen`); `createSmedJob` CHẶN + trả hướng dẫn (hết rơi `hddt`);
+>    sửa reportKey nguồn misa_pu_detail `misa-muavao-chitiet` → `misa-nk-chitiet` (khớp agent).
+> 3. **Web** `sql-data-module.tsx`: bỏ nguồn no-tool khỏi bước "Có" + khỏi điều kiện chờ tự-chạy-lại
+>    (`waitFor`); thêm nút "Chạy lại ngay — tự đồng bộ dữ liệu"; lọc `srcsDl` luồng tải-mới.
+> 4. **UI** `header-jobs-bar.tsx`: tách "Chờ dữ liệu nguồn (không phải đang chạy)" — thanh hổ phách
+>    + chip "⚠️ kẹt N giờ" (>2h) + nút "Chạy lại" trên thanh; `mapJob` thêm `updatedAt`.
+> 5. **Test** `src/lib/source-tool-map.test.ts` (MỚI — 19 nhóm): canh map nguồn↔tool 2 đầu
+>    (REPORT_SOURCE_TABLES ↔ -smed.ts) — thêm nguồn mới mà quên là FAIL.
+
+> **VẬN HÀNH (đã làm — báo cáo kỳ 22/10 CHẠY XONG trong phiên này):**
+> - Chrome CDP 9222 **treo WebSocket** (đúng dấu hiệu làm Task_05/Task_06 lỗi 03:25) → restart
+>   Chrome profile `.secrets/chrome-cdp` (tab MISA vẫn đăng nhập).
+> - `misa_pu_detail_sync.py 22/10/2026 22/10/2026` → 131 phiếu list · 86 phiếu chi tiết · 126 dòng hàng.
+> - Verify THẬT code mới: `check_source_data('dc-nhap-kho','22/10/2026','22/10/2026')` → in "🔄 … tự
+>   đồng bộ qua Chrome CDP (GĐ 531)" → sau sync trả **RỖNG = đủ 3 nguồn** ✅.
+> - Restart agent (gd491) nạp code → requeue job `41D32CF1` → **done sau 18 giây · 55 dòng kết quả**
+>   ("Đối chiếu nhập kho MISA – SMED – MIA TOOL") — job kẹt từ 24/10 đã xong.
+
+> **Verify:** tsc repo con EXIT 0 · npm test PASS 6/6 (gồm 19 nhóm test mới) · py_compile OK ·
+> check_source_data thật ✅ · job 22/10 done 55 dòng.
+
+> **Tiêu chí kiểm chứng (sau Push):** job CHỜ DỮ LIỆU hiện nhãn hổ phách "(không phải đang chạy)"
+> + nút "Chạy lại"; kỳ mới chưa sync → báo cáo Đối chiếu nhập kho chạy được ngay (agent tự đồng bộ);
+> bấm "Có" cho báo cáo chỉ có nguồn tự đồng bộ → KHÔNG còn tạo job `hddt` nhầm.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.8.0** / repo con **10.5.3**.
+
+### GĐ 532 / C.340 (Trợ lý Freebuff): PA Push đợt 25/10 — push 2 repo (GĐ 528/529/530/531) + bump 6.9.0 / 10.6.0 + LIVE (2026-10-25)
+
+> **Lệnh ĐH "push"** (sau khi GĐ 531 xong). Rà trùng lặp (nguyên tắc 3): nhánh phụ
+> `agent-cli` + `pipeline-work` **RỖNG cả 2 repo** · remote `origin/main` **0 commit mới**
+> (không ai push trước) · registry 3 dòng 🔒 cũ của phiên khác (GĐ 514/520/528) KHÔNG đụng
+> · working tree còn file dở phiên khác (app tổng: AGENTS.md/registry/package-lock · repo con:
+> 3 file danh mục) → **KHÔNG add**.
+
+> **⚠️ CẢNH BÁO (đã báo ĐH kèm theo):** đợt push này chứa luôn công việc CHƯA PUSH của
+> **3 phiên khác**: GĐ 528 (khảo sát kiến trúc phân tải đa máy — docs, chờ ĐH chốt PA) ·
+> GĐ 529 (fix tsc TS18046 + test tunnel-gist-fallback — code app tổng) · GĐ 530/C.338
+> (nhãn công việc cụ thể toàn hệ thống — code cả 2 app). Không có TRÙNG LẶP/SỬA ĐÈ.
+
+> **Push:** app tổng `1c7468f..8b4da84` (17 commit: GĐ 528×3 + 529×5 + 530×4 + 531×3
+> + claim GĐ 532 + bump) · repo con `3b33788..c65fad4` (5 commit: C.338 code+entry +
+> C.339 code+entry + bump)
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** nội dung đợt = fix code (GĐ 529) + feature
+> (nhãn công việc GĐ 530, chống treo "Chờ dữ liệu" GĐ 531) → **minor**: app tổng
+> **6.8.0 → 6.9.0** (package.json + DEFAULT_VERSION app-shell.tsx) · repo con
+> **10.5.3 → 10.6.0** (package.json + DEFAULT_VERSION). Checklist: mọi thành phần 1 chữ số ✓.
+
+> **✅ Verify production (checklist GĐ 470 — curl --compressed lần đầu):** app tổng
+> `giong-vn-v6.vercel.app` = **6.9.0** · app con `giong-banhang.vercel.app` = **10.6.0**
+> (deploy Vercel tự build từ push, deployment mới nhất Ready) · **login app tổng thật** →
+> JSON user "Phạm Kiên Cường" ✓ · `get-session` → session token ✓ · **SSO thật:** ký JWT
+> (iss=giong-vn-v6, aud=giong-banhang) bằng `APP_JWT_SECRET` → `302 → app con + Set-Cookie:
+> bh_session` ✓ (secret 2 app KHỚP — hết rủi ro lỗi login kiểu GĐ 463) · `/api/auth/me`
+> app con → user + 16+ nhóm/leaf quyền ✓.
+
+> **Tiêu chí kiểm chứng của ĐH:** mở app con → thanh trên cùng KHÔNG còn job "chạy ẩn 0%"
+> (0 job waitdownload trên hệ thống); job chờ nếu có hiện thanh hổ phách + nút "Chạy lại";
+> báo cáo Đối chiếu nhập kho kỳ MỚI chạy được ngay (agent tự đồng bộ nguồn MISA qua Chrome
+> CDP); nhãn công việc cụ thể toàn app (GĐ 530) đã LIVE.
+
+> **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+
 ---
 
 ### GĐ 528 (Trợ lý Freebuff / máy LAN-1): ✅ Phân tải download/upload đa máy — ĐH CHỐT PA-1, CODE XONG (C.338) (2026-10-24/25)
