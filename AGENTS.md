@@ -6313,3 +6313,38 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **6.8.0** / repo con **10.5.3**.
+
+### GĐ 533 / C.341 (Trợ lý Freebuff/máy LAN-1): PA Push đợt GĐ 528 code C.338/C.339 — KHÔNG bump (docs + agent-side python) — push qua merge origin GĐ 532 — LIVE (2026-10-25)
+
+> **Lệnh "Push" của Đại ca (25/10 tối).** Rà trùng lặp nguyên tắc 3: fetch cả
+> 2 repo — origin/main ĐÃ TIẾN XA (GĐ 529-532 phiên khác — bump **6.9.0** /
+> **10.6.0** + verify production riêng) · đối chiếu file: KHÔNG ai đụng code
+> GĐ 528 (api_server/40_web_agent/worker_node/etl_import không có trong diff
+> origin) — giao nhau CHỈ file dùng chung AGENTS.md + AGENT_REGISTRY.md →
+> merge conflict → resolve giữ bản origin + GHÉP entry/dòng của mình vào cuối
+> (grep verify: AGENTS.md có cả GĐ 528 + GĐ 532; registry cả 2 dòng — KHÔNG
+> nuốt entry ai). Merge commit: repo con "b1705bc" · app tổng "4cce2df".
+>
+> **KHÔNG bump version (giải thích):** app tổng đợt này = docs-only (entry/
+> registry — tiền lệ GĐ 416/417); repo con = 100% agent-side python (không
+> nằm bundle web — tiền lệ GĐ 422/C.256). Version giữ **6.9.0 / 10.6.0**
+> (của GĐ 532 — entry GĐ 528 ghi "6.8.0/10.5.3" là tại thời điểm viết, giờ
+> đã bị GĐ 532 vượt lên — lịch sử chỉ đi tới, không sửa entry cũ).
+>
+> **Push:** repo con "c3266b1..b1705bc" (6 commit em: C.337-C.339 + merge) ·
+> app tổng "d7df5c4..4cce2df" (11 commit em: GĐ 528 + merge).
+>
+> **✅ Verify production (GĐ 470 — curl --compressed lần đầu):** app tổng
+> "giong-vn-v6.vercel.app" = **6.9.0** · app con "giong-banhang.vercel.app"
+> = **10.6.0** — deploy mới chạy, không ghim deployment cũ · login app tổng
+> sign-in/email trả "user" ✅. SSO không test lại — GĐ 532 vừa verify cùng
+> env, đợt này 0 code web/env đổi.
+>
+> **Việc production chờ làm (từ máy chủ — A1-A6 HUONG-DAN-CHAY-PA1.md):**
+> git pull → chạy apply_migration_0009.py → restart api_server + agent →
+> bật SQL TCP/IP + firewall 1433 → T-SQL tạo login giong_worker → Test B
+> máy chủ (kỳ vọng 17/17) → máy LAN-1 pilot 1 job SMED (env đã sẵn
+> "C:\CUONG_2026\worker-lan1\worker-lan1.env.bat" — điền mật khẩu).
+>
+> **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + LIVE
+> (không đổi — đợt này không đụng web).
