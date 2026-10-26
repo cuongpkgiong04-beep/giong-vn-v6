@@ -6708,6 +6708,161 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
 
+### GĐ 528 (Trợ lý Freebuff / máy LAN-1): ✅ Phân tải download/upload đa máy — ĐH CHỐT PA-1, CODE XONG (C.338) (2026-10-24/25)
+
+> **Yêu cầu của Đại ca (24/10):** khảo sát tổng thể app con + Database → đề xuất
+> giải pháp giảm tải cho máy chủ: phân việc cho 4 máy tính trong phòng (LAN +
+> Internet) cùng tham gia download (SMED / MISA meInvoice / Bank / MIA) + upload
+> (MISA AMIS); GiondDB vẫn đặt tại máy chủ; mở rộng được cho máy ngoài LAN
+> (máy ở nhà). Tham chiếu mô hình MISA AMIS (1 máy chủ + nhiều điểm ghi).
+>
+> **ĐH chốt (25/10, sau vòng hỏi-đáp 3 PA):** **PA-1** — điểm vào web duy nhất
+> + worker đa máy chia GiondDB; máy nhà ngoài LAN pilot SAU.
+>
+> **Hiện trạng (đọc code thật):** MỘT máy duy nhất gánh tất cả — api_server
+> FastAPI :8777 (bind 127.0.0.1, cloudflared Quick Tunnel + gist + watchdog,
+> pyodbc GiondDB `.\SQLEXPRESS` cùng máy) · `40_web_agent.py` 1 process chạy
+> **TUẦN TỰ** while True: claim_job → chạy 1 job → report (auto-ETL 60' +
+> task_runner Task_01..07 cùng process) · tool download Playwright (SMED 19 TT
+> — **19 tài khoản riêng** center_pass.txt · MISA meInvoice — **1 TK** +
+> OTP Gmail IMAP + storage_state · VCB/TCB/TPB — **1 TK/NGH** + WAF headful ·
+> MIA — API + ddddocr) · upload MISA AMIS = Chrome CDP 9222 phiên AMIS login
+> sẵn · file Excel trung gian OUTPUT\ nằm trên máy.
+>
+> **Ràng buộc phân tải (bằng chứng .secrets + code):** SMED 19 TK → chia nhóm
+> TT nhiều máy được (LAN NAT chung 1 IP public — WAF an toàn); MISA meInvoice
+> 1 TK + OTP → ĐỘC QUYỀN 1 máy; Bank 1 TK/NGH + WAF → cố định 1 máy/NGH; AMIS
+> upload SaaS nhiều điểm ghi được nhưng cần queue tránh đụng cùng kỳ/TT;
+> GiondDB máy khác nối pyodbc qua LAN / máy nhà qua Tailscale (SQL 1433).
+>
+> **3 PA đã trình + dự đoán:** PA-1 (khuyến nghị) — giữ web + api_server +
+> tunnel NGUYÊN, thêm cột `worker_group` điều phối + worker rút gọn 4 máy poll
+> claim trực tiếp GiondDB theo nhóm → pipeline nhanh ~3x, web không đổi ·
+> PA-2 — mỗi máy 1 api_server + tunnel riêng → web đổi nhiều + lặp lại chaos
+> Quick Tunnel (GĐ 244/424) — KHÔNG khuyến nghị · PA-3 — song song hóa N thread
+> trong 1 máy → nhanh làm 1-2 phiên, giảm 2-3x nhưng không đạt mục tiêu 4 máy.
+>
+> **Thiết kế chi tiết PA-1 (đã lập):** `giong-apps/apps/banhang/agent/
+> CHECKPOINT-GD528-PA1.md` — migration SQL `claimed_by` + index · claim ATOMIC
+> theo nhóm (UPDATE...OUTPUT thay select-then-update — chống race đa worker) ·
+> stale reclaim 45' (máy LAN chết job không kẹt) · LỌC accounts theo nhóm
+> (máy SMED không nhận password MISA/bank — an toàn hơn hiện tại) ·
+> `worker_node.py` máy LAN import 40_web_agent (không nhân bản code, KHÔNG
+> task_runner/auto-ETL chung) · phân nhóm: core (máy chủ = MISA + Bank + AMIS
+> upload + scheduler) / smed (máy LAN) · thứ tự triển khai 6 bước + tiêu chí
+> kiểm chứng từng bước + rollback. PA-1b (chia TT trong 1 job) + máy nhà +
+> token riêng worker = mở rộng SAU.
+>
+> **Môi trường máy LAN-1 (25/10 — ĐH chỉ thị "cài đủ công cụ để làm việc"):**
+> Git 2.56.0 (user.email `cuongpk.giong04@gmail.com` đúng GĐ 285) · Python
+> 3.12.10 + pip 25.0.1 + playwright/pyodbc/requests + chromium (winget cài) ·
+> Node v24.22.1 + npm 11.19.1 (có sẵn từ trước) · **clone riêng**
+> `C:\CUONG_2026\giong-vn-v6-agent-lan` + `giong-apps` (quy ước GĐ 242 — máy
+> LAN làm việc git cục bộ, KHÔNG đụng worktree Z:/máy chủ của Agent Desktop) ·
+> hooks shared-doc ĐÃ cài (`scripts/agents/install-hooks.py`).
+>
+> **Trạng thái:** ✅ **CODE PA-1 XONG (C.338 — cùng phiên)** — 6 file repo con:
+> migration 0009 (claimed_by + ix_jobs_pending) · api_server claim ATOMIC
+> (CTE UPDATE..OUTPUT + UPDLOCK/READPAST + workerId/groups + stale reclaim
+> 45' + LỌC accounts theo nhóm + bind API_HOST 0.0.0.0) · 40_web_agent
+> tách process_job 238 dòng (main + worker dùng chung) + env WORKER_ID/
+> WORKER_GROUPS/AGENT_SQL_CONN · etl_import ETL_SQL_CONN · worker_node.py
+> máy LAN (importlib — không nhân bản logic) · test_claim_gd528.py
+> **12/12 PASS** (offline + HTTP TestClient; Test B DB thật tự skip — chạy
+> lại trên máy chủ). Probe LAN: ping 0ms OK — SQL Server máy chủ chưa bật
+> TCP/IP + firewall 1433 (việc hạ tầng mục 6 checkpoint). Commit repo con:
+> code + entry C.338 (quá cổng shared-doc).
+>
+> **C.339 — chuẩn bị vận hành XONG (cùng phiên):** script
+> "apply_migration_0009.py" (chạy máy chủ, tách batch GO + verify) · hướng
+> dẫn vận hành 2 máy "agent/HUONG-DAN-CHAY-PA1.md" (A. máy chủ: pull →
+> migration → restart → bật SQL TCP + firewall 1433 → T-SQL tạo login
+> giong_worker → Test B kỳ vọng 17/17 · B. máy LAN: driver 18/LEGACY → env
+> → pilot SMED · C. rollback) · máy LAN-1 cấu hình sẵn: 2 secret copy qua
+> SMB + file env "C:\CUONG_2026\worker-lan1\worker-lan1.env.bat" (chứa
+> SECRET ngoài repo — ĐH điền mật khẩu giong_worker).
+>
+> **Còn lại để LIVE:** (1) máy chủ — A1-A6 hướng dẫn; (2) máy LAN — B1-B4
+> pilot 1 job SMED; (3) sau pilot ổn → push.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **6.8.0** / repo con **10.5.3**.
+
+### GĐ 532 / C.340 (Trợ lý Freebuff): PA Push đợt 25/10 — push 2 repo (GĐ 528/529/530/531) + bump 6.9.0 / 10.6.0 + LIVE (2026-10-25)
+
+> **Lệnh ĐH "push"** (sau khi GĐ 531 xong). Rà trùng lặp (nguyên tắc 3): nhánh phụ
+> `agent-cli` + `pipeline-work` **RỖNG cả 2 repo** · remote `origin/main` **0 commit mới**
+> (không ai push trước) · registry 3 dòng 🔒 cũ của phiên khác (GĐ 514/520/528) KHÔNG đụng
+> · working tree còn file dở phiên khác (app tổng: AGENTS.md/registry/package-lock · repo con:
+> 3 file danh mục) → **KHÔNG add**.
+
+> **⚠️ CẢNH BÁO (đã báo ĐH kèm theo):** đợt push này chứa luôn công việc CHƯA PUSH của
+> **3 phiên khác**: GĐ 528 (khảo sát kiến trúc phân tải đa máy — docs, chờ ĐH chốt PA) ·
+> GĐ 529 (fix tsc TS18046 + test tunnel-gist-fallback — code app tổng) · GĐ 530/C.338
+> (nhãn công việc cụ thể toàn hệ thống — code cả 2 app). Không có TRÙNG LẶP/SỬA ĐÈ.
+
+> **Push:** app tổng `1c7468f..8b4da84` (17 commit: GĐ 528×3 + 529×5 + 530×4 + 531×3
+> + claim GĐ 532 + bump) · repo con `3b33788..c65fad4` (5 commit: C.338 code+entry +
+> C.339 code+entry + bump)
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** nội dung đợt = fix code (GĐ 529) + feature
+> (nhãn công việc GĐ 530, chống treo "Chờ dữ liệu" GĐ 531) → **minor**: app tổng
+> **6.8.0 → 6.9.0** (package.json + DEFAULT_VERSION app-shell.tsx) · repo con
+> **10.5.3 → 10.6.0** (package.json + DEFAULT_VERSION). Checklist: mọi thành phần 1 chữ số ✓.
+
+> **✅ Verify production (checklist GĐ 470 — curl --compressed lần đầu):** app tổng
+> `giong-vn-v6.vercel.app` = **6.9.0** · app con `giong-banhang.vercel.app` = **10.6.0**
+> (deploy Vercel tự build từ push, deployment mới nhất Ready) · **login app tổng thật** →
+> JSON user "Phạm Kiên Cường" ✓ · `get-session` → session token ✓ · **SSO thật:** ký JWT
+> (iss=giong-vn-v6, aud=giong-banhang) bằng `APP_JWT_SECRET` → `302 → app con + Set-Cookie:
+> bh_session` ✓ (secret 2 app KHỚP — hết rủi ro lỗi login kiểu GĐ 463) · `/api/auth/me`
+> app con → user + 16+ nhóm/leaf quyền ✓.
+
+> **Tiêu chí kiểm chứng của ĐH:** mở app con → thanh trên cùng KHÔNG còn job "chạy ẩn 0%"
+> (0 job waitdownload trên hệ thống); job chờ nếu có hiện thanh hổ phách + nút "Chạy lại";
+> báo cáo Đối chiếu nhập kho kỳ MỚI chạy được ngay (agent tự đồng bộ nguồn MISA qua Chrome
+> CDP); nhãn công việc cụ thể toàn app (GĐ 530) đã LIVE.
+
+> **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+
+---
+
+### GĐ 533 / C.341 (Trợ lý Freebuff/máy LAN-1): PA Push đợt GĐ 528 code C.338/C.339 — KHÔNG bump (docs + agent-side python) — push qua merge origin GĐ 532 — LIVE (2026-10-25)
+
+> **Lệnh "Push" của Đại ca (25/10 tối).** Rà trùng lặp nguyên tắc 3: fetch cả
+> 2 repo — origin/main ĐÃ TIẾN XA (GĐ 529-532 phiên khác — bump **6.9.0** /
+> **10.6.0** + verify production riêng) · đối chiếu file: KHÔNG ai đụng code
+> GĐ 528 (api_server/40_web_agent/worker_node/etl_import không có trong diff
+> origin) — giao nhau CHỈ file dùng chung AGENTS.md + AGENT_REGISTRY.md →
+> merge conflict → resolve giữ bản origin + GHÉP entry/dòng của mình vào cuối
+> (grep verify: AGENTS.md có cả GĐ 528 + GĐ 532; registry cả 2 dòng — KHÔNG
+> nuốt entry ai). Merge commit: repo con "b1705bc" · app tổng "4cce2df".
+>
+> **KHÔNG bump version (giải thích):** app tổng đợt này = docs-only (entry/
+> registry — tiền lệ GĐ 416/417); repo con = 100% agent-side python (không
+> nằm bundle web — tiền lệ GĐ 422/C.256). Version giữ **6.9.0 / 10.6.0**
+> (của GĐ 532 — entry GĐ 528 ghi "6.8.0/10.5.3" là tại thời điểm viết, giờ
+> đã bị GĐ 532 vượt lên — lịch sử chỉ đi tới, không sửa entry cũ).
+>
+> **Push:** repo con "c3266b1..b1705bc" (6 commit em: C.337-C.339 + merge) ·
+> app tổng "d7df5c4..4cce2df" (11 commit em: GĐ 528 + merge).
+>
+> **✅ Verify production (GĐ 470 — curl --compressed lần đầu):** app tổng
+> "giong-vn-v6.vercel.app" = **6.9.0** · app con "giong-banhang.vercel.app"
+> = **10.6.0** — deploy mới chạy, không ghim deployment cũ · login app tổng
+> sign-in/email trả "user" ✅. SSO không test lại — GĐ 532 vừa verify cùng
+> env, đợt này 0 code web/env đổi.
+>
+> **Việc production chờ làm (từ máy chủ — A1-A6 HUONG-DAN-CHAY-PA1.md):**
+> git pull → chạy apply_migration_0009.py → restart api_server + agent →
+> bật SQL TCP/IP + firewall 1433 → T-SQL tạo login giong_worker → Test B
+> máy chủ (kỳ vọng 17/17) → máy LAN-1 pilot 1 job SMED (env đã sẵn
+> "C:\CUONG_2026\worker-lan1\worker-lan1.env.bat" — điền mật khẩu).
+>
+> **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + LIVE
+> (không đổi — đợt này không đụng web).
+
 ### GĐ 540 / C.347 (Trợ lý Freebuff): Bảng giá dịch vụ — app TỰ đọc ảnh web mới (AI nhìn ảnh) + TỰ cập nhật giá, hết cảnh "bắt nạp file" (2026-10-26)
 
 > **ĐH báo (26/10, ảnh nút Refresh):** "Anh ấn vào Refresh trên phần 'Bảng giá dịch vụ' thì có
@@ -6747,6 +6902,42 @@ repo con **10.1.0**.
 > khoá z.ai chưa mở model nhìn ảnh → app hiện cảnh báo cũ kèm lý do (không ghi sai gì).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.7.0**.
+
+### GĐ 541 / C.348 (Trợ lý Freebuff): PA Push đợt 26/10 tối — 2 repo ĐÃ PUSH + LIVE (2026-10-26)
+
+> **Lệnh "Push" của ĐH (26/10).** Rà trùng lặp (nguyên tắc 3) trước khi push:
+> **PHÁT HIỆN TRÙNG LỚN** — remote repo con đã có **C.337–C.341 của phiên "máy LAN-1"**
+> (cùng tính năng GĐ 528 PA-1 phân tải đa máy) trong khi máy cty có **C.342 của phiên khác**
+> làm **cùng tính năng đó** ⇒ push `non-fast-forward`, xung đột **5 file** ở repo con
+> (`AGENTS.md` · `agent/40_web_agent.py` · `agent/api_server/api_server.py` ·
+> `agent/api_server/test_claim_gd528.py` · `agent/worker_node.py`).
+> **ĐÃ CẢNH BÁO ĐH TRƯỚC KHI PUSH** (đúng quy tắc 3) → **ĐH chốt "OK A"**: gộp theo bản
+> superset/tương thích.
+
+> **Kết quả push (2 repo):**
+> · **App tổng**: `a4f3ed1..5935e17` — merge union entry máy LAN-1 ↔ máy cty (AGENTS.md 139
+> khối · registry 260 khối, **0 khối mất**; còn 2-3 dòng/heading trùng do 2 phiên ghi cùng
+> số — giữ cả hai để không mất dấu việc). Merge làm ở **worktree tạm** để không đụng bài dở
+> phiên khác. Docs-only ⇒ **KHÔNG bump** (tiền lệ GĐ 416/417) — app tổng giữ **6.9.0**.
+> · **Repo con**: bump **10.6.0 → 10.7.0** (`bc1fb4d`) → `67ddcb6..8e6e6fe` (merge 5 file) →
+> `8e6e6fe..8fad6d2` (sửa deploy) → `9d2aedb` (entry). Gộp: `api_server.py` +
+> `test_claim_gd528.py` giữ **bản máy cty** (nhận CẢ 2 khoá `worker_id`/`workerId`, thêm 4 hàm);
+> `worker_node.py` giữ **bản máy LAN-1** (PILOT PASS máy .27); `40_web_agent.py` giữ khoá
+> `workerId` + NGUYÊN job-log GĐ 536. Verify bản gộp: **17/17 · 72/72 · 41/41 PASS** + py_compile.
+
+> **🚨 BÀI HỌC BẮT BUỘC (deploy app con FAIL 1 lần trong đợt này):** Vercel build báo
+> `Error transforming route file .../up-nhap-kho.tsx: SyntaxError: Unexpected token, expected "..."`
+> — gốc: **chú thích `{/**/}` đặt GIỮA các THUỘC TÍNH của `<SqlDataModule>` = sai cú pháp JSX**
+> (phải nằm ngoài, là JSX child). ⚠️ **`tsc --noEmit` EXIT 0 vẫn KHÔNG bắt được lỗi này** ⇒
+> **BẮT BUỘC chạy `npx vite build` THẬT trước khi push file web** (`src/**` app con) — bổ sung
+> vào quy trình push của mọi Agent (đã áp dụng ngay trong đợt này: build PASS rồi mới push lại).
+
+> **✅ Verify production (checklist GĐ 470 B):** app con **10.7.0** (curl lần đầu) · deployment
+> `8fad6d2d` **READY** · login app tổng trả JSON user + session ✓ · **SSO browser thật**: login
+> app tổng → bấm "Bán hàng" → app con mở **có phiên** (không "Chưa đăng nhập") ✓ · app tổng
+> **6.9.0**.
+
+> **Version:** app tổng **6.9.0** (docs-only, không bump) / app con **10.7.0** — ĐÃ PUSH + ĐÃ LIVE.
 
 ### GĐ 543 (Trợ lý Freebuff): PHÂN TẢI 4 MÁY LAN theo chốt của ĐH — nhóm misa-muahang/misa-banhang + máy chủ cứu hộ 15' + cài công cụ 3 máy (2026-10-27)
 
@@ -6812,3 +7003,4 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con
 > **10.7.0** (phiên khác đã push 26/10).
+
