@@ -6419,3 +6419,46 @@ repo con **10.1.0**.
 > (không kẹt vĩnh viễn).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.6.0**.
+
+> **CẬP NHẬT 26/10 chiều (ĐH báo máy .27 đã sẵn sàng + đã cài SSH/Tailscale — em làm nốt phần MÁY CHỦ A4/A5/A6):**
+> - **⚠️ TRÙNG LẶP 2 PHIÊN (nguyên tắc 3 — đã CẢNH BÁO ĐH):** phiên
+>   **"Trợ lý Freebuff/máy LAN-1"** đã code TRÙNG PA-1 từ 25/10 (`4fde96b`:
+>   api_server + 40_web_agent + migration 0009 + worker_node + test, ĐÃ PUSH +
+>   ĐÃ CÀI trên máy .27). Cùng thiết kế (cùng `claimed_by`, `ix_jobs_pending`,
+>   nhóm smed/core, stale 45') nhưng khác 3 chi tiết — đã **hoà giải theo hướng
+>   an toàn hơn từng điểm**: (a) họ gửi `workerId` (camelCase) → máy chủ VÁ nhận
+>   CẢ `workerId`/`worker_id`; (b) họ dùng `readpast` → giữ `updlock` (thực nghiệm:
+>   readpast làm worker 2 ĐÓI job 18/2, readpast+rowlock DEADLOCK); (c) họ reclaim
+>   theo `claimed_at` → giữ theo heartbeat `updated_at` (job dài heartbeat đều
+>   KHÔNG bị reclaim oan). Thêm alias `GROUP_REPORTS`/`STALE_MINUTES`/
+>   `db_rows_commit`/`_claim_filter_reports` + `core` = KHÔNG lọc (fallback) →
+>   **bộ test 17/17 của họ chạy được trên máy chủ**.
+> - **A4 ĐÃ LÀM — SQL Server mở TCP 1433:** phát hiện quan trọng — sửa registry
+>   tay KHÔNG đủ (TCP vẫn không listen), phải bật qua **WMI
+>   `ServerNetworkProtocol.SetEnable()`** (nguồn thật của Config Manager) +
+>   `IPAll.TcpPort=1433`; kèm **`LoginMode` 1→2 (Mixed)** vì máy chủ đang chỉ
+>   Windows-auth (login SQL sẽ không đăng nhập được). Verify: `netstat` →
+>   `0.0.0.0:1433 LISTENING` ✓ · firewall rule **`GiondDB 1433 LAN`** (chỉ
+>   192.168.1.0/24) · backup registry tại `C:\Users\Administrator\gd534_sql_backup\`.
+> - **A5 ĐÃ LÀM — login `giong_worker`** (db_datareader + db_datawriter, KHÔNG
+>   DDL) · mật khẩu random 24 ký tự lưu `agent/.secrets/worker_db_pass.txt` (máy
+>   chủ, không commit) · script idempotent `agent/create_worker_db_login.py` ·
+>   **VERIFY THẬT qua TCP**: `192.168.1.250,1433` + SQL auth → db=GiongDB ·
+>   login=giong_worker · 3.081 job · thấy cột `claimed_by` ✓.
+> - **A6 ĐÃ LÀM — `python test_claim_gd528.py` trên máy chủ → 17/17 PASS** (sửa 2
+>   lỗi khiến Test B CHƯA TỪNG chạy được ở máy .27: bảng test thiếu cột
+>   `updated_at`; `readpast` không khớp production). Test atomic của em
+>   (`test_claim_atomic.py`) cũng PASS toàn bộ sau khi cập nhật semantics core.
+> - **🚨 2 CẢNH BÁO CẤU HÌNH cho máy .27 (nếu không sửa sẽ KHÔNG kết nối được):**
+>   1. Hướng dẫn/file env của máy LAN-1 ghi `Database=GiondDB` — **SAI chính tả,
+>      database thật là `GiongDB`** (lỗi thật đã gặp khi chạy script: 911
+>      "Database 'GiondDB' does not exist").
+>   2. `Server=192.168.1.250\SQLEXPRESS` cần dịch vụ **SQL Browser (UDP 1434)**
+>      — máy chủ KHÔNG bật → phải dùng **`Server=192.168.1.250,1433`**.
+> - Lỗi T-SQL đã gặp: gộp `USE db; CREATE USER ...` trong 1 batch → lỗi 911 dù DB
+>   tồn tại (SQL compile cả batch theo context cũ) — phải tách lệnh.
+> - **Cấp cho phiên máy LAN-1:** IP `192.168.1.250,1433` · DB `GiongDB` · login
+>   `giong_worker` · mật khẩu: xem `agent/.secrets/worker_db_pass.txt` (hoặc ĐH
+>   đổi bằng `ALTER LOGIN`).
+> - **Commit phần này:** repo con `77d4082` (5 file) — **KHÔNG Push, KHÔNG bump**
+>   (chờ lệnh Push; đợt Push tới phải HỢP NHẤT 2 codebase PA-1 làm 1 + rà trùng).
