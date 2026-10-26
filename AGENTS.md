@@ -6463,6 +6463,30 @@ repo con **10.1.0**.
 > - **Commit phần này:** repo con `77d4082` (5 file) — **KHÔNG Push, KHÔNG bump**
 >   (chờ lệnh Push; đợt Push tới phải HỢP NHẤT 2 codebase PA-1 làm 1 + rà trùng).
 
+> **🎉 PILOT ĐÃ CHẠY THÀNH CÔNG (26/10 16:49→16:53 — bằng chứng thật, không phải mô phỏng):**
+> ĐH cấp SSH máy .27 (**`phamcuong@192.168.1.27` · admin · pass 123**) → em vào làm trực tiếp:
+> 1. Sửa file env `C:\CUONG_2026\worker-lan1\worker-lan1.env.bat`: **3 chỗ `GiondDB`→`GiongDB`**
+>    + điền mật khẩu `giong_worker` (2 chỗ) — đúng 2 lỗi cấu hình đã cảnh báo ở trên.
+> 2. Test TỪ máy .27: api_server `/health` **200** · `/agent/claim` **200** ·
+>    **GiondDB qua TCP `192.168.1.250,1433` OK** (db=GiongDB · login=giong_worker · 3.081 job) ·
+>    pyodbc thấy cả `ODBC Driver 18 for SQL Server` ✓.
+> 3. Chạy worker → tạo job pilot (hddt kỳ 20/10, đã có dữ liệu → nạp đè an toàn):
+>    **máy .27 claim sau ~15 giây · `claimed_by='lan-1'`** → tool chạy **244 giây** →
+>    **19/19 file Excel** về `OUTPUT\1.HDDT\2026-10-20` **TRÊN MÁY .27** →
+>    **ETL từ .27 nạp GiondDB `exit=0 · 19 file mới · 155 dòng`** → job `done`, 0 lỗi.
+> 4. **Worker chạy ĐỘC LẬP**: scheduled task **`GIONG_Worker_LAN1`**
+>    (`/sc onstart /ru phamcuong /rl HIGHEST`) → tự chạy khi máy .27 khởi động, không cần
+>    đăng nhập hay SSH. Gỡ: `schtasks /delete /tn GIONG_Worker_LAN1 /f`.
+> 5. **VẬN HÀNH THẬT — phân tải đã hoạt động**: Task_04 (17:15) chạy chuỗi job, kết quả
+>    quan sát trực tiếp: job `dtdt` + `bkccn` do **máy chủ (`core`)** chạy, job `dtthc` do
+>    **máy .27 (`lan-1`)** chạy xong — hai máy chia việc song song ✓.
+>
+> **⚠️ Điều kiện để phân tải có tác dụng thật:** máy .27 phải BẬT (nhất là **23:00** khi
+> Task_02 chạy). Máy tắt → máy chủ tự nhận lại job SMED (nhánh không lọc) — hệ thống vẫn
+> chạy, chỉ không giảm tải.
+> **⚠️ Tồn nhỏ theo dõi:** auto-ETL nền trên .27 báo `exit 1` (ETL-sau-job vẫn `exit=0`) —
+> không ảnh hưởng pilot, ghi nhận để rà sau.
+
 ### GĐ 536 / C.343 (Trợ lý Freebuff): PA-3 (ĐH chốt 26/10) — UPLOAD Phiếu xuất kho MISA lấy HẾT phiếu qua API nội bộ SMED (2026-10-26)
 
 > **Bối cảnh:** ĐH báo Task_05 kỳ 25/10 hiện **LỖI — "job treo quá 45 phút (watchdog
