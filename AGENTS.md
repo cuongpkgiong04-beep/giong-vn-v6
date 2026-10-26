@@ -330,6 +330,17 @@
 >
 > **Lệnh cơ bản (Agent đọc khi cần):** `git worktree list` (xem các working tree) · `git -C <worktree> log --oneline -5` (xem commit Agent kia) · merge khi Push: `git checkout main && git merge agent-cli`.
 
+>
+> **🛠️ CÔNG CỤ CẤP SỐ TỰ ĐỘNG (GĐ 535 — thay thao tác thủ công, chống trùng tuyệt đối):** thay vì tự grep + tự tính max+1 (mất 5-15 phút và VẪN trùng khi 2 phiên sát nhau — vụ GĐ 420 lệch 74 giây), dùng **1 lệnh**:
+>
+> ```bash
+> python scripts/agents/claim.py claim --agent "<tên Agent>" --task "<mô tả việc>" [--scope "file dự kiến"] [--cx]
+> python scripts/agents/claim.py check                        # max 2 dải + ai đang giữ 🔒 + commit chưa push
+> python scripts/agents/claim.py done --gd <số> --hash <hash code>   # 🔒 → ✅ khi xong việc
+> ```
+>
+> → `claim` tự quét MỌI nguồn (registry + entry trên MỌI ref kể cả nhánh chưa merge + commit message mọi nhánh + repo con cho dải C.x; số lạ xa dải bị bỏ kèm cảnh báo) → max+1 → tự ghi dòng 🔒 → **tự commit NGAY qua cổng shared-doc**; khóa toàn cục trong `.git` (dùng chung mọi worktree) chặn 2 phiên cùng số — 2 phiên claim đồng thời vẫn ra 2 số khác nhau (đã chứng minh bằng test race 3 process). Quy tắc gốc GĐ 285 **KHÔNG đổi** (vẫn claim TRƯỚC khi làm, commit NGAY, không push) — claim.py chỉ là CÁCH thực hiện nhanh + không thể trùng. Thêm `--dry-run` để xem trước số sẽ cấp.
+
 <!-- SHARED-BLOCK:GD495-CONG-FILE-DUNG-CHUNG START -->
 ### 🚧 CỔNG COMMIT FILE DÙNG CHUNG — CHỐNG NUỐT/XOÁ BÀI PHIÊN SONG SONG (hiệu lực GĐ 495, 21/10/2026)
 
@@ -6253,3 +6264,63 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
+
+### GĐ 535 (Trợ lý Freebuff): TỐI ƯU CẤP SỐ GIAI ĐOẠN ĐA AGENT — `claim.py` 1 lệnh tự quét + tự khóa + tự commit (2026-10-26)
+
+> **Yêu cầu của Đại ca (26/10):** "Việc ghi nhận số GĐ thế nào để không bị trùng lặp...
+> quá trình mất rất nhiều thời gian để xác định số GĐ xem có bị trùng lặp ở các Agents
+> khác không... Em kiểm tra lại và tối ưu chỗ này để kết quả nhanh nhất và đúng nhất."
+>
+> **Chẩn đoán (số liệu thật, quét lại toàn bộ lịch sử 1.239 commit):**
+> 1. **~20 vụ TRÙNG SỐ THẬT riêng tháng 10/2026**: 403/405 · 408 · 411/414 · 413/435 ·
+>    420/421 · 435/436 · 477 · 485/486 · 495/496 · 500/501 · 512/513/514 · 515/516 · 517 ·
+>    C.184/185 · C.242/244 · C.302 · C.306/307 · C.328/329 — gần như mỗi đợt Push 2-3 phiên
+>    là có 1 vụ phải đổi số.
+> 2. **Gốc rễ (1) — cấp số THỦ CÔNG:** mỗi phiên tự grep `git log` + tự đọc bảng registry
+>    (247KB) + AGENTS.md (440KB) + archive (1.1MB) rồi tự tính max+1 — mất 5-15 phút, dễ sót.
+> 3. **Gốc rễ (2) — "đọc số → ghi số" KHÔNG nguyên tử:** vụ GĐ 420 hai phiên commit claim
+>    cách nhau **74 GIÂY**, cả 2 đều làm đúng quy tắc GĐ 285 mà vẫn cùng số.
+> 4. **Gốc rễ (3) — số đã claim CHƯA Push** trên nhánh khác (agent-cli/pipeline-work) không
+>    nhìn thấy nếu chỉ grep nhánh mình.
+>
+> (Trả lời câu hỏi của ĐH "lấy số lúc nhận lệnh hay lúc xong mới đi tìm?": quy tắc đã đúng là
+> **claim TRƯỚC khi làm** — nhưng cách thực hiện thủ công vẫn trùng; phải TỰ ĐỘNG quét + khóa
+> trong MỘT lệnh thì mới hết. ĐH đề xuất "agents tự xem số gần nhất + số đã đánh dấu nhận chưa
+> Push" là ĐÚNG về nguyên lý — nay máy tự làm thay, không cần agent tự mắt rà nữa.)
+>
+> **Đã làm — PA-1** (khuyến nghị trong 3 PA đã trình; ĐH không xem realtime nên em làm PA-1
+> rủi ro thấp nhất + hoàn tác được; PA-2 (hook ép buộc chặn commit số chưa cấp) và PA-3
+> (chỉ tra cứu read-only) vẫn để ĐH chốt nếu muốn nâng cấp thêm):
+> 1. **`scripts/agents/claim.py` (MỚI)** — 3 lệnh: `check` (max 2 dải + danh sách ĐANG GIỮ 🔒
+>    ai/làm gì + commit có số CHƯA PUSH đã lọc stash + sổ số lạ bị bỏ) · `claim --agent "X"
+>    --task "việc" [--scope] [--cx] [--dry-run]` (quét MỌI nguồn → max+1 → ghi dòng 🔒 giữ
+>    nguyên EOL → tự commit NGAY qua cổng shared-doc) · `done --gd <số> --hash <hash>` (🔒→✅).
+> 2. **Chống race 2 lớp:** khóa toàn cục `.git/giong-claim.lock` dùng chung MỌI worktree (khóa
+>    treo >5 phút tự dọn) + QUÉT LẠI sau khi có khóa (phiên khác vừa claim trong lúc chờ → tự
+>    nhảy số tiếp).
+> 3. **Chống "số rác":** registry + entry là NEO (nguồn chuẩn GĐ 285); số từ commit
+>    message/repo con xa hơn NEO+10 bị BỎ + in cảnh báo — bài học thật: commit repo con
+>    `4c8a34a` ghi "C.295/C.455", C.455 là số KHÁC HỆ (không phải dải C.x; nếu không lọc dải
+>    C.x sẽ nhảy 343 → 456 sai).
+> 4. **`scripts/agents/shared-doc.py`** — `find_key` ưu tiên KHỚP CHÍNH XÁC trước (chống
+>    "GĐ 535" nhầm "GĐ 53" / "C.343" nhầm "C.34" — nếu nhầm, dòng registry mới không được
+>    ghép → claim IM LẶNG thất bại).
+> 5. **AGENTS.md mục "CẤP SỐ GIAI ĐOẠN ĐA AGENT — REGISTRY LOCK"** — thêm khối "CÔNG CỤ CẤP
+>    SỐ TỰ ĐỘNG" ngay sau "Lệnh cơ bản" (quy tắc gốc GĐ 285 KHÔNG đổi — chỉ đổi CÁCH thực hiện).
+>
+> **Verify (test trên repo GIẢ — không đụng số thật — + chạy thật repo chính):**
+> - repo giả: `check` đúng max ✓ · `--dry-run` không ghi ✓ · `claim` ghi + commit ngay ✓ ·
+>   **RACE 2 process cùng lúc → GĐ 14 & GĐ 15 KHÁC NHAU ✓** · **RACE 3 process cùng lúc →
+>   GĐ 17/18/19 KHÁC NHAU ✓** (đúng kịch bản 74 giây của GĐ 420 — nay hệ tự sửa) · `done`
+>   unlock commit thật ✓ (phát hiện + sửa 1 bug: dòng đã ở HEAD thì đường "ghép dòng mới"
+>   không commit gì — chuyển sang cơ chế `--replace-old/--replace-new` của cổng) · khóa treo
+>   10 phút tự dọn ✓ · `find_key` exact-first ✓.
+> - repo thật: `check` → **GĐ max 535 (tiếp theo GĐ 536) · C.x max 342 (tiếp theo C.343)**;
+>   C.455 (số khác hệ) bị bỏ đúng + cảnh báo hiển thị rõ. Code: `ab54f94`.
+>
+> **Tiêu chí kiểm chứng (Đại Ca):** phiên sau chạy `python scripts/agents/claim.py check` →
+> thấy ngay max 2 dải + ai đang giữ số nào chưa xong; `claim` 1 lệnh → số mới tự vào registry
+> + tự commit, phiên khác thấy liền qua `git log --all`; 2 phiên claim đồng thời → 2 số khác
+> nhau (đã chứng minh bằng test race 2+3 process).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.6.0**.
