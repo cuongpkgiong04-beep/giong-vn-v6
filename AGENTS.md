@@ -6611,3 +6611,33 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
+
+### GĐ 538 / C.345 (Trợ lý Freebuff): PA-1 (ĐH chốt 26/10) — "Lịch sử upload MISA" LỌC THEO MODULE (2026-10-26)
+
+> **ĐH báo (26/10 kèm ảnh):** khung "Lịch sử upload MISA" ở cả 3 trang upload hiện
+> **lẫn cả 3 loại** (Mua hàng · Bán hàng HĐ GTGT · Xuất kho) — ĐH muốn mỗi module chỉ
+> hiện lịch sử của chính nó.
+
+> **GỐC (1 dòng):** hook `loadUploadHistoryJobs` (`sql-data-module.tsx`) gọi
+> `loadUploadHistory({})` — **không truyền bộ lọc** ⇒ server trả 30 job mới nhất gộp
+> cả 3 loại; server fn **đã nhận sẵn** tham số `reports` (routes/api/-smed.ts) → chỉ
+> thiếu truyền vào.
+
+> **Đã làm (PA-1 — repo con `99f5f66` code + `318893a` entry):**
+> (1) `loadUploadHistory({ reports: [uploadReport] })` + `uploadReport` vào dependencies
+> (đổi module → nạp lại đúng loại; số trong ngoặc tự thành số lệnh của module đó);
+> (2) `up-nhap-kho.tsx` khai báo `report: "misa-mua-hang-api"` **tường minh** (trước
+> dựa vào mặc định) — 3 module đối xứng; (3) test mới
+> `src/lib/upload-history-scope.test.ts` (11 check quét mã nguồn chặn tái diễn) +
+> đăng ký `npm test`. **GIỮ NGUYÊN** nhãn loại trên từng dòng + tiêu đề "Lịch sử
+> upload MISA"; **KHÔNG đụng** thanh trạng thái job toàn app.
+
+> **Verify:** `tsc --noEmit` EXIT 0 · `npm test` **7 bộ PASS** (mới 11/11).
+
+> **Tiêu chí kiểm chứng (sau Push):** `/m/up-xuat-kho` → khung lịch sử chỉ có lệnh
+> Xuất kho (26/10: `4B14AEDB` + `7DACD413`), không còn dòng Mua hàng/Bán hàng;
+> `/m/up-nhap-kho` chỉ Mua hàng; `/m/up-hoadon-gtgt` chỉ Bán hàng; "Làm mới" vẫn chỉ
+> loại của trang.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
+> repo con **10.6.0**.
