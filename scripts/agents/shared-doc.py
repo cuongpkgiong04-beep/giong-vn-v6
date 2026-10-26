@@ -219,6 +219,8 @@ def cmd_check(_a):
         if f in dirty:
             print("   (đang có thay đổi chưa commit trong máy)")
     print('\n-> Commit an toàn: python scripts/agents/shared-doc.py commit --entry "GĐ xxx" -m "..."')
+    print('💡 Cấp số GĐ/C.x TỰ ĐỘNG (GĐ 535 — hết trùng đa agent): '
+          'python scripts/agents/claim.py claim --agent "<tên>" --task "<việc>" [--cx]')
     return 0
 
 

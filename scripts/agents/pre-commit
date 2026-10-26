@@ -67,6 +67,10 @@ if [ "$LOST" -gt 0 ]; then
     echo "   → Commit an toàn: python scripts/agents/shared-doc.py commit --entry \"GĐ xxx\" -m \"...\""
     echo "   → Cố ý (tách archive/dọn dẹp): thêm [shared-approved] vào commit message."
     echo ""
+    echo "   💡 Cấp số GĐ/C.x TỰ ĐỘNG (GĐ 535 — hết trùng đa agent, 1 lệnh):"
+    echo "      python scripts/agents/claim.py claim --agent \"<tên Agent>\" --task \"<mô tả việc>\" [--cx]"
+    echo "      (xem trước: thêm --dry-run · báo cáo: check · xong việc: done --gd <số> --hash <hash>)"
+    echo ""
     exit 1
 fi
 
@@ -79,5 +83,9 @@ echo "     python scripts/agents/shared-doc.py commit --entry \"GĐ xxx\" -m \"d
 echo "        (hoặc --all-new nếu file chỉ có entry của mình)"
 echo "   Cổng ghép CHỈ entry của mình lên bản HEAD và giữ nguyên bài dở phiên khác."
 echo "   Chắc chắn 100% mình kiểm soát nội dung → dùng: git commit --no-verify"
+echo ""
+echo "   💡 Cấp số GĐ/C.x TỰ ĐỘNG (GĐ 535 — hết trùng đa agent, 1 lệnh):"
+echo "      python scripts/agents/claim.py claim --agent \"<tên Agent>\" --task \"<mô tả việc>\" [--cx]"
+echo "      (xem trước: thêm --dry-run · báo cáo: check · xong việc: done --gd <số> --hash <hash>)"
 echo ""
 exit 1
