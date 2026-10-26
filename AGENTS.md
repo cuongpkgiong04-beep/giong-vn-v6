@@ -6707,3 +6707,43 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
+
+### GĐ 540 / C.347 (Trợ lý Freebuff): Bảng giá dịch vụ — app TỰ đọc ảnh web mới (AI nhìn ảnh) + TỰ cập nhật giá, hết cảnh "bắt nạp file" (2026-10-26)
+
+> **ĐH báo (26/10, ảnh nút Refresh):** "Anh ấn vào Refresh trên phần 'Bảng giá dịch vụ' thì có
+> cảnh báo ... Nếu theo cảnh báo này thì anh cần phải nạp file bảng giá mới hả? Anh nhớ về
+> nguyên tắc App phải tự tìm giá mới trên 3 trang Website để cập nhật vào bảng giá này? Sao giờ
+> lại bắt người dùng phải nạp bảng giá mới bằng file? Em kiểm tra lại và khắc phục." Chi tiết đầy
+> đủ ở entry **C.347** AGENTS.md repo con (code `539fa06`).
+
+> **Chẩn đoán (bằng chứng thật):** cảnh báo ĐÚNG — web tiemchunggiong.com đã đăng ảnh mới
+> "Bảng gia 22_10_2026.jpg" (md5 `636ca0dd…`, tải về OK) trong khi `price_list` còn bản 15/10
+> (`418925ce…`). **Gốc:** VNVC + Long Châu có dữ liệu chữ/JSON → app tự lấy giá + tự nạp đè
+> (GĐ 478); trang Tiêm chủng Gióng CHỈ có **ẢNH** → app chỉ so md5 biết "ảnh đổi" mà chưa biết
+> ĐỌC ảnh. Đã ĐO máy OCR sẵn có (tesseract trên máy agent): đọc 800.000 → "800.006" ở cả 3 mức
+> thử (toàn ảnh · cắt dải · phóng to từng ô) → LOẠI.
+
+> **Đã làm:** (1) logic thuần `src/lib/bang-gia-soi.ts` (+187): `parseAiBangGia` · `chuanHoaTenVx`
+> · `doiChieuBangGia` (ghép theo VỊ TRÍ STT + kiểm tra chéo tên + luật AN TOÀN: giá phải tròn
+> nghìn · không đổi quá gấp đôi/giảm quá nửa · lệch >20 dòng hoặc <90% khớp tên → CHẶN; dòng vi
+> phạm → `nghiNgo` KHÔNG ghi) · `buildCapNhatGiaSql`; (2) server fn `-bang-gia.ts` (+156) —
+> `docAnhBangGiaBangAi()` gửi ảnh cho **z.ai NHÌN ẢNH** (OpenAI-compatible; model thử lần lượt
+> `glm-4.5v` → `glm-4v-flash` → `glm-4v-plus`, env `ZAI_VISION_MODEL` đè) → tự UPDATE + ghi md5
+> ảnh mới (chỉ đối chiếu dòng CÓ GIÁ — `price_list` còn 9 dòng danh mục thêm tay giá 0); (3) UI
+> báo "🔁 đã TỰ ĐỌC và cập nhật N dòng: <cũ → mới>", lỗi → giữ cảnh báo cũ + LÝ DO.
+
+> **VẬN HÀNH (nạp ngay — bảng 22/10 đang áp dụng):** đọc tay ảnh **2 vòng độc lập** → **5 dòng
+> đổi**: 13 Boostrix 770.000→800.000 · 31 Bexsero ưu đãi 0→1.780.000 · 32 Menquadfi ưu đãi
+> 1.750.000→1.700.000 · 43 Varilrix 1.000.000→1.050.000 · 54 Morcvax 150.000→160.000 → chạy ĐÚNG
+> câu SQL của cơ chế mới qua api_server (63 dòng) · **verify tổng 54 dòng có giá = 65.740.000
+> khớp JSON chuẩn TỪNG ĐỒNG** · hash = `636ca0dd…` → Refresh hết cảnh báo vàng.
+
+> **Verify:** unit `bang-gia-soi` **28/28 PASS** (15 cũ + 13 mới) · npm test **7 bộ PASS** · tsc
+> app con: vùng bảng giá **0 lỗi** (còn 2 lỗi file `up-nhap-kho.tsx` + `sql-data-module.tsx` của
+> PHIÊN KHÁC đang sửa dở — không đụng).
+
+> **Tiêu chí kiểm chứng (sau Push):** Refresh → **hết cảnh báo vàng** (hash đã khớp ảnh 22/10);
+> web ra ảnh mới lần tới → thông báo "đã TỰ ĐỌC và cập nhật N dòng" (KHÔNG cần nạp file). Nếu
+> khoá z.ai chưa mở model nhìn ảnh → app hiện cảnh báo cũ kèm lý do (không ghi sai gì).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.7.0**.
