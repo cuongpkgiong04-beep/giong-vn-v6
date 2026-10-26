@@ -6847,3 +6847,39 @@ repo con **10.1.0**.
 >
 > **Version:** app tổng **6.9.0** / repo con **10.6.0** — ĐÃ PUSH + LIVE
 > (không đổi — đợt này không đụng web).
+
+### GĐ 541 / C.348 (Trợ lý Freebuff): PA Push đợt 26/10 tối — 2 repo ĐÃ PUSH + LIVE (2026-10-26)
+
+> **Lệnh "Push" của ĐH (26/10).** Rà trùng lặp (nguyên tắc 3) trước khi push:
+> **PHÁT HIỆN TRÙNG LỚN** — remote repo con đã có **C.337–C.341 của phiên "máy LAN-1"**
+> (cùng tính năng GĐ 528 PA-1 phân tải đa máy) trong khi máy cty có **C.342 của phiên khác**
+> làm **cùng tính năng đó** ⇒ push `non-fast-forward`, xung đột **5 file** ở repo con
+> (`AGENTS.md` · `agent/40_web_agent.py` · `agent/api_server/api_server.py` ·
+> `agent/api_server/test_claim_gd528.py` · `agent/worker_node.py`).
+> **ĐÃ CẢNH BÁO ĐH TRƯỚC KHI PUSH** (đúng quy tắc 3) → **ĐH chốt "OK A"**: gộp theo bản
+> superset/tương thích.
+
+> **Kết quả push (2 repo):**
+> · **App tổng**: `a4f3ed1..5935e17` — merge union entry máy LAN-1 ↔ máy cty (AGENTS.md 139
+> khối · registry 260 khối, **0 khối mất**; còn 2-3 dòng/heading trùng do 2 phiên ghi cùng
+> số — giữ cả hai để không mất dấu việc). Merge làm ở **worktree tạm** để không đụng bài dở
+> phiên khác. Docs-only ⇒ **KHÔNG bump** (tiền lệ GĐ 416/417) — app tổng giữ **6.9.0**.
+> · **Repo con**: bump **10.6.0 → 10.7.0** (`bc1fb4d`) → `67ddcb6..8e6e6fe` (merge 5 file) →
+> `8e6e6fe..8fad6d2` (sửa deploy) → `9d2aedb` (entry). Gộp: `api_server.py` +
+> `test_claim_gd528.py` giữ **bản máy cty** (nhận CẢ 2 khoá `worker_id`/`workerId`, thêm 4 hàm);
+> `worker_node.py` giữ **bản máy LAN-1** (PILOT PASS máy .27); `40_web_agent.py` giữ khoá
+> `workerId` + NGUYÊN job-log GĐ 536. Verify bản gộp: **17/17 · 72/72 · 41/41 PASS** + py_compile.
+
+> **🚨 BÀI HỌC BẮT BUỘC (deploy app con FAIL 1 lần trong đợt này):** Vercel build báo
+> `Error transforming route file .../up-nhap-kho.tsx: SyntaxError: Unexpected token, expected "..."`
+> — gốc: **chú thích `{/**/}` đặt GIỮA các THUỘC TÍNH của `<SqlDataModule>` = sai cú pháp JSX**
+> (phải nằm ngoài, là JSX child). ⚠️ **`tsc --noEmit` EXIT 0 vẫn KHÔNG bắt được lỗi này** ⇒
+> **BẮT BUỘC chạy `npx vite build` THẬT trước khi push file web** (`src/**` app con) — bổ sung
+> vào quy trình push của mọi Agent (đã áp dụng ngay trong đợt này: build PASS rồi mới push lại).
+
+> **✅ Verify production (checklist GĐ 470 B):** app con **10.7.0** (curl lần đầu) · deployment
+> `8fad6d2d` **READY** · login app tổng trả JSON user + session ✓ · **SSO browser thật**: login
+> app tổng → bấm "Bán hàng" → app con mở **có phiên** (không "Chưa đăng nhập") ✓ · app tổng
+> **6.9.0**.
+
+> **Version:** app tổng **6.9.0** (docs-only, không bump) / app con **10.7.0** — ĐÃ PUSH + ĐÃ LIVE.
