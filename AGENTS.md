@@ -6325,3 +6325,97 @@ repo con **10.1.0**.
 > nhau (đã chứng minh bằng test race 2+3 process).
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.6.0**.
+
+### GĐ 534 / C.342 (Trợ lý Freebuff): TRIỂN KHAI GĐ 528 PA-1 — claim ATOMIC đa worker + WORKER MÁY LAN + khảo sát máy 192.168.1.27 (2026-10-26)
+
+> **Yêu cầu của Đại Ca (26/10):** *"Em kiểm tra cho anh máy trong mạng LAN có IP là:
+> 192.168.1.27. Hôm qua anh có thực hiện khảo sát theo GĐ 528 để thực hiện làm việc
+> giảm tải cho máy chủ qua các máy tính trong cùng mạng nội bộ là mạng LAN, hiện tại
+> anh cần em đọc lại nội dung và tiến hành các công việc."* → đọc lại spec
+> `agent/CHECKPOINT-GD528-PA1.md` (ĐH chốt PA-1) và thi công phần **MÁY CHỦ**.
+
+> **Khảo sát máy .27 (bằng chứng quét cổng + NetBIOS):** máy = **PC-PKT-01**
+> (Windows) · IP LAN 192.168.1.27 (MAC 60-cf-84-64-57-fb) · **đã có Tailscale**
+> (100.111.91.35, đang online) · cổng mở: 135/139/445 · **22 (SSH) · 3389 (RDP) ·
+> 5985 (WinRM) ĐÓNG** → chưa có đường truy cập từ xa; SMB không có credential
+> (`Test-Path \\192.168.1.27\C$` = False). **Máy chủ hiện tại = 192.168.1.250**
+> (nơi có GiondDB + api_server + tunnel). ⇒ Phần cài trên .27 **cần ĐH/IT** (em
+> không tự làm từ xa được) — xem "việc còn lại" cuối entry.
+
+> **Đã làm (repo con `b973abf` — 11 file +959/−22; chi tiết đầy đủ ở entry C.342 AGENTS.md repo con):**
+> 1. **Migration `0009` ĐÃ ÁP VÀO GIONDDB**: cột `claimed_by NVARCHAR(64)` +
+>    index `ix_jobs_pending` (filtered) — verify: `claimed_by=True · ix_jobs_pending=True`.
+> 2. **`api_server.py` — claim ATOMIC**: 1 câu `UPDATE … OUTPUT … WHERE id = (SELECT TOP 1 … WITH (UPDLOCK))`
+>    thay 2 bước select→update (bước cũ RACE khi >1 worker). Kèm: lọc theo NHÓM
+>    (`smed` = 14 report SMED · `core` = MISA/bank/MIA/báo cáo/mọi key khác — fallback
+>    nên report mới tự thuộc core) · **stale reclaim 45' theo HEARTBEAT `updated_at`**
+>    (KHÁC spec ghi `claimed_at` — job dài có heartbeat nuôi `updated_at` sẽ KHÔNG bị
+>    reclaim oan; chỉ reclaim job có `claimed_by <> ''` nên job cũ không bị đụng;
+>    tắt bằng `AGENT_STALE_RECLAIM_MIN=0`) · **lọc accounts theo nhóm** (worker SMED
+>    KHÔNG nhận password MISA/bank) · **LAN guard middleware** (từ IP ngoài loopback
+>    chỉ mở `/agent/*` + `/health`) · bind qua env `API_BIND_HOST`.
+> 3. **`40_web_agent.py`**: khai `worker_id` + `WORKER_GROUPS` khi claim (rỗng =
+>    **hành vi 1 máy cũ** — tương thích ngược 100%) + kèm worker_id khi report +
+>    chế độ `SMED_AGENT_ROLE=worker` → bỏ auto-ETL + task_runner (chỉ máy chủ chạy).
+> 4. **Bộ cài máy LAN**: `worker_node.py` (chạy CÙNG 40_web_agent qua `runpy` —
+>    KHÔNG nhân bản logic) · `worker.env.example` · `worker-install.bat` (7 bước:
+>    Python → pip → Chromium → worker.env → test kết nối → NSSM service
+>    `GIONG_SMED_Worker`) · `WORKER-README.md` (hướng dẫn + xử lý sự cố + rollback).
+> 5. **`test_claim_atomic.py` — PASS TOÀN BỘ**: 20 job smed chia **đều 10/10** giữa
+>    2 worker · **0 trùng lặp** · worker core nhận đúng 20/20 job core (không đụng
+>    job smed) · worker không khai groups nhận đủ mọi nhóm (tương thích ngược) ·
+>    stale reclaim đúng (heartbeat cũ → nhận lại ✓ · heartbeat mới → không đụng ✓).
+> 6. **Thực nghiệm chọn khóa (probe 4 biến thể, 2 worker song song)**: `updlock` →
+>    chia đều 10/10 ✓ · `updlock+readpast` → worker 2 **ĐÓI** (18/2) · `readpast+rowlock`
+>    → **DEADLOCK 40001** · không hint → 10/10 nhưng ngữ nghĩa kém rõ → **chọn `updlock`**.
+> 7. **⚠️ SỰ CỐ TỰ PHÁT HIỆN & SỬA NGAY TRONG PHIÊN (quan trọng):** sau khi lên code,
+>    log api_server xuất hiện `[lan-guard] CHẶN 44.203.203.245 → /query` **mỗi 20 giây**
+>    — IP 44.203.x = **outbound Vercel**: uvicorn mặc định **TIN header
+>    `X-Forwarded-For`** do cloudflared gửi → `request.client.host` bị gán thành IP
+>    Vercel → middleware tưởng "từ LAN" và **chặn nhầm traffic thật của web production**.
+>    **Fix:** `uvicorn.run(..., proxy_headers=False)` (client.host = IP kết nối TCP
+>    thật: tunnel = 127.0.0.1 · LAN = IP LAN). Verify lại: tunnel `/health` 200 ·
+>    `/jobs` không token **401** (auth — KHÔNG còn 403 của middleware) · LAN `/jobs`
+>    **403** (đúng chủ đích) · LAN `/agent/claim` **401** (cho qua, auth chặn) ✓.
+> 8. **VẬN HÀNH**: set `API_BIND_HOST=0.0.0.0` vào service `GIONG_API_Server`
+>    (⚠️ NSSM **bỏ qua biến đứng sau phần tử RỖNG** trong `AppEnvironmentExtra` —
+>    gặp thật: env không nạp dù registry có; fix bằng ghi lại mảng sạch 6 phần tử;
+>    backup tại `%TEMP%\giong_api_env_backup_20261026.txt`) · firewall rule
+>    **`GIONG API Server 8777 (LAN)`** chỉ `192.168.1.0/24` · restart 2 service khi
+>    rảnh (kill đúng PID python api_server theo cmdline + NSSM) · xoá `__pycache__`.
+
+> **Verify production (đã chạy thật):**
+> - Log agent máy chủ: `🧩 Worker: id=core · nhóm=TẤT CẢ (1 máy)` ✓ (hành vi không đổi).
+> - api_server bind `0.0.0.0:8777` ✓ · tunnel mới đăng ký gist + Vercel HTTP 200 ✓.
+> - Từ IP LAN 192.168.1.250: `/health` 200 · `/jobs` **403** · `/db/query` **403** ·
+>   `/agent/claim` 401 (token sai) → **middleware đúng như thiết kế**.
+> - Từ Internet (tunnel): `/health` 200 · `/jobs` 401 · `/agent/claim` 401 ✓.
+> - **End-to-end thật**: tạo job nhãn thử → agent máy chủ **claim trong 5 giây**,
+>   `claimed_by='core'` ghi đúng cột mới, job kết thúc dứt khoát (error rõ ràng,
+>   không treo) → đã xoá job thử.
+> - Web production: login app tổng 200 + session OK sau mọi lần restart.
+
+> **Việc CÒN LẠI (cần ĐH/IT — em không làm được từ xa, máy .27 không có SSH/RDP/WinRM):**
+> 1. Mở 1 đường vào .27 (OpenSSH / RDP / WinRM) **hoặc** ĐH/IT ngồi trực tiếp máy đó;
+> 2. Copy **nguyên thư mục `agent\`** + `.secrets\agent_token.txt` từ máy chủ sang .27
+>    (cùng đường dẫn `D:\DuLieuChung\CUONG_2026\giong-vn-v6\giong-apps\apps\banhang\agent`);
+> 3. Chạy `worker-install.bat` (Run as administrator) → điền `worker.env`
+>    (`SMED_INTERNAL_API_URL=http://192.168.1.250:8777` · token · `WORKER_ID=lan-27`).
+> → Hướng dẫn đầy đủ: **`agent/WORKER-README.md`**.
+
+> **Lưu ý minh bạch:** spec ghi file cài ở `agent/start/` nhưng `agent/start` trong
+> máy là **FILE rác 18 bytes** (nội dung `GIONG_SMED_Agent`, ngày 23/10 — em KHÔNG
+> xoá vì không phải file của mình) → em đặt `worker-install.bat` ở `agent/`; ĐH
+> xác nhận thì phiên sau dọn file rác + tạo thư mục `start/`.
+
+> **Giai đoạn áp dụng (an toàn):** hiện **GIAI ĐOẠN 1** — máy chủ vẫn claim MỌI job
+> (`WORKER_GROUPS` trống) nên thêm máy LAN **không đổi hành vi**; muốn nhường hẳn
+> job SMED cho máy LAN (giai đoạn 2) → set `WORKER_GROUPS=core` cho service máy chủ.
+
+> **Tiêu chí kiểm chứng của Đại Ca:** (1) máy .27 cài xong → log worker hiện
+> `🧩 Worker: id=lan-27 · nhóm=['smed'] · CHẾ ĐỘ MÁY LAN`; (2) chạy job SMED kỳ nhỏ
+> → file Excel về OUTPUT **của máy .27** + bảng `smed_pull_jobs` có
+> `claimed_by='lan-27'`; (3) tắt máy .27 giữa job → sau 45' job tự được claim lại
+> (không kẹt vĩnh viễn).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.6.0**.
