@@ -6747,3 +6747,68 @@ repo con **10.1.0**.
 > khoá z.ai chưa mở model nhìn ảnh → app hiện cảnh báo cũ kèm lý do (không ghi sai gì).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.7.0**.
+
+### GĐ 543 (Trợ lý Freebuff): PHÂN TẢI 4 MÁY LAN theo chốt của ĐH — nhóm misa-muahang/misa-banhang + máy chủ cứu hộ 15' + cài công cụ 3 máy (2026-10-27)
+
+> **Yêu cầu của Đại Ca (26/10 tối):** *"Em thiết kế và hướng dẫn anh"* — 4 máy đã setup SSH:
+> PC-PKT-01 (.27) · GIANGKT (.245) · THANH-PC (.34) · LATITUDE3550 (.19).
+> Phân công ĐH muốn: **GIANGKT = Upload MISA mua hàng + xuất kho** · **THANH-PC = Upload MISA
+> HĐ GTGT bán hàng** · **PC-PKT-01 = các việc còn lại** · LATITUDE = chưa giao.
+
+> **ĐH CHỐT (PA-1 ×2):** (1) MISA **mỗi máy 1 tài khoản riêng** (đã cấp user/pass 2 máy);
+> **SMED dùng chung tài khoản** với máy chủ (SMED cho phép nhiều máy) — chỉ MISA mới cần
+> tách phiên. (2) Máy chủ **nhường** việc chuyên biệt nhưng **CỨU HỘ job chờ quá 15'**
+> (máy chuyên biệt tắt → pipeline đêm không đứt). Kèm: *"Cài đặt tất cả các công cụ còn
+> thiếu của 3 máy còn lại để có thể hoạt động tốt."*
+
+> **⚠️ PHÁT HIỆN KỸ THUẬT (quyết định thiết kế):** cả 3 builder upload MISA **KHÔNG dùng mật
+> khẩu** — chúng lấy token từ **phiên Chrome CDP `localhost:9222`** đã đăng nhập (hardcode
+> trong code). ⇒ Mỗi máy upload PHẢI có Chrome chạy thường trực + phiên MISA riêng của máy
+> đó; mật khẩu MISA chỉ dùng cho lần đăng nhập đầu. Builder cũng cần `center_pass` (đăng
+> nhập SMED để lấy số HĐ) + GiondDB qua TCP 1433 (đã mở ở GĐ 534).
+
+> **Đã làm — CODE (repo con `debc9a7`):**
+> 1. `api_server`: `GROUP_REPORTS` thêm **`misa-muahang`** (`misa-mua-hang-api` +
+>    `misa-xuat-kho-api`) và **`misa-banhang`** (`misa-ban-hang-api`); **`core` đổi
+>    semantics**: loại report chuyên biệt + **CỨU HỘ** (job chuyên biệt chờ >
+>    `AGENT_RESCUE_MIN`=15' → máy chủ lấy chạy; đặt 0 = nhường cứng); rỗng/nhóm lạ giữ
+>    "không lọc" (tương thích). Giữ `updlock` + stale theo heartbeat `updated_at`.
+> 2. `test_claim_gd528.py` (bộ 17/17 của phiên máy LAN-1): cập nhật A3/A5 theo semantics
+>    mới → **17/17 PASS** ✓.
+> 3. `test_claim_atomic.py`: viết lại **5 giai đoạn** (smed chia đều · 2 máy chuyên biệt
+>    song song · core chỉ job không chuyên biệt · **cứu hộ**: job cũ 20' nhận vs job mới
+>    không · no-groups nhận hết). *Chưa chạy được ngay vì máy chủ đang chạy Task_02 đêm —
+>    script tự canh rảnh.*
+> 4. `restart_when_idle_gd537.py`: chờ rảnh (0 job + 0 nhiệm vụ, kiểm 2 lần cách 60s) →
+>    restart api_server (kill đúng PID) + agent (nạp env `WORKER_ID=core` +
+>    `WORKER_GROUPS=core` đã set vào NSSM) — **đang chạy nền, chờ Task_02 xong**.
+
+> **Đã làm — 3 MÁY LAN (qua SSH key-based từ máy chủ):**
+> 5. Khảo sát: .245 thiếu Python thật + ODBC18 · .34 thiếu ODBC18 · .19 thiếu ODBC18.
+> 6. `lan_install.ps1` (script chung, phân phối qua HTTP tạm `192.168.1.250:8899` chỉ LAN):
+>    cài **ODBC Driver 18 + Python 3.12 (chỉ .245) + pip (playwright/pyodbc/requests/openpyxl)
+>    + bộ code + secrets (agent_token + center_pass)** → **CẢ 3 MÁY: ODBC18 ✓ · Python ✓ ·
+>    DEPS-OK ✓ · 35 file code ✓ · secrets ✓**.
+> 7. Chrome CDP: phát hiện **Chrome mở qua SSH bị tắt khi phiên SSH đóng** → chuyển sang
+>    **scheduled task `GIONG_ChromeMISA`** (`/sc onlogon`) → CDP 9222 sống độc lập ✓ trên
+>    cả .245 và .34 (verify 200 + 23/45 tiến trình Chrome).
+> 8. **Đăng nhập MISA: đã điền user/pass tự động (script `misa_lan_login.py`) → MISA CHỜ
+>    MÃ XÁC THỰC:**
+>    - **.245 GIANGKT**: mã gửi **Zalo/SMS tới số `*******043`** (user `mrhungtm2@gmail.com`)
+>    - **.34 THANH-PC**: mã gửi **email `vut*********@gmail.com`** (user `0985542084`)
+>    - Công cụ nhập mã đã sẵn: `misa_submit_otp.py` (env `MISA_OTP`, tự tick "Không hỏi lại
+>      trên thiết bị này" để lần sau khỏi cần mã).
+>    **⏳ ĐANG CHỜ ĐẠI CA CẤP 2 MÃ OTP** — có mã là em nhập xong trong 1 phút.
+> 9. worker env (`giangkt.env.bat` / `thanhpc.env.bat` — nhóm tương ứng, SQL LAN,
+>    MISA_USER/PASS riêng) + `mo-chrome-misa.bat` đã đặt sẵn trên 2 máy. **Scheduled task
+>    worker CHƯA bật** — cố ý: phải đợi api_server nạp code nhóm mới (nếu bật sớm, api_server
+>    cũ không biết nhóm `misa-muahang` → máy upload sẽ nhận MỌI job, sai thiết kế).
+
+> **Tiêu chí kiểm chứng (pilot):** api_server nạp code mới → bật worker 2 máy → tạo job
+> `misa-mua-hang-api` kỳ nhỏ → **chỉ GIANGKT nhận** (`claimed_by='giangkt'`) · job
+> `misa-ban-hang-api` → **chỉ THANH-PC nhận** · tắt 1 máy → sau 15' máy chủ tự cứu hộ.
+> *Lưu ý vận hành:* máy .245/.34 phải BẬT + Chrome CDP phải sống khi cần upload; phiên MISA
+> hết hạn → chạy `*-login-misa.bat` trên máy đó để đăng nhập lại.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con
+> **10.7.0** (phiên khác đã push 26/10).
