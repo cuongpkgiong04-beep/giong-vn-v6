@@ -6655,3 +6655,41 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
+
+### GĐ 539 / C.346 (Trợ lý Freebuff): Hộp KPI TỒN KHO (Tổng quan app con) — chi tiết thêm STT + Đơn giá + Giá trị tồn, cột Vắc xin thu nhỏ, drill-down 5 cột (2026-10-26)
+
+> **Yêu cầu Đại ca (26/10, ảnh dialog "CHI TIẾT TỒN KHO — TÍNH ĐẾN 25/10/2026"), 5 điểm:**
+> (1) cột STT; (2) cột Vắc xin thu nhỏ = 40% độ rộng hiện tại (chữ dài ẨN — không đè cột
+> phải); (3) cột "Đơn giá" bên phải "Số lượng tồn"; (4) cột "Giá trị tồn" bên phải "Đơn giá";
+> (5) bấm chi tiết loại Vắc Xin → bảng trung tâm cũng đủ 5 cột STT · Trung tâm · Số lượng tồn
+> · Đơn giá · Giá trị tồn.
+
+> **Nguồn số (probe thật):** stg_7BCNXT col16 = SL tồn cuối · **col17 = Giá trị tồn cuối (số
+> THẬT kế toán)**; **Đơn giá = col17/col16** (giá vốn bình quân — cùng công thức "Giá tồn cuối"
+> tool 12 NXT kế toán). Snapshot 25/10: 54 vắc xin · **29.863 liều** (khớp ảnh ĐH) ·
+> **11.555.920.805 đ** · 0 dòng SL>0 mà thiếu giá trị.
+
+> **Đã làm (repo con `ef1d3a9` + entry `01c119f`):** `-overview.ts` (stockStats + value ·
+> StockCenterRow + value · loadOverviewStockByCenter SUM col17 từng TT · box stock columns 5
+> cột — dòng TỔNG CỘNG TRỐNG cột Đơn giá theo nguyên tắc đơn giá) · `overview-dashboard.tsx`
+> **CHỈ hunk GĐ 539** (partial staging): bảng chi tiết 5 cột (Vắc xin 62%→25%, truncate+title)
+> · 2 bảng drill-down 5 cột (dialog Chi tiết Tồn kho + dialog từ biểu đồ, nới max-w-2xl).
+
+> **⚠️ ĐA AGENT — 2 việc phải báo ĐH:**
+> - **Trùng file với phiên GĐ 537/C.344** (hộp Nhập Vắc Xin — cùng `overview-dashboard.tsx`):
+>   em commit bằng partial staging (`git apply --cached` 6 hunk GĐ 539) → bài dở phiên 537 còn
+>   NGUYÊN ở working tree, KHÔNG bị nuốt.
+> - **LỖI CHẶN BUILD (không phải của em):** commit `99f5f66` (phiên GĐ 538/C.345) để lỗi cú
+>   pháp `src/routes/m/up-nhap-kho.tsx` (JSX comment trong props — tsc TS1005 dòng 41) →
+>   **PHẢI SỬA TRƯỚC KHI PUSH** (Vite build sẽ fail). Em không đụng file phiên khác (đang 🔒).
+
+> **Verify:** tsc app con — 2 file của em **0 lỗi** · probe: drill-down Hexaxim 19 TT ·
+> 2.029 liều · 1.663.893.914 đ khớp từng đồng (đơn giá từng TT 811.886–889.150 do mỗi TT giữ
+> lô giá khác nhau — đúng bản chất kế toán).
+
+> **Tiêu chí kiểm chứng (sau Push):** Tổng quan → hộp **TỒN KHO** → dialog 5 cột, cột Vắc xin
+> hẹp + chữ dài ẩn (hover xem đủ), TỔNG CỘNG đủ SL + tiền, Đơn giá trống; bấm 1 dòng vắc xin →
+> bảng trung tâm 5 cột; bấm cột biểu đồ Tồn kho → dialog trung tâm 5 cột.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
+> repo con **10.6.0**.
