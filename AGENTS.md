@@ -6307,6 +6307,7 @@ repo con **10.1.0**.
 >    ghép → claim IM LẶNG thất bại).
 > 5. **AGENTS.md mục "CẤP SỐ GIAI ĐOẠN ĐA AGENT — REGISTRY LOCK"** — thêm khối "CÔNG CỤ CẤP
 >    SỐ TỰ ĐỘNG" ngay sau "Lệnh cơ bản" (quy tắc gốc GĐ 285 KHÔNG đổi — chỉ đổi CÁCH thực hiện).
+> 6. **Nhắc TỰ ĐỘNG tại CỔNG COMMIT (GĐ 495):** hook pre-commit (bản cài dùng mọi worktree) + `shared-doc.py check` in thêm dòng 💡 hướng dẫn `claim.py` mỗi lần commit/chạm file dùng chung — phiên mới đi qua cổng là thấy ngay, không cần nhớ lệnh.
 >
 > **Verify (test trên repo GIẢ — không đụng số thật — + chạy thật repo chính):**
 > - repo giả: `check` đúng max ✓ · `--dry-run` không ghi ✓ · `claim` ghi + commit ngay ✓ ·
