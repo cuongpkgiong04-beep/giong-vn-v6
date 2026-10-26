@@ -6549,3 +6549,65 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
+
+### GĐ 537 / C.344 (Trợ lý Freebuff): Hộp KPI "NHẬP VẮC XIN" chi tiết — cố định dòng tiêu đề + dòng TỔNG CỘNG (sticky) + thu nhỏ cột Vắc xin còn ~60% (2026-10-26)
+
+> **Yêu cầu của Đại ca (26/10, kèm ảnh chụp hộp chi tiết):** (1) dòng tiêu đề và dòng
+> Tổng cộng **chưa cố định** — cố định nó **giống các phần khác**; (2) cột "Vắc xin"
+> rộng quá — **thu còn 60%** cột hiện tại, chữ trong dòng bị tràn thì **ẨN** để không
+> đè lên cột bên phải.
+
+> **Chẩn đoán (bằng chứng trong code):** hộp Nhập Vắc Xin là hộp **duy nhất còn dùng
+> "nhánh bảng CHUNG"** (dùng chung với hộp Ngân hàng tầng 1 + Xuất Vắc Xin tầng 1):
+> khung cuộn `<div className="overflow-auto rounded-lg border border-line">` **KHÔNG có
+> `max-h`** ⇒ chính div này không tự cuộn, nên `sticky top-0` của thead và
+> `sticky bottom-0` của tfoot **không dính** (sticky chỉ bám khung cuộn gần nhất).
+> Các hộp khác (Tồn kho / Hóa đơn / Lượt tiêm / Cận hạn) đều có `max-h-[420px]` nên
+> dính đúng — đây chính là lý do "chưa cố định giống các phần khác". Ngoài ra bảng
+> đang để cột Vắc xin chiếm ~53% bề ngang (dòng dài nhất như "Measles, Mumps and
+> Rubella Vaccine Live, Attenuated (Freeze-Dried)" kéo cột) và các ô text không
+> truncate ⇒ tràn/đè cột bên phải.
+
+> **Đã làm (repo con code `60810f4` — 1 file, +110/−14):** tách hộp Nhập Vắc Xin sang
+> **NHÁNH RENDER RIÊNG** (`detailBox === "import"`) theo đúng khuôn hộp Tồn kho / Hóa
+> đơn (đã được ĐH duyệt):
+> 1. Khung cuộn `max-h-[420px] overflow-auto` ⇒ **thead DÍNH trên, tfoot DÍNH dưới**
+>    khi cuộn danh sách lô.
+> 2. `colgroup` 11/30/11/12/9/13/14 (%) ⇒ cột "Vắc xin" còn **~60% bề ngang cũ**
+>    (259px trong khung 864px), các cột Ngày/Lô/Hạn sử dụng/Số lượng/Đơn giá/Thành
+>    tiền đủ chỗ — không bị cắt header, không phải cuộn ngang trên desktop.
+> 3. Mọi ô text `truncate` + `title` (hover xem đầy đủ) — **chữ tràn bị ẩn**, không đè
+>    cột bên phải; cột số căn phải `tabular` (4 nguyên tắc định dạng toàn app).
+> 4. tfoot "TỔNG CỘNG" **ưu tiên DÒNG TỔNG của server** (Số lượng + Thành tiền tính
+>    trên TOÀN BỘ dữ liệu, trong khi bảng chỉ hiện 200 dòng đầu) — nếu tự cộng 200
+>    dòng hiển thị sẽ ra SỐ SAI; cột "Đơn giá nhập" để **TRỐNG** (nguyên tắc #3: cột
+>    đơn giá không cộng Subtotal).
+> 5. Giữ nguyên drill-down GĐ 388: bấm 1 dòng lô → chi tiết nhập tại từng trung tâm.
+> 6. Bỏ 2 điều kiện `detailBox === "import"` còn sót trong nhánh bảng CHUNG (sau khi
+>    tách nhánh thì unreachable → tsc TS2367). Nhánh chung giờ chỉ phục vụ hộp Ngân
+>    hàng + Xuất Vắc Xin — **KHÔNG đổi hành vi 2 hộp này** (0 dòng logic của họ bị sửa).
+
+> **Verify:** tsc app con (chạy trên file đã sửa, qua ZCode Electron node v24) —
+> **0 lỗi ở `overview-dashboard.tsx`** (lỗi duy nhất trong lần chạy là
+> `src/routes/m/up-nhap-kho.tsx` TS1005 — file phiên C.343 đang sửa dở, không phải của
+> em) · bản commit dựng từ HEAD + đúng đoạn chèn của em, **diff của 2 bản (bản commit
+> và bản worktree) giống nhau từng byte**, 0 dòng bị xoá ngoài 2 điều kiện chết.
+
+> **⚠️ BÀI DỞ 24/10 TRONG CHÍNH FILE NÀY (không phải của em — KHÔNG đụng, CẢNH BÁO):**
+> worktree còn thay đổi **CHƯA COMMIT** của một phiên khác ở `overview-dashboard.tsx`
+> (mtime 24/10 09:03, **không có entry + không có dòng registry**): thêm `table-fixed`
+> + colgroup + truncate cho **nhánh bảng CHUNG** và thêm `tfoot` tự cộng cho 2 hộp
+> Ngân hàng / Xuất Vắc Xin. **RỦI RO: tfoot đó tự cộng MỌI dòng kể cả dòng "TỔNG CỘNG"
+> của server ⇒ số bị GẤP ĐÔI** (thấy rõ ở hộp Xuất Vắc Xin, cột Số lượng) — ai commit
+> bài đó phải **lọc dòng tổng trước khi cộng** như hộp Tồn kho. Em commit **chỉ phần
+> của em** (dựng bản HEAD + đoạn chèn, ghi qua index tạm) nên bài dở **vẫn nguyên
+> trong worktree, chưa lên git** — cần phiên đó (hoặc ĐH cho phép) xử lý riêng.
+
+> **Tiêu chí kiểm chứng của Đại ca (sau Push):** mở hộp KPI **"NHẬP VẮC XIN"** → chi
+> tiết: cuộn danh sách lô xuống thì **dòng tiêu đề vẫn dính trên** và **dòng TỔNG CỘNG
+> vẫn dính dưới**; cột "Vắc xin" hẹp hơn hẳn (~60% cũ), tên dài hiện "…" (hover hiện
+> đủ) — không tràn sang cột Lô; tổng Số lượng/Thành tiền khớp dòng TỔNG CỘNG cũ; bấm 1
+> dòng vẫn ra chi tiết nhập tại từng trung tâm.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
+> repo con **10.6.0**.
