@@ -6691,5 +6691,19 @@ repo con **10.1.0**.
 > hẹp + chữ dài ẩn (hover xem đủ), TỔNG CỘNG đủ SL + tiền, Đơn giá trống; bấm 1 dòng vắc xin →
 > bảng trung tâm 5 cột; bấm cột biểu đồ Tồn kho → dialog trung tâm 5 cột.
 
+> **🔧 BỔ SUNG KHẨN (22:2x 26/10 — phát hiện khi phiên GĐ 541/C.348 đang PA Push tối nay):**
+> verify tsc tìm ra **2 lỗi của phiên C.345 (GĐ 538) chưa ai sửa** → SỬA NGAY (quy tắc
+> "phát hiện lỗi → sửa ngay, không chờ nhắc") — **commit repo con `8cfd38c`** (2 file +8/−4):
+> 1. `apps/banhang/src/routes/m/up-nhap-kho.tsx` — comment JSX nằm trong DANH SÁCH PROPS
+>    (commit `99f5f66`) = lỗi CÚ PHÁP (TS1005; esbuild cũng fail) → **Vite build production sẽ
+>    FAIL**. Đã chuyển comment ra TRƯỚC thẻ — 0 đổi hành vi.
+> 2. `apps/banhang/src/components/sql-data-module.tsx:607` — `loadUploadHistory({ reports: [...] })`
+>    **thiếu bọc `data:`** (API serverFn — so chỗ gọi đúng dòng 577 cùng file) → `reports`
+>    KHÔNG tới server ⇒ **lọc lịch sử upload theo module (mục tiêu CHÍNH của C.345) VÔ TÁC
+>    DỤNG**. Đã sửa `{ data: { reports: [uploadReport] } }` (hết TS2353).
+> **Sau 2 fix: tsc app con 0 LỖI toàn bộ** (trước: TS1005 + TS2353 — lỗi cú pháp CHE lỗi
+> type, sửa xong phải chạy lại mới thấy) · 7 bộ test PASS. ⇒ **Đợt Push tối 26/10 PHẢI gồm
+> commit `8cfd38c`**, nếu không: app con build FAIL hoặc tính năng lọc không chạy.
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
