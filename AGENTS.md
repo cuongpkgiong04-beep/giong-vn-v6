@@ -6462,3 +6462,66 @@ repo con **10.1.0**.
 >   đổi bằng `ALTER LOGIN`).
 > - **Commit phần này:** repo con `77d4082` (5 file) — **KHÔNG Push, KHÔNG bump**
 >   (chờ lệnh Push; đợt Push tới phải HỢP NHẤT 2 codebase PA-1 làm 1 + rà trùng).
+
+### GĐ 536 / C.343 (Trợ lý Freebuff): PA-3 (ĐH chốt 26/10) — UPLOAD Phiếu xuất kho MISA lấy HẾT phiếu qua API nội bộ SMED (2026-10-26)
+
+> **Bối cảnh:** ĐH báo Task_05 kỳ 25/10 hiện **LỖI — "job treo quá 45 phút (watchdog
+> GĐ 490)"**. Điều tra ra 3 bệnh của builder xuất kho: (1) `smed_list_phieu` chỉ đọc
+> **TRANG 1** lưới SMED (10 dòng/trang — probe LB 25/10: "Hiển thị 72 bản ghi" nhưng
+> chỉ 10 dòng hiện) ⇒ **25/10 chỉ 176/697 phiếu lên MISA**; đối chiếu `stg_6BKX` ×
+> `sm_xuatkho_phieu` cho thấy mọi TT >10 phiếu dừng đúng 10 — 17/10→25/10 thiếu
+> ≈1.870 phiếu, riêng **24/10: 445 phiếu chưa lên MISA** (2 job 25/10 01:51/01:52
+> chết vì Chrome CDP); (2) tra mã phiếu bằng **KHỚP MỜ** rồi click dòng đầu ⇒ yêu cầu
+> `PX-SD-202610251742` lại mở `PX-SD-2026102517428` ⇒ Excel vừa LẶP phiếu kia vừa
+> THIẾU phiếu này (MISA cộng dồn 2 bản = "import lệch"); (3) mở hộp thoại từng phiếu
+> ~13s ⇒ 700 phiếu ~2,5 giờ (vượt watchdog 45' ⇒ task báo LỖI oan dù job còn chạy
+> đúng — 26/10 lần 1 chết vì 1 lỗi fetch MISA không được bọc, lần 2 chạy 76 phút thì
+> đã bị watchdog bỏ từ phút 45).
+
+> **ĐH chốt PA-3:** sửa gốc thu thập + **gọi API nội bộ SMED** thay scrape lưới.
+> Khảo sát bắt network: API ABP `theKho/DataSearchTheKho` (danh sách **phân trang
+> server-side** `page`/`rows` + `totalCount`, kỳ ngày gửi UTC của giờ VN) và
+> `theKho/DataViewPhieuNhapTra?id=` (chi tiết `phieu` + `chiTiets[]` đủ tên hàng/SL/
+> đơn giá/lô/HSD); bắt buộc header **`x-xsrf-token`** (cookie `XSRF-TOKEN`, phải lọc
+> theo URL trang vì 2 domain SMED có 2 cookie khác nhau).
+
+> **Đã làm (repo con `5bfd8b4` — 6 file, +842/−62):** `misa_xuatkho_api.py` (khối API:
+> `day_range_utc` · `iso_to_dmy` chuẩn hóa phần thập phân 2/3/6/7 chữ số · `xsrf_token`
+> theo URL · `smed_api_post` có trần · `smed_api_list_phieu` lật trang tới hết
+> `totalCount` (trần trang + dedupe = chống lặp vô hạn) · `map_chi_tiet_json` ·
+> `smed_list_phieu_all` + `_grid_next_page` cho đường dự phòng UI · `smed_scrape_detail`
+> khớp **CHÍNH XÁC** + guard mở nhầm phiếu · `db_upsert_phieu` khóa **(ma_phieu,
+> center)** + `MIGRATE_TABLE_XK`) · `misa_xuatkho_import.py` (`quet_smed_ngay` viết
+> lại: API là đường CHÍNH, chi tiết **song song có trần 4**, tự fallback lưới UI có
+> lật trang, **dedupe (TT, mã phiếu)**, kiểm chứng mã; **kiểm chứng số dòng/tiền
+> TRƯỚC khi ghi sổ** phiếu đã có; `ghi_so_1_phieu` **log thông điệp MISA**) ·
+> `40_web_agent.py` (**lưu TOÀN BỘ output tool theo job** `LOG/<report>_<time>.log`
+> trần 5MB + đính kèm vào files của job) · `gd478_import_api.py` (in **lý do dòng
+> import KHÔNG hợp lệ**) · `gd536_xk_api.test.py` (**72 test offline**, dữ liệu THẬT
+> SMED 26/10).
+
+> **Verify (26/10):** unit **72/72** + 41/41 + 33/33 PASS · py_compile OK ·
+> **QUÉT THẬT 25/10**: HM **28/28** (bảng kê 28) · TT **16/16** · LB **72** (lưới SMED
+> báo 72) — **116 phiếu/62,4 giây ⇒ ~700 phiếu ≈ 6 phút** (trước 2,5 giờ) ·
+> **E2E THẬT** (1 TT · 2 phiếu chỉ định · có ghi sổ): `PX-SD-20261025112059` tạo trên
+> MISA 3 dòng/2.458.243đ khớp SMED (ghi sổ bị MISA chặn: **"số lượng xuất vượt tồn
+> kho — lô MO-041025 còn tồn (19,00)"** = lỗi TỒN KHO MISA) ·
+> `PX-SD-20261025112143` MISA loại dòng **"Ngày chứng từ/Ngày hạch toán trống"** →
+> truy ra mốc SMED `…11:21:46.02+07:00` (2 chữ số thập phân) không parse được ⇒ sửa
+> `iso_to_dmy` → chạy lại **tạo + GHI SỔ 1/1, 0 lỗi**, `refdate` MISA = 25/10/2026
+> (đúng GĐ 457) · DB đã áp `UNIQUE (ma_phieu, center)`.
+
+> **Tồn đọng (cần ĐH quyết):** (a) **bù dữ liệu** 24/10 (445 phiếu) + 25/10 (~520) +
+> 17–23/10 nếu muốn trọn; (b) **xóa + import lại 4 phiếu 25/10 sai số dòng** trên MISA
+> (HM 17428 · QO 165332 · TĐ 1105514 · cặp QO/TA 165258) — chờ ĐH đồng ý vì là thao
+> tác xóa trên MISA; (c) ghi sổ đang bị MISA chặn do **tồn kho MISA âm/lệch** (hệ quả
+> nhiều ngày chỉ đẩy 10 phiếu/TT) — cần đối chiếu nhập ↔ xuất kho trên MISA; (d) yêu
+> cầu riêng của ĐH: **lọc khung "Lịch sử upload MISA" theo từng module** (đang chờ ĐH
+> chốt PA-1/2/3 của phần UI).
+
+> **Tiêu chí kiểm chứng (sau Push + restart agent):** chạy Task_05 kỳ mới → job tạo ĐỦ
+> phiếu (≈ bảng kê SMED, không còn dừng ở 10/TT), có file `LOG/misa-xuat-kho-api_*.log`
+> đầy đủ; job xong < 15 phút; web hiện tổng kết tạo/ghi sổ/bỏ qua/lỗi.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
+> repo con **10.6.0**.
