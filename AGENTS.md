@@ -6609,6 +6609,20 @@ repo con **10.1.0**.
 > đủ) — không tràn sang cột Lô; tổng Số lượng/Thành tiền khớp dòng TỔNG CỘNG cũ; bấm 1
 > dòng vẫn ra chi tiết nhập tại từng trung tâm.
 
+> **BỔ SUNG — ĐO THẬT bằng Chrome headless (cùng ngày; code repo con `4025974`):** em
+> dựng lại ĐÚNG bảng này thành 1 trang HTML đo được (cùng class CSS Tailwind phát ra:
+> `table-fixed` + colgroup % + `truncate` + `sticky`), render 3 chế độ rồi ĐO bằng JS:
+> - **Bản CŨ (đúng bản production):** khung cuộn 864px nhưng **bảng 1027px ⇒ CUỘN NGANG
+>   180px, các cột bên phải (Đơn giá nhập / Thành tiền) bị CẮT** — tái hiện đúng ảnh
+>   ĐH gửi; cột Vắc xin **441px (51% khung)** vì tên dài nhất (68 ký tự) kéo cột.
+> - **Bản MỚI:** bảng **847px = khung** · **cuộn ngang: KHÔNG** · header không bị cắt ·
+>   mã lô 10 ký tự (`ASPNB377AE`) hiện ĐỦ · tên dài hiện "…" (hover đầy đủ) · ảnh cuộn
+>   giữa danh sách cho thấy **thead DÍNH trên + dòng TỔNG CỘNG DÍNH dưới**.
+> - **Cột Vắc xin 254px = 58% bản cũ** (đo bề ngang TỐI THIỂU 6 cột còn lại = **585px**
+>   ⇒ trần của cột Vắc xin là **262px = 59%**; muốn đúng 60% thì phải cắt bớt ngày/lô/số
+>   — nên em chốt 58% và tinh chỉnh colgroup **Lô 11→12%** (mã lô không bị cắt),
+>   **Đơn giá 13→12%**).
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** /
 > repo con **10.6.0**.
 
