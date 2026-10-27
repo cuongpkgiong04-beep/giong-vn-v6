@@ -7070,6 +7070,23 @@ repo con **10.1.0**.
 > - **Kiểm chứng trên máy chủ**: task chạy 27/10 13:22 → log `👤 cuongpk.giong01@gmail.com ·
 >   App Password Gmail: CÓ` + `✅ đã đăng nhập sẵn` · Next Run 13:52 ✓.
 
+> **CHẠY ẨN CỬA SỔ MISA (ĐH cấp phép lại 27/10 — commit `c733826`):** *"Cấp lại phép cho việc
+> chạy ẩn cửa sổ phần Upload - Misa Amis... để máy không bị phân tâm và không vô ý đóng cửa
+> sổ gây lỗi tiến trình. Chỉ để phần trên thanh trạng thái tiến trình hoàn thiện."*
+> - Cơ chế đã có sẵn từ GĐ 515: env **`MISA_CHROME_HIDDEN=1`** → `misa_tab_guard.ensure_window_bounds`
+>   đẩy cửa sổ ra **(-32000,-32000)** và giữ ẩn suốt job (đọc lại mỗi lần cleanup).
+> - **ĐÃ BẬT cho cả 3 máy:** máy chủ = env NSSM `GIONG_SMED_Agent` + restart; 2 máy LAN =
+>   thêm vào `*-env.bat` của worker + `mo-chrome-misa.bat` mở Chrome kèm `--window-position=-32000,-32000`
+>   + restart Chrome/worker.
+> - **Bằng chứng đo thật** (`check_hidden.py` — đọc `Browser.getWindowForTarget`): máy chủ
+>   `left=-21845` · .245 `left=-32000` · .34 `left=-26214` → **cả 3 ĐANG ẨN** ✓; tiến trình vẫn
+>   theo dõi trên web (thanh trạng thái + `Đã tạo X/Y phiếu · Z%`).
+> - Muốn HIỆN lại (khi cần xem thao tác): bỏ env `MISA_CHROME_HIDDEN` hoặc chạy
+>   `mo-chrome-*.bat` không kèm `--window-position`.
+> - **⏳ ĐH đang hỏi ý kiến** về việc hiển thị **ICON ở khay hệ thống (thanh bottom)** cho máy
+>   LAN (rảnh/đang chạy/lỗi, có nên vẽ % tiến trình lên icon) — em đã trình 3 PA, chờ ĐH chốt
+>   mới code.
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
