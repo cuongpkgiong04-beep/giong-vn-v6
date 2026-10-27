@@ -7031,6 +7031,25 @@ repo con **10.1.0**.
 > - **Máy .19 LATITUDE3550**: đã cài đủ công cụ (ODBC 18 + code + secrets + Chrome) — **chưa
 >   giao việc**, chờ ĐH chỉ đạo (đề xuất: MIA / bank / dự phòng).
 
+> **CẬP NHẬT 27/10 (tiếp) — PILOT MÁY .34 HOÀN TẤT + xác nhận câu hỏi của ĐH về máy chủ:**
+> - **✅ PILOT MÁY .34 THÀNH CÔNG**: job `misa-ban-hang-api` kỳ 22/10 → `claimed_by='thanh-pc'`
+>   → **done** · tổng kết `{created:0, posted:0, skipped:167, failed:0}` (bỏ qua hết — không tạo
+>   trùng). Lần đầu lỗi do thiếu template `LOG/gd463/ui_save_full_BH_body.json` → đã copy cả
+>   thư mục `LOG/gd463` sang 2 máy LAN.
+> - **⇒ CẢ 3 NHÓM ĐÃ CHẠY THẬT**: `smed` (.27, từ GĐ 534) · `misa-muahang` (.245 GIANGKT) ·
+>   `misa-banhang` (.34 THANH-PC) — phân tải 3 máy + máy chủ điều phối ✓.
+> - **Máy chủ (.250) — ĐH hỏi "đã lấy App Password để tự đọc Gmail lấy mã MISA
+>   `cuongpk.giong01@gmail.com` chưa?":** ✅ **ĐÃ CÓ TỪ LÂU** — `.secrets/gmail_app_pass.txt`
+>   (16 ký tự); em TEST lại 27/10 → **đăng nhập Gmail IMAP OK** (không có thư mã trong 24h là
+>   bình thường vì phiên MISA máy chủ đang sống, không phát sinh mã). Máy chủ cũng có sẵn cơ
+>   chế tự đọc OTP: `fetch_otp_from_gmail()` dùng bởi `30_misa_BKCT_HD.py` (tải meInvoice) và
+>   `LOG/gd442/_cdp_login_misa.py` (login MISA AMIS). **Khác 2 máy LAN**: LAN chạy script mới
+>   `misa_auto_login.py` (tự thử lại khi mã hết hạn + tự đăng nhập lại); máy chủ vẫn dùng script
+>   login cũ (GĐ 444) — cùng nằm trong `agent/`, dùng chung `.secrets` nên muốn đồng bộ chỉ cần
+>   chạy `misa_auto_login.py` trên máy chủ khi phiên hết hạn.
+>   (Test thử script mới trên máy chủ báo `connect_over_cdp: Connection closed` — do tranh Chrome
+>   CDP lúc builder đang chạy job ở máy chủ; không phải lỗi cấu hình.)
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
