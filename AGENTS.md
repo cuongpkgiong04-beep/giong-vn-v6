@@ -7128,6 +7128,27 @@ repo con **10.1.0**.
 >   Worker cả 2 máy đã restart để nạp env tài khoản mới.
 > - File app password CŨ vẫn giữ ở `.secrets/` máy chủ (chưa xóa — phòng khi cần tra cứu).
 
+> **🚀 PA PUSH ĐỢT 27/10 (lệnh ĐH "Push tất cả các công việc"):** push **CẢ 2 REPO** —
+> app tổng `21de581..e40df7b` (15 commit: GĐ 543 ×14 của em + GĐ 544/545 của phiên khác) rồi
+> push tiếp `e40df7b..0958704` (5 commit dọn sổ sách: unlock 4 dòng registry cũ GĐ 498/506/520/533
+> + sửa dòng 543 vỡ format 3 ô → 7 ô) · repo con `d76c0a5..361dc36` (11 commit).
+> **Bump:** app tổng **6.9.0 → 7.0.0** (minor 9 → nhớ sang major) · repo con **10.8.0 → 10.9.0** —
+> cả 2 `package.json` + `DEFAULT_VERSION` (app-shell.tsx) đồng bộ; **build cả 2 app PASS** trước push.
+> **Rà trùng lặp (nguyên tắc 3):** nhánh phụ `agent-cli` + `pipeline-work` = **0 commit** (không cần
+> merge) · remote app tổng 0 commit mới · **repo con có 4 commit mới từ phiên máy LAN-1** → đã
+> **MERGE** và phát hiện **TRÙNG SỐ KÉP C.350 + C.351** (2 phiên cùng dùng, nội dung khác nhau):
+> theo GĐ 285 (ai commit trước giữ số — local 14:45 sớm hơn remote 15:41) → **phiên máy chủ giữ
+> C.350/C.351**, entry phiên máy LAN-1 đổi thành **C.352/C.353** (giữ đủ bài 2 bên: kiểm bằng
+> script `set(entry)` sau merge ⊇ HEAD và ⊇ origin/main — **158 entry, 0 mất**).
+> **✅ VERIFY PRODUCTION (checklist GĐ 470):** env Vercel 2 app đủ (DATABASE_URL · APP_JWT_SECRET ·
+> TUNNEL_API_BASE_URL/GIST_ID · BETTER_AUTH_* / ZAI_API_KEY) · curl: app tổng **7.0.0** / app con
+> **10.9.0** · **login thật 200** · get-session có user · **SSO 302 → https://giong-banhang.vercel.app/
+> + Set-Cookie bh_session** (khớp secret 2 app ✓) · `/api/auth/me` 200.
+> **⚠️ SỰ CỐ VẬN HÀNH phát hiện trong đợt này:** Chrome CDP **treo WebSocket** ở **máy chủ** (đã sửa
+> bằng task `GIONG_ChromeCDP`) và ở **máy .34** (job bán hàng lỗi `Timeout 180000ms`). **Bài học:
+> restart Chrome phải kill TOÀN BỘ tiến trình `chrome`** (`Get-Process chrome | Stop-Process`), chỉ
+> kill theo cmdline `*chrome-cdp-misa*` **KHÔNG đủ** (còn tiến trình con không chứa chuỗi đó).
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
