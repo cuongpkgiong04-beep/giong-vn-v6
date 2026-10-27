@@ -7331,3 +7331,63 @@ repo con **10.1.0**.
 > đồng bộ code** giữa 3 máy.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 548 / C.355 (Trợ lý ZCode — máy chủ): Ẩn cửa sổ worker/icon khay máy trạm + watchdog tự hồi sinh + dọn http.server 8899 (2026-10-28)
+
+> **Yêu cầu Đại Ca (27/10 tối, kèm ảnh chụp màn hình máy trạm):** trên máy trạm hiện 2 cửa sổ
+> (cmd.exe log `… chưa có job mới` + python.exe in SyntaxWarning `lan_tray.py:119`) — *"Cho nó chạy
+> ẩn đi được không? Máy đó còn có người làm trực tiếp nên sợ họ sẽ đóng cửa sổ đó lại ảnh hưởng
+> đến việc của dự án này."* **ĐH chốt:** **PA-1 = VBS chạy ẩn** (không đụng code Python) · **dọn ngay**
+> `http.server 8899` trên máy chủ (đang phơi 2 App Password Gmail + `*.env.bat` ra LAN) · **làm kèm 2
+> việc nhỏ** (task tự sống lại khi bị kill + sửa SyntaxWarning).
+
+> **Điều tra thật (SSH cả 4 máy, không đoán):** chỉ task kiểu **Interactive** mới mở cửa sổ.
+> `.34 THANH-PC` = 2 cửa sổ (worker task + icon khay) · `.245 GIANGKT` = 1 (icon khay) ·
+> `.27 PC-PKT-01` = 0 · máy chủ = 1 (icon khay trên desktop Administrator). **Cả 3 máy LAN đã có
+> Windows Service `GIONG_SMED_Worker` (phiên GĐ 546) — worker thật chạy session 0 (không cửa sổ),
+> task cũ `Disabled` có chủ đích (`WORKER_DISABLE_TASK`)**.
+
+> **Đã làm (repo con `5176ddc`, 3 file trong `apps/banhang/agent/`):**
+> 1. **`run-hidden.vbs` (mới)** — launcher ẩn: `sh.Run(cmd, 0, True)` (SW_HIDE + **CHỜ** để Task
+>    Scheduler coi wscript là tiến trình task ⇒ giữ trạng thái `Running` ⇒ `IgnoreNew`/watchdog/ETL=0
+>    mới hiệu lực); trả mã thoát của tiến trình con.
+> 2. **`lan-hidden.ps1` (mới)** — cài trên từng máy: copy VBS → đổi action task Interactive sang
+>    `wscript.exe run-hidden.vbs "<lệnh cũ>"` → settings chống chết → restart có kiểm soát (dọn tiến
+>    trình mồ côi trước) → in bảng kiểm tra. Có `-Restore` (khôi phục từ backup XML), `-NoHide`,
+>    `-NoSettings`, `-NoRestart`, `-TaskUser/-TaskPassword`.
+> 3. **`lan_tray.py`** — fix SyntaxWarning: `".\SQLEXPRESS"` → `r".\SQLEXPRESS"`.
+
+> **🐞 4 LỖI ẨN phát hiện kèm (đã xử lý đúng mức):**
+> 1. **`ExecutionTimeLimit=PT72H` trên MỌI task** ⇒ Task Scheduler **KILL tiến trình chạy liên tục sau
+>    72 giờ** (worker/icon khay chạy mãi) → đặt `PT0S`. *Bài học: task chạy dài PHẢI khai `PT0S`.*
+> 2. **Task worker `.34`/`.245`/`.27` bị `Disabled` sẵn** ⇒ sau reboot không tự chạy — ⚠️ là **chủ đích
+>    của phiên GĐ 546** (đã chuyển sang service) → script **GIỮ NGUYÊN trạng thái Enabled gốc**, chỉ
+>    cảnh báo kèm lệnh bật: **không tự bật lại việc phiên khác đã tắt.**
+> 3. **`GIONG_MISA_KEEPALIVE` trên CẢ 2 máy LAN trỏ SAI đường dẫn** (tên file hỏng
+>    `giong-worker$P-login-misa.bat`) ⇒ `LastTaskResult=1` mỗi 30 phút, **keepalive MISA chưa từng
+>    chạy** → trỏ lại `thanhpc-login-misa.bat` / `giangkt-login-misa.bat` (chạy tay: result=0 ✓).
+> 4. **`RestartOnFailure` của Windows KHÔNG hồi sinh khi tiến trình bị kill** (test thật: kill icon
+>    khay → `0xFFFFFFFF`, chờ 75s không tự chạy lại) và **`<Repetition>` trong LogonTrigger không được
+>    lên lịch** (`NextRunTime` rỗng) ⇒ dùng **watchdog = TimeTrigger lặp 5 phút** (đang chạy thì lần lặp
+>    bị `IgnoreNew` bỏ qua; chết thì sống lại ≤ 5 phút) — theo đúng mẫu TimeTrigger của keepalive.
+
+> **Triển khai + verify thật:** máy chủ (icon khay) · `.34` (icon khay + keepalive + worker task) ·
+> `.245` (icon khay + keepalive) · `.27` (chỉ vá settings). Kiểm chứng "hết cửa sổ" bằng task tạm chạy
+> **trong phiên user** probe `MainWindowHandle` + `IsWindowVisible` → python `lan_tray.py` (`HIEN=False`)
+> trên cả 2 máy + ảnh chụp desktop sạch (đã xóa ảnh/task tạm). **Dọn 8899:** 0 listener + chuyển 8 file
+> nhạy cảm vào `D:\DuLieuChung\lan-setup\.secrets\` (2 App Password · 2 `*.env.bat` · 2 `*-login-misa.bat`
+> · bundle chứa `.secrets/` · headers MISA có cookie).
+
+> **Trùng lặp ĐA AGENT (đã rà nguyên tắc 3):** phiên **GĐ 546/C.356 (Trợ lý Freebuff)** chuyển worker LAN
+> sang Windows Service — không đá nhau: service lo **worker** (session 0), việc này lo **icon khay +
+> keepalive** và **giữ nguyên** trạng thái task của họ. Đã tự gây 1 sự cố nhỏ rồi tự sửa trong phiên:
+> script dọn tiến trình bản đầu dùng mẫu chung (`.env.bat`, `worker_node.py`) → **diệt nhầm worker của
+> service** (NSSM tự chạy lại ~1 phút, đã kiểm chứng) ⇒ sửa: mẫu lấy **từ backup của chính task** ·
+> **bỏ qua session 0** · chỉ diệt theo cây cha–con.
+
+> **Tiêu chí kiểm chứng (sau Push):** máy trạm không còn cửa sổ cmd/python nào; icon khay vẫn chạy
+> (có thể nằm trong khay phụ `^` — muốn luôn hiện: `IsPromoted=1` trong
+> `HKCU\Control Panel\NotifyIconSettings`); kill icon khay → sống lại ≤ 5 phút; log vẫn ghi đủ ở
+> `agent\LOG\web_agent_*.log` + `lan_tray.log`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
