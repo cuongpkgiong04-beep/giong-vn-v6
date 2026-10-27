@@ -7050,6 +7050,26 @@ repo con **10.1.0**.
 >   (Test thử script mới trên máy chủ báo `connect_over_cdp: Connection closed` — do tranh Chrome
 >   CDP lúc builder đang chạy job ở máy chủ; không phải lỗi cấu hình.)
 
+> **ĐỒNG BỘ MÁY CHỦ DÙNG CHUNG SCRIPT + TỰ PHỤC HỒI ĐỊNH KỲ (ĐH yêu cầu "làm luôn đồng bộ", 27/10 — commit `465dc8c`):**
+> - **CẢ 3 MÁY + MÁY CHỦ giờ dùng CHUNG một quy trình**: `misa_auto_login.py` (tự điền
+>   user/pass → tự đọc mã OTP từ Gmail → mã hết hạn thì tự đăng nhập lại lấy mã mới)
+>   + `misa-login-auto.bat` trên máy chủ (đọc `.secrets\misa_user.txt`/`misa_pass.txt`,
+>   KHÔNG hardcode) và `*-login-misa.bat` trên 2 máy LAN.
+> - **TỰ PHỤC HỒI TỰ ĐỘNG**: scheduled task **`GIONG_MISA_KEEPALIVE`** chạy **30 phút/lần**
+>   trên **cả 3 máy** (máy chủ `/ru SYSTEM`, máy LAN theo user) — phiên còn sống thì script
+>   thoát ngay (~5s, không tác dụng phụ), **hết phiên thì tự đăng nhập lại bằng mã Gmail**
+>   → không cần ai can thiệp.
+> - **🚨 SỰ CỐ ĐÃ SỬA trong lúc làm:** **Chrome CDP máy chủ TREO WebSocket** (HTTP
+>   `/json/version` vẫn 200 nhưng WS không phản hồi — đúng dấu hiệu từng làm Task_05/06 lỗi
+>   25/10). Đã: kill Chrome cũ → tạo task **`GIONG_ChromeCDP`** (`mo-chrome-cdp.bat`, mở lại
+>   với profile `.secrets\chrome-cdp`) → verify WS OK, **phiên MISA còn nguyên**
+>   (`amisapp.misa.vn/home` — Phạm Kiên Cường). *Nếu lần sau CDP treo: chạy `mo-chrome-cdp.bat`
+>   (hoặc `schtasks /run /tn GIONG_ChromeCDP`).*
+> - **Bug nhận diện đã sửa**: script cũ chỉ coi `actapp.misa.vn` là đã đăng nhập → phiên sống
+>   ở `amisapp.misa.vn/home` bị báo nhầm "chưa đăng nhập". Nay nhận CẢ 2 domain.
+> - **Kiểm chứng trên máy chủ**: task chạy 27/10 13:22 → log `👤 cuongpk.giong01@gmail.com ·
+>   App Password Gmail: CÓ` + `✅ đã đăng nhập sẵn` · Next Run 13:52 ✓.
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
