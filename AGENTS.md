@@ -7109,6 +7109,25 @@ repo con **10.1.0**.
 > - Ảnh mẫu icon: `agent/tray_preview/*.png` (rảnh · 25% · 70% · lỗi). Lưu ý: nếu máy đang bật
 >   **auto-hide taskbar** thì icon chỉ hiện khi rê chuột xuống đáy màn hình.
 
+> **ĐỔI TÀI KHOẢN MISA CHO 2 MÁY LAN (ĐH yêu cầu 27/10 chiều — commit `5a98d32`):**
+> - **.245 GIANGKT**: `mrhungtm2@gmail.com` → **`mrhungtm3@gmail.com`** (app password mới
+>   `obse…ffur`) · **.34 THANH-PC**: `vuthuy290790@gmail.com` → **`thuygiongvn290790@gmail.com`**
+>   (app password `isuh…jduh`).
+> - **Cách làm (`misa_switch_account.py` mới):** ĐĂNG XUẤT tài khoản cũ = **`clear_cookies()`
+>   toàn phiên Chrome** rồi chạy `misa_auto_login.py` (điền user/pass MỚI + tự lấy mã OTP từ
+>   Gmail mới). ⚠️ **Bài học:** bản CDP `Storage.getCookies` **không trả cookie** → xóa được 0
+>   (tưởng xong nhưng chưa đăng xuất); `Playwright ctx.cookies()` đọc được (6-20 cookie
+>   `misa.vn`) → phải dùng `clear_cookies()`. Xóa cookie cũng xóa phiên SMED nhưng builder tự
+>   đăng nhập lại bằng `center_pass` khi chạy job.
+> - **Mật khẩu MISA của tài khoản mới = mật khẩu buổi sáng** (ĐH không cấp lại; thử và ĐÚNG):
+>   .245 `Hungtm@123` · .34 `Gvn290790@`.
+> - **✅ Kết quả verify:** cả 2 máy đăng nhập TỰ ĐỘNG bằng tài khoản mới (mã OTP lấy từ Gmail
+>   mới) → vào đúng **công ty KETOAN_2026** + phân hệ **Mua hàng** (`misа_verify.py`).
+> - **Đang chạy pilot xác nhận quyền hạn tài khoản mới**: job `misa-mua-hang-api` (`giangkt`)
+>   + `misa-ban-hang-api` (`thanh-pc`) kỳ 22/10 (đã upload trước → kỳ vọng skip hết, 0 lỗi).
+>   Worker cả 2 máy đã restart để nạp env tài khoản mới.
+> - File app password CŨ vẫn giữ ở `.secrets/` máy chủ (chưa xóa — phòng khi cần tra cứu).
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
