@@ -7160,3 +7160,30 @@ repo con **10.1.0**.
 > — production không ảnh hưởng (nhờ fallback gist) nhưng nên chạy
 > `scripts/update-tunnel-env.py` khi rảnh; và xử **trùng số giữa 2 máy** (C.341/GĐ 533) theo
 > quy tắc GĐ 285.
+
+### GĐ 544 / C.350 (Trợ lý Freebuff): Hộp KPI "HÓA ĐƠN GTGT" (Tổng quan app con) — đổi tên "MISA | SMED" + hiện CẢ 2 nguồn "MISA tờ|mũi - SMED tờ|mũi" (2026-10-27)
+
+> **Yêu cầu của Đại ca (27/10):** đổi tên hộp "HÓA ĐƠN GTGT" → **"HÓA ĐƠN GTGT: MISA | SMED"**;
+> nội dung bên dưới hiện số **tờ|mũi của MISA TRƯỚC** — nối bằng dấu **"-"** — rồi tới số của
+> **SMED** (VD "Hôm nay: 178 tờ|211 mũi - 179 tờ|212 mũi"); số liệu SMED lấy từ **báo cáo tình hình
+> SD-HĐĐT** (dữ liệu SQL GiongDB), **số mũi = đếm vắc xin trong cột "Nội dung thu"** (1 dòng có
+> thể có 2-3 vắc xin cách nhau bằng dấu phẩy). Chi tiết đầy đủ ở entry C.350 AGENTS.md repo con.
+
+> **Đã làm (repo con code `b22c2bc` + entry `289dcb5`):** `-overview.ts` hàm mới `smedInvoiceStats()`
+> (nguồn **stg_1HDDT** = báo cáo tình hình SD-HĐĐT, cùng nguồn trang /m/bc-sd-hddt) — số **TỜ** =
+> số hóa đơn (probe toàn DB 124.175 dòng = 124.175 phiếu; loại dòng `Hủy` cùng quy ước TX-DS), số
+> **MŨI** = 1 + số lần `", "` trong col7 SAU khi bảo vệ tên MMR (có 2 dấu phẩy bên trong — đếm mọi
+> dấu phẩy không bảo vệ vượt 481 mũi toàn DB); tính 2 mốc (kỳ chọn + tháng này) trong 1 query +
+> 4 field `smedInvoicePeriod/QtyPeriod/Month/QtyMonth`. `overview-dashboard.tsx`: nhãn hộp + 2 dòng
+> hiển thị (partial staging — file đang chứa bài dở bảng Xuất Vắc Xin của phiên khác, giữ nguyên).
+
+> **Verify:** tsc app con **EXIT 0** · `vite build` **EXIT 0** (32,7s) · **SQL chạy thật qua `/query`**
+> (đúng đường web: `$N` + params, token thật) · **đối chứng độc lập bằng Python khớp từng số**: 26/10
+> SMED **175 tờ|210 mũi** (MISA 178|211) · tháng 10 (01→27/10) **6.117 tờ|7.641 mũi** (MISA
+> 7.399|9.372) · TT TD 26/10 **14|17** · kỳ rỗng = 0 · **Chrome headless**: nhãn vẫn 1 dòng, không
+> tràn ngang (hộp cao 87 → 125px — 2 dòng số tự xuống dòng).
+
+> **Còn lại (chờ Đại ca quyết):** bấm hộp → dialog chi tiết vẫn CHỈ có MISA (bảng kê chi tiết HĐGTGT),
+> chưa thêm bảng SMED / SD-HĐĐT; anh muốn bấm hộp ra CẢ 2 nguồn thì báo em.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.8.0**.
