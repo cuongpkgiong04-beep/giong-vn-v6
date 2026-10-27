@@ -7087,6 +7087,28 @@ repo con **10.1.0**.
 >   LAN (rảnh/đang chạy/lỗi, có nên vẽ % tiến trình lên icon) — em đã trình 3 PA, chờ ĐH chốt
 >   mới code.
 
+> **ICON KHAY HỆ THỐNG CHO MÁY LAN — ĐÃ LÀM XONG (ĐH chốt PA-1, 27/10 — commit `16ae4f7`):**
+> - **ĐH hỏi "cho thêm % tiến trình vào ICON nhỉ?"** → em phân tích: icon khay chỉ **16×16 px**
+>   nên **số % không đọc được**; thay vào đó dùng **VÒNG TRÒN tiến trình** (liếc 1 giây biết
+>   chạy tới đâu), còn **số % để trong tooltip**. ĐH chốt PA-1 theo hướng này.
+> - **`lan_tray.py` (mới)**: 🟢 xanh lá = rảnh · 🔵 vòng xanh dương đầy dần theo % = đang chạy
+>   · 🔴 đỏ = job lỗi gần nhất. Tooltip: `<MÁY> · <tên việc> · <kỳ> · X/Y · Z% · <người tạo>`
+>   (nhãn việc tiếng Việt, đồng bộ `job-labels.ts`). Chuột phải: mở thư mục log · kiểm tra
+>   api_server · thoát.
+> - **Nguồn dữ liệu = đọc TRỰC TIẾP GiondDB** (`pyodbc` + `AGENT_SQL_CONN` của máy LAN).
+>   Lý do: **middleware LAN guard của api_server chặn `/jobs` từ LAN** (đúng thiết kế bảo mật —
+>   từ LAN chỉ `/agent/*` + `/health`) → không dùng API được, cũng không cần mở thêm cổng.
+> - **Đã cài CẢ 3 MÁY + MÁY CHỦ** (`pip pystray Pillow` + task **`GIONG_LAN_TRAY`** `/sc onlogon
+>   /it`): verify tooltip THẬT — `GIANGKT · RẢNH (việc cuối: UPLOAD MISA — phiếu MUA HÀNG ·
+>   22/10/2026)` · `THANH-PC · RẢNH (… hóa đơn GTGT BÁN HÀNG · 22/10/2026)` ·
+>   `CORE · RẢNH (… phiếu MUA HÀNG · 26/10/2026)`; process tray nằm đúng **Console session**
+>   của user.
+> - **2 bài học vận hành:** (1) task tray PHẢI có **`/it`** (interactive) — thiếu thì chạy ở
+>   session 0 và **icon vô hình**; (2) `schtasks /run` bỏ qua nếu task còn "Running" → phải
+>   **`schtasks /end`** trước (đã gói vào `restart_tray.ps1`).
+> - Ảnh mẫu icon: `agent/tray_preview/*.png` (rảnh · 25% · 70% · lỗi). Lưu ý: nếu máy đang bật
+>   **auto-hide taskbar** thì icon chỉ hiện khi rê chuột xuống đáy màn hình.
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
