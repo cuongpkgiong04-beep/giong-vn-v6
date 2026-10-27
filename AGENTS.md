@@ -7274,3 +7274,60 @@ repo con **10.1.0**.
 > Trạng thái) để đối chiếu; Đại ca muốn lọc cả trang báo cáo thì báo em.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.9.0** / repo con **10.8.0**.
+
+### GĐ 546 / C.356 (Trợ lý Freebuff): PA-1 — 3 máy LAN chạy worker bằng WINDOWS SERVICE (vá 4 lỗ hổng bản GĐ 534) + verify thật (2026-10-28)
+
+> **Bối cảnh:** ĐH gửi 2 ảnh phiên ZCode trên máy LAN-1 (.27) đang hướng dẫn ĐH chạy TAY
+> `worker-install.bat` + `bo-sung-service.bat` để cài Windows Service cho worker, và hỏi
+> "có nên làm không hay để em làm cho đồng bộ". Em rà chứng cứ (SSH 3 máy + đọc code + DB)
+> → phát hiện bản GĐ 534 cài xong **service KHÔNG chạy được** ⇒ **ĐH chốt PA-1: không chạy tay,
+> giao em chuẩn hoá CẢ 3 MÁY**.
+
+> **4 lỗ hổng thật của bản GĐ 534 (verify bằng code + SSH, không suy đoán):**
+> 1. `worker-install.bat` tạo `worker.env` nhưng **NSSM không đọc được file .env** và
+>    **không có code nào đọc `worker.env`** ⇒ service thiếu `SMED_AGENT_TOKEN` →
+>    `worker_node.py` log lỗi rồi **thoát** → NSSM restart lặp vô hạn.
+> 2. `bo-sung-service.bat` hardcode `PLAYWRIGHT_BROWSERS_PATH=C:\Users\Administrator\...` —
+>    máy .27 Chromium nằm ở `C:\Users\phamcuong\...` (thư mục Administrator **RỖNG**).
+> 3. `worker.env` mẫu **thiếu `AGENT_SQL_CONN` + `ETL_SQL_CONN`** ⇒ ETL rơi về `.\SQLEXPRESS`
+>    (máy LAN không có SQL) ⇒ tải file về mà **KHÔNG nạp được GiondDB**.
+> 4. Task worker cũ vẫn `Enabled` ⇒ cài service xong là **2 worker cùng máy**.
+> Phụ: `SMED_AGENT_ROLE=worker` **CÓ** được đọc (`40_web_agent.py:287 IS_WORKER_NODE`) — phiên
+> kia nói "chưa có code đọc" là sai lý do (kết luận "vô hại" đúng vì worker_node không qua `main()`).
+
+> **Đã làm — code (repo con `9c6d3f3` · entry `7c71c36`):**
+> `worker-install.bat` viết lại: sinh **`worker.env.bat` từ `worker.env`** rồi cho service chạy
+> `cmd /c worker.env.bat` (đúng mô hình 3 máy đang chạy thật) + tự dò `ms-playwright` của máy +
+> `PATH` kèm python (cho subprocess ETL gọi `python` trần) + `AppExit=Restart`/`AppRestartDelay`/
+> `AppThrottle` + `WORKER_DISABLE_TASK` tự `/end`+disable task cũ + `WORKER_OPEN_CHROME=1` sinh khối
+> tự mở Chrome CDP 9222 + cờ `--no-service`/`--quiet`; `worker.env.example` thêm 2 biến SQL;
+> `bo-sung-service.bat` vào repo (di sản, path động); `WORKER-README.md` cập nhật (trạng thái 3 máy +
+> rollback); **`gd546_deploy_service.py`** (mới) triển khai từ máy chủ qua SSH, có nhánh HTTP cho máy
+> .34 không SFTP.
+
+> **Đã làm — 3 MÁY:** `.245` (user `ADMIN`) · `.34` (`admin-pc`, không password) · `.27` (`phamcuong`)
+> — mỗi máy: /end task cũ → cài NSSM + service → dọn worker cũ sót → start → verify.
+> **2 lỗi thật gặp trong lúc triển khai (đã vá):** (1) `nssm set AppDirectory "%AGENTDIR%"` với
+> `\` cuối → C-runtime hiểu `\"` → AppDirectory dính dấu `"` ⇒ service `SERVICE_STOPPED` ngay, **log
+> rỗng** (vá `%AGENTDIRNB%`); (2) scp fail trên .34 (không SFTP) + **7 tiến trình `http.server 8899`
+> cũ còn sống** (Windows cho nhiều bind 1 port — SO_REUSEADDR) ⇒ request rơi vào server cũ → 404
+> (vá: dọn server cũ trước + staging dir).
+
+> **Verify (bằng chứng thật):** cả 3 máy `GIONG_SMED_Worker` **RUNNING + AUTO_START**, task cũ
+> **Disabled**; **.27 chạy TRỌN CHUỖI 9 JOB SMED dưới service** (hddt→dtdt→dtthc→bkccn→nhapkho→
+> xuatkho→xnkt→chietkhau→hentiem, `claimed_by='lan-1'`, tất cả done) — mỗi job `ETL sau download:
+> exit=0`, đối chứng `stg_5BKN` 27/10 = **34 dòng** khớp log ⇒ Playwright dưới LocalSystem OK +
+> `python` trong PATH OK + ETL nạp GiondDB qua LAN OK; `.245`/`.34` CDP 9222 sống (Chrome/155 ·
+> 156) + pyodbc OK + worker log "CHẾ ĐỘ MÁY LAN" chờ job; cài bổ sung **chromium-1248** cho `.245`
+> (playwright 1.64.1 vs 1.60.0 của .34 — browser build phải khớp từng máy).
+
+> **Bài học:** path kết thúc `\` truyền trong `"..."` cho CLI C-runtime (NSSM) thành `\"` — bệnh
+> "service không start mà log rỗng"; `nssm start` trả `START_PENDING` là bình thường (chờ ~10s);
+> Windows nhiều tiến trình bind chung 1 port; `-EncodedCommand` dài quá **8191 ký tự** bị cmd cắt
+> **im lặng** (dùng gzip+base64 hoặc HTTP/scp); .34 không có SFTP.
+
+> **Tồn (chờ ĐH quyết):** `worker_node.py` trên `.245`/`.34` là **bản cũ hơn** bản repo (`load_env_file`
+> + gọi `w.main()`), `.27` dùng bản repo — hai bản đều chạy đúng loại job của từng máy nhưng **chưa
+> đồng bộ code** giữa 3 máy.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
