@@ -7211,3 +7211,26 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.8.0**.
 
 > **⚠️ PHÁT HIỆN khi verify (27/10) — THIẾU DỮ LIỆU SMED:** stg_1HDDT (OUTPUT\1.HDDT) THIẾU hẳn 3 ngày **04/10 · 06/10 · 07/10** và một phần **03/10** (68 dòng, MISA cùng ngày 391) ⇒ dòng “Tháng này” sẽ thấy SMED (6.117) thấp hơn MISA (7.399) khoảng 1.280 tờ — **KHÔNG phải lỗi đếm** (probe các ngày 20→26/10 hai nguồn khớp: 154/154 · 186/185 · 168/167 · 170/168 · 443/440 · 704/702 · 178/175). import_log: **06/10 không có file 1HDDT**; 04/10 + 07/10 có file nhưng thuộc kỳ 02→03/10 (nạp lại thư mục cũ) ⇒ **việc còn lại: chạy job tải bù report `hddt` cho 03→07/10 rồi ETL lại** (quy trình Download→ETL→Báo cáo) để hộp đủ số tháng.
+
+### GĐ 545 / C.351 (Trợ lý Freebuff): Hộp HĐ GTGT (phần SMED) — CHỈ lấy dòng "Trạng thái = Đã gửi" của báo cáo tình hình SD-HĐĐT (2026-10-27)
+
+> **Yêu cầu của Đại ca (27/10, tiếp GĐ 544/C.350):** lọc thêm cột "Trạng thái" của báo cáo tình hình
+> SD-HĐĐT (SQL GiongDB) — loại dòng 'Hủy', **chỉ lấy dòng 'Đã gửi' để tính toán**. Chi tiết đầy đủ ở
+> entry C.351 AGENTS.md repo con.
+
+> **Đã làm (repo con code `7759bba` + entry `fe1c6a6`):** `-overview.ts` hàm `smedInvoiceStats()` đổi
+> điều kiện từ `ISNULL(col12,N'') <> N'Hủy'` → **`LTRIM(RTRIM(col12)) = N'Đã gửi'`** (áp cho cả số TỜ
+> và số MŨI, cả 2 mốc kỳ chọn + tháng này). Điều kiện mới chặt hơn: từ nay SMED sinh trạng thái mới
+> (VD 'Chờ gửi') thì không bị tính.
+
+> **Probe 27/10 (trước khi sửa):** `col12` toàn DB chỉ có 2 giá trị — `Đã gửi` 123.813 · `Hủy` 362;
+> 0 dòng khoảng trắng thừa; tháng 10: `Đã gửi` 6.117 · `Hủy` 30 ⇒ **số hộp KHÔNG đổi** so GĐ 544.
+
+> **Verify:** tsc app con EXIT 0 · vite build EXIT 0 · SQL chạy thật qua `/query` (đường web) +
+> `/db/query` đều **175 tờ|210 mũi (26/10)** và **6.117 tờ|7.641 mũi (tháng 10)** · đối chứng độc lập
+> Python khớp từng số · số dòng bị loại THÊM = 0.
+
+> **Phạm vi:** chỉ phần tính toán của hộp KPI — trang báo cáo `/m/bc-sd-hddt` vẫn hiện đủ dòng (kèm cột
+> Trạng thái) để đối chiếu; Đại ca muốn lọc cả trang báo cáo thì báo em.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.9.0** / repo con **10.8.0**.
