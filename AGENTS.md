@@ -7391,3 +7391,45 @@ repo con **10.1.0**.
 > `agent\LOG\web_agent_*.log` + `lan_tray.log`.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 551 (Trợ lý Freebuff): PA Push đợt 28/10 — push 2 repo (agent-side + docs) + verify production login/SSO (2026-10-28)
+
+> **Lệnh "Push" của ĐH (28/10, sau GĐ 546 worker máy LAN sang Windows Service).**
+
+> **Rà trùng lặp (nguyên tắc 3 — có 1 CẢNH BÁO đã báo ĐH):** nhánh phụ `agent-cli` +
+> `pipeline-work` **RỖNG cả 2 repo** · remote `origin/main` 0 commit mới. ⚠️ **Đợt push này
+> chứa commit CHƯA PUSH của 3 phiên khác** (đã cảnh báo trước khi push):
+> **GĐ 547 / C.354** (Trợ lý ZCode — fix typo tên DB `GiondDB`→`GiongDB` trong fallback connection
+> 4 file agent) · **GĐ 548 / C.355** (Trợ lý ZCode máy chủ — ẩn cửa sổ task máy trạm
+> `run-hidden.vbs` + `lan-hidden.ps1` + watchdog 5 phút + fix `lan_tray.py`) · **GĐ 550 / C.357**
+> (chỉ là **dòng claim 🔒 đang làm dở** — vá captcha MIA HĐĐT; code của họ trong working tree
+> `43_mia_hddt.py` **KHÔNG đụng, KHÔNG add**). Working tree app tổng còn `AGENTS.md` +
+> `AGENT_REGISTRY.md` bản bài dở của phiên khác — đi qua cổng shared-doc, bài dở được trả nguyên.
+
+> **KHÔNG bump version** (7.0.0 / 10.9.0 giữ nguyên): đợt này **0 thay đổi file web** — repo con chỉ
+> đụng `apps/banhang/agent/*` (script vận hành máy agent + 4 file agent-side của C.354), app tổng chỉ
+> `AGENTS.md` + `AGENT_REGISTRY.md`. Tiền lệ đã duyệt: GĐ 416/417 (docs-only) + GĐ 422 (agent-side).
+
+> **Push:** repo con `361dc36..5176ddc` (6 commit: C.354 fix typo DB · C.356 entry + code GĐ 546 ·
+> C.355 ẩn cửa sổ/watchdog) · app tổng `0711bfe..1370633` (12 commit: entry GĐ 546/C.356 + các
+> dòng claim/unlock GĐ 546/547/548/549/550/551).
+
+> **✅ Verify production (checklist GĐ 470 — đủ phần A + B):**
+> - **A. env Vercel 2 app:** app tổng `DATABASE_URL` · `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` ·
+>   `TUNNEL_GIST_ID` · `BETTER_AUTH_SECRET` · `BETTER_AUTH_URL` — có đủ; app con `DATABASE_URL` ·
+>   `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID` · `ZAI_API_KEY` — có đủ.
+> - **B. Test thật:** curl `--compressed` app tổng = **7.0.0** · app con = **10.9.0** (không đổi vì
+>   không bump) · login app tổng `sign-in/email` trả JSON có `user` (Phạm Kiên Cường, `createdAt`
+>   **26/09/2026 10:30:35** = đúng bản ghi GiongDB thật — KHÔNG rơi Neon/PGLite) · `get-session` OK ·
+>   **SSO:** ký JWT (HS256, `iss=giong-vn-v6`, `aud=giong-banhang`, secret `.secrets/app_jwt_secret.txt`)
+>   → `302 → https://giong-banhang.vercel.app/` + `Set-Cookie: bh_session=...` ✅ (⇒ `APP_JWT_SECRET`
+>   **2 app KHỚP NHAU**) · `/api/auth/me` với cookie phiên: `user.empId=e003` · `role=SuperAdmin` ·
+>   **14 nhóm + các lá quyền đủ** ✅.
+> - **Agent:** `/health` = `{ok:true, db:GiongDB, jobs:3395, tunnel_ok:true}` (tunnel hiện tại
+>   `blend-tier-follows-smoke.trycloudflare.com` — đã đổi URL, app tự đọc gist theo GĐ 426).
+
+> **Việc production chờ (không gấp):** các máy agent (máy chủ + 3 máy LAN) `git pull` để có bộ file
+> mới `worker-install.bat` / `WORKER-README.md` (chỉ là tài liệu + script cài — máy LAN đã được cài
+> trực tiếp qua `gd546_deploy_service.py`, không cần pull để chạy).
+
+> **Version:** app tổng **7.0.0** / repo con **10.9.0** — ĐÃ PUSH + LIVE (không đổi — 0 thay đổi web).
