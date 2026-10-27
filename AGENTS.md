@@ -7004,6 +7004,33 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con
 > **10.7.0** (phiên khác đã push 26/10).
 
+> **CẬP NHẬT 27/10 (ĐH cấp App Password Gmail → tự động hoá hoàn toàn):**
+> - **Google KHÔNG có CLI đọc Gmail** → dùng **App Password + IMAP** (ĐH tạo "GIONG MISA"
+>   cho 2 hộp thư). Em viết `gmail_otp.py` (đọc mã; đã sửa 2 bug thật: số trong địa chỉ email
+>   `vuthuy290790@` bị bắt nhầm thành mã, và mã giả `000000`) + `misa_auto_login.py`
+>   (**đăng nhập MISA hoàn toàn tự động**: điền user/pass → tự đọc Gmail lấy mã → mã hết hạn
+>   thì tự đăng nhập lại lấy mã mới). Đặc điểm MISA cần nhớ: **mã hiệu lực 7 phút, TIÊU ĐỀ
+>   thư chính là mã**.
+> - **✅ CẢ 2 MÁY ĐÃ ĐĂNG NHẬP MISA** (.245 GIANGKT + .34 THANH-PC, công ty KETOAN_2026) —
+>   verify bằng `misa_verify.py` (mở `actapp.misa.vn/app/PU` → vào đúng phân hệ Mua hàng).
+> - **✅ PILOT MÁY .245 THÀNH CÔNG TRỌN VẸN**: job `misa-mua-hang-api` kỳ 22/10 →
+>   **`claimed_by='giangkt'` sau 10 giây** → chạy **23 phút** → **done, 0 lỗi** ·
+>   tổng kết `{created:0, posted:0, skipped:36, failed:0, aliasCount:3}` (kỳ đã upload trước
+>   → bỏ qua hết, không tạo trùng). Máy chủ (core) KHÔNG nhận job này ✓ đúng thiết kế PA-1.
+> - **⏳ PILOT MÁY .34**: job `misa-ban-hang-api` kỳ 22/10 đang chạy (`claimed_by='thanh-pc'`).
+> - **3 LỖI THẬT phát hiện khi chạy (đã sửa, commit `5538aec`):**
+>   1. `misa_muahang_upload.py` **hardcode `Server=.\SQLEXPRESS` + Trusted_Connection** →
+>      máy LAN không có SQL Server local → job lỗi 08001. Sửa: đọc `AGENT_SQL_CONN` trước
+>      (cả 3 builder mua hàng/xuất kho/bán hàng dùng chung hằng này).
+>   2. Thiếu **`danh_sach_nha_cung_cap.xlsx`** (138 NCC — builder cần) → đã copy sang 2 máy.
+>   3. **Chrome CDP chết khi phiên SSH đóng** và sau logoff → file env `.bat` nay **tự mở
+>      Chrome CDP nếu chưa chạy** trước khi chạy worker (tự phục hồi sau reboot/logoff).
+> - **Lưu ý vận hành:** phiên MISA hết hạn → chạy `*-login-misa.bat` (tự lấy mã Gmail, không
+>   cần ai đọc mã). Máy .245/.34 phải BẬT + Chrome CDP sống khi cần upload; tắt 1 máy → job
+>   chuyên biệt chờ 15' sẽ được máy chủ cứu hộ (PA-1).
+> - **Máy .19 LATITUDE3550**: đã cài đủ công cụ (ODBC 18 + code + secrets + Chrome) — **chưa
+>   giao việc**, chờ ĐH chỉ đạo (đề xuất: MIA / bank / dự phòng).
+
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
 > **Yêu cầu của Đại ca (26/10, tiếp GĐ 537):** "làm luôn cho Ngân hàng và Xuất Vắc Xin" —
