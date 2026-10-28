@@ -7504,3 +7504,69 @@ repo con **10.1.0**.
 > thẳng endpoint SSO; (4) `APP_JWT_SECRET` là KHOÁ KÉP ở app con (SSO + mã hoá SMED).
 
 > **Version:** KHÔNG bump. App tổng **7.0.0** / repo con **10.9.0** — ĐÃ PUSH.
+
+### GĐ 553 (Trợ lý ZCode (máy chủ)): Điều tra "vì sao máy chủ .250 vẫn đăng nhập MISA `cuongpk.giong01@gmail.com`" — trả lời ĐH 3 câu về phiên MISA (2026-10-28)
+
+> **Câu hỏi của Đại Ca (28/10, kèm ảnh popup MISA "Đang có người dùng khác sử dụng tài khoản
+> này… Tiếp tục đăng nhập trên máy này, tài khoản sẽ đăng xuất khỏi tất cả các máy khác"):**
+> (1) Có cần đăng nhập MISA bằng tài khoản của anh trên máy chủ .250 khi 2 máy trạm chạy ổn
+> không? Mục đích gì? (2) Trong/sau khi chạy, anh muốn dùng MISA + đăng nhập thì có ảnh hưởng
+> việc đã hoàn thành không? (3) Máy trạm khác cũng muốn đăng nhập MISA — nhiệm vụ kế tiếp của
+> App có thực hiện được không?
+
+> **Điều tra thật (probe DB GiongDB + cấu hình 4 máy + kiểm chứng phiên qua CDP — không suy đoán):**
+> - **Bảng phân vai hiện hành** (GĐ 543/546, cấu hình `*.env.bat` + NSSM): `.27 PC-PKT-01` =
+>   nhóm `smed` (tải SMED 19 TT) · **`.245 GIANGKT` = nhóm `misa-muahang`** (MISA_USER
+>   `mrhungtm3@gmail.com`) · **`.34 THANH-PC` = nhóm `misa-banhang`** (MISA_USER
+>   `thuygiongvn290790@gmail.com`) · **`.250 máy chủ` = nhóm `core`** (NSSM `WORKER_ID=core` /
+>   `WORKER_GROUPS=core`): **nhường** 3 nhóm chuyên biệt nhưng **CỨU HỘ** job chuyên biệt chờ
+>   quá `AGENT_RESCUE_MIN` = **15 phút** (máy chuyên biệt tắt/treo → máy chủ tự lấy chạy để
+>   pipeline đêm không đứt — ĐH chốt PA-1 ngày 26/10).
+> - **DB 60 job MISA gần nhất:** **28/10 (hôm nay) máy chủ 0 job** — mua hàng/xuất kho do
+>   `giangkt` (5 job), bán hàng do `thanh-pc` (3 job) ⇒ 2 máy trạm đang làm đúng việc.
+>   **27/10 core nhận 5 job**, trong đó job mua hàng `1A868DD2` tạo 02:54:38 → **chờ 26 phút**
+>   mới được máy chủ nhận lúc 03:20:05 → **done** = **bằng chứng cứu hộ chạy thật** (4 job còn lại
+>   chờ ≤13' là lúc worker 2 máy LAN chưa bật — trước GĐ 546).
+> - **Trang bị máy chủ:** Chrome CDP ẩn (PID 18972, `--user-data-dir=...\.secrets\chrome-cdp`,
+>   `--window-position=-32000,-32000`) + task **`GIONG_MISA_KEEPALIVE`** chạy `misa-login-auto.bat`
+>   **mỗi 30 phút** (đọc `.secrets/misa_user.txt` = `cuongpk.giong01@gmail.com`, tự lấy OTP qua
+>   Gmail App Password; lần cuối 10:52 result=0; log toàn "✅ đã đăng nhập sẵn").
+> - **Kiểm chứng phiên THẬT (không tin log):** mở tab mới qua CDP tới dashboard MISA →
+>   **PHIÊN SONG** (KETOAN_2026, không bị đá về `/login`) ⇒ tài khoản của ĐH hiện có 1 phiên
+>   sống trên máy chủ, sẵn sàng cứu hộ.
+> - **2 máy LAN cũng có keepalive MISA riêng** (`giangkt-login-misa.bat` /
+>   `thanhpc-login-misa.bat` — GĐ 548 đã sửa path hỏng, chạy tay result=0) → mỗi máy tự đăng
+>   nhập lại tài khoản của máy mình ≤ 30 phút. Builder upload MISA **không dùng mật khẩu** — lấy
+>   token từ phiên Chrome CDP localhost:9222 của chính máy đó (GĐ 543).
+
+> **Trả lời ĐH 3 câu (nội dung đã báo):**
+> 1. **Cần** — vì máy chủ là **lưới an toàn (cứu hộ 15')**; bằng chứng 27/10 cứu hộ 26' chạy
+>    done. Muốn máy chủ thôi giữ tài khoản: đặt `AGENT_RESCUE_MIN=0` (nhường cứng) + tắt
+>    keepalive + đăng xuất Chrome CDP — đổi lại mất lưới an toàn, máy trạm chết là job treo.
+> 2. **Job đã done → KHÔNG ảnh hưởng** (dữ liệu đã ghi MISA, không phụ thuộc phiên). Nhưng
+>    **đăng nhập CÙNG tài khoản** trong lúc máy chủ đang chạy job → đá phiên builder → job lỗi
+>    giữa chừng; và keepalive 30' của máy chủ sẽ tự login lại → **2 bên đá nhau mỗi ≤30 phút**
+>    (đúng popup ĐH thấy).
+> 3. **Máy trạm khác**: đăng nhập **tài khoản khác** → không ảnh hưởng gì; đăng nhập **cùng tài
+>    khoản của máy đó** (mrhungtm3 / thuygiongvn290790) → đá phiên builder máy đó, job kế tiếp
+>    lỗi cho tới khi task keepalive máy đó (≤30') tự đăng nhập lại → **job vẫn chạy tiếp được**,
+>    chỉ chậm tối đa 30 phút; người vừa đăng nhập sẽ bị đá ra.
+
+> **3 PA trình ĐH chốt (chưa làm gì — chờ lệnh):**
+> - **PA-1 (khuyến nghị):** tạo 1 tài khoản MISA **riêng cho ĐH** (MISA AMIS cho nhiều user cùng
+>   công ty KETOAN_2026) để xem/sửa MISA thoải mái — builder cứu hộ vẫn giữ `cuongpk.giong01`,
+>   không ai đá ai. Không mất lưới an toàn.
+> - **PA-2:** tắt cứu hộ máy chủ (`AGENT_RESCUE_MIN=0`) + tắt `GIONG_MISA_KEEPALIVE` + đăng xuất
+>   Chrome CDP máy chủ → ĐH dùng `cuongpk.giong01` tự do; **rủi ro:** 1 máy trạm chết → job
+>   chuyên biệt treo tới khi máy đó sống lại (phải chạy lại tay).
+> - **PA-3:** đổi tài khoản MISA trên máy chủ (cứu hộ) sang tài khoản phụ khác (VD của nhân viên)
+>   → giữ cứu hộ + ĐH dùng tài khoản chính; cần 1 tài khoản MISA + cấu hình `.secrets` máy chủ.
+
+> **Ghi chú kèm (điểm yếu nhỏ phát hiện, chưa sửa):** `misa_auto_login.py` phát hiện "đã đăng
+> nhập" bằng **URL tab** — nếu bị kick mà tab chưa reload, script có thể tưởng phiên còn sống
+> (log "đã đăng nhập sẵn" không đủ tin; phải kiểm chứng thật như cách đã làm). Builder
+> `misa_muahang_upload.py` (bản fill-form cũ, không phải bản đang chạy) còn hardcode
+> `cuongpk.giong01@gmail.com` khi lấy OTP — bản API đang chạy (`misa_muahang_api.py`) lấy
+> headers từ phiên CDP nên không bị.
+
+> **Version:** KHÔNG bump (điều tra docs-only, 0 code đổi). App tổng **7.0.0** / repo con **10.9.0**.
