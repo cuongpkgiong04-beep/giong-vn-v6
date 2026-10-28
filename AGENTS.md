@@ -7433,3 +7433,47 @@ repo con **10.1.0**.
 > trực tiếp qua `gd546_deploy_service.py`, không cần pull để chạy).
 
 > **Version:** app tổng **7.0.0** / repo con **10.9.0** — ĐÃ PUSH + LIVE (không đổi — 0 thay đổi web).
+
+### GĐ 550 / C.357 (Trợ lý ZCode — máy chủ): Cổng GDT đổi luật — "máy tính tiền" (sco-query) bắt buộc captcha ckey/cvalue; vá tool MIA 43_mia_hddt.py (PA-1 ĐH chốt 28/10) (2026-10-28)
+
+> **Đại ca báo (28/10 rạng sáng, kèm ảnh kết quả Task_02):** 4 phân hệ MiaTool (Mua vào/Bán ra ×
+> Tổng quan/Chi tiết) của Task_02 17:15 ngày 27/10 đều **Lỗi**. ĐH đã tự test **MIA TOOL 2026 v4.5.2**
+> (bộ chạy `C:\Program Files\MIA TOOL 2026` · bộ cài `MIA-TOOL-2026-Setup-4.5.2.rar`) thấy ổn định →
+> giao khảo sát bản vá rồi sửa.
+
+> **Gốc lỗi (log thật):** Cổng HĐĐT Quốc gia trả `HTTP 500 "Required request parameter 'ckey' for method
+> parameter type String is not present"` cho MỌI request `/api/sco-query/invoices/purchase|sold`. Cổng
+> **đổi luật**: nhóm endpoint MÁY TÍNH TIỀN (`sco-query`) nay bắt buộc kèm captcha đã giải (ckey/cvalue);
+> `/api/query/...` (HĐĐT thường) và `/api/*/invoices/detail` KHÔNG cần.
+
+> **Khảo sát bản vá 4.5.2 (không đoán):** vỏ Electron `app.asar` (`mia-desktop-app` **4.5.2**) + lõi
+> Python `runtime/mia-runtime.exe` (PyInstaller 3.11) → trích PYZ + dịch ngược bytecode → thấy module
+> vá mới **`mia_cash_register_captcha`** (docstring: gửi ckey/cvalue **ở cả query params LẪN headers**
+> cho mọi search/page/export; detail không cần): mỗi request sco-query lấy captcha MỚI + OCR, bị từ chối
+> (400/403/422 kèm chữ captcha) thì thử lại tối đa 3 lần.
+
+> **Probe thật lên cổng (đêm 27/10, tài khoản công ty — chỉ ĐỌC):** không ckey → **500**; có ckey
+> (chỉ params cũng đủ) → **200**; **dùng lại captcha cũ → 401 "Mã captcha không đúng."** (captcha dùng
+> **MỘT LẦN**; 401 này KHÁC token hết hạn) · `sold` có ckey → 200 (196 HĐ 27/10) · `detail`→200 (không cần).
+
+> **Đã làm (repo con `c8aabe5` code + `b61afa4` docs — surgical đúng `MiaClient._get` trong
+> `agent/43_mia_hddt.py`):** hằng số 3 path sco + từ khoá lỗi captcha + env `MIA_CAPTCHA_RETRIES`;
+> `_solver()` (ddddocr dùng chung 1 instance) + `_solve_captcha()`; `_get()` gắn ckey/cvalue vào params
+> & headers, **401/400/403/422 kèm chữ captcha → captcha mới chứ KHÔNG login lại / KHÔNG xoá token**;
+> giữ nguyên các nhánh 429/5xx/timeout cũ; `_gdt_down_hint` thêm nhánh thiếu/sai captcha;
+> `43_mia_hddt.test.py` +8 test (session giả, không mạng).
+
+> **Verify:** unit **16/16 PASS** · chạy THẬT 4 tổ hợp 27/10 (muavao 29 HĐ/45 dòng · banra 196 HĐ/238
+> dòng) · 2 lần chạy liên tiếp tập HĐ **giống hệt** · **4 job tạo lại qua API → CẢ 4 DONE** (06:58–07:00)
+> + **ETL tự nạp GiongDB**: `mia_hddt_hd` kỳ 27/10 = **29 mua vào + 195 bán ra**; file thật nằm đúng
+> `OUTPUT8.MIA_MUA|19.MIA_BAN6-10-27\`. **KHÔNG cần restart agent** (tool chạy qua subprocess
+> mới mỗi job) và KHÔNG ảnh hưởng máy LAN (worker chỉ nhận nhóm `misa-muahang`/`misa-banhang`).
+
+> **Lưu ý đã kiểm chứng (không phải lỗi):** job Tổng quan và Chi tiết chạy 2 thời điểm khác nhau nên số
+> HĐ có thể lệch 1 (tối nay TQ 195 · CT 196 — HĐ C26MAE/3248 được cấp mã giữa 2 job); ETL đọc đúng
+> 195 dòng của file TQ.
+
+> **Việc còn lại (ngoài phạm vi, chưa đụng):** 6 job MISA kỳ 27/10 cũng lỗi — nguyên nhân KHÁC:
+> "Không có phiếu nào … trong `stg_5BKN`" + `Tab guard: connect_over_cdp Timeout 15000ms` (Chrome CDP treo).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
