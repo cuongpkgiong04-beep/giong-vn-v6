@@ -7706,3 +7706,46 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.0.0** / repo con **10.9.0**.
+
+### GĐ 558 (Trợ lý Freebuff): Fix phiếu bán hàng MISA thiếu Số lô/Hạn sử dụng — nguyên nhân BKCCN về muộn + `--fix-lots` tự rà/sửa; đã sửa 159 phiếu 27/10 + 2 phiếu 25/10 (2026-10-28)
+
+> **ĐH báo (28/10 tối, ảnh):** các phiếu Chứng từ bán hàng trên MISA AMIS trống
+> "Số lô"/"Hạn sử dụng" — phiếu ví dụ `09112610270852363060` (TP · LUU PHAM NHAT
+> LINH). ĐH miễn hỏi lần này — em tự chọn giải pháp tối ưu + rà các phiếu lỗi
+> tương tự để sửa lại. **Chi tiết đầy đủ ở entry C.362 / GĐ 561 AGENTS.md repo
+> con** (commit `ec8a76f` — code builder + tool quét).
+
+> **Nguyên nhân (bằng chứng thật):** nguồn DUY NHẤT có Số lô/HSD là BKCCN
+> (stg_4BKCCN — "Bảng kê chung cuối ngày", GĐ 471). SMED thường xuất bảng kê
+> 23:12 tối cùng ngày, nhưng **27/10 file chỉ về 12:25 trưa hôm sau** → phiếu
+> tạo tối 27/10 khi index lô còn RỖNG → **161/192 phiếu 27/10 thiếu lô**. Tên
+> trường payload `lot_no`/`expiry_date` ĐÚNG (phiếu 22/10 tạo khi BKCCN đã có →
+> MISA có lô; phiếu lỗi lot_no=None).
+
+> **Đã làm (repo con `misa_banhang_api.py` + tool `gd558_scan_missing.py`):**
+> cảnh báo BKCCN rỗng trong run() · `bkccn_peek()` (peek không pop) ·
+> `run_fix_lots()` + CLI `--fix-lots [--dry-run]` (quét detail_full → xóa phiếu
+> thiếu lô CÓ đường điền từ BKCCN + reset DB + tạo lại tự động — guard refno DB
+> như GĐ 501, chống vòng lặp) · CLI `--upload-all` · `ensure_misa_session()`
+> (tự bấm "Tiếp tục đăng nhập" khi phiên bị đá — JS click) · tool quét
+> `gd558_scan_missing.py`.
+
+> **Kết quả thật (tối 28/10):** 27/10: xóa 159 + tạo lại **159 · lỗi 0** → quét
+> lại **190/192 đủ lô** — phiếu của ĐH `09112610270852363060` ĐÃ CÓ LÔ (Imojev
+> 08C2507GB · HSD 05/05/2029 — Avaxim 80U Y3G04D3 · 31/07/2027). 25/10: xóa 2 +
+> tạo lại đủ (TA/LM chạy riêng sau khi phiên bị đá). **Còn thiếu (BKCCN không có
+> nguồn — giữ nguyên không bịa, cần soi tay):** ML `6102716402102` + TS
+> `07422610270844491072` (27/10) + 1 phiếu TO 25/10. **⚠️ Lỗi có sẵn ngoài phạm
+> vi (chờ ĐH/phiên sau):** 34 phiếu LB 25/10 `InvalidInvno` (số HĐ 1C26MAA bị
+> dùng — chưa từng tạo được) · 66 phiếu `thiếu entity 'Data' trong Lịch sử gửi`
+> (SMED) · **24/10 + 26/10 chưa có phiếu nào** (upload chưa từng chạy — BKCCN đã
+> có, chạy `--upload-all` là có lô ngay).
+
+> **Vận hành:** Chrome CDP treo WS 19:43 → kill toàn bộ chrome + task
+> GIONG_ChromeCDP (phiền không mất — cookie profile) · MISA xóa bất đồng bộ
+> (8s sau DELETE còn "sót" 134 — 15 phút sau biến mất; fix-lots chạy lại tự hồi
+> phục) · bản chạy tạm `_fix558_run/` trên máy chủ (file misa_muahang_api.py
+> đang dở của phiên khác chặn Python 3.10 import — xóa khi phiên khác sửa xong).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.0.0** / repo con **10.9.0**.
