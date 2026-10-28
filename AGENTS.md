@@ -7853,3 +7853,32 @@ repo con **10.1.0**.
 > **Việc còn lại (nhỏ):** (1) thêm 1 dòng `NAV_GROUP_TO_MOD` cho nhóm mới trong `app-shell.tsx` — file đang bị phiên khác sửa dở nên KHÔNG đụng (quy tắc đa agent); (2) test `upload-history-scope.test.ts` **fail SẴN từ trước** (regex chưa cập nhật theo cú pháp `{data:{...}}` của GĐ 539 — đã chứng minh fail cả ở HEAD, không liên quan GĐ 557).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 564 (Trợ lý ZCode — máy chủ): Nghiên cứu CodeGraph (semantic code intelligence + MCP) — chạy thử THẬT trên code dự án, trình 3 PA (2026-10-28)
+
+> **Yêu cầu của Đại Ca (28/10):** kiểm tra/nghiên cứu thư mục `D:\DuLieuChung\CUONG_2026\Github\codegraph-main` xem áp dụng được vào dự án `giong-vn-v6` không.
+
+> **CodeGraph là gì (v1.6.2, MIT, colbymchenry/codegraph):** index code dự án thành **đồ thị tri thức** (symbol + cạnh calls/imports/extends/route) lưu **SQLite cục bộ — 100% local, không gửi code đi đâu**; cắm vào AI agent qua **MCP** (mặc định 1 tool `codegraph_explore`: trả nguồn verbatim + call path + blast radius trong 1 lệnh). Kernel Rust parse 20 ngôn ngữ — trong đó **TypeScript/TSX, JavaScript, Python, C#, và có nhận diện riêng TanStack Router** (đúng stack dự án). Có watcher tự đồng bộ khi sửa file + CLI `affected` (tìm test bị ảnh hưởng) + `impact/callers/callees/node`.
+
+> **Đã tự ĐO trên CODE THẬT của mình** (chạy trên bản COPY ngoài repo tại `Github\_codegraph-trial\`, KHÔNG đụng working tree các phiên đang làm):
+
+> | Đích index | File | Nodes/Edges | Thời gian | DB |
+> |---|---|---|---|---|
+> | App con `apps/banhang` (agent Python + web TSX) | 462 (py 238 · tsx 101 · js 74) | 12.951 / 34.228 | 6s (lần đầu 69s tính cả khởi động) | 52 MB |
+> | App tổng (TanStack Start) | 246 | 4.356 / 9.325 | 1,8s | 12 MB |
+
+> **Chất lượng truy vấn (truy vấn thật — 1 lệnh thay cho vòng grep + Read nhiều file):**
+> - `build_tra_no` → đúng `agent/gd348-build-lht-ds.py:356` + liệt kê caller ✔
+> - Câu hỏi luồng "wake up a stuck report job" → đúng `wake_waiting_reports` tại `agent/report_wake.py:305` ✔ (2,1s)
+> - App tổng: `BH_GROUPS` → đúng `src/lib/banhang-catalog.ts:44` + 6 caller + chỉ ra **test `banhang-catalog.test.ts`** ✔
+> - `codegraph affected src/lib/banhang-catalog.ts` → đúng 2 test cần chạy (`banhang-catalog.test.ts`, `permissions.test.ts`) ✔
+> - Sửa 1 file → `sync` lại **683 ms** ✔
+> - **MCP smoke test stdio THẬT:** initialize OK (serverInfo `codegraph 1.6.2`) → `tools/list` = `codegraph_explore` → gọi thật trả 22.686 ký tự nguồn (4,9s) ✔ ⇒ **cắm được vào ZCode** qua `~/.zcode/cli/config.json` → `mcp.servers.codegraph` = `{type: "stdio", command: "codegraph", args: ["serve","--mcp"]}` (CodeGraph KHÔNG có ZCode trong danh sách auto-install → phải tự viết config; đã xác minh giao thức chạy đúng, không đoán).
+
+> **Rủi ro/lưu ý (đo từ README + thực tế):** (1) `explore` trả payload đặc ~22k ký tự/lần → **token XỬ LÝ giảm nhưng context TỒN DƯ tăng** (README tự đo +80%) — phải cân với quy tắc context GĐ 319/450; (2) telemetry **mặc định BẬT** → phải `codegraph telemetry off`; (3) `.codegraph/` tự chứa .gitignore riêng nhưng `git status` sẽ thấy 1 file untracked `.codegraph/.gitignore` → nên thêm dòng `.codegraph/` vào .gitignore 2 repo; (4) 3 worktree × 2 repo = mỗi bản một index riêng (~12-52 MB/bản) → chỉ index bản đang làm, đừng index cả 3; (5) đây là **phân tích TĨNH** — KHÔNG thay thế quy tắc đối chứng bằng chứng (probe DB/file thật).
+
+> **Trạng thái:** CLI 1.6.2 đã cài tại `D:\DuLieuChung\CUONG_2026\Github\_tools-codegraph` (ngoài repo) + script smoke test `Github\_codegraph-trial\mcp_smoke_test.py`; **CHƯA sửa code app, CHƯA cắm MCP vào ZCode, CHƯA index repo thật** (chờ ĐH chốt PA).
+
+> **3 PA trình ĐH:** PA-1 (khuyến nghị) dùng cho phiên ZCode — cắm MCP user-scope + index app tổng & app con + tắt telemetry + thêm `.gitignore`; PA-2 cài cho MỌI agent (ZCode/Freebuff/CLI) + dùng `codegraph affected` trong quy trình test trước commit; PA-3 chỉ dùng CLI thủ công khi điều tra việc lớn (refactor/điều tra bug lan rộng).
+
+> **Version:** KHÔNG bump (docs-only + công cụ ngoài repo — chờ lệnh Push). App tổng **7.0.0** / repo con **10.9.0**.
