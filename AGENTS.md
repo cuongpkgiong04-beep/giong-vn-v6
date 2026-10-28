@@ -7698,7 +7698,16 @@ repo con **10.1.0**.
 > hàm mới — id `c75aaa51-8f05-4eb8-96be-9a3a830316b1` · đơn vị Liều · nhóm HH;
 > danh mục có đúng 2 item GC FLU (mới + cũ giữ nguyên).
 >
-> **18 phiếu từ 21/10/2026 ĐH tự sửa tay trên MISA (PA-2):** 12 phiếu 21/10
+> **BỔ SUNG 29/10 — ĐÃ SỬA TỰ ĐỘNG 18/18 PHIẾU (ĐH gật "làm đi em"):** quy
+> trình bỏ ghi sổ (`DELETE g2/api/ledger/v1/ledger/unpost` + PassWarnings 2 bước
+> chấp nhận cảnh báo mềm 'đã có phiếu xuất sau chứng từ') → xóa → import lại
+> (đúng item mới + đủ 3 cột HĐ: số · ký hiệu K26TDK · ngày) → verify từng đồng
+> → ghi sổ lại. **Verify ĐỘC LẬP 18/18 ĐẠT**: khớp tiền từng đồng · GC FLU trỏ
+> item mới `c75aaa51` · posted=True · HĐ giữ · **Mã địa điểm KD nay ĐÚNG mã
+> kho** (phiếu cũ dính bug = số lô). Hàm `bo_ghi_so_misa()` đã code hóa vào
+> misa_muahang_api.py (commit repo con `2bcdf0c`) + test PASS.
+>
+> **Danh sách 18 phiếu (đã sửa xong — lưu đối chiếu):** 12 phiếu 21/10
 > (TP/TĐ/TO/LM/ML/TT/CĐ/TA/SĐ/BH/LB/NL — PN-20261021135040…PN-20261021162725)
 > + 3 phiếu 22/10 (HM 60×188.124 · TD 36 · TS 60) + 3 phiếu 23/10 (QO 120 ·
 > PY 120 · ĐX 96) — đổi dòng hàng sang item mới, SL/giá giữ nguyên; đã ghi sổ
