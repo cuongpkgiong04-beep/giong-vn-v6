@@ -7570,3 +7570,28 @@ repo con **10.1.0**.
 > headers từ phiên CDP nên không bị.
 
 > **Version:** KHÔNG bump (điều tra docs-only, 0 code đổi). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 555 (Trợ lý Freebuff): Điều tra "BKCCN 27/10 chạy lần 3 lỗi 3/19 file" + KHÔI PHỤC dữ liệu 27/10 đủ 19 TT + trình 3 PA cơ chế tự rà soát/bù thiếu mọi phân hệ download (2026-10-28)
+
+> **ĐH hỏi (28/10 sáng — 3 ảnh):** "Bảng kê chung cuối ngày" ngày 27/10 chạy lần thứ 3 thì lỗi 3/19 file (2 lần trước OK). Hỏi: (1) nhiệm vụ này chạy 3 lần hay 2 lần? (2) chạy lại thì dữ liệu lần trước bị xóa hết đúng không? Yêu cầu: nghiên cứu cơ chế TỰ RÀ SOÁT khi chưa đủ file → TỰ CHẠY LẠI cho đủ (báo cáo đúng), áp cho MỌI tác vụ download; trường hợp bất khả kháng (lỗi hệ thống) phải có cảnh báo cụ thể + đề xuất hướng khắc phục.
+
+> **TL;DR trả lời:** (1) **3 lần** — 17:25 (Task_04·17:15) OK 19/19 · 23:10 (Task_02·23:00) OK 19/19 · **00:53 sáng 28/10 chạy lại cùng Task_02** (service máy chủ restart 23:47 giữa chừng → task chạy lại TỪ ĐẦU, job retry_partial=0) → chỉ 3/19 file. (2) **ĐÚNG — chạy lại XÓA HẾT dữ liệu lần trước** (2 tầng: agent xóa mọi file .xls* trong thư mục ngày + ETL rebuild-ngày xóa dữ liệu ngày trong GiongDB rồi nạp lại file còn lại). Hậu quả thật: `stg_4BKCCN` 27/10 chỉ còn 3 TT/38 dòng (khớp KPI "Lượt tiêm 38 mũi" trên ảnh ĐH) — **16 TT mất sạch dữ liệu**.
+
+> **GỐC lần 3 lỗi (bằng chứng):** worker máy trạm .27 (lan-1) bị **restart giữa chừng** lúc 00:57:54 ("Terminate batch job" trong log phiên cũ) → tool 3_smed_BKCCN.py dừng sau khi xong 3 TT của account tcgiongts (file cuối 00:56:29), 16 TT account tcgiong không tải được. **NẶNG HƠN: job vẫn báo `done` 19/19** vì `40_web_agent.py` set `doneCenters = job.get("totalCenters", 19)` CỨNG cho mọi job không phải bank-vcb (không đếm file thật) → Task_02/04 thấy "done" → **KHÔNG retry** (cơ chế retry 3 lần sẵn có bị vô hiệu — "done giả"). Tool BKCCN cũng tự bắt lỗi từng TT (try/except) rồi vẫn in "✅ HOÀN THÀNH TOÀN BỘ" + exit 0 → không có tín hiệu lỗi nào.
+> **Timeline đầy đủ:** Task_04 17:15 → job 17:25 (19 file ✓) · Task_02 23:00 → job 23:10 (19 file ✓) → **service máy chủ restart 23:47:17** (log `web_agent_271026_234717.log`) → task chạy lại 00:43:10 chạy lại TỪ ĐẦU chuỗi bước (hddt 00:43 → dtdt 00:47 → dtthc 00:52 → **bkccn 00:53** → nhapkho 00:58 → …) · worker .27 restart 00:57:54-00:58:00 → job bkccn đóng 00:58:01 với 3 file nhưng `done`.
+
+> **✅ ĐÃ KHÔI PHỤC (vận hành, 0 sửa code):** backup 3 file cũ → `_probe27/backup_2710/` (máy chủ) · tạo job khôi phục `0C213738` (bkccn kỳ 27/10, `retry_partial=0`) → máy .27 chạy **12:25→12:46 = 19/19 file** · ETL nạp lại: `stg_4BKCCN` 27/10 = **18 TT/240 dòng** (TT Đông Yên không phát sinh — file rỗng "0 lượt khách" đúng thực tế, file thứ 17 vẫn có trong thư mục) · đối chiếu mapping file→TT đúng thứ tự (12:25:22→TD … 12:45:28→TT).
+
+> **⚠️ CẢNH BÁO QUAN TRỌNG (đừng bấm sai):** nút "Chạy lại tác vụ này (chỉ bổ sung file thiếu)" với **BKCCN hiện KHÔNG hoạt động như tên gọi** — bkccn KHÔNG nằm trong danh sách `scanable` của agent (file `BangKeChungCuoiNgay_*.xlsx` không mang tên/mã TT) → agent KHÔNG xóa file cũ, KHÔNG lọc TT thiếu → tool chạy đủ 19 TT → thư mục còn **3 + 19 = 22 file** → ETL map TT theo THỨ TỰ mtime (GĐ B.5) → **16 TT đầu nhận SAI file + 3 file cuối bị bỏ** = dữ liệu SAI hơn cả thiếu. **Tạm thời KHÔNG bấm nút này cho BKCCN/HDDT/DTTDT/XUATKHO** (các phân hệ file không mang tên TT) — chờ PA dưới đây.
+
+> **3 PA trình ĐH chốt (chưa viết code — đúng quy trình 5 bước):**
+> - **PA-1 (khuyến nghị):** agent TỰ KIỂM + TỰ BÙ ngay trong job + chỉ báo done khi ĐỦ file: (a) vá "done giả" — doneCenters = số file thật so `expectedFiles`; (b) thiếu → tự chạy lại phần thiếu ngay (tối đa 3 vòng, cách 60s): phân hệ nhận diện TT theo tên dùng cơ chế sẵn có `SMED_ONLY_CENTERS` (GĐ C.83); phân hệ file KHÔNG mang tên TT (bkccn/hddt/dtdt/xuatkho) → bù TT thứ N+1→19 theo THỨ TỰ chuẩn (tool tải tuần tự) → file mới nối CUỐI thư mục → mapping mtime của ETL vẫn đúng; (c) sau các vòng vẫn thiếu → job `error` + thông báo cụ thể (thiếu mấy file/TT nào + trích lỗi cuối log tool + gợi ý khắc phục) → Task_02/04 tự retry 3 lần (đã có); (d) **chống mất dữ liệu**: chạy lại full thì chuyển bộ cũ sang `OUTPUT/_backup/...` (NGOÀI thư mục ngày — ETL quét rglob nên để trong thư mục ngày là bị nạp lẫn), tải xong mà ít hơn bộ cũ → báo lỗi + giữ backup.
+> - **PA-2:** chỉ vá "done giả" + giao retry cho Task (3 lần sẵn có) + thêm Task rà soát 06:00 sáng quét mọi phân hệ ngày hôm qua → thiếu thì tạo job bù + chạy lại báo cáo liên quan. Khắc phục CHẬM (tới sáng sau), báo cáo đêm vẫn có thể chạy trên dữ liệu thiếu.
+> - **PA-3:** PA-1 + trang "Sức khoẻ dữ liệu" (đủ/thiếu file + số dòng DB theo ngày từng phân hệ, xanh/đỏ) + thông báo khi job thiếu file. Minh bạch nhất nhưng thêm UI.
+> - **Lỗi bất khả kháng** (mọi PA): Chrome/CDP chết, SMED sập, mất mạng, phiên/mật khẩu hết hạn, máy trạm tắt → sau N vòng bù vẫn thiếu thì job `error` + error nêu rõ nguyên nhân trích từ log tool + gợi ý (VD "kiểm tra Chrome CDP .27 / đăng nhập lại SMED / chạy lại sau 10 phút") + retry backoff.
+
+> **⚠️ Cảnh báo trùng phiên (nguyên tắc 3):** GĐ **554 (Trợ lý ZCode (máy chủ))** claim lúc 13:04 hôm nay cùng chủ đề "Thống kê + tải bù dữ liệu SMED thiếu phục vụ báo cáo tháng 10/2026 (giao máy .27)" — nếu phiên đó cũng tải bù bkccn kỳ 27/10 thì TRÙNG job khôi phục `0C213738` của em. Đề nghị đối chiếu trước khi chạy thêm job bù cho 27/10.
+
+> **Verify:** job `0C213738` done 19/19 file (12:46) · `stg_4BKCCN` 27/10 = 18 TT/240 dòng · file→TT mapping đúng thứ tự · backup 3 file cũ + 2 file mẫu giữ tại `_probe27/`.
+
+> **Version:** KHÔNG bump (không sửa code — điều tra + vận hành job/DB). App tổng **7.0.0** / repo con **10.9.0**.
