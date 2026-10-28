@@ -7477,3 +7477,30 @@ repo con **10.1.0**.
 > "Không có phiếu nào … trong `stg_5BKN`" + `Tab guard: connect_over_cdp Timeout 15000ms` (Chrome CDP treo).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 552 / C.358 (Trợ lý ZCode — máy chủ): PA Push đợt 28/10 — push 2 repo (agent-side MIA captcha + docs, KHÔNG bump) + verify production; SỬA NGAY sự cố SSO (APP_JWT_SECRET app tổng LỆCH) (2026-10-28)
+
+> **Lệnh ĐH "Push" (sau GĐ 550/C.357).** Rà trùng lặp nguyên tắc 3: nhánh phụ `agent-cli` +
+> `pipeline-work` **0 commit** · worktree chỉ còn file phiên khác (KHÔNG đụng) · verify env Vercel
+> **ĐỦ cả 2 app** TRƯỚC push (checklist GĐ 470-A) → **Push:** repo con `5176ddc..b61afa4` ·
+> app tổng `9339dc0..cd8aa52`. **KHÔNG bump** (agent-side + docs-only; tiền lệ GĐ 422/551) —
+> giữ **7.0.0 / 10.9.0**.
+
+> **🔴 Sau push phát hiện + ĐÃ SỬA NGAY (checklist 470-B/C): SSO app tổng → app con FAIL** —
+> app con hiện "Chưa đăng nhập", token bị đá về `/login?next=bahang` = **verify fail**.
+> Chẩn đoán: ký JWT chuẩn bằng `.secrets/app_jwt_secret.txt` → app con **CHẤP NHẬN**
+> (`Set-Cookie: bh_session`) ⇒ **`APP_JWT_SECRET` của APP TỔNG LỆCH**. Sửa: `vercel env rm/add
+> APP_JWT_SECRET` (app tổng) + `vercel redeploy` (Ready 46s).
+> ⚠️ **KHÔNG đụng app con** — app con dùng secret này làm **khoá mã hoá tài khoản SMED**
+> (`crypto.ts`), đổi = mất giải mã credentials SMED đã lưu.
+
+> **✅ Verify sau sửa (đủ 4 bước checklist 470-B):** login app tổng ✅ · **SSO → 302 về app con +
+> `Set-Cookie: bh_session`** ✅ · app con `/api/auth/me` 200 → **Phạm Kiên Cường · e003 ·
+> SuperAdmin** ✅ · version 2 app **7.0.0 / 10.9.0**.
+
+> **Bài học:** (1) test SSO bằng browser PHẢI chờ React hydrate (click sớm = không gửi
+> `sign-in/email` → tưởng lỗi SSO); (2) sau redeploy app tự reload (SW + version) → chờ ~12s;
+> (3) phân biệt nhanh "secret lệch vs token hết hạn 60s" = tự ký token từ `.secrets` rồi gọi
+> thẳng endpoint SSO; (4) `APP_JWT_SECRET` là KHOÁ KÉP ở app con (SSO + mã hoá SMED).
+
+> **Version:** KHÔNG bump. App tổng **7.0.0** / repo con **10.9.0** — ĐÃ PUSH.
