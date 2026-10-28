@@ -7662,3 +7662,47 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (vận hành job/DB + data — không sửa code; tiền lệ GĐ 419/422). App tổng **7.0.0** /
 > repo con **10.9.0**. Chưa Push (quy tắc ĐA AGENT — chờ lệnh ĐH).
+
+### GĐ 560 / C.361 (Trợ lý Freebuff): PA-2 ĐH chốt 28/10 — MISA TỰ TẠO hàng hóa theo SMED khi chưa có + chặn alias GC FLU + tạo item thật (2026-10-28)
+
+> **Yêu cầu của ĐH (28/10):** (1) MISA chưa có mã hàng mà SMED đã có → **MISA
+> tự tạo theo SMED** (tìm hiểu quy trình tạo mã + viết code tự động); (2)
+> PN-20261021135040 21/10 trên MISA mã "GC FLU Quadrivalent pre-filled
+> syringe inj" phải đúng mã SMED "GC FLU Pre-filled Syringe" cho tất cả phiếu.
+> **ĐH chốt PA-2:** tự tạo hàng hóa — KHÔNG xóa/sửa phiếu tự động; **"2 mã này
+> khác nhau — bản chất khác nhau"** → tạo mã mới, **mã cũ GIỮ NGUYÊN**; quy ước
+> **Mã hàng = Tên hàng = nguyên văn tên SMED**; phạm vi sửa phiếu cũ **từ
+> 21/10/2026**; 12 phiếu 21/10 làm cùng đợt.
+>
+> **Probe từ máy nhà (headless — kỹ thuật GĐ 553):** 18/18 phiếu 21→23/10 TRÊN
+> MISA trỏ item cũ `2ad92e0e-…` + **posted=True**; giá 188.125 = SMED
+> 179.166,66 × 1,05 (đúng số, sai sản phẩm); danh mục chưa có item mới.
+> pu_list filter 3654 (ngày HĐ) **không bắt phiếu không hóa đơn** — quét sort
+> 4018 + khớp mọi trường mới đủ 18/18.
+>
+> **Quy trình tạo/xóa hàng hóa MISA (capture UI thật):** tạo =
+> `POST g1/api/di/v1/inventory_item/full` [{Type,Key:null,Object,Details}] —
+> nhóm VTHH "HH" · TK 156_BH/632_BH/5111 · branch d3b88c57 · đơn vị từ
+> `GET di/v1/unit_get`; xóa = `DELETE di/v1/inventory_item/batch` body object
+> đầy đủ (test item ZZTEST **đã xóa sạch**).
+>
+> **Đã làm (repo con `22ea6fe` + entry `c8b916b` — chi tiết C.361 AGENTS.md
+> repo con):** `tao_hang_hoa_misa()` idempotent + `tra_don_vi_tinh()` cache +
+> `ALIAS_BLOCKED` chặn alias GC FLU trong `tra_hang_hoa` (⚠️ strip_vn giữ '-')
+> → `run()` tự tạo khi tra None + report `createdItems[]` → wrapper
+> `40_web_agent.py` (createdItemsCount) → **chip XANH web**
+> `sql-data-module.tsx`. Test +2 = **14/14 thuần PASS** (2 test DB chỉ máy
+> chủ) · tsc EXIT 0.
+>
+> **Verify thật: item "GC FLU Pre-filled Syringe" ĐÃ TẠO trên MISA** qua đúng
+> hàm mới — id `c75aaa51-8f05-4eb8-96be-9a3a830316b1` · đơn vị Liều · nhóm HH;
+> danh mục có đúng 2 item GC FLU (mới + cũ giữ nguyên).
+>
+> **18 phiếu từ 21/10/2026 ĐH tự sửa tay trên MISA (PA-2):** 12 phiếu 21/10
+> (TP/TĐ/TO/LM/ML/TT/CĐ/TA/SĐ/BH/LB/NL — PN-20261021135040…PN-20261021162725)
+> + 3 phiếu 22/10 (HM 60×188.124 · TD 36 · TS 60) + 3 phiếu 23/10 (QO 120 ·
+> PY 120 · ĐX 96) — đổi dòng hàng sang item mới, SL/giá giữ nguyên; đã ghi sổ
+> → bỏ ghi sổ → sửa → ghi sổ lại. Danh sách chi tiết ở entry C.361 repo con.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.0.0** / repo con **10.9.0**.
