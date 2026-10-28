@@ -7945,3 +7945,31 @@ repo con **10.1.0**.
 > **⚠️ Bài học cho mọi máy LAN:** worker chạy job SMED/BANK **PHẢI dưới user có Playwright browsers** — service LocalSystem chỉ dùng được cho loại job KHÔNG cần browser (hoặc phải cài browsers cho systemprofile). Khi thêm máy/đổi cơ chế chạy: kiểm tra `Test-Path "$env:LOCALAPPDATA\ms-playwright"` của ĐÚNG user chạy task.
 
 > **Version:** KHÔNG bump (docs + vận hành; chưa push — chờ lệnh ĐH). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 565 (Trợ lý ZCode — máy chủ): Nghiên cứu ECC + codebase-memory-mcp và GỘP phương pháp 3 công cụ thành cách làm cho dự án (2026-10-29)
+
+> **Yêu cầu của Đại Ca (28-29/10):** kiểm tra/nghiên cứu `Github\ECC-main` + `Github\codebase-memory-mcp-main`, rồi **gộp ý tưởng cách làm của CẢ 3** thư mục (codegraph GĐ 564 + 2 thư mục này) để lấy phương pháp áp dụng vào `giong-vn-v6`.
+
+> **1) Hai thư mục thuộc HAI LOẠI khác nhau:**
+> - **ECC** (affaan-m/ECC v2.2.3, MIT) — KHÔNG phải công cụ code, mà là **"hệ điều hành vận hành agent"**: 71 subagent · 311 skill · 97 slash command · rules (common + 22 ngôn ngữ) · hooks · **Memory Vault** (`.ecc/memory/`, handoff giữa các harness) · `contexts/` (dev·research·review). Tách bạch 4 khái niệm: **Skills** (nạp khi cần — không nhồi cả repo) · **Agents** (tác tử context riêng) · **Rules** (luôn nạp → phải chọn lọc) · **Hooks** (chạy NGOÀI context — cưỡng chế xác định) + **Instincts** (học từ phiên thật). Có sẵn hướng dẫn **Manual Adaptation** cho harness không nằm trong danh sách hỗ trợ (đúng ca ZCode).
+> - **codebase-memory-mcp** (DeusData v0.12.1, MIT) — MCP server C native: **17 tool**, 162 grammar, đồ thị nối **code + TÀI LIỆU + HẠ TẦNG** (Docker/K8s/Terraform/Ansible/Make/CI), **Hybrid LSP** (TS/JS/Python/C#/Go/Java/Kotlin...), **Cypher-like query**, semantic search (embeddings nằm trong binary — không cần API key), `detect_changes` (git diff → symbol ảnh hưởng + test impact), `manage_adr` (nhật ký quyết định kiến trúc), dead-code, Louvain cluster, **team-shared graph artifact** (.zst nén 8-13:1), session daemon dùng chung nhiều client, **CBM Lens UI** (đồ thị 3D + đọc nguồn Monaco). SQL · TSX · Python · C# đều tier "Good".
+
+> **2) ĐÃ CHẠY THỬ THẬT codebase-memory-mcp → BỊ CHẶN TRÊN MÁY NÀY (kèm bằng chứng ACL):** tải binary 0.12.1, `--version` OK, nhưng **mọi lệnh** (kể cả MCP mode) chết ngay ở bước nạp settings/tạo "secure coordination endpoint":
+> - cache trên D: → `could not load saved runtime settings` (im lặng, không nêu lý do);
+> - cache/runtime trên C: → `secure CLI coordination could not be created (endpoint): C:\Users\Administrator: DACL entry 3 grants mutation rights 0x000d0152 to untrusted identity (other S-1-5-21-813571151-1972360175-3951137201-1009)`.
+> - **Gốc:** hardening của CBM đòi thư mục state có DACL **chỉ owner**. Máy ta: `C:\Users\Administrator` có **SID mồ côi toàn quyền (F)** (dịch tên không được) + chuỗi `D:\DuLieuChung` cấp **Everyone:(F)**. Đã thử 5 biến thể (D: · C: · %TEMP% · thư mục CBM tự tạo · có/không `CBM_RUNTIME_DIR`) → **không chạy được**. Muốn dùng phải **dọn ACL máy** (bỏ `Everyone:(F)` khỏi chuỗi D:\DuLieuChung + xử lý SID mồ côi trên profile) = thay đổi HỆ THỐNG → phải ĐH quyết.
+> - ⇒ **So sánh:** CodeGraph (GĐ 564) chạy sạch + đã đo thật trên máy này; CBM nhiều tính năng hơn nhưng bị chặn bởi chính cơ chế bảo mật của nó.
+
+> **3) PHƯƠNG PHÁP GỘP 3 LỚP (phần ĐH yêu cầu — trình kèm 3 PA):**
+> | Lớp | Nội dung | Lấy ý tưởng từ | Áp dụng cụ thể vào giong-vn-v6 |
+> |---|---|---|---|
+> | **1. Bộ não CODE** (đồ thị) | 1 lệnh hỏi → trả nguồn + đường gọi + phạm vi ảnh hưởng, thay vòng grep/Read từng file | CodeGraph (đã đo: 462 file/6s, truy vấn đúng symbol, `affected` ra đúng test) · CBM (bị chặn) | cắm MCP vào ZCode + index app tổng & app con; dùng `affected` trước khi commit/test |
+> | **2. Bộ não DỰ ÁN** (kỷ luật vận hành) | Skills nạp-khi-cần · Agents tác tử riêng · Rules luôn-nạp-nhưng-chọn-lọc · Hooks ngoài context · Memory có **ranh giới tin cậy** (memory ≠ policy — phải nâng lên tài liệu chính thức) | ECC | giữ nguyên AGENTS.md = Rules + registry/claim/shared-doc = Hooks (đã có, tự chế trước); **bổ sung skills ngắn trong `.zcode/skills/`** cho việc lặp lại (điều tra job lỗi · rà số liệu đối chứng · checklist push · xử lý tunnel/ACL) + nguyên tắc "rules chọn lọc — skill nạp theo việc" |
+> | **3. Vòng KIỂM CHỨNG** | Đường bằng chứng: kế hoạch → test ĐỎ → XANH → review context mới → verify + tự động hoá rà ảnh hưởng | ECC (verification-loop) + CBM (detect_changes/test-impact) + quy tắc đối chứng của ta | chuẩn hoá: **sửa → rà ảnh hưởng (codegraph affected/impact) → chạy đúng test bị ảnh hưởng → đối chứng số THẬT → ghi entry kèm bằng chứng** |
+> **Kinh tế context (bài học ECC rất đáng lưu):** mỗi MCP server/tool "ăn" context ngay từ đầu (khuyến nghị **<10 MCP · <80 tool**) ⇒ CodeGraph (1 tool) rẻ context hơn CBM (17 tool); rules luôn nạp phải chọn lọc; nên compact ở ~50% thay vì để tự động ở 95%.
+
+> **Trạng thái:** CodeGraph CLI đã cài (`Github\_tools-codegraph`) · binary CBM giữ tại `Github\_tools-cbm` (319 MB — bị chặn, chưa dùng được) · ECC chỉ khảo sát nguồn, KHÔNG cài · bản copy thử đã xoá. **CHƯA sửa code app · CHƯA đổi ACL máy · CHƯA cắm MCP** (chờ ĐH chốt PA).
+
+> **3 PA trình ĐH:** **PA-1 (khuyến nghị)** Lớp 1 = CodeGraph (đã chứng minh chạy) + Lớp 2 = skills ECC-style vào `.zcode/skills` + Lớp 3 = chuẩn hoá vòng kiểm chứng — KHÔNG đụng hệ thống. **PA-2** = PA-1 + dọn ACL máy để dùng thêm codebase-memory-mcp (17 tool · Cypher · detect_changes · UI · artifact chia sẻ). **PA-3** = chỉ mượn phương pháp Lớp 2+3, không cài công cụ đồ thị nào.
+
+> **Version:** KHÔNG bump (docs + công cụ ngoài repo — chờ lệnh Push). App tổng **7.0.0** / repo con **10.9.0**.
