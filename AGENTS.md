@@ -7595,3 +7595,70 @@ repo con **10.1.0**.
 > **Verify:** job `0C213738` done 19/19 file (12:46) · `stg_4BKCCN` 27/10 = 18 TT/240 dòng · file→TT mapping đúng thứ tự · backup 3 file cũ + 2 file mẫu giữ tại `_probe27/`.
 
 > **Version:** KHÔNG bump (không sửa code — điều tra + vận hành job/DB). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 554 (Trợ lý ZCode (máy chủ)): Thống kê + TẢI BÙ dữ liệu SMED thiếu phục vụ báo cáo tháng 10/2026 — 22/22 job done trên máy PC-PKT-01 (.27), +14.780 dòng vào GiongDB (2026-10-28)
+
+> **Lệnh của Đại Ca (28/10, kèm bảng phân vai máy):** *"Giao việc cho máy PC-PKT-01 (192.168.1.27) —
+> Chạy thống kê lại các phần Download dữ liệu phục vụ báo cáo tháng 10/2026. Chạy riêng phần download SMED.
+> (1) Liệt kê các dữ liệu cần download; (2) Download dữ liệu còn thiếu — rà soát ngày thiếu, báo cáo thiếu
+> theo ngày; (3) Không download tất cả khi file đã có sẵn. Xong cập nhật vào DB như quy định. Báo cáo lại
+> công việc sau khi xong."*
+
+> **1) DANH MỤC DỮ LIỆU CẦN DOWNLOAD ĐỂ PHỤC VỤ BÁO CÁO — nhóm SMED (13 phân hệ, 19 file/19 TT chuẩn):**
+> `hddt` (1.HDDT) · `dtdt` (2.DTTDT) · `dtthc` (3.DTTHC — 2 file) · `bkccn` (4.BKCCN) · `nhapkho` (5.BKN) ·
+> `xuatkho` (6.BKX) · `xnkt` (7.BCNXT_KT) · `chietkhau` (8.BCCK) · `hentiem` (9.LHT) · `dattruoc` (10.GDTVX —
+> 76 file = 19 TT × 4 loại) · `blth` (12.DTTDT_BLTH) · `tkgvvxdt` (14.GVVXDT — snapshot kỳ) — 12 phân hệ này
+> nằm trong Task_02 23:00 / Task_04 17:15; thêm `tkkh` (20.TKKH — danh mục khách hàng, KHÔNG thuộc lịch ngày,
+> chỉ chạy tay; dữ liệu hiện là snapshot 21/10).
+> Ngoài SMED (ĐH yêu cầu "chạy riêng SMED" nên KHÔNG đụng đợt này): MISA meInvoice `bkct-hdgtgt` (11) ·
+> `bkth-hdgtgt` (13) · MIA TOOL mua vào/bán ra (18.MIA_MUA · 19.MIA_BAN) · BANK VCB/TCB/TPB (15/16/17) ·
+> 3 job upload MISA API (mua hàng / xuất kho / HĐ GTGT bán hàng).
+
+> **2) RÀ SOÁT (nguồn: `smed_pull_jobs` + `import_log` + OUTPUT cả 2 máy, kỳ 01→27/10):**
+> - **19 mục (phân hệ × ngày) KHÔNG có job tải nào:** 04/10 = hddt, dtdt, dtthc, nhapkho, xuatkho, chietkhau,
+>   hentiem, dattruoc, blth (9) · 06/10 và 07/10 = hddt, xnkt, chietkhau, hentiem, dattruoc (5+5). Nguyên nhân
+>   04/10 + 06-07/10: đêm 05-06/10 pipeline không tạo job cho các phân hệ này (04/10 là Chủ nhật nhưng vẫn có
+>   phát sinh — bkccn/xnkt/dtdt đã được tải bù ngay trong tuần đó, 9 phân hệ còn lại thì chưa).
+> - **3 job `done` nhưng THIẾU file:** `xnkt` 21/10 (18/19) · `hentiem` 15/10 (18/19) · `dattruoc` 14/10 (74/76).
+> - **1 job bị HỦY nhưng file ĐỦ:** `hentiem` 08/10 (19 file đã ETL, 1.088 dòng) → **KHÔNG tải lại** (đúng lệnh #3).
+> - `tkgvvxdt` (snapshot) job 28/10 01:37 đã phủ tới 27/10 ⇒ không thiếu.
+
+> **3) ĐÃ LÀM — tạo 22 job cho máy .27 (worker `lan-1`, nhóm `smed`):** 19 job MỚI cho các mục (phân hệ×ngày)
+> không có job + 3 job CŨ thiếu file đặt lại `pending` + **`retry_partial=1`** (cơ chế GĐ C.83 — chỉ tải TT/file
+> thiếu, KHÔNG chạy lại bừa — đúng lệnh #3) + sửa `expected_files` job dattruoc 14/10 19→76 (job cũ rơi default).
+> KPI theo dõi qua `tools_tmp/gd554_*.py`. **Kết quả: 22/22 job `done` (16:28→18:18), 642 file tải về —
+> `lan-1` (.27) 20 job · `core` (máy chủ) 2 job** (hentiem 04/10 + 15/10 — tool 19 dùng `SMED_CENTER_PASS` nên
+> máy chủ chạy được khi cứu hộ).
+
+> **4) CẬP NHẬT DB (đúng quy trình Download→ETL→Báo cáo):** mỗi job ETL tự chạy sau download
+> (`ETL sau download: exit=0`), nạp đè theo ngày/đúng vùng folder — **837 lượt file nạp · +14.780 dòng**
+> (7BCNXT 4.795 · 9LHT 4.697 · 6BKX 1.436 · 1HDDT 1.080 · 2DTTDT 953 · 12BLTH 769 · 8BCCK 744 · 4BKCCN 178 ·
+> 5BKN 45 · 3DTTHC 42 · 10GDTVX 41).
+
+> **5) VERIFY (bằng chứng thật):** 11/12 phân hệ SMED **đủ 27/27 ngày** có job done + đủ file (chuẩn 19/2/76);
+> `hentiem` 26/27 vì 08/10 job bị hủy — **dữ liệu đã có đủ** (`stg_9LHT` 08/10 = 1.088 dòng/18 file, 1 file
+> rỗng hợp lệ) ⇒ thực chất **12/12 phân hệ đủ**; `tkgvvxdt` done 19 file tới 27/10. Kiểm tra **không trùng lặp**:
+> mỗi ngày ≤ 19-20 file / ≤ 19 trung tâm (folder GDTVX nạp đè theo (folder, center) nên 150 lượt nạp
+> folder 14/10 vẫn ra 1 bộ dòng); dòng legacy từ folder cũ kiểu "02-10-2026" (chietkhau 07/10 = 19 dòng) đã
+> được thay bằng bộ 19 file đầy đủ (101 dòng).
+
+> **⚠️ SỰ CỐ GIỮA CHỪNG (đã xử lý) + PHÁT HIỆN CẦN ĐH QUYẾT:**
+> 1. **Cơ chế CỨU HỘ (GĐ 543) hỏng một nửa:** api_server cấp accounts theo nhóm — `WORKER_GROUPS=core` ⇒
+>    `wants_smed=False` ⇒ **KHÔNG cấp `SMED_USER_3/SMED_PASS_3/16`** cho máy chủ. 16:43–17:12 máy chủ tự cứu hộ
+>    4 job của đợt này → **`xnkt` 07/10 · `chietkhau` 06+07/10 lỗi ngay** *"Thiếu SMED_USER_3/SMED_PASS_3"*
+>    (blth 04/10 cũng lỗi trên máy chủ, thông báo khác — chưa rõ gốc; đã chạy lại .27 → done). Đã xử lý tạm:
+>    requeue 4 job + đặt `created_at = now+3h` cho job chờ (worker .27 KHÔNG lọc `created_at` nên vẫn claim;
+>    job mới của Task_02/04 có `created_at` nhỏ hơn ⇒ .27 chạy trước) — **chặn cứu hộ oan**.
+>    **Đề xuất (chờ ĐH chốt):** hoặc (a) cấp accounts SMED cho `core` khi cứu hộ (sửa `wants_smed`),
+>    hoặc (b) `AGENT_RESCUE_MIN=0` (nhường cứng — GĐ 553 cũng đã nêu phương án này) — nếu không, mọi job SMED
+>    bị cứu hộ sẽ lỗi và còn **xoá file thư mục ngày** trên máy chủ (rủi ro với job `retry_partial`).
+> 2. **`api_server` tạo job cho task THIẾU `expected_files`** (nhánh `/task/create-job` — không truyền cột này
+>    → rơi DEFAULT 19) ⇒ `dtthc` (chuẩn 2 file) bị web báo "thiếu 17 file" oan. Đề xuất: dùng
+>    `expectedFilesForReport` như 3 nhánh INSERT kia (chưa sửa — ngoài phạm vi lệnh).
+> 3. `tkkh` chỉ có snapshot 21/10 (không thuộc lịch tải ngày) — muốn làm mới danh mục thì chạy tay 1 job.
+> 4. **Rà trùng phiên (nguyên tắc 3):** phiên song song GĐ 553 cảnh báo trùng job khôi phục `bkccn` 27/10 —
+>    đối chiếu: **bkccn đủ 27/27 ngày**, đợt này không tạo job bkccn nào ⇒ **KHÔNG trùng**; 22 job của em có
+>    `task_id='gd554-backfill-smed'` + `created_by='Trợ lý ZCode (GĐ 554)'` để truy vết.
+
+> **Version:** KHÔNG bump (vận hành job/DB + data — không sửa code; tiền lệ GĐ 419/422). App tổng **7.0.0** /
+> repo con **10.9.0**. Chưa Push (quy tắc ĐA AGENT — chờ lệnh ĐH).
