@@ -7839,3 +7839,17 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**
 > (giữ nguyên — đợt push 28/10 của GĐ 552 là docs/agent-side, không bump).
+
+### GĐ 557 / C.360 (Trợ lý Freebuff): PA-3 ĐH chốt — TỰ RÀ SOÁT + TỰ BÙ thiếu file cho MỌI phân hệ download + trang SỨC KHOẺ DỮ LIỆU (2026-10-28)
+
+> **Lệnh của ĐH (28/10, sau điều tra GĐ 555):** chốt **PA-3** — "khi chạy lại giữ liệu mà bị lỗi vì tỷ lệ hoàn thành chưa đủ thì tự động rà soát và chạy lại cho đủ file để báo cáo cho đúng; áp dụng với TẤT CẢ các tác vụ download; trường hợp bất khả kháng (lỗi hệ thống) phải có cảnh báo cụ thể và đề xuất hướng khắc phục" + lưới quan sát "Sức khoẻ dữ liệu".
+
+> **PHẦN A — AGENT (repo con `3d26907`):** vá **"done giả"** (doneCenters = số file THẬT — ca 27/10 thiếu 16 file vẫn báo 19/19 nên Task không retry) · thêm **`run_smed_task_with_fill`** — sau khi tool xong tự đếm file thư mục vs chuẩn rồi **TỰ BÙ tối đa 2 vòng**: phân hệ có tên/mã TT trong tên file → scan như GĐ C.83; **phân hệ file KHÔNG mang tên TT (bkccn/hddt/dtdt/xuatkho) → suy theo THỨ TỰ** (file thứ i = CENTER_ORDER[i]) rồi bù các TT còn lại bằng `SMED_ONLY_CENTERS` (file mới nối cuối → mapping mtime của ETL giữ đúng); phân hệ 1 file/kỳ → chạy lại cả bộ · thiếu sau các vòng → **job `error`** kèm số file/TT thiếu + `_diagnose_tail()` gợi ý khắc phục (Chrome/CDP chết · timeout SMED · đăng nhập · xem log) để Task tự retry · **CHỐNG MẤT DỮ LIỆU**: file cũ thay vì `unlink` → **dời `agent/_backup/<phân hệ>/<ngày>/`** (ngoài cây OUTPUT vì ETL quét rglob), giữ 10 bộ gần nhất · fix 4 tool `first_time=(index==0)` → `_first_pass` (bù TT giữa danh sách) · test mới **32/32 PASS** + test cũ xanh.
+
+> **PHẦN B — WEB (`f25b5b1` + app tổng `1b2bbd2`):** trang **`/m/suc-khoe-du-lieu`** (nhóm sidebar bậc 1 mới "SỨC KHOẺ DỮ LIỆU") — ma trận NGÀY × 12 phân hệ SMED: ô = `file/chuẩn` + số dòng GiongDB; 🟢 đủ · 🟡 không phát sinh · 🔴 thiếu file/job lỗi · ⚪ chưa chạy; khối "Cần xử lý" gom mọi ô đỏ + link mở trang tải; lọc 7/10/14/30 ngày + toggle chỉ hiện vấn đề; đúng 4 nguyên tắc định dạng. Server fn `loadDataHealth` đếm file **ngay trong SQL** (OPENJSON, không tải cột `files`/`result` — quy ước egress) + 1 query UNION ALL 12 bảng stg. Phân quyền **3 điểm đủ**: nav.ts · smed-auth.ts (17 nhóm) · app tổng banhang-catalog.ts (+test 9/9).
+
+> **Verify:** test agent 32/32 · typecheck 2 app EXIT 0 · test app tổng 9/9 · **production build app con PASS** (1.82s) · 2 câu SQL mới chạy THẬT trên GiongDB (27/10 BKCCN = 240 dòng khớp sau khôi phục). ⚠️ Probe lộ: **GDTVX không có bảng `stg_10GDTVX`** (ETL GĐ 228j tách f1..f4) → trang dùng `stg_10gdtvx_f1_dangky` cột `folder`.
+
+> **Việc còn lại (nhỏ):** (1) thêm 1 dòng `NAV_GROUP_TO_MOD` cho nhóm mới trong `app-shell.tsx` — file đang bị phiên khác sửa dở nên KHÔNG đụng (quy tắc đa agent); (2) test `upload-history-scope.test.ts` **fail SẴN từ trước** (regex chưa cập nhật theo cú pháp `{data:{...}}` của GĐ 539 — đã chứng minh fail cả ở HEAD, không liên quan GĐ 557).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
