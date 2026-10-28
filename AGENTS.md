@@ -7882,3 +7882,54 @@ repo con **10.1.0**.
 > **3 PA trình ĐH:** PA-1 (khuyến nghị) dùng cho phiên ZCode — cắm MCP user-scope + index app tổng & app con + tắt telemetry + thêm `.gitignore`; PA-2 cài cho MỌI agent (ZCode/Freebuff/CLI) + dùng `codegraph affected` trong quy trình test trước commit; PA-3 chỉ dùng CLI thủ công khi điều tra việc lớn (refactor/điều tra bug lan rộng).
 
 > **Version:** KHÔNG bump (docs-only + công cụ ngoài repo — chờ lệnh Push). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 562 / C.364 (Trợ lý ZCode — máy chủ): PA 1-a — cấp tài khoản SMED cho MÁY CHỦ khi cứu hộ + đóng gói CÔNG CỤ CHUẨN rà soát/tải bù download 4 nhóm (2026-10-28/29)
+
+> **Lệnh của ĐH (28/10, sau báo cáo GĐ 554):** *"Chốt phương án cứu hộ 1-a: cấp tài khoản SMED cho máy
+> chủ khi cứu hộ. Em đóng gói script rà soát + tải bù này thành công cụ chuẩn để chạy lại mỗi
+> tháng/cho các nhóm SMED-MISA-MIA-BANK."* Chi tiết kỹ thuật đầy đủ ở **entry C.364 AGENTS.md repo con**.
+
+> **A) PA 1-a — `api_server/api_server.py`:** `wants_smed` nay nhận CẢ nhóm `core` ⇒ máy chủ được cấp
+> accounts SMED khi cứu hộ (nhóm `smed` thuần + `core` thuần đều chỉ nhận `user_3`/`user_16`; khai cả 2
+> nhóm = không lọc như cũ). Gốc sự cố: máy chủ cứu hộ job SMED → lỗi ngay *"Thiếu SMED_USER_3"* (claim
+> API không cấp accounts cho `core`) — bằng chứng GĐ 554 (3 job lỗi 16:43-16:44).
+> **Test:** +ca A13 (core → PHẢI nhận user_3) ⇒ `test_claim_gd528.py` **18/18 PASS**, A11 giữ nguyên
+> (smed thuần KHÔNG nhận password MISA) ⇒ không rò mật khẩu.
+> **Verify THẬT:** restart `GIONG_API_Server` (nssm) 22:31 → gọi `/agent/claim` với `groups=['core']` +
+> job SMED cũ → accounts trả về có `user_3` đã giải mã ⇒ cứu hộ SMED của máy chủ hết lỗi credential.
+> (Chỉ máy chủ có api_server → 3 máy LAN không cần đồng bộ.)
+
+> **B) Công cụ chuẩn `agent/gd554_audit_backfill.py` (+ test 24/24 PASS):** 4 lệnh `audit` / `backfill`
+> / `watch` / `verify`; danh mục **22 phân hệ (13 SMED + 2 MISA + 4 MIA + 3 BANK)** kèm bảng + cột ngày;
+> `backfill` mặc định **chạy khô** (`--run` mới ghi DB), job `done` thiếu file → `pending` +
+> `retry_partial=1` (chỉ bù file thiếu — GĐ C.83); **chỉ tạo job khi THIẾU HẲN** và bỏ qua ngày đã có
+> dữ liệu trong DB; `tkkh` đánh dấu "chạy tay" không tự tải bù; tùy chọn `--rescue-guard` (chặn cứu hộ).
+> **Test canh chéo:** T23 đối chiếu map bảng/cột-ngày với trang **Sức khoẻ dữ liệu (C.360 - phiên khác)**
+> — bắt ngay 1 điểm lệch thật (`tkgvvxdt`) và đã đồng bộ ⇒ 2 nguồn không trôi khỏi nhau.
+> **Chạy thật trên GiongDB:** **SMED 01→28/10 = 0 mục cần tải bù** ✅ (khớp kết quả GĐ 554 nhóm SMED);
+> nhóm `all` chỉ ra **78 mục còn thiếu** ở MISA/MIA/BANK (bkth 6-7/10 · MIA 1-7/10 + lỗi 3,10-11,17-18,
+> 22-26 · bank-vcb 1,2,4,6,7 + **23→28/10** · bank-tcb/tpb 1,2,4,6,7) — **CHƯA chạy bù, chờ ĐH quyết**.
+
+> **⚠️ Sự cố phát sinh + ĐÃ SỬA NGAY:** restart `GIONG_API_Server` (nạp code A) làm **Quick Tunnel đổi
+> URL** → env `TUNNEL_API_BASE_URL` trên Vercel 2 app trỏ URL chết. Đã xử lý theo thủ tục GĐ 424 +
+> checklist GĐ 470-C: gist tự cập nhật → `scripts/update-tunnel-env.py` (sync `.env.local` 2 app) →
+> `vercel env rm/add TUNNEL_API_BASE_URL` **2 app** → **redeploy 2 app** → verify 5 bước: login ✅ ·
+> session ✅ · **SSO 302 + bh_session ✅** · `/api/auth/me` = Phạm Kiên Cường · e003 · SuperAdmin ✅ ·
+> **probe Vercel → tunnel → GiongDB 200 ✅**.
+> **Phát hiện kèm (chưa sửa — chờ ĐH):** route **`/api/agent/claim` trên Vercel (LEGACY trước GĐ 528)**
+> vẫn sống, claim kiểu cũ ⇒ job `running` nhưng `claimed_by=''` ⇒ theo `_stale_where()` job **KẸT VĨNH
+> VIỄN** (không ai reclaim được). Đã gặp thật khi probe (job dattruoc 28/10) và **đã trả về pending ngay**
+> (worker .27 nhận lại sau 20s). Đề xuất: vô hiệu route hoặc set `claimed_by='vercel-legacy'`.
+> **Ghi chú kỹ thuật khác:** test `test_claim_atomic.py` có **1 ca FAIL CÓ SẴN** (*"nhóm misa-muahang:
+> nhận x/10"*) — đã chứng minh bằng cách chạy trên bản HEAD gốc (cũng FAIL 3/10): do **worker LAN đang
+> sống giành job test** (test chỉ tạm dừng service agent máy chủ) — KHÔNG do thay đổi của đợt này.
+
+> **Phiên song song (nguyên tắc 3 — không trùng):** C.360 (Trợ lý Freebuff) = lớp QUAN SÁT (trang web
+> Sức khoẻ dữ liệu + agent tự bù file thiếu trong lúc chạy job); đợt này = lớp HÀNH ĐỘNG ngoài pipeline
+> (CLI rà soát theo kỳ + TẠO JOB tải bù 4 nhóm). Không đụng file của phiên khác.
+
+> **Commit:** repo con `9e492cb` (api_server + test + công cụ + entry C.364) · app tổng: entry này +
+> registry unlock. **KHÔNG Push** (quy tắc ĐA AGENT).
+
+> **Version:** KHÔNG bump (agent-side + docs — web không đổi; tiền lệ GĐ 422/554). App tổng **7.0.0** /
+> repo con **10.9.0**.
