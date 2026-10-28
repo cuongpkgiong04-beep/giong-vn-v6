@@ -7933,3 +7933,15 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (agent-side + docs — web không đổi; tiền lệ GĐ 422/554). App tổng **7.0.0** /
 > repo con **10.9.0**.
+
+### GĐ 566 / C.365 (Trợ lý Freebuff): Deploy PA-3 (GĐ 557) xuống máy trạm .27 + phát hiện service LocalSystem thiếu Playwright — chuyển worker về task user phamcuong + E2E verify thật (2026-10-29)
+
+> **Việc:** sau khi triển khai GĐ 557 (agent tự bù thiếu file + trang Sức khoẻ dữ liệu), copy 6 file (commit `3d26907`) xuống `.27` và chuyển worker sang chạy bằng service — thì **lộ 2 lỗi hạ tầng có sẵn**: (1) service NSSM `GIONG_SMED_Worker` cài **SAI AppParameters** (`agent\worker.env.bat` — không tồn tại; đúng là `C:\CUONG_2026\worker-lan1\worker-lan1.env.bat`) → start là thoát ngay → service PAUSED (log `worker_service_err.log` đầy "is not recognized"); (2) sau khi sửa path, job **FAIL ngay**: `BrowserType.launch: Executable doesn't exist at C:\Windows\system32\config\systemprofile\AppData\Local\ms-playwright\...` — **LocalSystem KHÔNG có Playwright browsers** (browsers nằm ở `C:\Users\phamcuong\AppData\Local\ms-playwright`). ⟹ Đây là lý do worker .27 vốn chạy dạng PROCESS **user phamcuong** từ 26/10 (mồ côi 2 ngày vì task bị Disabled ở GĐ 546) chứ không qua service.
+
+> **Đã sửa đúng (cơ chế chuẩn của .27):** task `GIONG_Worker_LAN1` (Principal = user **phamcuong**, RunLevel Highest, BootTrigger, Action = `worker-lan1.env.bat`) → `schtasks /change /enable` + `/run`; service → `sc stop` + `sc config ... start= demand` (để reboot không auto-start service lỗi). Worker mới: PID mới · **user phamcuong** · chạy ẩn (session 0) · tự chạy khi boot ✓. Kèm 2 script dùng lại: `scripts/_gd557_fix_lan27_worker.py` (sửa registry + chờ rảnh + chuyển worker, có guard 3×20s không cắt job) + `scripts/_gd557_restart_lan27_when_idle.py`.
+
+> **✅ E2E VERIFY THẬT (không chỉ test):** job thử `blth` kỳ 27/10 → **done · doneCenters 19 · 19 file**; log worker .27 in **`✅ GĐ 557 — đủ file: 19/19`** (xác nhận code mới chạy trên máy trạm). Job thử lần 1 (lúc còn service LocalSystem) FAIL → báo **`error` + doneCenters 0** (chứng minh hết "done giả") **và 19 file cũ được DỜI vào `agent\_backup\blth\2026-10-27\`** (chứng minh cơ chế chống mất dữ liệu chạy thật — đúng ca 27/10 trước đây bị `unlink` mất 16 TT). Backup giữ làm minh chứng (cơ chế tự prune 10 bộ).
+
+> **⚠️ Bài học cho mọi máy LAN:** worker chạy job SMED/BANK **PHẢI dưới user có Playwright browsers** — service LocalSystem chỉ dùng được cho loại job KHÔNG cần browser (hoặc phải cài browsers cho systemprofile). Khi thêm máy/đổi cơ chế chạy: kiểm tra `Test-Path "$env:LOCALAPPDATA\ms-playwright"` của ĐÚNG user chạy task.
+
+> **Version:** KHÔNG bump (docs + vận hành; chưa push — chờ lệnh ĐH). App tổng **7.0.0** / repo con **10.9.0**.
