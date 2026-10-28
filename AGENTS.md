@@ -7749,3 +7749,93 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.0.0** / repo con **10.9.0**.
+
+### GĐ 556 (Trợ lý ZCode — máy chủ): VẤN ĐỀ 1 — PA-3 ĐH chốt: hết treo "Chờ dữ liệu" ở 66% (watchdog Chrome CDP + agent tự đánh thức job báo cáo) — ĐÃ LIVE-VERIFY trọn chuỗi; sửa khẩn lỗi cú pháp làm chết tool MISA mua/bán hàng (2026-10-28)
+
+> **2 vấn đề ĐH nêu (28/10, kèm ảnh):** (1) thanh trạng thái đứng ở **66%** hàng giờ không phản ứng —
+> "có bị lỗi ở đâu không, có vòng lặp vô hạn không, phải báo cho người dùng biết"; (2) **Task_05
+> (xuất kho) + Task_07 (mua hàng) báo LỖI nhưng không có biện pháp khắc phục**.
+> **ĐH chốt:** VĐ1 = **PA-3** · VĐ2 = **PA-3** · trùng mã phiếu giữa 2 TT = **cấp số chứng từ riêng
+> theo trung tâm** · vượt tồn = **cho phép lập phiếu nhưng chưa ghi sổ**.
+
+> **ĐIỀU TRA VĐ1 (bằng chứng thật, job `61A137E6` kỳ 25/10):** 66% = tiến độ TẢI NGUỒN của luồng
+> "Tải dữ liệu mới nhất" (`(19+19+0)/(3×19+1)`), KHÔNG phải % báo cáo. Nguồn `bkct-hdgtgt` (done
+> 07:33) + `bkccn` (done 07:54) + **`misa-ban-hang-api` LỖI 08:30** (`BrowserType.connect_over_cdp:
+> Timeout 180000ms exceeded` — Chrome máy .34 treo WebSocket; 19 TT × 180s ≈ 58 phút). Bước "tự chạy
+> lại" của GĐ C.45 nằm **TRONG TRÌNH DUYỆT** (`sql-data-module.tsx`, chỉ chạy khi mở đúng trang +
+> chỉ khi mọi nguồn `done`, lại so theo 150 job mới nhất còn job nguồn cũ rơi ra ngoài) ⇒ nguồn LỖI =
+> **treo vĩnh viễn, không thông báo** (không phải vòng lặp vô hạn — chỉ poll 6s nhẹ).
+> Đêm 27→28/10 Task chạy OK vì Task_06 done sau 2 lần thử; hôm nay ĐH tick "tải mới" nên sinh job
+> upload bán hàng mới → dính CDP treo. Tần suất CDP treo: **6 lần/5 ngày** (24→28/10).
+
+> **ĐÃ LÀM VĐ1 (repo con, commits `c1c71ae` + `b759c23` + `cf6a767` + `ad9e668` + `564f6be` + `ccbecfb`):**
+> 1. **`agent/cdp_watchdog.py` (mới):** probe `/json/version` + **connect_over_cdp thật** (phân biệt
+>    `hung` khi HTTP 200 mà WS treo) → nếu treo: **kill CHỈ tiến trình Chrome giữ port 9222/cmdline
+>    CDP** (KHÔNG đụng Chrome người dùng) → mở lại qua task `GIONG_ChromeCDP` (máy chủ) /
+>    `GIONG_ChromeMISA` (2 máy LAN) → chờ tới khi sống lại. Env `CDP_WATCHDOG=0` để tắt. CLI:
+>    `python cdp_watchdog.py [--fix]`.
+> 2. **`40_web_agent.py`:** gọi watchdog TRƯỚC khi chạy job cần CDP (`misa-ban-hang-api`,
+>    `misa-mua-hang-api`, `misa-xuat-kho-api`, `misa-mua-hang`, `misa-nk-chitiet`, sqlreport
+>    `misa-nk-chitiet`/`dc-nhap-kho`) — áp cho CẢ máy chủ lẫn máy LAN (dùng chung `process_job`).
+> 3. **`agent/report_wake.py` (mới) + hook:** sau MỖI job (process_job) + vòng 60s `task_runner`
+>    (lưới an toàn) → job báo cáo `waitdownload` được agent tự quyết: **đủ nguồn → chạy lại**;
+>    **nguồn lỗi → TỰ THỬ LẠI 1 lần** (clone job, `created_by='Hệ thống (auto-retry)'`); **hết lượt
+>    (2 lần) → chuyển job báo cáo sang LỖI kèm lý do rõ** ("Nguồn “…” (mã: …) lỗi 2 lần … — bấm
+>    “Chạy lại”"); chờ > 3 giờ không còn job nguồn nào chạy → LỖI luôn (hết chờ vô hạn).
+> 4. **Web:** cho phép nút "Chạy lại" từ trạng thái `error` (`-smed.ts`) + thanh trạng thái hiện
+>    **báo cáo LỖI nền ĐỎ kèm lý do trong 2 giờ** (`header-jobs-bar.tsx`, giữ nguyên chế độ vàng "chờ
+>    dữ liệu" + nút Hủy chỉ khi có lệnh chạy/chờ).
+> 5. **Test:** `report_wake.test.py` **29 PASS** · `cdp_watchdog.test.py` **16 PASS** · tsc 0 · vite
+>    build PASS · `40_web_agent.test.py` 4/4 · `misa_tab_guard.test.py` 62/62 (file `task_runner_quick`
+>    1 FAIL có sẵn từ GĐ 516).
+
+> **✅ LIVE-VERIFY TRỌN CHUỖI (28/10 20:24 → 22:13 — trên máy chủ thật):**
+> watchdog+wake nạp (`Restart-Service GIONG_SMED_Agent`, đã kiểm 0 job/task đang chạy trước đó) →
+> 20:34 wake phát hiện nguồn lỗi → tạo job auto-retry `AA97350D` → .34 claim nhưng **api_server trả
+> lời quá 30s (Read timed out)** ⇒ job mồ côi 'running' (đưa về `pending`) → core cứu hộ 15' nhận
+> 21:20 → tool chết do **lỗi cú pháp** (xem dưới) → wake lần 2: hết lượt → **job báo cáo 25/10 chuyển
+> LỖI kèm lý do đúng thiết kế** → sửa lỗi cú pháp → đưa báo cáo về pending 22:11 → **`done` 22:13
+> (result 229 KB, có rows)** — job 66% của ĐH đã chạy xong.
+
+> **⚠️ SỬA KHẨN (phát hiện trong lúc verify): commit `22ea6fe` (19:28 cùng ngày, phiên Trợ lý Freebuff —
+> GĐ 560/C.361) để LỖI CÚ PHÁP 1 dòng trong `misa_muahang_api.py:660` ("unterminated string literal")
+> → module đó VÀ `misa_banhang_api.py` (import chéo `misa_muahang_api`) KHÔNG nạp được ⇒ mọi job MISA
+> **mua hàng + bán hàng chết ngay khi khởi động** (chỉ máy chủ — worktree này; 2 máy LAN còn bundle
+> 26/10 nên chưa dính). Đã sửa (`b45fdab`, chỉ 1 hunk — giữ nguyên bài dở của phiên kia), verify
+> `import misa_banhang_api` OK + test `misa_banhang_api.test.py` 86/86 + `misa_muahang_api.test.py`
+> PASS + **quét cú pháp 128 file agent** (còn 3 file rác dev cũ: fix_test_final2/recreate_2210/
+> refetch_sa_2210 — không dùng trong pipeline).
+
+> **TRIỂN KHAI:** máy chủ (service chạy trực tiếp từ worktree này) + **đã copy 5 file sang 2 máy LAN**
+> (`C:\CUONG_2026\giong-agent`: 40_web_agent/cdp_watchdog/report_wake + 2 test — hash khớp HEAD,
+> backup `.bak-gd556`, restart `GIONG_SMED_Worker`, 0 job đang chạy) qua SSH key + stdin base64
+> (bài học GĐ 548). Máy LAN cũ ở bundle 26/10 (C.343) → nay đồng bộ HEAD.
+
+> **⚠️ BÀI HỌC MỚI (đừng lặp):** (a) `mode` trong `smed_pull_jobs` chỉ **16 ký tự** (nối '+auto-retry'
+> → SQL truncate 2628) ⇒ đánh dấu qua `created_by`; (b) `claimed_by` **NOT NULL** ⇒ requeue KHÔNG
+> được set NULL (khớp đúng SQL nút Chạy lại của web); (c) service máy chủ **không có env
+> `AGENT_SQL_CONN`** ⇒ module agent phải tự dùng chuỗi mặc định `Server=.\SQLEXPRESS` (bài GĐ 547);
+> (d) cửa sổ lấy job nguồn phải tính theo `created_at` của job chờ, KHÔNG theo giờ hiện tại (job
+> treo từ sáng vẫn phải thấy nguồn của lượt đó); (e) **job claim bị "Read timed out"** → api_server
+> đã set 'running' mà worker không nhận được → job mồ côi (watchdog GĐ 491 dọn sau 45'; thao tác
+> nhanh: đưa về `pending`).
+
+> **VĐ2 (Task_05/Task_07) — CHƯA LÀM (phiên sau, ĐH đã chốt PA-3):** điều tra xong, bằng chứng đầy
+> đủ: 43 phiếu lỗi tồn 17/10→27/10 (25 "chưa ghi sổ" = MISA từ chối **xuất vượt tồn theo lô/HSD** kèm
+> hàng/lô/kho/số tồn; 10 "import lệch" = **MISA gộp 2 TT trùng mã phiếu** (bằng chứng cùng refid +
+> tổng tiền = tổng 2 TT: `PX-SD-202610279318` ML+CĐ, `PX-SD-20261027101925` ĐX+QO) **+ import lặp 2×**
+> (MISA = 2× SMED: TO 23/10, QO/HM/TĐ 25/10 do ai_search trễ index); 8 dòng khác). Task_07: 15/16
+> phiếu OK, 1 phiếu `ML PN-20261027102202` bị MISA đánh **INVALID dòng Excel** (bằng chứng
+> `validate_description`: "<Ngày chứng từ>/<Ngày hạch toán> … không được để trống" — builder điền ngày
+> bằng `ngay_lap` scrape SMED, **luồng import Excel THIẾU fallback** trong khi luồng save_full cũ có).
+> ⇒ Kế hoạch phiên sau (ĐH đã chốt): (1) lưu LÝ DO MISA THẬT vào DB thay "xem log"; (2) thêm fallback
+> ngày cho Excel; (3) siết kiểm tồn tại chống import lặp; (4) **cấp số chứng từ riêng theo TT** khi
+> trùng mã (≤20 ký tự — cần chốt cách rút gọn) + dọn 4 phiếu gộp/lặp hiện có; (5) **cho phép lập
+> phiếu nhưng CHƯA ghi sổ** (không tính là lỗi Task) + tự thử ghi sổ lại ở lượt sau; (6) khối "Phiếu
+> cần xử lý" trên web.
+> **CẢNH BÁO TRÙNG PHẠM VI:** phiên Freebuff đang sửa `misa_muahang_api.py` + `misa_muahang_upload.py`
+> (GĐ 560/561/562) ⇒ phiên sau phải dùng cách **stage riêng hunk** (`scripts/_gd556_stage_mine.py` —
+> tách hunk theo marker) để KHÔNG nuốt bài của nhau.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**
+> (giữ nguyên — đợt push 28/10 của GĐ 552 là docs/agent-side, không bump).
