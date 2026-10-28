@@ -7999,7 +7999,7 @@ repo con **10.1.0**.
 
 > **Verify:** unit `misa_xuatkho_import.test.py` **57 PASS** (24 test mới GĐ 563: số CT ≤20/duy nhất/idempotent · fallback ngày · Excel ghi số CT + mã gốc · record chờ ghi sổ · _sach_msg · invalidMap) · `misa_xuatkho_api.test.py` 41 PASS · mua hàng/bán hàng PASS · py_compile 6 file OK · **tsc app con EXIT 0**.
 
-> **Triển khai:** migration DB đã áp trên GiongDB (err 1000 + cho_ghi_so + post_tries + bảng sm_phieu_xuly ✓) + chuẩn hóa 8 dòng thô + migrate 35 dòng chờ-ghi-sổ. Deploy 8 file agent xuống **máy .34** (0 job — đã restart service, verify hash OK) qua `scripts/_gd563_deploy_lan.py`; **.245 HOÃN** (đang chạy job mua hàng 03:07→; sẽ deploy + chạy dọn khi rảnh).
+> **Triển khai:** migration DB đã áp trên GiongDB (err 1000 + cho_ghi_so + post_tries + bảng sm_phieu_xuly ✓) + chuẩn hóa 8 dòng thô + migrate 35 dòng chờ-ghi-sổ. Deploy 8 file agent xuống **máy .34** (0 job — đã restart service, verify hash OK) qua `scripts/_gd563_deploy_lan.py` + bản vá 024cd12; **.245** đang chạy job mua hàng (03:07→) → script `scripts/_gd563_wait_deploy_clean.py` tự chờ rảnh rồi deploy + restart worker (đang chạy nền, tối đa 150 phút).
 
 > **⚠️ TỒN ĐỌNG (báo ĐH):**
 > - **Dọn 8 phiếu MISA sai CHƯA chạy:** phiên MISA máy chủ (`cuongpk.giong01`) bị MISA chặn — "Đang có người dùng khác sử dụng tài khoản này … (14.177.60.105)" = ĐH đang dùng cùng tài khoản ở máy khác (đúng vấn đề GĐ 553). Em **KHÔNG bấm "Tiếp tục đăng nhập"** (sẽ đá phiên của ĐH) → kế hoạch: chạy `gd563_don_phieu_loi.py --apply` trên **.245** (tài khoản riêng mrhungtm3) khi job đang chạy xong.
