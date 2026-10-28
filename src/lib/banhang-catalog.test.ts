@@ -12,9 +12,12 @@ import { BH_GROUPS, BH_GROUP_KEYS, BH_LEAF_KEYS, getBanhangDetailAccess } from "
 const groupOf = (key: string) => BH_GROUPS.find((g) => g.key === key);
 const routesOf = (key: string) => (groupOf(key)?.leaves ?? []).map((l) => l.to);
 
-test("GĐ 420 — cấu trúc: 16 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số lá, banhang-misa còn 6 lá", () => {
-  assert.equal(BH_GROUPS.length, 16, "phải có đủ 16 nhóm (10 cũ + 4 nhập dữ liệu + 1 GĐ 438 + 1 ĐỐI CHIẾU GĐ 504)");
-  assert.equal(new Set(BH_GROUP_KEYS).size, 16, "key nhóm không được trùng");
+test("GĐ 420 — cấu trúc: 17 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số lá, banhang-misa còn 6 lá", () => {
+  // GĐ 557/C.360: 16 → 17 nhóm (+ SỨC KHOẺ DỮ LIỆU — trang tự rà soát thiếu file).
+  assert.equal(BH_GROUPS.length, 17, "phải có đủ 17 nhóm (16 cũ + 1 SỨC KHOẺ DỮ LIỆU GĐ 557)");
+  assert.equal(new Set(BH_GROUP_KEYS).size, 17, "key nhóm không được trùng");
+  // GĐ 557/C.360 — nhóm SỨC KHOẺ DỮ LIỆU: đúng 1 lá /m/suc-khoe-du-lieu
+  assert.deepEqual(routesOf("bh-suc-khoe-du-lieu"), ["/m/suc-khoe-du-lieu"]);
   assert.deepEqual(routesOf("bh-nhap-danh-muc"), [
     "/m/danh-muc-vac-xin",
     "/m/danh-muc-nha-cung-cap",

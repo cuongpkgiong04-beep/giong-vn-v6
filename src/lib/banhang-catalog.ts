@@ -268,9 +268,19 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bank-vtb", label: "Sao kê ngân hàng VTB" },
     ],
   },
+  // GĐ 557/C.360 (28/10/2026 — PA-3 ĐH chốt): nhóm SỨC KHOẺ DỮ LIỆU — ngang
+  // hàng BÁO CÁO / ĐỐI CHIẾU (sidebar app con CUỐI cùng). Trang tự rà soát mọi
+  // phân hệ download theo ngày: file thư mục vs chuẩn + số dòng GiongDB.
+  {
+    key: "bh-suc-khoe-du-lieu",
+    label: "SỨC KHOẺ DỮ LIỆU",
+    leaves: [
+      { to: "/m/suc-khoe-du-lieu", label: "Sức khoẻ dữ liệu" },
+    ],
+  },
 ];
 
-/** Mọi key nhóm (15) — dùng vòng for, tránh suy diễn từ mảng literal. */
+/** Mọi key nhóm (17) — dùng vòng for, tránh suy diễn từ mảng literal. */
 export const BH_GROUP_KEYS: string[] = BH_GROUPS.map((g) => g.key);
 
 /** Mọi key lá (bh-leaf-*) — phẳng từ BH_GROUPS. */
