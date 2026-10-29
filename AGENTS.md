@@ -187,6 +187,39 @@
 > - `git diff HEAD` — working tree có file modified của session KHÁC (không phải của mình) → KHÔNG add, KHÔNG đụng, báo Đại ca.
 > - Đối chiếu GĐ mới nhất trong AGENTS.md cả 2 repo — Agent khác vừa ghi GĐ trùng phạm vi → CẢNH BÁO.
 
+<!-- SHARED-BLOCK:GD570-PUSH-DONG-LOAT START -->
+### 🌍 PUSH ĐỒNG LOẠT TOÀN DỰ ÁN — lệnh Push ở đâu cũng rà hết nhiệm vụ ĐÃ XONG (hiệu lực GĐ 570, 29/10/2026 — chỉ thị Đại ca):
+
+> **Chỉ thị của Đại ca (29/10, nguyên văn rút gọn):** *"Đặt lệnh Push ở bất kỳ đâu
+> (trong máy này, trong máy trạm mạng LAN, ngoài mạng LAN) thì đều phải rà soát lại
+> các nhiệm vụ đã xong ở các Sessions (nhiệm vụ đợi Push) để đồng loạt Push lên
+> Github. Nhiệm vụ nào đang dở dang ở các nơi khác nhau thì để Push lần tiếp theo."*
+
+> **Hiện tượng ĐH phát hiện (29/10):** lệnh Push phát ở Session A thì việc ĐÃ XONG
+> của Session B không được đẩy lên — vì mỗi Agent chỉ thấy working tree của mình;
+> việc của B nằm trên nhánh riêng/worktree khác/máy LAN/máy nhà, agent A không rà
+> thì KHÔNG ai đẩy. Sau khi A push xong, các session khác push riêng dễ bị chặn
+> (non-fast-forward — chưa pull · index.lock dùng chung · nhánh chưa gộp) → phải
+> KẾT THÚC bằng MỘT đợt push duy nhất do agent nhận lệnh điều phối.
+
+> **CHECKLIST bắt buộc cho agent NHẬN LỆNH "Push" (áp dụng MỌI nơi phát lệnh):**
+> 1. `git fetch origin` + `git log --branches --not --remotes` **CẢ 2 repo, MỌI
+>    nhánh** (main · agent-cli · pipeline-work...) — liệt kê commit ĐÃ XONG chưa push.
+> 2. Đọc AGENTS.md + AGENT_REGISTRY.md (mọi entry mới nhất ghi "KHÔNG push chờ
+>    lệnh" + dòng registry ✅) — phân loại: **ĐÃ XONG** (commit xong + entry hoàn
+>    tất + registry ✅) vs **ĐANG DỞ** (registry còn 🔒 không kèm code / entry ghi
+>    "dở dang").
+> 3. Việc ngoài git (máy nhà Z: · máy LAN · session khác): entry ĐÃ XONG mà chưa
+>    commit (tiền lệ GĐ 498 — code máy nhà không git) → **commit hộ** + push cùng
+>    đợt; đang sửa dở → **KHÔNG đụng**, ghi lại để lần sau.
+> 4. Merge các nhánh ĐÃ XONG về `main` (CẢ 2 repo) + **bump version MỘT lần duy
+>    nhất cho cả đợt** + rà trùng lặp (nguyên tắc 3) + **push 1 lần**.
+> 5. BÁO Đại ca: danh sách GĐ đã push + danh sách BỎ QUA vì đang dở (ở đâu, việc
+>    gì) — anh biết rõ còn lại gì cho lần Push sau.
+> 6. Sau đợt push: các session khác KHÔNG push thêm trong đợt đó — việc mới xong
+>    sau đợt → commit + ghi AGENTS.md + **chờ lệnh Push kế tiếp**.
+<!-- SHARED-BLOCK:GD570-PUSH-DONG-LOAT END -->
+
 ### 🧪 KIỂM TRA TRƯỚC & SAU MỌI LẦN PUSH (BẮT BUỘC — MỌI AGENT — hiệu lực GĐ 470, 2026-10-19):
 
 > **Lệnh của Đại ca (19/10/2026) nguyên văn:** *"Áp dụng chung cho tất cả các Agents.
