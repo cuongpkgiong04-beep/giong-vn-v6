@@ -8410,3 +8410,50 @@ repo con **10.1.0**.
 >   process Python agent trước khi xoá (Windows lock file đang mở).
 
 > **Version:** KHÔNG bump (vận hành 0 code). App tổng **7.2.0** / repo con **11.2.0**.
+
+### GĐ 580 / C.372 (Trợ lý ZCode — máy chủ): Hoàn thiện PA-2 upload MISA — nối đường HTTP thuần vào 2 đường production qua công tắc `MISA_UPLOAD_MODE` (mặc định `browser` — production KHÔNG đổi) (2026-10-29)
+
+> **Nhiệm vụ ĐH:** "kiểm tra lại và hoàn thiện những chỗ dở dang" của nghiên cứu
+> upload MISA (báo cáo máy LAN C.368/GĐ 572 — code `857111e`, chưa nối 2 đường
+> production vì là đường ghi thật + `misa_muahang_upload.py` đang bị phiên khác sửa dở).
+
+> **Kiểm tra lại hiện trạng (bằng chứng):**
+> 1. PA-2 sẵn sàng: `misa_http_login.py` (đăng nhập HTTP 5 bước, phiên lưu
+>    `.secrets/misa_http_session.json`, OTP Gmail) + `misa_http_api.py`
+>    (`import_excel_file_http` giữ đúng 6 bước, trả kết quả y hệt hàm CDP, 401 → tự
+>    đăng nhập lại) + 36 test offline — máy LAN verify live dry-run THÀNH CÔNG (token 24h).
+> 2. **MISA CHƯA hết lỗi** — truy job GiondDB 22:19 29/10: 28–29/10 **13 đỏ / 3 done**;
+>    01:59 `misa-xuat-kho-api` chết đúng ca CDP treo WebSocket (TimeoutError 180s);
+>    02:35–03:51 mua/bán hàng "THIẾU FILE 0/19" — luồng tải SMED qua trình duyệt trơ;
+>    cộng endpoint nhập khẩu MISA (sheetname/step2) lỗi từ 15:00 (C.368, nghi bị
+>    MISA tạm hạn chế — đang theo dõi `q5_retest_loop.py`).
+> 3. **Phát hiện khi soi code:** chỉ đổi 1 dòng import thì Chrome VẪN phải sống —
+>    `post/get` (tìm phiếu/kiểm chứng/ghi sổ) là fetch trong trang
+>    (`make_fetcher(page)` → `page.evaluate`); phép thử "tắt hẳn Chrome" chỉ đạt
+>    khi thay cả fetcher.
+
+> **Đã làm (code repo con `5d3a5ab` — chi tiết ở AGENTS.md repo con C.372):**
+> công tắc env `MISA_UPLOAD_MODE` — mặc định `browser` (luồng cũ nguyên vẹn,
+> production KHÔNG đổi một iota) · `http` → toàn đường MISA chạy HTTP thuần PA-2:
+> `misa_http_api.py` +`make_http_fetcher(session)` (bản HTTP thuần của
+> `make_fetcher`) · `misa_xuatkho_import.py` `upload_mode()` + nhánh
+> `import_excel_file_http_async` (2022/in_outward) · `misa_xuatkho_api_run.py`
+> `_run_all` nhánh http (bỏ tab MISA/bắt header; chế độ http bỏ qua luồng yêu cầu
+> xóa phiếu từ web — cần tab MISA) · `misa_muahang_api.py` `run()` nhánh http +
+> nhánh import (302/pu_voucher) · test mới `misa_http_fetcher.test.py`. Chrome
+> vẫn mở cho quét SMED (chuyển `smed_api` cho luồng này là bước sau). `40_web_agent.py`
+> **chưa đụng** — gỡ 2 report khỏi `CDP_JOB_REPORTS` chỉ sau khi phép thử đạt.
+
+> **Verify:** py_compile 4 file OK · test offline **42/42 PASS** (13 api + 23
+> login của C.368 + 6 mới).
+
+> **Phép thử khi bật (tiêu chí máy LAN):** đặt `MISA_UPLOAD_MODE=http` trên máy
+> chạy job → chạy 1 ngày → **tắt hẳn Chrome CDP vẫn xanh + số phiếu khớp từng
+> phiếu**. Bật khi: (1) endpoint nhập khẩu MISA hồi phục, (2) đối chứng 1 ngày
+> khớp từng phiếu. Muốn xóa phiếu từ web trong chế độ http → bỏ công tắc chạy browser.
+
+> **Không đụng:** `misa_muahang_upload.py` + `AGENTS.md` repo con đang dở của
+> phiên khác (entry C.372 repo con để CHƯA commit cùng tình trạng entry C.368 —
+> phiên sau commit khi file rảnh).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.2.0** / repo con **11.2.0**.
