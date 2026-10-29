@@ -811,6 +811,35 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 - E2E: innerText chứa NBSP (U+00A0) — normalize trước khi so chuỗi (GĐ 327).
 - Trùng số GĐ → đổi số theo quy tắc GĐ 285; entry/registry cũ đánh ⛔.
 
+<!-- SHARED-BLOCK:GD568-CONG-CU-DO-THI START -->
+## 14. CÔNG CỤ ĐỒ THỊ CODE + VÒNG KIỂM CHỨNG (hiệu lực GĐ 568, 29/10/2026)
+
+> **ĐH chốt PA-2 (29/10/2026):** dùng 2 công cụ tra cứu code qua MCP + chuẩn hoá vòng kiểm chứng cho MỌI việc sửa code.
+
+### 14.1 Hai công cụ đã cắm sẵn (MCP user-scope `~/.zcode/cli/config.json`, index cục bộ — không gửi code đi đâu)
+| Công cụ | Dùng khi nào | Chi phí context |
+|---|---|---|
+| **codegraph** (1 tool `codegraph_explore`) | Hỏi 1 câu "X ở đâu · luồng nào · ảnh hưởng gì" → trả **nguồn thật kèm số dòng + đường gọi + phạm vi ảnh hưởng**; `codegraph affected <file>` = danh sách test cần chạy | Rẻ (1 tool) |
+| **codebase-memory** (17 tool) | Truy vấn sâu: `trace_path` (ai gọi ai nhiều tầng) · `query_graph` (Cypher: dead-code, đếm) · `detect_changes` (git diff → symbol ảnh hưởng + test impact) · `get_architecture` · `manage_adr` (nhật ký quyết định) · `search_code` | 17 tool ≈ 3.000 ký tự mô tả |
+
+> **Quy tắc thứ tự:** hỏi **ĐỒ THỊ trước** khi grep/Read (1 lệnh thay nhiều lần đọc file); chỉ Read **đúng dòng** cần sửa sau khi đã biết chính xác `file:dòng`. Đồ thị là **phân tích TĨNH** — KHÔNG thay thế quy tắc đối chứng bằng chứng (probe DB/file thật).
+
+### 14.2 Vận hành + bẫy đã gặp thật (GĐ 568)
+- **CBM bắt buộc 2 biến state** (hardening DACL của tool chặn mặc định): `CBM_CACHE_DIR=C:\CBM\cache` + `CBM_RUNTIME_DIR=C:\CBM\runtime` (thư mục runtime phải tồn tại sẵn, ACL chỉ-chủ-sở-hữu).
+- **File rác tên thiết bị Windows** (`nul`/`con`/`aux`/`prn`): có 1 file `nul` là CBM **hủy index trong ~4 giây** (`aborted_previous_preserved`). Đã xoá 2 file rác (`\\?\D:\...\nul`) + thêm guard vào `.cbmignore`.
+- **`.cbmignore`** (gốc mỗi repo) loại dữ liệu/runtime khỏi index; sửa nó phải index lại mới có hiệu lực. **`.codegraph/`** đã thêm vào `.gitignore` cả 2 repo.
+- **Index theo TỪNG working tree** (3 worktree = 3 index riêng). Sau khi pull/đổi nhiều: `codegraph sync` hoặc CBM `cli index_repository --repo-path <thư mục>`.
+
+### 14.3 VÒNG KIỂM CHỨNG chuẩn (áp cho MỌI việc sửa code)
+1. **Rà ảnh hưởng TRƯỚC khi sửa**: `codegraph affected <file>` (hoặc `detect_changes` của CBM) → biết test/chỗ nào bị ảnh hưởng.
+2. **Sửa surgical** (quy tắc cũ: đúng dòng cần sửa, không lan).
+3. **Chạy ĐÚNG test bị ảnh hưởng** thay vì chạy cả bộ (nhanh hơn, vẫn đủ).
+4. **Đối chứng số THẬT** với nguồn (file gốc / DB / MISA) — quy tắc bất biến.
+5. **Ghi entry kèm bằng chứng**: số cụ thể · commit hash · lệnh đã chạy · kết quả.
+
+> **Kinh tế context (bài học ECC):** giữ **<10 MCP server · <80 tool**; rules luôn nạp phải chọn lọc (việc lặp lại → viết thành **skill nạp-theo-việc** trong `.agents/skills/`); context ~50% nên compact thay vì để tự động ở 95%.
+<!-- SHARED-BLOCK:GD568-CONG-CU-DO-THI END -->
+
 ---
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
@@ -8139,3 +8168,37 @@ repo con **10.1.0**.
 > mục 🧪 KIỂM TRA...); 0 dòng bị xoá (cổng ghép sạch, giữ nguyên bài dở phiên khác).
 >
 > **Version:** KHÔNG bump (docs-only — quy tắc, 0 code) — KHÔNG push chờ lệnh.
+
+### GĐ 568 (Trợ lý ZCode — máy chủ): TRIỂN KHAI PA-2 — mở khoá codebase-memory-mcp + cắm MCP 2 công cụ đồ thị vào ZCode + index 2 repo thật + skills nạp-theo-việc + chuẩn hoá vòng kiểm chứng (2026-10-29)
+
+> **Lệnh của Đại Ca:** "PA-2" (chốt sau GĐ 565) = dùng CodeGraph cho Lớp 1 + skills ECC-style cho Lớp 2 + chuẩn hoá vòng kiểm chứng Lớp 3, **VÀ** xử lý ACL để mở khoá codebase-memory-mcp (17 tool).
+
+> **1) MỞ KHOÁ codebase-memory-mcp — cách ÍT XÂM LẤN NHẤT (KHÔNG đụng ACL hệ thống):** thay vì gỡ `Everyone:(F)` khỏi `D:\DuLieuChung` hay sửa SID mồ côi trên profile (rủi ro cho mọi tool khác), em cấp cho CBM **2 thư mục state riêng, ACL chỉ-chủ-sở-hữu**, trên ổ C:
+> - `CBM_CACHE_DIR=C:\CBM\cache` (tool tự tạo) · `CBM_RUNTIME_DIR=C:\CBM\runtime` (**phải tồn tại sẵn** với `icacls /inheritance:r /grant:r` cho đúng user + SYSTEM — tool từ chối nếu thiếu).
+> - Kết quả: `list_projects` chạy OK. ⇒ **Không cần sửa 1 dòng ACL nào của máy** — rủi ro bằng 0 cho các dịch vụ khác.
+
+> **2) 🎯 THỦ PHẠM THẬT của "index bị hủy" = FILE RÁC TÊN `nul` (tên thiết bị Windows) trong cây mã nguồn.** Chuỗi điều tra (mỗi bước là 1 phép thử thật, loại trừ dần):
+> - Loại trừ: ACL chuỗi thư mục (copy cùng nội dung ĐẶT TRONG `D:\DuLieuChung` → index OK) · kích thước cây (copy FULL 21.004 file/1,7 GB → index OK) · `.git` (repo git tĩnh + repo lồng nhau + 40 lượt commit đồng thời → index OK) · "file đổi giữa chừng" (đo 60 giây: 0 file đổi) · bộ nhớ (`CBM_MEM_BUDGET_MB=8192`) · tuần tự (`CBM_WORKERS=1`).
+> - Bisect trên cây THẬT: `src/` → OK · thêm `agent/` → HỦY ⇒ thủ phạm nằm trong `agent/`.
+> - Soi tên file: **`giong-apps/apps/banhang/agent/nul`** và **`giong-vn-v6/nul`** (94 byte, nội dung = 1 dòng SSH keyscan của máy .27 — rác do lệnh `> nul` nhầm trong Git Bash). Windows chuyển hướng tên `nul` sang **thiết bị NUL** ⇒ bước quét discovery của CBM chết sau ~4 giây.
+> - **ĐÃ XỬ LÝ:** xoá 2 file rác (đường dẫn `\\?\D:\...\nul`; cả 2 KHÔNG thuộc git — `git ls-files --error-unmatch` thất bại) + thêm guard `nul/con/aux/prn…` vào `.cbmignore` 2 repo.
+
+> **3) KẾT QUẢ INDEX 2 REPO THẬT (đo được, sau khi dọn `nul`):**
+> | Công cụ | Đích | Thời gian | Kết quả |
+> |---|---|---|---|
+> | **codebase-memory** | app con `apps/banhang` | 16,5 giây | **7.338 node / 27.014 cạnh** (19 thư mục bị loại theo `.cbmignore`) |
+> | **codebase-memory** | app tổng | 21 giây | **7.734 node / 16.596 cạnh** |
+> | **CodeGraph** | app con `apps/banhang` | 3,2 giây | 11.015 node / 23.063 cạnh (516 file) |
+> | **CodeGraph** | app tổng | 3,1 giây | 6.031 node / 12.330 cạnh (333 file) |
+> **Kiểm chứng chất lượng (truy vấn thật, không tin lời quảng cáo):** `build_tra_no` → đúng `agent/gd348-build-lht-ds.py:356-379` · `trace_path wake_waiting_reports` → 15 hàm con · Cypher tìm hàm "wake" → đúng `report_wake.py` + `40_web_agent.py` · `detect_changes` theo git diff (363 file thay đổi, có phân trang) · Cypher dead-code trong `src/lib` → 6 hàm.
+
+> **4) CẮM MCP VÀO ZCODE (user-scope `~/.zcode/cli/config.json`)** — 2 server, đã smoke test giao thức MCP thật:
+> - `codegraph`: `node <...>\_tools-codegraph\...\npm-shim.js serve --mcp` → initialize OK, `tools/list` = 1 tool (`codegraph_explore`).
+> - `codebase-memory`: `...\_tools-cbm\cbm\codebase-memory-mcp.exe` + env `CBM_CACHE_DIR`/`CBM_RUNTIME_DIR` → initialize OK, **17 tool** (mô tả gộp **3.053 ký tự** — rẻ context), gọi thật `query_graph` Cypher ra đúng hàm, tổng 2,7 giây.
+> - CodeGraph: đã `telemetry off` (off nghĩa là off) + thêm `.codegraph/` vào `.gitignore` **cả 2 repo**.
+
+> **5) LỚP 2 + LỚP 3 — skills nạp-theo-việc + vòng kiểm chứng:** thêm **3 skill** vào `.agents/skills/` (ZCode tự nạp khi việc khớp mô tả): `tra-cuu-code-do-thi` (hỏi đồ thị TRƯỚC khi grep/Read + bẫy vận hành 2 công cụ) · `dieu-tra-job-loi` (5 bước điều tra job + bẫy đã gặp: done giả · waitdownload · CDP treo · env lệch · `save_full` vô hình) · `ra-doi-chung-so-lieu` (đối chứng tổng từng đồng, 3 chặng file→DB→báo cáo/MISA). Kèm **mục 14 mới trong AGENTS.md** (bảng chọn công cụ + quy tắc thứ tự + vòng kiểm chứng 5 bước + kinh tế context <10 MCP/<80 tool).
+
+> **Việc còn lại cho phiên sau:** (1) **khởi động lại ZCode** để nạp 2 MCP server (config chỉ đọc lúc mở phiên); (2) cân nhắc `codebase-memory-mcp daemon start` để có UI đồ thị 3D (mặc định chỉ chạy khi có phiên); (3) nếu muốn, thêm 2 skill tương tự cho repo con (C.366 đã ghi).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
