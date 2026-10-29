@@ -8457,3 +8457,28 @@ repo con **10.1.0**.
 > phiên sau commit khi file rảnh).
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.2.0** / repo con **11.2.0**.
+
+### GĐ 582 (Trợ lý ZCode — máy chủ): Bảo mật share `DuLieuChung` — chuyển từ tài khoản Guest sang tài khoản riêng cho máy LAN (2/3 bước; bước cuối chờ thời điểm máy LAN rảnh) (2026-10-29)
+
+> **Yêu cầu của Đại Ca:** xử lý rủi ro "4 máy LAN (.245 · .27 · .34 · .11) đang truy cập dữ liệu công ty qua tài khoản Guest" (em phát hiện ở GĐ 576).
+
+> **Hiện trạng đã xác minh:** share `DuLieuChung` (D:\DuLieuChung) mở **`Everyone: FULL`** ở cả 2 lớp (share + NTFS) và tài khoản **Guest đang Enabled** ⇒ **bất kỳ máy nào trong mạng cũng vào được toàn quyền, không cần mật khẩu**. `.245` và `.27` kết nối ẩn danh (`Get-SmbSession` = `GIONGPC\Guest`), **đang mở 335 file trong chính repo dự án** (`.agents` · `.zcode`/`.grok` · `.git` · `src` · `scripts`) — tức các phiên AI trên máy LAN làm việc trực tiếp qua share. Máy `.11` **không có SSH** (port 22 timeout) → chưa xác định được là máy gì.
+
+> **ĐÃ LÀM (2/3 bước — CHƯA thay đổi quyền truy cập hiện tại, không gây gián đoạn):**
+> 1. **Tạo 3 tài khoản riêng trên máy chủ**: `lan245` (GIANGKT) · `lan34` (THANH-PC) · `lan27` (PC-PKT-01) — mật khẩu 20 ký tự chữ+số, không hết hạn; lưu tại `giong-apps/apps/banhang/agent/.secrets/lan_accounts.txt` (**trong dự án, đã gitignore**).
+> 2. **Cấp quyền share `Change`** (đọc/ghi/xoá) cho 3 tài khoản (giữ nguyên quyền cũ để không đứt việc).
+> 3. **Lưu credential trên cả 3 máy LAN, cả 2 tầng:**
+>    - **Tầng service** (`GIONG_SMED_Worker` chạy **LocalSystem**): task tạm `/ru SYSTEM` → **VERIFY THẬT: `dir` share THÀNH CÔNG trên cả 3 máy** ✓ (bằng chứng: "Volume in drive \\192.168.1.250\DuLieuChung is New Volume").
+>    - **Tầng phiên người dùng** (`phamcuong` · `admin-pc` · `admin`): task tạm `/ru <user> /it` → `cmdkey /list` xác nhận **credential đã lưu** trong profile user trên cả 3 máy; riêng `.245` (user `admin`) còn **`dir` thành công** ✓.
+
+> **Sự cố nhỏ trong lúc làm (đã xử lý):** mật khẩu sinh lần đầu chứa ký tự `%` và `^` → trong file `.bat` của cmd bị hiểu là biến/escape ⇒ xác thực sai (`user name or password is incorrect`). Đã **sinh lại mật khẩu chỉ chữ+số** và đặt lại trên máy chủ.
+
+> **Bài học kỹ thuật (quan trọng cho các lần sau):**
+> - **Phiên SSH (network logon) KHÔNG lưu được credential** (`CMDKEY: Credentials cannot be saved from this logon session`) và **không truy cập được SMB share** (do `RestrictNullSessAccess=1`) ⇒ mọi phép thử phải chạy **qua scheduled task trong phiên console (`/it`) hoặc dưới SYSTEM**, đừng kết luận từ phiên SSH.
+> - `C:\Windows\Temp` KHÔNG ghi được bởi user thường → log kiểm chứng phải ghi vào `%TEMP%` của chính user đó.
+> - Lỗi `System error 67`/`The system cannot find the file specified` khi `dir \\IP\share` từ phiên SSH là **hành vi bình thường**, KHÔNG phải share hỏng.
+
+> **CHƯA LÀM — BƯỚC CUỐI (cố ý, chờ thời điểm an toàn):** bỏ `Everyone` khỏi share + tắt `Guest`. Lý do chưa làm ngay: (a) các phiên AI trên `.245`/`.27` **đang mở repo qua share** — tắt Guest sẽ buộc chúng tạo kết nối mới, nếu credential chưa được dùng đúng thì công việc của các phiên đó đứt giữa lúc làm; (b) máy `.11` chưa xác định nên chưa biết có cần cấp tài khoản không.
+> **Sẵn sàng hoàn tất bất cứ lúc nào (1 lệnh):** `python D:\CBMState\_lan\hoan_tat_hoac_khoi_phuc.py --finish` (bỏ Everyone + tắt Guest + in trạng thái) — có **`--rollback`** để khôi phục trong 5 giây nếu có sự cố, và `--status` để xem trạng thái.
+
+> **Version:** KHÔNG bump (không sửa code app). App tổng **7.2.0** / repo con **11.2.0**.
