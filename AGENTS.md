@@ -840,6 +840,32 @@ app tổng nếu clone repo con nằm trong thư mục app tổng.
 > **Kinh tế context (bài học ECC):** giữ **<10 MCP server · <80 tool**; rules luôn nạp phải chọn lọc (việc lặp lại → viết thành **skill nạp-theo-việc** trong `.agents/skills/`); context ~50% nên compact thay vì để tự động ở 95%.
 <!-- SHARED-BLOCK:GD568-CONG-CU-DO-THI END -->
 
+<!-- SHARED-BLOCK:GD576-QUY-TAC-LUU-TRU-DU-LIEU START -->
+## 15. QUY TẮC LƯU TRỮ DỮ LIỆU DỰ ÁN (Đại Ca chốt 29/10/2026 — hiệu lực vĩnh viễn)
+
+> **Chỉ thị của Đại Ca (29/10/2026):** **KHÔNG dùng ổ C cho dự án này. TOÀN BỘ dữ liệu của dự án phải nằm trong thư mục gốc của dự án** — `D:\DuLieuChung\CUONG_2026\giong-vn-v6`.
+
+### 15.1 Phạm vi áp dụng
+Mọi thứ do công cụ/dự án SINH RA: index đồ thị code (`.codegraph/`), state/cache của codebase-memory-mcp, file tạm, log công cụ, artifact, backup, script tiện ích → **đặt TRONG dự án** (hoặc trong chính worktree đang làm việc), **KHÔNG** đặt ở `C:\`, `%LOCALAPPDATA%`, `~/.cache`, `%TEMP%`.
+
+### 15.2 Hiện trạng từng công cụ (GĐ 576)
+| Công cụ | Dữ liệu | Vị trí hiện tại |
+|---|---|---|
+| CodeGraph | `.codegraph/` trong mỗi repo | ✅ **TRONG dự án** (đã đúng quy tắc) |
+| codebase-memory-mcp | cache + runtime (state) | ⚠️ `D:\CBMState\` — **Ổ D nhưng cạnh dự án** (chưa nằm trong dự án do rào cản ACL, xem 15.3) |
+
+### 15.3 Rào cản thật: vì sao state CBM chưa nằm trong dự án (bằng chứng GĐ 576)
+codebase-memory-mcp có cơ chế bảo mật riêng: **mọi thư mục trên đường dẫn tới state dir (trừ gốc ổ đĩa) không được cấp quyền GHI cho identity ngoài {owner · SYSTEM · Administrators}**. Đã chứng minh bằng 10 phép thử thật:
+- ACE `Everyone:(Full)` → **chặn** · ACE `Authenticated Users:(Modify)` (dù TƯỜNG MINH hay KẾ THỪA) → **chặn** · junction trỏ từ dự án ra ngoài → **chặn** (công cụ không đi theo junction).
+- Thư mục mới tinh với ACL chỉ `owner + SYSTEM` (trên ổ D) → **chạy tốt**; `Everyone` chỉ-đọc → **được chấp nhận** (không phải quyền ghi).
+Chuỗi thư mục dự án hiện có `Authenticated Users:(Modify)` **kế thừa từ gốc ổ D** ⇒ muốn state nằm TRONG dự án phải bỏ quyền ghi đó trên cả 3 cấp `D:\DuLieuChung` → `CUONG_2026` → `giong-vn-v6` ⇒ **các MÁY LAN (.245 · .27 · .34 · .11) đang truy cập dữ liệu bằng tài khoản `Guest`** sẽ **MẤT QUYỀN GHI** (bằng chứng: SMB open-files cho thấy `GIONGPC\Guest` đang mở file trong dự án) + phải propagate ACL toàn cây (rất chậm). ⇒ **3 PA chờ Đại Ca chốt** (chi tiết ở entry GĐ 576).
+
+### 15.4 Quy tắc vận hành kèm theo
+1. Công cụ mới có sinh dữ liệu → đặt state **trong dự án**; nếu công cụ có hardening ACL chặn thì tạo thư mục riêng **trên ổ D sát dự án** và **ghi rõ lý do + đường dẫn vào AGENTS.md** (như `D:\CBMState`).
+2. KHÔNG để backup/log/temp của dự án trên ổ C. Phát hiện dữ liệu dự án trên ổ C → chuyển về ổ D rồi dọn.
+3. **Cảnh báo an ninh (phát hiện khi điều tra GĐ 576):** máy LAN truy cập share `\\<máy chủ>\DuLieuChung` bằng tài khoản **Guest (đang bật)** — rủi ro bảo mật; nên chuyển sang tài khoản riêng cho từng máy (việc riêng, chờ Đại Ca quyết).
+<!-- SHARED-BLOCK:GD576-QUY-TAC-LUU-TRU-DU-LIEU END -->
+
 ---
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
@@ -8297,3 +8323,29 @@ repo con **10.1.0**.
 > **Ghi chép:** claim `GĐ 572 / C.368` (registry đã commit) · repo con `857111e` (4 file mới) · entry C.368 ghi vào AGENTS.md repo con (đang có phiên khác dọn bài cũ nên **file đó KHÔNG được commit trong phiên này** — để phiên sau commit qua cổng) · toàn bộ probe + báo cáo: `C:\CUONG_2026\misa-upload-research\`.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.1.0** / repo con **10.9.0**.
+
+### GĐ 576 (Trợ lý ZCode — máy chủ): Chuyển dữ liệu công cụ khỏi ổ C về ổ D + điều tra rào cản ACL của CBM + ghi QUY TẮC LƯU TRỮ DỮ LIỆU DỰ ÁN (2026-10-29)
+
+> **Yêu cầu của Đại Ca:** "chuyển cache đồ thị về ổ D tại thư mục của dự án… anh không muốn sử dụng ổ C cho dự án này. Ghi nhớ điều này để áp dụng cho các lần sau. **Toàn bộ dữ liệu của dự án phải nằm trong thư mục gốc của dự án này.**" → Đã ghi thành **mục 15 AGENTS.md** (quy tắc vĩnh viễn).
+
+> **1) ĐÃ CHUYỂN — ổ C giờ sạch với mọi dữ liệu dự án:**
+> - Rà ổ C: chỉ có state của codebase-memory-mcp (`C:\CBM`) là dữ liệu do dự án dùng; CodeGraph đã ở đúng chỗ (`.codegraph/` trong từng repo).
+> - **State CBM chuyển sang `D:\CBMState\`** (cache + runtime, ACL chỉ-chủ-sở-hữu) → copy nguyên 2 đồ thị (đỡ index lại): app tổng **7.765 node/16.631 cạnh** · app con **7.485/27.708** → verify `list_projects` + truy vấn Cypher chạy đúng trên vị trí mới.
+> - Cập nhật MCP config (`~/.zcode/cli/config.json`): env trỏ `D:\CBMState\{cache,runtime}`.
+> - **Đã xoá `C:\CBM`** + toàn bộ thư mục thử nghiệm (`C:\cbmtest*`, `C:\cbm-store2`, `D:\cbmt2…cbmt10`, `D:\_jtest`). Ổ C không còn gì của dự án/công cụ.
+
+> **2) ĐIỀU TRA: vì sao state CBM KHÔNG thể nằm TRONG dự án (10 phép thử thật) — đây là lý do phải dùng `D:\CBMState`:** CBM từ chối nếu bất kỳ thư mục nào trên đường dẫn tới state dir (trừ gốc ổ) cấp **quyền GHI** cho identity ngoài **{owner · SYSTEM · Administrators}**:
+> - `Everyone:(F)` → chặn · `Everyone:(RX)` (chỉ đọc) → **được** · `Authenticated Users:(M)` **tường minh** → chặn · `Authenticated Users:(M)` **kế thừa từ D:\** → chặn · thêm ACE `BUILTIN\Administrators:(F)` → **được** · owner = nhóm Administrators → **được** (không phải nguyên nhân) · **junction** trỏ ra ngoài → **chặn** (không follow) · thư mục mới tinh ACL chỉ owner+SYSTEM trên ổ D → **chạy tốt**.
+> - Chuỗi dự án có `Authenticated Users:(Modify)` kế thừa từ gốc ổ D ở cả 3 cấp ⇒ muốn state vào TRONG dự án phải bỏ quyền ghi đó trên `D:\DuLieuChung` → `CUONG_2026` → `giong-vn-v6`.
+
+> **3) ⚠️ SỰ CỐ + ĐÃ XỬ LÝ (minh bạch):** thử nghiệm đầu, em chạy `icacls ... /grant:r Everyone:(RX)` trên `D:\DuLieuChung` — lệnh **lan xuống toàn bộ cây con** (chậm, I/O nặng) nên em đã **DỪNG** giữa chừng. Khi kiểm tra, phát hiện **các MÁY LAN (.245 · .27 · .34 · .11) đang truy cập dữ liệu bằng tài khoản `GIONGPC\Guest`** (bằng chứng: `Get-SmbOpenFile` cho thấy Guest mở file trong dự án) ⇒ việc hạ `Everyone` có thể **làm mất quyền GHI của máy LAN** → **ĐÃ KHÔI PHỤC NGAY** về trạng thái ban đầu (`Everyone:(OI)(CI)(F)` trên `D:\DuLieuChung`; verify mẫu file sâu `package.json` đã trở lại `Everyone:(F)`). **Backup ACL** (bản đọc được + bản khôi phục máy) lưu tại `D:\CBMState\_acl-backup\`.
+>   ⇒ **KHÔNG có thay đổi ACL nào còn hiệu lực** trên hệ thống (trạng thái y như trước khi can thiệp).
+
+> **4) 3 PA chờ Đại Ca chốt (cho yêu cầu "state nằm TRONG dự án"):**
+> - **PA-A (khuyến nghị):** Giữ state ở `D:\CBMState` — **ổ D, không đụng quyền ai, đã chạy + verify**. Ghi ngoại lệ rõ trong mục 15 AGENTS.md.
+> - **PA-B:** Đưa state vào TRONG dự án ⇒ phải **bỏ quyền ghi của LAN/Guest** trên 3 cấp thư mục (propagate ACL toàn cây, chậm) + **cấu hình lại truy cập LAN bằng tài khoản riêng từng máy** (thay Guest) — việc hệ thống, làm có kế hoạch, ước tính 30-90 phút.
+> - **PA-C:** Chuyển thư mục dự án ra khỏi `D:\DuLieuChung` (ví dụ `D:\giong-vn-v6` ngay trên ổ D — chuỗi ACL sạch nên CBM nhận state trong dự án ngay) ⇒ nhưng phải cập nhật mọi thứ trỏ đường dẫn cũ (service agent, scheduled task, batch máy LAN, share, IDE, script) → rủi ro cao, cần kế hoạch riêng.
+
+> **5) Việc cần Đại Ca:** **khởi động lại ZCode** (MCP đang giữ env cũ `C:\CBM` đã xoá; phiên sau sẽ nạp `D:\CBMState`). Trong lúc chưa restart, tra cứu đồ thị vẫn dùng được qua CLI với env `D:\CBMState`.
+
+> **Version:** KHÔNG bump (docs + công cụ ngoài repo — chờ lệnh Push). App tổng **7.2.0** / repo con **11.1.0**.
