@@ -172,27 +172,45 @@ function Dashboard() {
   );
   const todayIn = todayInPeople.size;
 
-  // "14 phiên đông" = 14 ngày có nhiều lượt vào/ra nhất, tính từ data chấm công (đã lọc theo user)
+  // ===== GĐ 559 (ĐH chốt 28/10): biểu đồ chấm công THEO THÁNG (dropdown) —
+  // vẽ đầy đủ các ngày trong tháng chọn (mặc định tháng hiện tại). Thay cách
+  // cũ "14 phiên đông" lấy top-14 toàn lịch sử (lộn xộn 05/09→23/10). =====
+  const [attMonth, setAttMonth] = useState(() => today.slice(0, 7)); // "YYYY-MM"
+  const attMonths = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of myAttendance) if (a.date && a.date.length >= 7) set.add(a.date.slice(0, 7));
+    set.add(today.slice(0, 7)); // tháng hiện tại luôn có trong danh sách
+    return [...set].sort((x, y) => (x < y ? 1 : -1)); // mới nhất lên trước
+  }, [myAttendance, today]);
+
+  // Tháng chọn → mảng ĐỦ NGÀY (1 → cuối tháng; tháng hiện tại đến hôm nay),
+  // ngày không có lượt điền 0 để đường liền mạch trong tháng.
   const attChart = useMemo(() => {
+    const [yy, mm] = attMonth.split("-").map(Number);
+    const daysInMonth = new Date(yy, mm, 0).getDate();
+    const lastDay = attMonth === today.slice(0, 7) ? Number(today.slice(8, 10)) : daysInMonth;
     const byDate = new Map<string, { in: number; out: number }>();
     for (const a of myAttendance) {
+      if (!a.date || !a.date.startsWith(attMonth)) continue;
       const bucket = byDate.get(a.date) ?? { in: 0, out: 0 };
       if (a.status.includes("vào")) bucket.in += 1;
       if (a.status.includes("tan")) bucket.out += 1;
       byDate.set(a.date, bucket);
     }
-    return [...byDate.entries()]
-      .map(([date, b]) => ({ date, ...b, total: b.in + b.out }))
-      .sort((x, y) => y.total - x.total) // đông nhất lên trước
-      .slice(0, 14) // lấy đúng 14 phiên đông
-      .sort((x, y) => (x.date < y.date ? -1 : 1)) // hiển thị theo thứ tự thời gian
-      .map((d) => ({
-        // dd/mm theo yêu cầu Đại ca (2026-09-10) — trước đây mm/dd (slice(5) → tháng trước)
-        day: d.date.slice(8, 10) + "/" + d.date.slice(5, 7),
-        vào: d.in,
-        ra: d.out,
-      }));
-  }, [myAttendance]);
+    const out: { day: string; vào: number; ra: number }[] = [];
+    for (let d = 1; d <= lastDay; d++) {
+      const iso = `${attMonth}-${String(d).padStart(2, "0")}`;
+      const b = byDate.get(iso);
+      out.push({
+        // dd/mm theo yêu cầu Đại ca (2026-09-10)
+        day: String(d).padStart(2, "0") + "/" + String(mm).padStart(2, "0"),
+        vào: b?.in ?? 0,
+        ra: b?.out ?? 0,
+      });
+    }
+    return out;
+  }, [myAttendance, attMonth, today]);
+  const attMonthEmpty = attChart.every((d) => d.vào === 0 && d.ra === 0);
 
   const firstName = userName.split(" ").slice(-1)[0];
   const pending = myProposals.filter((p) => p.status === "Chờ duyệt").length;
@@ -249,16 +267,34 @@ function Dashboard() {
       <div className="mt-5">
         <Card>
           <CardHeader>
-            <div>
-              <CardTitle>Chấm công 14 phiên đông</CardTitle>
-              <p className="mt-0.5 text-sm text-muted">Lượt vào ca / tan ca trên toàn hệ thống</p>
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+              <div>
+                <CardTitle>Chấm công theo tháng</CardTitle>
+                <p className="mt-0.5 text-sm text-muted">Lượt vào ca / tan ca theo ngày trong tháng chọn</p>
+              </div>
+              {/* GĐ 559: chọn tháng (mặc định tháng hiện tại) */}
+              <select
+                value={attMonth}
+                onChange={(e) => setAttMonth(e.target.value)}
+                className="rounded-lg border border-line bg-surface px-2 py-1 text-xs font-medium text-ink focus:outline-none focus:ring-2 focus:ring-accent/40"
+                aria-label="Chọn tháng"
+              >
+                {attMonths.map((m) => {
+                  const [yy, mm] = m.split("-");
+                  return (
+                    <option key={m} value={m}>
+                      Tháng {Number(mm)}/{yy}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
           </CardHeader>
           <ClientOnly>
             <div className="h-56">
-              {attChart.length === 0 ? (
+              {attMonthEmpty ? (
                 <div className="flex h-full items-center justify-center text-sm text-muted">
-                  Chưa có dữ liệu chấm công — biểu đồ sẽ hiển thị khi có lượt vào ca / tan ca.
+                  Tháng {Number(attMonth.slice(5, 7))}/{attMonth.slice(0, 4)} chưa có dữ liệu chấm công — biểu đồ sẽ hiển thị khi có lượt vào ca / tan ca.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
