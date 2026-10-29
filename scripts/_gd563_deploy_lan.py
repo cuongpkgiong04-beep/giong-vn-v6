@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 REPO = Path(r"D:/DuLieuChung/CUONG_2026/giong-vn-v6")
 REPO_CON = REPO / "giong-apps"
-HEAD = "e57e723"
+HEAD = "024cd12"
 FILES = ["40_web_agent.py", "misa_xuatkho_api.py", "misa_xuatkho_api_run.py",
          "misa_xuatkho_import.py", "misa_xuatkho_import.test.py",
          "gd478_import_api.py", "misa_muahang_api.py", "gd563_don_phieu_loi.py"]

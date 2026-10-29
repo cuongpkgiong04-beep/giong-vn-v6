@@ -33,13 +33,15 @@ def main():
     m = dep.MACHINES["245"]
     het_han = time.time() + a.max_phut * 60
 
-    log(f"Chờ worker {m['worker']} rảnh (tối đa {a.max_phut} phút)…")
+    log(f"Chờ worker {m['worker']} rảnh 2 lần liên tiếp (tối đa {a.max_phut} phút)…")
+    calm = 0
     while time.time() < het_han:
         n = dep.check_idle(m)
-        if n == 0:
-            log("✅ RẢNH — bắt đầu deploy")
+        calm = calm + 1 if n == 0 else 0
+        if calm >= 2:
+            log("✅ RẢNH (2 lần liên tiếp) — bắt đầu deploy")
             break
-        log(f"   … còn {n} job running/pending — chờ 45s")
+        log(f"   … còn {n} job running/pending (rảnh liên tiếp {calm}/2) — chờ 45s")
         time.sleep(45)
     else:
         log("⏱️ Hết thời gian chờ — DỪNG (chưa deploy/xóa gì)")
