@@ -8280,3 +8280,20 @@ repo con **10.1.0**.
 > **Verify production SAU push (checklist GĐ 470 B) — PASS toàn bộ:** 2 app HTTP 200 (version 7.2.0 / 11.1.0) · **login thật** app tổng → 200 + có `user` · `get-session` → có `user` · **SSO** ký JWT (HS256 · iss `giong-vn-v6` · aud `giong-banhang`) → **302 về `https://giong-banhang.vercel.app/` + Set-Cookie `bh_session`** · app con `/api/auth/me` → 200, đúng email + **role SuperAdmin** (gửi token đúng claims `empId/name/email/role/center/mods`) · **Deployment:** Vercel tạo mới lúc **13:42 (app tổng)** / **13:46 (app con)** — ngay sau lệnh push, cả 2 ● **Ready** (build 29s/33s).
 
 > **Version:** app tổng **7.2.0** / repo con **11.1.0** — ĐÃ PUSH + ĐÃ LIVE (không đổi số đợt này).
+
+### GĐ 572 / C.368 (Trợ lý ZCode — máy nhà LAN-1): PA-2 (ĐH chốt 29/10) — ĐĂNG NHẬP MISA AMIS BẰNG HTTP THUẦN (bỏ hẳn trình duyệt) + client HTTP thuần cho đường upload (2026-10-29)
+
+> **Lệnh của Đại Ca (29/10, sau báo cáo nghiên cứu GĐ 569):** chốt **PA-2** — tức làm PA-1 (chuyển đường upload sang HTTP thuần) **và** đăng nhập cũng bằng HTTP thuần. Chi tiết đầy đủ ở entry **C.368 trong AGENTS.md repo con** (giong-apps).
+
+> **Kết quả chính (đã chạy thật, không phải giả định):**
+> 1. **Dịch ngược luồng đăng nhập MISA** (chụp thật từng request — `q1_capture.json`): **KHÔNG có OAuth/PKCE**, chỉ 5 lời gọi HTTP: `Account/login` (→ Code 99 + JWT tạm 15') → `loginwithotp` (OTP đọc tự động từ Gmail) → `GET …/APIS/IntegrationAPI/app/redirect/Accounting` **đi theo 302 tới `/app/callback`** (⚠️ bước này mới phát cookie phiên — bỏ qua là lỗi `Mã lỗi: F79C…`) → `account/verify` → `login/misa_id` (→ **Bearer AMIS hạn 24h** + `Context` = chính `x-misa-context`).
+> 2. **2 module mới trong repo con** (commit repo con `857111e`, chỉ THÊM file — không sửa file production nào): `agent/misa_http_login.py` (login + lưu/tái dùng phiên `.secrets/misa_http_session.json` + tự đăng nhập lại khi hết hạn) và `agent/misa_http_api.py` (Bearer/context/cookie qua urllib · **401 → tự login lại rồi gọi lại** · `import_excel()` giữ đúng 6 bước import như bản Chrome, trả **cùng dạng kết quả** nên nơi gọi chỉ đổi 1 dòng · thêm `do_import=False` để **kiểm tra trước khi ghi**).
+> 3. **Test offline 36 PASS** (23 login + 13 api — không cần mạng) · **verify LIVE: đăng nhập HTTP thuần THÀNH CÔNG** (`OTP OK → NV_0174 · token hạn 24.0 giờ`) rồi đọc thật `stock_get → 20 kho`, `pu_list → 2.821 phiếu mua hàng`.
+
+> **⚠️ PHÁT HIỆN PHẢI THEO DÕI (KHÔNG do code mới):** từ ~15:00 cùng ngày, 2 endpoint **nhập khẩu** của MISA (`/g1/api/import/v1/import/sheetname`, `step2`) trả `Success=false · "Có một số lỗi xảy ra… Mã lỗi: <GUID>"` với **cả token trình duyệt cũ, token HTTP mới, lẫn phiên mở lại** — trong khi API thường (stock_get · notification/count · pu_list) vẫn 200 và upload file vẫn OK. Đúng script chạy tốt buổi sáng nay giờ trả `sheets: []`. **Nghi vấn hàng đầu: MISA chặn/tạm hạn chế sau khi bị quét ~1.000 request step2 trong ~15 phút** (đợt quét 740 refType ở GĐ 569) — đang chạy vòng thử lại tự động mỗi 5 phút (`q5_retest_loop.py`) để xem tự hồi phục. **Hệ quả tiềm tàng: job import MISA (mua hàng/xuất kho) tối nay có thể lỗi — cần kiểm tra lại trước khi kết luận bất cứ điều gì về production.** Bài học: KHÔNG quét dữ liệu sống của MISA ở quy mô lớn (mỗi request là 1 lần gọi thật tới server MISA).
+
+> **Việc còn lại (chờ ĐH):** nối PA-2 vào 2 đường đang chạy (`misa_xuatkho_import.py:640` · `misa_muahang_api.py:1322` — hiện nhận `misa_page/post/get/hdrs` từ Chrome CDP) và bỏ bước mở Chrome/bắt header ở `40_web_agent.py`. Phiên này **CHƯA làm** vì 2 file đó là đường ghi production và `misa_muahang_upload.py` đang bị phiên khác sửa dở (tôn trọng "chỉ sửa phần được chỉ định" + không đụng bài dở phiên khác).
+
+> **Ghi chép:** claim `GĐ 572 / C.368` (registry đã commit) · repo con `857111e` (4 file mới) · entry C.368 ghi vào AGENTS.md repo con (đang có phiên khác dọn bài cũ nên **file đó KHÔNG được commit trong phiên này** — để phiên sau commit qua cổng) · toàn bộ probe + báo cáo: `C:\CUONG_2026\misa-upload-research\`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.1.0** / repo con **10.9.0**.
