@@ -8349,3 +8349,25 @@ repo con **10.1.0**.
 > **5) Việc cần Đại Ca:** **khởi động lại ZCode** (MCP đang giữ env cũ `C:\CBM` đã xoá; phiên sau sẽ nạp `D:\CBMState`). Trong lúc chưa restart, tra cứu đồ thị vẫn dùng được qua CLI với env `D:\CBMState`.
 
 > **Version:** KHÔNG bump (docs + công cụ ngoài repo — chờ lệnh Push). App tổng **7.2.0** / repo con **11.1.0**.
+
+### GĐ 578 / C.371 (Trợ lý ZCode — máy chủ): PA Push đợt 29/10 tối — 2 repo (10 commit), bump repo con 11.2.0, verify production PASS (2026-10-29)
+
+> **Lệnh của Đại Ca:** "Push hết cho anh" (sau khi xác nhận **PA-A** cho quy tắc lưu trữ dữ liệu — state CBM giữ ở `D:\CBMState`).
+
+> **Rà trùng lặp (nguyên tắc ĐA AGENT + quy tắc Push đồng loạt GĐ 570):** remote 0 commit hơn ở cả 2 repo · nhánh phụ `agent-cli` + `pipeline-work` = RỖNG · working tree chỉ còn bài dở phiên khác (KHÔNG đụng) · đối chiếu registry: các việc trong đợt đều đã ✅.
+
+> **Đợt push (10 commit):**
+> - **App tổng** `5e67071..e947101` (6 commit): GĐ 576 (em — quy tắc lưu trữ dữ liệu + di chuyển state khỏi ổ C + mục 15 AGENTS.md + skill cập nhật) · GĐ 572/C.368 (phiên máy LAN-1 — entry PA-2 MISA HTTP thuần).
+> - **Repo con** `064dc07..cd9758f` (4 commit): C.368 (MISA đăng nhập + upload bằng HTTP thuần) · C.369 ×2 (PA-1 lấy dữ liệu SMED qua API nội bộ **bật vào lịch chạy đêm** cho 1HDDT+2DTTDT qua cầu nối `_pa1_fetch.py`, có công tắc `SMED_FETCH_MODE=browser` tắt khẩn cấp + tự lùi tool cũ; ghép thêm 3 module vào `smed_api.py`) · **bump C.371** của em.
+
+> **Bump version:** repo con **11.1.0 → 11.2.0** (minor — feature mới agent-side, theo tiền lệ GĐ 543 bump cho thay đổi builder/agent) — đã bump ĐỦ 2 nơi (`apps/banhang/package.json` + `DEFAULT_VERSION` app-shell.tsx, checklist GĐ 138 ✓). App tổng **giữ 7.2.0** (đợt này chỉ docs/skill/tooling — tiền lệ GĐ 417/568).
+
+> **Verify env Vercel TRƯỚC push (checklist GĐ 470 A):** đủ cả 2 app (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · GH_GIST_TOKEN · BETTER_AUTH_* app tổng · ZAI_API_KEY app con); APP_JWT_SECRET 2 app cùng hash `6218206c…`.
+
+> **Verify production SAU deploy (checklist GĐ 470 B) — PASS:** version **7.2.0** (app tổng) / **11.2.0** (app con) · login thật → 200 + `user` · `get-session` → có user · **SSO → 302 về app con + Set-Cookie `bh_session`** · `/api/auth/me` → 200 đúng tài khoản · deployment mới **● Ready** (30s / 22s).
+
+> **Theo dõi sau push:** phiên máy LAN-1 cảnh báo **endpoint nhập khẩu MISA có lỗi từ ~15:00** (ghi trong entry GĐ 572) — cần xem lại khi chạy job upload tối nay. Đồng thời PA-1 SMED API vừa bật vào lịch đêm nay → **kiểm tra job đêm** (nếu lỗi: đặt `SMED_FETCH_MODE=browser` để lùi tool cũ).
+
+> **Còn lại cho phiên sau:** **khởi động lại ZCode** để MCP nạp state mới `D:\CBMState` (phiên hiện tại báo MCP codebase-memory "not connected" vì state cũ `C:\CBM` đã xoá).
+
+> **Version:** app tổng **7.2.0** / repo con **11.2.0** — ĐÃ PUSH + ĐÃ LIVE.
