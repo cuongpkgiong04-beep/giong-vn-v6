@@ -8202,3 +8202,63 @@ repo con **10.1.0**.
 > **Việc còn lại cho phiên sau:** (1) **khởi động lại ZCode** để nạp 2 MCP server (config chỉ đọc lúc mở phiên); (2) cân nhắc `codebase-memory-mcp daemon start` để có UI đồ thị 3D (mặc định chỉ chạy khi có phiên); (3) nếu muốn, thêm 2 skill tương tự cho repo con (C.366 đã ghi).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 569 (Trợ lý ZCode — máy nhà LAN-1): NGHIÊN CỨU độc lập kênh UPLOAD dữ liệu lên MISA AMIS — phát hiện API "Nhập khẩu Excel" dùng chung + chứng minh chạy được KHÔNG cần trình duyệt (2026-10-29)
+
+> **Yêu cầu của Đại ca (29/10):** đăng nhập `amisapp.misa.vn` (tài khoản `cuongpk.giong01`)
+> để tìm hiểu cách **upload dữ liệu phục vụ báo cáo trên MISA** mà KHÔNG phải vào từng
+> phân hệ Mua hàng / Bán hàng / Xuất kho nhập liệu như hiện nay. Chỉ nghiên cứu + đề xuất
+> giải pháp, được phép chạy thử nhưng phải báo cáo cụ thể. **KHÔNG sửa code app** (đúng
+> phạm vi — phiên này chỉ đọc/khảo sát).
+
+> **Cách MISA vận hành (bằng chứng thật, không suy đoán):** `amisapp.misa.vn` = cổng đăng
+> nhập MISA ID (OIDC, `id.misa.vn/connect/authorize`, client_id `4c8dc9ce-…`) → `actapp.misa.vn`
+> = app kế toán SPA (~2.450 chunk JS trên CDN `actappg2.misacdn.net`). Phiên = **Bearer JWT
+> (iss MISAJSC, hạn 24h)** + cookie (`x-sessionid`, `x-tenantid`, `tid`, `dbid`) + header
+> **`x-misa-context` = JSON THUẦN** (TenantId/TenantCode/DatabaseId/BranchId/SessionId/…) —
+> KHÔNG mã hoá ⇒ dựng lại được, không cần bắt từ UI. API: `/g1|g2|g3/api/<module>/v1/…`
+> (di/danh mục · pu/mua hàng · sa/bán hàng · in/iv/kho · ledger/ghi sổ · ai/tìm kiếm ·
+> **import**/nhập khẩu · file/upload).
+
+> **🔑 PHÁT HIỆN CHÍNH — kênh upload hàng loạt dùng CHUNG mọi loại chứng từ** (trích từ
+> bundle `pjs.ImportAPI`): `file/multi → import/sheetname → import/step2 (trả
+> `mapping_columns` = ĐỊNH NGHĨA TEMPLATE chính thức: tên cột, cột bắt buộc, mô tả giá trị
+> hợp lệ) → step3 (KIỂM TRA) → worker/check_step3 (lý do lỗi TỪNG dòng) → step4 (GHI THẬT)`.
+> Đang dùng production cho Xuất kho (refType 2022) + Mua hàng (302) từ GĐ 481/501/512 —
+> **nay dò được 21 loại** nhập khẩu được (quét 740 giá trị `refType`): mua hàng 302/318/330 ·
+> đơn mua 301 · đơn đặt 352 · **nhập kho 2014** · xuất kho 2022 · **chuyển kho 2030** ·
+> lệnh SX/lắp ráp 2040/2050/2051 · kiểm kê 2060 · TSCĐ 250 · CCDC 450/457 · **danh mục VTHH
+> 9010** · hệ thống TK 9011 · **KH 9020** · **NCC 9021** · **nhân viên 9022** · người phụ thuộc
+> 9023. **BÁN HÀNG không có template** (quét hết dải 300–360 = 0 cột) ⇒ vẫn phải `save_full`.
+> Server chọn template theo **`refType`**, `tableName` gần như bị bỏ qua.
+
+> **✅ CHỨNG MINH BỎ ĐƯỢC TRÌNH DUYỆT (chạy thật hôm nay):** (1) đăng nhập **headless** tự đọc
+> OTP từ Gmail (IMAP) → OK (mã 728275 lúc 10:06); (2) `GET /g1/api/di/v1/stock_get` bằng
+> **urllib thuần → 200 · 20 kho**; (3) upload Excel multipart + sheetname bằng Python thuần → OK;
+> (4) **toàn chuỗi** file→sheetname→step2 (`31 cột · ghép 31`)→step3→check_step3 chạy Python
+> thuần, trả *"hợp lệ 0/1 · PX-SD-20261025112143 → Số chứng từ đã tồn tại trên phần mềm"*
+> (**dừng trước step4 ⇒ 0 phiếu nào được ghi**); (5) `pu_list` đọc 2.821 phiếu mua hàng +
+> `ai_search` OK không browser. ⇒ **Chrome CDP + bắt header từ UI + misa_tab_guard là KHÔNG
+> còn cần thiết cho đường upload.**
+
+> **3 PA trình ĐH (chờ chốt — chưa viết code):** **PA-1 (khuyến nghị)** chuyển `gd478_import_api`
+> sang HTTP thuần + giữ 1 lần login headless/ngày lấy token + sinh Excel từ `mapping_columns`
+> của MISA + mở rộng sang nhập kho/chuyển kho/danh mục — dự đoán hết lớp lỗi "không bắt được
+> headers" (GĐ 468) và giảm mạnh lỗi lệch/gộp/trùng (GĐ 563) nhờ kiểm tra TRƯỚC khi ghi.
+> **PA-2** = PA-1 + reverse luồng MISA ID OAuth để login cũng bằng HTTP (100% headless, nhưng
+> dễ vỡ khi MISA đổi OTP/thiết bị — làm sau). **PA-3** = xin kênh CHÍNH THỨC
+> `developer.misa.vn` (**MISA Developer Portal**: đăng ký ứng dụng + API key + OpenAPI theo sản
+> phẩm + nhật ký gọi API + api-testing-tool, xác thực MISA ID) — bền vững nhưng **phải MISA
+> duyệt/phát sinh điều kiện ⇒ chỉ ĐH liên hệ được**.
+
+> **Báo cáo đầy đủ + toàn bộ probe:** `C:\CUONG_2026\misa-upload-research\` (máy LAN-1) —
+> `BAO-CAO-UPLOAD-MISA.md` (báo cáo), `p2_login_capture.py` (login+OTP), `p3_headers.json`
+> (header thật), `p4`/`p9` (HTTP thuần + chuỗi upload dừng trước khi ghi), `p8_reftype_catalog.py`
+> (quét 740 refType → 21 template), `chunks/` + `pjs.index.js` (bundle MISA để lập bản đồ API).
+
+> **⚠️ Lưu ý phiên sau:** hôm nay phiên này **đã đăng nhập `cuongpk.giong01` từ LAN-1** (10:06)
+> — tài khoản ĐH đang dùng ⇒ MISA có thể báo "đang có người dùng khác sử dụng tài khoản"; phiên
+> này **KHÔNG bấm "Tiếp tục đăng nhập"**. Automation nên dùng tài khoản riêng (đã có `mrhungtm3`).
+> Chưa kiểm chứng trên máy agent .34/.245 (token không gắn IP nhưng cần chạy thử 1 lượt trước khi thay production).
+
+> **Version:** KHÔNG bump (nghiên cứu, 0 code app — chờ lệnh Push). App tổng **7.1.0** / repo con **10.9.0**.
