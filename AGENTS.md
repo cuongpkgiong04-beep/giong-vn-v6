@@ -8262,3 +8262,21 @@ repo con **10.1.0**.
 > Chưa kiểm chứng trên máy agent .34/.245 (token không gắn IP nhưng cần chạy thử 1 lượt trước khi thay production).
 
 > **Version:** KHÔNG bump (nghiên cứu, 0 code app — chờ lệnh Push). App tổng **7.1.0** / repo con **10.9.0**.
+
+### GĐ 575 (Trợ lý ZCode — máy chủ): PA Push đợt 29/10 — push CẢ 2 repo (13 commit), KHÔNG bump (0 file code production) + verify production login/SSO PASS (2026-10-29)
+
+> **Lệnh của Đại Ca:** "Push". Rà trùng lặp theo nguyên tắc ĐA AGENT + quy tắc **Push đồng loạt (GĐ 570)** → push TOÀN BỘ commit đã xong đang đợi push của mọi phiên.
+
+> **Rà TRƯỚC khi push:** remote **0 commit mới** ở cả 2 repo (không có agent khác push chen) · nhánh phụ `agent-cli` + `pipeline-work` = **RỖNG** (không cần merge) · working tree chỉ có bài dở của phiên khác (AGENTS.md/AGENT_REGISTRY.md đang sửa, 1 file attachments bị xoá, untracked `_probe27/`-`screenshots/`-`attachments/`…) → **KHÔNG add, KHÔNG đụng**. Ghi chú: repo con có bài dở `misa_muahang_upload.py`, `overview-dashboard.tsx`, `-danh-muc.ts`… của phiên khác — giữ nguyên.
+
+> **Nội dung đợt push (13 commit):**
+> - **App tổng** `7611536..c8ff2b6` (12 commit): GĐ 568 (em — tooling đồ thị code: `.cbmignore`, `.codegraph/`, 3 SKILL.md, mục 14 AGENTS.md) · GĐ 569 (máy LAN-1 — nghiên cứu kênh UPLOAD MISA AMIS) · GĐ 570 (Freebuff — nguyên tắc Push đồng loạt) · GĐ 571/C.367 (em — claim phần repo con) · GĐ 572/C.368 (máy nhà LAN-1 — claim PA-2 MISA ID HTTP thuần) + các dòng registry ✅.
+> - **Repo con** `40b628c..72bc64b` (1 commit): C.367 — `.cbmignore` cho app con + guard tên thiết bị Windows (`nul`) + `.codegraph/` vào `.gitignore`.
+
+> **KHÔNG bump version** — kiểm bằng `git diff --name-only origin/main..HEAD` cả 2 repo: đợt này **0 file code production** (chỉ `AGENTS.md` · `AGENT_REGISTRY.md` · `.cbmignore` 2 repo · `.gitignore` 2 repo · 3 `SKILL.md`). Tiền lệ GĐ 416/417 (docs-only). App tổng giữ **7.2.0** / repo con giữ **11.1.0**.
+
+> **Verify env Vercel TRƯỚC push (checklist GĐ 470 A) — ĐỦ ở cả 2 app:** `DATABASE_URL` · `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID` · `GH_GIST_TOKEN` · `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` (app tổng) · `ZAI_API_KEY` (app con). Đặc biệt **`APP_JWT_SECRET` 2 app GIỐNG NHAU**: so hash hai file `.env.local` → cùng `sha256 6218206c…` (dài 64), và chứng minh end-to-end bằng SSO thật bên dưới.
+
+> **Verify production SAU push (checklist GĐ 470 B) — PASS toàn bộ:** 2 app HTTP 200 (version 7.2.0 / 11.1.0) · **login thật** app tổng → 200 + có `user` · `get-session` → có `user` · **SSO** ký JWT (HS256 · iss `giong-vn-v6` · aud `giong-banhang`) → **302 về `https://giong-banhang.vercel.app/` + Set-Cookie `bh_session`** · app con `/api/auth/me` → 200, đúng email + **role SuperAdmin** (gửi token đúng claims `empId/name/email/role/center/mods`) · **Deployment:** Vercel tạo mới lúc **13:42 (app tổng)** / **13:46 (app con)** — ngay sau lệnh push, cả 2 ● **Ready** (build 29s/33s).
+
+> **Version:** app tổng **7.2.0** / repo con **11.1.0** — ĐÃ PUSH + ĐÃ LIVE (không đổi số đợt này).
