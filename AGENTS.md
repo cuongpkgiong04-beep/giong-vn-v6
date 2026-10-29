@@ -8065,3 +8065,19 @@ repo con **10.1.0**.
 >
 > **Version:** app tổng **7.1.0 → 7.2.0** / repo con **11.0.0 → 11.1.0**
 > (minor — feature mới) — ĐÃ PUSH theo lệnh ĐH.
+
+### GĐ 567 / C.366 (Trợ lý ZCode — máy chủ): PA Push đợt 29/10 — lệnh ĐH "Push hết tất cả": đẩy 2 repo (VĐ2 + toàn bộ tồn đọng GĐ 554→566) + bump 7.1.0/11.0.0 + verify production trọn checklist GĐ 470 (2026-10-29)
+
+> **Lệnh của Đại Ca (29/10 08:35):** "Push hết tất cả nhé". Rà trùng lặp TRƯỚC push: fetch 2 repo → remote KHÔNG có commit mới · nhánh phụ `agent-cli`/`pipeline-work` RỖNG · working tree còn file dở của phiên khác (app tổng: `src/routes/index.tsx` GĐ 559 · repo con: `overview-dashboard.tsx`, `dashboard-data.ts`, `-danh-muc.ts`, `-overview.ts`, `app-shell.tsx`, `misa_muahang_upload.py`…) → **KHÔNG đụng, KHÔNG add** (báo ĐH).
+
+> **Bump version (lúc Push — quy tắc ĐA AGENT):** app tổng **7.0.0 → 7.1.0** (minor — VĐ2 phiếu MISA + watchdog CDP/wake job báo cáo + trang Sức khoẻ dữ liệu + 4 nhóm quyền NHẬP DỮ LIỆU) · repo con **10.9.0 → 11.0.0** (minor=9 → **nhớ sang MAJOR**, KHÔNG dùng 10.10.0). ⚠️ `apps/banhang/src/components/app-shell.tsx` (repo con) đang bị phiên khác sửa dở → CHỈ stage **hunk version** bằng patch lọc hunk (`git apply --cached`), giữ nguyên bài dở (bài học mới — trước đây dùng marker; nay lọc theo nội dung hunk). Checklist GĐ 138 ✓ (mọi thành phần 1 chữ số, grep đối chiếu 4 chỗ).
+
+> **Push — 2 ĐỢT cùng ngày (không đè nhau):** đợt của em: app tổng `f6d1ab7..1feaaa9` (~40 commit: GĐ 554→566 của nhiều phiên + GĐ 563 VĐ2 + scripts) · repo con `34ca1f1..dc987d4` (~30 commit). Sau đó phiên **GĐ 559 (Trợ lý Freebuff)** commit + push tiếp code mobile Dashboard → bump **7.2.0 / 11.1.0** (nền đã gồm 7.1.0/11.0.0 của em). **09:15: cả 2 repo 0 commit chưa push.**
+
+> **✅ Verify production SAU push (checklist GĐ 470 mục B — test THẬT, không tin chữ "Ready"):** app tổng `giong-vn-v6.vercel.app` = **7.2.0** · app con `giong-banhang.vercel.app` = **11.1.0** (curl --compressed lần đầu — không ghim deployment) · `POST /api/auth/sign-in/email` 200 + có user ✓ · `GET /api/auth/get-session` 200 + user ✓ · **SSO app tổng → app con: 302 về `https://giong-banhang.vercel.app/` + `Set-Cookie: bh_session`** ✓ (= APP_JWT_SECRET 2 app KHỚP NHAU; token ký bằng secret trong `.env.local` được app con chấp nhận — mạnh hơn test env vì đi đúng đường verify) · `GET /api/auth/me` 200 + SuperAdmin + **94 quyền = 11 nhóm + 78 lá** (đọc LIVE từ module_access) ✓ · `/m/up-xuat-kho` 200 + khối **"Phiếu cần xử lý"** render (HTTP + grep HTML thật) ✓ · tunnel: `curl /health` từ internet → `tunnel_ok: true`, URL khớp `.env.local` 2 app + api_server local ✓.
+
+> **Deploy máy LAN (không nằm trong Vercel — quan trọng vì job MISA chạy trên LAN):** `.34` nhận 8 file VĐ2 lúc 04:0x; `.245` do `scripts/_gd563_wait_deploy_clean.py` tự chờ rảnh rồi deploy lúc **04:49** (verify hash PASS · `GIONG_SMED_Worker` = **Running**/Automatic) ⇒ Task_05/07 đêm nay chạy code mới (hết đỏ oan vì "chờ ghi sổ", có số CT riêng theo TT).
+
+> **Tồn đọng báo ĐH (KHÔNG tự xử lý — bài dở của phiên khác):** repo con còn 4 file chưa commit sau đợt push của họ: `apps/banhang/src/components/overview-dashboard.tsx` · `src/routes/api/-danh-muc.ts` · `src/routes/m/danh-muc-khach-hang.tsx` · `agent/misa_muahang_upload.py` (phiên nào làm xong tự commit) · app tổng: `src/routes/index.tsx` (GĐ 559) · `package-lock.json` (lệch 6.4.0→6.8.0, bài cũ) · `attachments/*.zip` deleted (phiên cũ).
+
+> **Version:** app tổng **7.2.0** / repo con **11.1.0** — ĐÃ PUSH + ĐÃ LIVE (7.1.0/11.0.0 là mốc bump của đợt em; 7.2.0/11.1.0 là đợt GĐ 559 push tiếp).
