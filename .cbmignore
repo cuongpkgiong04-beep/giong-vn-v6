@@ -1,0 +1,62 @@
+# .cbmignore — loại trừ khỏi đồ thị code của codebase-memory-mcp (GĐ 568, 29/10/2026)
+# Chỉ ảnh hưởng trình index, KHÔNG ảnh hưởng git.
+# App tổng: loại dữ liệu tải về/ảnh/log để index nhanh và không bị hủy giữa chừng.
+
+# ── Dữ liệu tải về / ảnh / rác làm việc ──
+attachments/
+screenshots/
+LOG/
+tools_tmp/
+_probe*/
+probe*/
+apps/
+
+# ── Cache/dữ liệu tool ──
+cache_/
+**/cache_/
+*.sqlite
+*.sqlite3
+*.db
+
+# ── Tài liệu/gói tải về ──
+*.xlsx
+*.xls
+*.zip
+*.7z
+*.rar
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.whl
+
+# ── Log ──
+*.log
+
+# ── Nhị phân ──
+*.exe
+*.dll
+*.pyd
+
+# ── File rác trùng TÊN THIẾT BỊ Windows (nul/con/aux/prn) ──
+# Đã gặp thật 29/10/2026: file `nul` ở gốc repo làm bước quét discovery của
+# codebase-memory-mcp thất bại — Windows chuyển hướng tên này sang thiết bị NUL.
+# File gốc đã xoá; giữ dòng này để chặn tái diễn.
+nul
+con
+aux
+prn
+com1
+com2
+com3
+lpt1
+lpt2
+
+# ── Build/venv ──
+node_modules/
+.vercel/
+dist/
+build/
+__pycache__/
+.venv/
+venv/

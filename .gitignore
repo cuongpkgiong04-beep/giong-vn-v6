@@ -28,3 +28,6 @@ giong-apps-cli/
 
 # ui-ux-pro-max skill — rác runtime (GĐ 347)
 .agents/skills/ui-ux-pro-max/scripts/__pycache__/
+
+# CodeGraph (đồ thị code cục bộ — GĐ 568, 29/10/2026): index của từng máy, không commit
+.codegraph/
