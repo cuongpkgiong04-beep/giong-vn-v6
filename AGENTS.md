@@ -8009,3 +8009,59 @@ repo con **10.1.0**.
 > **Tiêu chí kiểm chứng (sau Push):** (1) /m/up-xuat-kho → khối "Phiếu cần xử lý" hiện đúng nhóm + lý do THẬT (hết "xem log"); (2) bấm "Ghi sổ lại"/"Chạy lại phiếu này" → job tạo đúng ngày → kết quả cập nhật trên khối; (3) Task_05/07 đêm: phiếu chờ ghi sổ KHÔNG làm job đỏ + tự thử lại lượt sau; (4) 2 TT trùng mã → 2 chứng từ riêng (số CT `SD-…_<TT>`), mã SMED gốc ở "Số chứng từ kèm theo".
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+### GĐ 559 / C.359 (Trợ lý Freebuff): Mobile — bảng giá + TH GB-KM sticky cuộn ngang · Dashboard so sánh 2 kỳ + màu xanh đồng nhất · phân quyền chỉ-Dashboard app con · chấm công theo tháng app tổng (2026-10-29)
+
+> **Yêu cầu của Đại ca (28/10, 4 nhóm):** (1) Bảng giá dịch vụ cuộn ngang
+> desktop + mobile, mobile không mất chữ, cố định thanh tiêu đề; (2) Bảng TH
+> GB-KM_GN-CK-LN cố định thanh tiêu đề cả mobile + desktop; (3) Dashboard
+> "Tổng quan" app con 6 biểu đồ thể hiện 2 dòng dữ liệu so sánh theo kỳ chọn +
+> thống nhất màu xanh (đậm hơn cho kỳ so sánh); (4) app tổng: 4.1 Admin/User
+> chỉ-Dashboard → khóa/ẩn sidebar app con · 4.2 xem lại phân quyền theo nhóm
+> sidebar · 4.3 biểu đồ chấm công để 1 tháng (tháng 9/tháng 10).
+
+> **ĐH chốt 4 PA (vòng hỏi-đáp 28/10):** (1) khung cuộn riêng + tiêu đề ghim;
+> (2) đồng nhất TẤT CẢ sang hệ xanh; (3) tắt hết nhóm → chỉ Dashboard (giữ
+> compat "chưa cấu hình = đủ hết"); (4) chọn tháng + vẽ cả tháng.
+
+> **Đã làm (repo con `d298c0e` + bump `23c6ce0` · app tổng `924e639` + bump
+> `e04859b`):**
+> 1. **Bảng giá** (`banhang-bang-gia-dich-vu.tsx`): bỏ `table-fixed` % →
+>    `min-w-[1080px]` auto layout cuộn ngang THEO NỘI DUNG (mobile cột tự rộng,
+>    hết truncate mất chữ) + khung `max-h-[70vh] overflow-auto` + thead sticky
+>    (ghi chú tách ra ngoài khung).
+> 2. **TH GB-KM** (`banhang-th-gbkm-gnck-ln.tsx`): khung `max-h-[70vh]` +
+>    tiêu đề 2 hàng GHIM (hàng 1 `top-0 z-20`, hàng 2 `top-[29px]` = 16 line +
+>    12 py + 1 border) + `min-w-[1280px]`.
+> 3. **Dashboard so sánh 2 kỳ** (6 biểu đồ — tồn kho giữ nguyên): helper mới
+>    `dashboard-data.ts` — `compareRange()` (5 quy tắc ĐH: Hôm nay→Hôm qua ·
+>    Hôm qua→Hôm kia · Tháng này→Tháng trước · Năm nay→Năm trước · Khoảng
+>    khác→lùi 30 ngày; Tháng trước/Năm trước→kỳ liền trước cùng độ dài) ·
+>    `mergeSeriesByDay()` (ghép theo NGÀY THỨ i, ngày thiếu điền 0) ·
+>    `mergeByVax()` (top 10: cột kỳ so sánh cạnh cột kỳ này, 0 nếu không bán).
+>    `useChart` tải 2 kỳ SONG SONG (backend KHÔNG đổi SQL — chỉ thêm field
+>    `iso` vào series) + cache key thêm kỳ so sánh. Màu: hết tím — đồng nhất
+>    `#0ea5e9` (kỳ này) / `#0369a1` ĐẬM (kỳ so sánh) + legend chấm màu dưới
+>    chart + tooltip 2 dòng (CompareTooltip).
+> 4. **Chỉ-Dashboard app con** (`app-shell.tsx` repo con `filterTreeByMods`):
+>    mods RỖNG (Admin tắt hết nhóm) → trả `[]` — sidebar chỉ còn TỔNG QUAN;
+>    "chưa cấu hình" server vẫn trả đủ hết (compat user cũ giữ nguyên).
+> 5. **Chấm công app tổng** (`index.tsx`): card "14 phiên đông" → "Chấm công
+>    theo tháng" — dropdown chọn tháng (mặc định tháng hiện tại, danh sách
+>    tháng từ dữ liệu) + vẽ ĐỦ ngày trong tháng (điền 0) + thông báo tháng trống.
+>
+> **Verify:** tsc app tổng EXIT 0 · tsc repo con EXIT 0 · unit mới
+> `dashboard-compare.test.ts` **12/12 PASS** (đăng ký npm test) · npm test bộ
+> cũ 6/7 PASS — `upload-history-scope` FAIL CÓ SẴN trên HEAD sạch (đối chứng
+> stash — không liên quan) · commit app con tách hunk (giữ nguyên 12 dòng dở
+> colgroup của phiên khác trong working tree, script bytes-mode).
+>
+> **Tiêu chí kiểm chứng (sau Push 7.2.0 / 11.1.0):** (1) Bảng giá + TH GB-KM:
+> cuộn ngang trên mobile không mất chữ, tiêu đề ghim khi cuộn dọc; (2) Tổng
+> quan: chọn "Hôm nay" → 2 dòng hôm nay + hôm qua; "Tháng này" → tháng này +
+> tháng trước; "Khoảng khác" → lùi 30 ngày; cột so sánh XANH ĐẬM; (3) user bị
+> tắt hết nhóm → app con chỉ còn TỔNG QUAN; (4) Dashboard app tổng: chấm công
+> theo tháng, đổi tháng được.
+>
+> **Version:** app tổng **7.1.0 → 7.2.0** / repo con **11.0.0 → 11.1.0**
+> (minor — feature mới) — ĐÃ PUSH theo lệnh ĐH.
