@@ -8371,3 +8371,42 @@ repo con **10.1.0**.
 > **Còn lại cho phiên sau:** **khởi động lại ZCode** để MCP nạp state mới `D:\CBMState` (phiên hiện tại báo MCP codebase-memory "not connected" vì state cũ `C:\CBM` đã xoá).
 
 > **Version:** app tổng **7.2.0** / repo con **11.2.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 579 (Trợ lý ZCode — máy chủ): Restart GIONG_SMED_Agent nạp code PA-1 7 phân hệ (máy LAN-1 `da70d7e`) + trả lời 2 câu hỏi máy LAN (2026-10-29)
+
+> **Bối cảnh:** máy LAN-1 (C.369) push code PA-1 bật 7 phân hệ SMED lấy dữ liệu qua
+> API nội bộ (`da70d7e` 21:48) và xin Đại Ca restart service máy chủ; Đại Ca giao
+> "Nếu hợp lý em tự xử đi nhé".
+
+> **Đã làm (vận hành — 0 code đổi):**
+> 1. Đối soát TRƯỚC restart: HEAD repo con máy chủ đã ở chính `da70d7e` (fetch thấy)
+>    · compile 128 file agent sạch (duy nhất `fix_test_final2.py` file test cũ ở root
+>    lỗi cú pháp — KHÔNG thuộc runtime, không đụng) · diff `misa_muahang_upload.py`
+>    +3/−1 là bản sửa hoàn chỉnh GĐ 554 (mã địa điểm = mã kho theo trung tâm — nạp
+>    cùng lúc đúng, không commit hộ) · `SMED_FETCH_MODE` không set trong env NSSM →
+>    `PA1_ENABLED` mặc định = api = PA-1 BẬT.
+> 2. Restart chuẩn (quy trình 13.3): `sc stop` → web_agent chết sạch theo sc stop
+>    (không cần taskkill) → xoá `__pycache__` 3 chỗ (root agent 40_web_agent+smed_api
+>    · api_server 9 file · etl 24 file) → `sc start` 22:14:46 → RUNNING.
+> 3. **Bám bài học GĐ 424 — nhưng lần này tunnel URL GIỮ NGUYÊN:** cloudflared là
+>    process CON của api_server (không thuộc service GIONG_SMED_Agent) → chỉ restart
+>    web_agent → api_server + cloudflared sống nguyên → tunnel
+>    `essence-royalty-coverage-obtained` không đổi → KHÔNG cần update-tunnel-env /
+>    env Vercel / redeploy. (Chỉ khi kill cả api_server thì URL mới đổi.)
+> 4. Verify: `PA1_MODULES` đủ 7 (hddt · dtdt · bkccn · nhapkho · xnkt · chietkhau ·
+>    hentiem) · luồng job → `_pa1_fetch.py` import `smed_api` bản da70d7e · log khởi
+>    động sạch · Task_02 23:00 còn lên lịch · /health GiongDB 3.581 jobs tunnel_ok ·
+>    production 2 app sống (app con 11.2.0).
+>
+> **Trả lời 2 câu hỏi máy LAN (Đại Ca đã xem):**
+> - **KHÔNG bật 5 phân hệ chưa ghép** (6BKX · 12DTTDT_BLTH · 3DTTHC · 14GVVVXDT ·
+>   10GDTVX): "đối chứng đạt" mới là chạy thử so khớp, code GHÉP (khuôn file +
+>   fetch_items + lịch) chưa viết xong → bật cũng không có gì để chạy; đêm nay 5
+>   phân hệ vẫn chạy tool cũ bình thường. Ghép xong + đối chứng + commit rồi bật
+>   (restart thêm 1 lần lúc rảnh — tránh sát 23:00 Task_02).
+> - **Xoá __pycache__ AN TOÀN:** chỉ là cache bytecode Python tự sinh lại từ file
+>   .py thật (lần import đầu chậm hơn vài trăm ms); không chứa dữ liệu/cấu hình;
+>   xoá chống stale .pyc nạp nhầm code cũ (GĐ 168). Điều kiện duy nhất: dừng hết
+>   process Python agent trước khi xoá (Windows lock file đang mở).
+
+> **Version:** KHÔNG bump (vận hành 0 code). App tổng **7.2.0** / repo con **11.2.0**.
