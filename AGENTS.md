@@ -8114,3 +8114,28 @@ repo con **10.1.0**.
 > **Tồn đọng báo ĐH (KHÔNG tự xử lý — bài dở của phiên khác):** repo con còn 4 file chưa commit sau đợt push của họ: `apps/banhang/src/components/overview-dashboard.tsx` · `src/routes/api/-danh-muc.ts` · `src/routes/m/danh-muc-khach-hang.tsx` · `agent/misa_muahang_upload.py` (phiên nào làm xong tự commit) · app tổng: `src/routes/index.tsx` (GĐ 559) · `package-lock.json` (lệch 6.4.0→6.8.0, bài cũ) · `attachments/*.zip` deleted (phiên cũ).
 
 > **Version:** app tổng **7.2.0** / repo con **11.1.0** — ĐÃ PUSH + ĐÃ LIVE (7.1.0/11.0.0 là mốc bump của đợt em; 7.2.0/11.1.0 là đợt GĐ 559 push tiếp).
+
+### GĐ 570 (Trợ lý Freebuff): Ghi nguyên tắc PUSH ĐỒNG LOẠT TOÀN DỰ ÁN vào AGENTS.md (chỉ thị Đại ca 29/10) (2026-10-29)
+
+> **Bối cảnh:** Đại ca phát hiện khi phát lệnh "Push" ở 1 Session, các nhiệm vụ ĐÃ
+> XONG của Session khác KHÔNG được đẩy lên (agent chỉ thấy working tree của mình).
+> Đại ca nhớ đã từng giao nguyên tắc "đồng loạt Push" nhưng **tra toàn bộ
+> AGENTS.md + AGENTS_ARCHIVE.md + CLAUDE.md → CHƯA TỪNG được ghi thành quy tắc**
+> (chỉ có tiền lệ làm từng đợt: GĐ 423 push toàn bộ việc đã xong · GĐ 498 commit
+> hộ 3 GĐ máy nhà). Quy tắc push hiện hành (Nguyên tắc Push ĐA AGENT 2026-09-26)
+> chỉ có 3 nguyên tắc: không tự push · bump khi Push · rà trùng lặp — THIẾU mục
+> "rà các nhiệm vụ đợi Push của CÁC SESSION/MÁY KHÁC".
+
+> **Đã làm (docs-only):** thêm khối **"🌍 PUSH ĐỒNG LOẠT TOÀN DỰ ÁN"** ngay sau
+> mục "Nguyên tắc Push ĐA AGENT" (SHARED-BLOCK GD570-PUSH-DONG-LOAT, chèn qua
+> cổng shared-doc --block) — gồm: nhận định hiện tượng (mỗi agent chỉ thấy
+> worktree của mình · non-fast-forward · index.lock · nhánh chưa gộp) +
+> **CHECKLIST 6 bước bắt buộc** cho agent nhận lệnh Push (rà mọi nhánh cả 2 repo
+> → phân loại ĐÃ XONG/DỞ theo registry 🔒/✅ → việc ngoài git xong rồi commit hộ
+> (tiền lệ GĐ 498) → merge + bump 1 lần + push 1 lần → báo danh sách đã
+> push/đã bỏ qua → cấm push riêng sau đợt).
+>
+> **Verify:** khối nằm đúng vị trí (sau mục Nguyên tắc Push ĐA AGENT, trước
+> mục 🧪 KIỂM TRA...); 0 dòng bị xoá (cổng ghép sạch, giữ nguyên bài dở phiên khác).
+>
+> **Version:** KHÔNG bump (docs-only — quy tắc, 0 code) — KHÔNG push chờ lệnh.
