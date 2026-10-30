@@ -56,7 +56,11 @@ test("GĐ 420 — cấu trúc: 17 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số 
     "/m/mia-banra-chitiet",
   ]);
   // GĐ 504/C.322 (22/10 — yêu cầu Đại ca): nhóm ĐỐI CHIẾU SỐ LIỆU — mục 1 nhập kho
-  assert.deepEqual(routesOf("bh-doi-chieu-so-lieu"), ["/m/doi-chieu-nhap-kho"]);
+  // GĐ 588/C.375 (30/10 — PA-2 ĐH chốt): + mục 2 đối chiếu số liệu xuất kho
+  assert.deepEqual(routesOf("bh-doi-chieu-so-lieu"), [
+    "/m/doi-chieu-nhap-kho",
+    "/m/doi-chieu-xuat-kho",
+  ]);
 });
 
 test("GĐ 420 — mọi lá chỉ thuộc MỘT nhóm duy nhất (không route trùng giữa nhóm)", () => {

@@ -235,6 +235,9 @@ export const BH_GROUPS: BhGroup[] = [
     label: "ĐỐI CHIẾU SỐ LIỆU",
     leaves: [
       { to: "/m/doi-chieu-nhap-kho", label: "Đối chiếu nhập kho MISA-SMED-MIATOOL" },
+      // GĐ 588/C.375 (30/10/2026 — PA-2 ĐH chốt): Mục 2 — đối chiếu số liệu xuất
+      // kho MISA ↔ SMED mức DÒNG HÀNG (số lô + hạn sử dụng; gồm cả phiếu xuất hủy).
+      { to: "/m/doi-chieu-xuat-kho", label: "Đối chiếu số liệu xuất kho MISA-SMED" },
     ],
   },
   // GĐ 229 (26/09/2026 — yêu cầu Đại ca): nhóm ĐIỀU HÀNH — NHIỆM VỤ (bậc 0
