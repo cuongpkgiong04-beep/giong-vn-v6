@@ -9335,3 +9335,78 @@ repo con **10.1.0**.
 > repo con **11.4.1**.
 
 ---
+
+### GĐ 599 (Trợ lý ZCode (máy chủ)): KHẢO SÁT + NHẬN ĐỊNH phân hệ "UPLOAD Hóa đơn đầu vào" (MIA → MISA AMIS) — trình ĐH 3 phương án, CHƯA sửa code (2026-10-31)
+
+> **Yêu cầu của Đại Ca (31/10, ảnh trang `/m/up-hoadon-dauvao` app con đang là
+> placeholder):** xây phân hệ "Upload MISA \ UPLOAD Hóa đơn đầu vào" —
+> **toàn bộ hóa đơn mua vào theo bảng kê MiaTool TRỪ phần vắc xin đã upload theo
+> đường SMED** (chứng từ mua hàng) = phần còn lại phải upload lên MISA. Chia thành
+> 3 loại phiếu: (1) nhập mua NVL — Nợ 152/Có 331 · (2) nhập mua CCDC — Nợ 153/Có 331 ·
+> (3) chứng từ mua dịch vụ — Nợ 242/642/Có 331. ĐH sẽ **hạch toán tay** vào bảng chi
+> tiết do em cung cấp; em phân 3 bảng → upload Excel (hoặc đường tốt nhất đã khảo sát)
+> + ghi số chứng từ; sau đó thêm mục "4. Đối chiếu hóa đơn mua vào MISA-MIATOOL"
+> trong nhóm ĐỐI CHIẾU SỐ LIỆU (chuẩn: số chứng từ bằng nhau + số tiền bằng nhau).
+
+> **KHẢO SÁT — bằng chứng thật (không sửa gì):**
+>
+> **(1) Nguồn MIA** — `mia_hddt_hd` (tổng hợp theo HĐ) + `mia_hddt_hh` (chi tiết dòng
+> hàng, 37 cột có lô/HSD): T9/2026 mua vào **386 HĐ / 5.481.355.958** (5.216.285.388 +
+> 265.076.902) · T10 đến 30/10 **268 HĐ / 5.542.810.213** · T9+T10 **654 HĐ**
+> TRỪ phần đã có chứng từ SMED = **529 HĐ đã upload** (10.322.938.241) → **125 HĐ còn
+> lại (701.227.930)**. ⚠️ **135 HĐ tháng 10 CHỈ có ở `hh`, thiếu header `hd`** (Biovaccine
+> 2/7/8/22/10…, ~851,6M trước thuế; 74 HĐ đã có SMED) ⇒ nguồn phải là **UNION hd+hh**
+> (dedupe theo số HĐ chuẩn hóa). Không có cột nhóm hàng/cờ vắc xin; không có metadata
+> upload MISA phía MIA.
+>
+> **(2) Phần đã upload theo SMED** — nguồn `stg_5BKN` (**col5 = SỐ HÓA ĐƠN NCC**,
+> col2 NCC, col4 mã phiếu PN-), đã lên MISA qua **import Excel API 302/pu_voucher**
+> (production, `MISA_UPLOAD_MODE=http`). Dấu vết MISA: `misa_phieu_status` (247 phiếu
+> inv_no/is_posted) · `misa_pu_detail` (172 dòng/131 phiếu — mới phủ 09-22/10).
+> **Khóa khớp ĐO ĐƯỢC: SỐ HÓA ĐƠN (bỏ số 0 đầu) = 529/654 = 81%** (NCC + tiền sau
+> thuế khớp khít trên mẫu 12 cặp); khớp cả tiền = 75%; khớp mức dòng hàng 69%.
+> ⚠️ Ghi chú cũ `sql_reports.py:611` ("số HĐ SMED ↔ MIA KHÔNG giao") **hết đúng** với
+> dữ liệu hiện tại. 135 HĐ mồ côi → 61 chưa có SMED.
+>
+> **(3) Kênh upload MISA — probe THẬT hôm nay (đọc định nghĩa template, DỪNG trước
+> bước kiểm tra/ghi, dùng phiên HTTP thuần cache sẵn — 0 đăng nhập mới):**
+> - **302** = Mua hàng trong nước (2 hình thức "nhập kho"/"**không qua kho**") — có
+>   Số HĐ/Ký hiệu/Ngày HĐ/%thuế ⇒ vào bảng kê thuế đầu vào; cột Kho/TK kho/TK công nợ.
+> - **330** = **chứng từ MUA DỊCH VỤ** (cột "Mã dịch vụ"/"Tên dịch vụ"/"TK chi phí/TK
+>   kho"/"TK công nợ"/"Nhận kèm hóa đơn") ⇒ Nợ 242/642 Có 331, có Số HĐ ⇒ đúng loại (3).
+> - **318** = mua hàng nhập khẩu (thuế NK) · **2014** = phiếu nhập kho có **TK Nợ + TK Có
+>   tường minh NHƯNG KHÔNG có cột Số HĐ/Ký hiệu/Ngày HĐ** ⇒ không phục vụ bảng kê thuế.
+> - **Kho MISA hiện có 20 kho — TOÀN BỘ theo trung tâm (VP/TT/TS/TP/TO/TĐ/TD/TA/SĐ/QO/
+>   PY/NL/ML/LM/LB/HM/ĐY/ĐX/CĐ/BH), CHƯA có kho NVL/CCDC** ⇒ phải quyết "nhập kho hay
+>   không qua kho" trước khi làm.
+>
+> **(4) Hạ tầng đã sẵn:** route `/m/up-hoadon-dauvao` + nav (mục 6 nhóm UPLOAD-MISA-AMIS)
+> + phân quyền 3 điểm (`bh-upload-misa-amis` cả 2 repo) đã khai đủ; `gd478_import_api.py`
+> + `misa_http_api.py` (HTTP thuần, công tắc `MISA_UPLOAD_MODE`) chạy production; builder
+> `sinh_excel_mua_hang()` (26 cột) tái dùng được cho NVL/CCDC; module đối chiếu có mẫu
+> `dc_nhap_kho`/`dc_xuat_kho`/`dc_hoadon_banhang` (3 nguồn _MS/_SM/_MI + cờ kết quả).
+
+> **3 PHƯƠNG ÁN trình ĐH (chờ chốt — CHƯA code):**
+> - **PA-1 (khuyến nghị)** — 1 bảng chi tiết chung "HĐ mua vào chưa upload" (UNION
+>   hd+hh, từng dòng hàng) + cột Hạch toán ĐH điền tay (TK Nợ/TK Có/mã hàng-dịch vụ/kho)
+>   + cột Loại phiếu tự suy từ TK Nợ (152→NVL · 153→CCDC · 242/642→dịch vụ, sửa tay được)
+>   → hệ thống TÁCH 3 bảng + sinh Excel template 302/302/330 + upload HTTP thuần + tự
+>   đánh số chứng từ + lưu trạng thái vào bảng mới (misa_hddt_upload_line) → đối chiếu.
+>   *Ưu: một chỗ nhập tay, không sót; nhược: 1 màn hình nhiều cột.*
+> - **PA-2** — 3 bảng riêng ngay từ đầu (ĐH hạch toán trong từng bảng).
+>   *Ưu: rõ ràng; nhược: phân loại trước khi hạch toán → phải chọn loại thủ công từ đầu.*
+> - **PA-3** — Xuất Excel bảng kê chưa upload → ĐH hạch toán ngoài Excel → import lại.
+>   *Ưu: ĐH quen Excel; nhược: cần import ngược + dễ lệch cấu trúc file.*
+>
+> **CÂU HỎI CHỜ ĐH CHỐT:** (a) NVL/CCDC **nhập kho hay không qua kho** (→ tạo kho
+> NVL/CCDC trên MISA hay không) · (b) danh mục mã NVL/CCDC/dịch vụ trên MISA: **tự tạo
+> theo tên hàng MIA** (như GĐ 560 bán hàng) hay ĐH tự nhập · (c) NCC: map theo MST/tên,
+> chưa có thì tự tạo? · (d) quy tắc ĐÁNH SỐ chứng từ (PN-NVL-…/PN-CCDC-…/MVDV-…?).
+>
+> **Verify đã làm:** probe chỉ đọc (0 ghi MISA, 0 phiếu tạo) · 0 file code sửa ·
+> phiên MISA hết hạn ~31/10 22:12 (dùng lại cache, không đá phiên ĐH).
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
+> repo con **11.4.1**.
+
+---
