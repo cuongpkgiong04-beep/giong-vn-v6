@@ -9632,3 +9632,71 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
 > App tổng **7.4.1** / repo con **11.5.0**.
+
+### GĐ 603 / C.381 (Trợ lý ZCode — máy chủ): PHÂN HỆ "UPLOAD Hóa đơn đầu vào" (MIA → MISA) — PA-1 ĐH chốt 31/10: engine nạp bảng kê + sinh Excel 302/330 + tự sinh số chứng từ + tự tạo NCC; kiểm chứng với MISA còn THIẾU KHO NVL/CCDC (2026-10-31)
+
+> **Đại Ca chốt (31/10, sau GĐ 599):** **PA-1** (một bảng kê chưa upload + cột hạch toán
+> tay + tự tách 3 loại phiếu) · **NVL/CCDC NHẬP KHO** · danh mục mã NVL/CCDC/dịch vụ
+> theo **2 file danh mục MISA ĐH mới export** (`Danh_sach_hang_hoa_dich_vu.xlsx`,
+> `Danh_sach_nha_cung_cap (1).xlsx`) · NCC **tự map theo MST, chưa có thì tự tạo** ·
+> số chứng từ **theo MISA**. Nhiệm vụ: "Toàn bộ hóa đơn đầu vào từ MIA TOOL phải được
+> Upload hết lên MISA" → sau đó đối chiếu mục 4 (số chứng từ + số tiền bằng nhau).
+
+> **DANH MỤC MISA (phân tích 2 file ĐH export — bằng chứng):** 121 mã VTHH/dịch vụ gồm
+> **59 hàng hóa** · **36 NVL (prefix `VTTH-`, TK kho `152_BH`)** · **5 CCDC (`TS-`,
+> `153_BH`)** · **19 dịch vụ (`DVMN-`, TK chi phí `632_BH`)** · 138 NCC (**Mã NCC = MST**
+> ⇒ map thẳng theo `mia_hddt_h*.mst_nvb`). Đối chiếu phần chưa upload: **194 HĐ / 413
+> dòng / 54 NCC** — 40 NCC đã có trong danh mục, **14 NCC chưa có** (Bệnh viện Hà Đông,
+> BV Từ Sơn, FPT, HNC, HKD…) ⇒ sẽ tự tạo qua template 9021.
+
+> **ĐÃ LÀM (commit repo con `2772035` — module mới `agent/misa_hddt_dauvao.py` + test
+> `misa_hddt_dauvao.test.py` 22/22 PASS):**
+> 1. **NẠP**: bảng mới `misa_hddt_upload_line` (DDL idempotent tự tạo) — HĐ mua vào kỳ
+>    = union `mia_hddt_hd` ∪ `mia_hddt_hh` (bắt 135 HĐ mồ côi GĐ 599) **TRỪ** HĐ đã có
+>    chứng từ SMED khớp theo SỐ HÓA ĐƠN (`stg_5BKN.col5`; SỬA LỖI cách so ngày: dùng
+>    `TRY_CONVERT(date, col3, 103)` — so chuỗi dd/mm/yyyy bị sai thứ tự, số đúng là
+>    **789 HĐ kỳ · đã có SMED 595 · chưa upload 194**). MERGE giữ nguyên hạch toán đã
+>    điền khi nạp lại. ✅ ĐÃ CHẠY: 413 dòng vào DB.
+> 2. **SINH EXCEL**: NVL/CCDC → template **302** ("Mua hàng trong nước NHẬP KHO"), DV →
+>    template **330** (mua dịch vụ). **Tiền khớp gốc MIA**: MIA lưu `dgia` = giá NIÊM
+>    YẾT còn `thtien` = tiền SAU chiết khấu (HĐ 59293: 100×1.420.000 nhưng thực 113,6tr
+>    = CK 20%) và `tsuat` đôi khi là phân số ('0.05' = 5%) ⇒ hàm `gia_va_ck()` điền
+>    ĐG niêm yết + **Tỷ lệ CK (%)** khi sai số ≤1 đồng, còn lại dùng giá hiệu dụng
+>    `thtien/sl` ⇒ MISA tính lại KHỚP TỪNG ĐỒNG (điều kiện đối chiếu bảng kê thuế).
+> 3. **Số chứng từ**: ⚠️ **MISA BẮT BUỘC nhập** (khác giả định "MISA tự sinh" — bằng
+>    chứng check_step3) ⇒ module tự sinh `HDDT-<số HĐ>` (bỏ ký tự lạ, ≤20 ký tự theo
+>    ràng buộc GĐ 481; cùng số HĐ nhiều NCC → thêm 4 số cuối MST).
+> 4. **Tự tạo NCC** qua template **9021/account_object** (đã dò ra cặp đúng); danh mục
+>    VTHH mới qua **9010/inventory_item** (nếu cần).
+
+> **KIỂM CHỨNG THẬT VỚI MISA (step2+step3 — DỪNG trước step4, 0 chứng từ được ghi):**
+> step2 ghép **29/46 cột**; MISA nêu **5 yêu cầu bắt buộc**: Kho · Vị trí · Đơn vị ·
+> Mã thống kê · Số phiếu nhập → module đã bổ sung **Vị trí = mã kho**, **Đơn vị =
+> `GIONGVN`** (đơn vị gốc công ty, tra từ `organization_unit_get`), **Mã thống kê =
+> `VP`**, Số chứng từ tự sinh ⇒ **chạy lại CHỈ CÒN ĐÚNG 2 LỖI LIÊN QUAN KHO**:
+> *"Kho `<kho nvl>` không có trong danh mục; Vị trí `<kho nvl>` không có trong danh
+> mục"* — tức mọi cột khác ĐÃ ĐÚNG (mã hàng `VTTH-…` tồn tại trong danh mục, TK kho
+> 152_BH, Đơn vị, Mã thống kê…). **Kho MISA hiện chỉ có 20 kho = 20 trung tâm, KHÔNG
+> có kho NVL/CCDC; thử dò template danh mục kho (9012-9019) = KHÔNG có** ⇒ phải tạo
+> kho bằng UI MISA (hoặc khảo sát tiếp API tạo kho).
+> 3 dòng mẫu đã gán hạch toán để kiểm chứng: id 21 (NVL `VTTH-Giấy in An Hòa A4 /70`
+> · 152_BH · KHO NVL), id 403 + 412 (DV `DVMN-PHẦN MỀM SMED` · 632_BH).
+
+> **VIỆC CHỜ ĐẠI CA (chặn bước upload thật):** (1) **Tạo 2 kho trên MISA** — đề xuất
+> mã `NVL` ("Kho nguyên vật liệu", TK 152_BH) + mã `CCDC` ("Kho công cụ dụng cụ",
+> TK 153_BH) — ĐH tạo trên UI MISA (30 giây) HOẶC cho phép em khảo sát/call API tạo kho;
+> (2) xác nhận **Đơn vị `GIONGVN` + Mã thống kê `VP`** cho hóa đơn mua của công ty.
+
+> **CÒN LẠI (phiên sau):** trang web `/m/up-hoadon-dauvao` (bảng kê + nhập tay mã
+> hàng/TK Nợ/TK Có/kho + nút Upload) + server fn `-hddt-dauvao.ts` + endpoint agent
+> `/hddt-*` trong `api_server.py` (mẫu đã khảo sát: `createServerFn` + `getSql()` +
+> `agentPost`) · upload thử 1-2 phiếu/loại rồi chạy cả kỳ · **mục 4 đối chiếu
+> MISA-MIATOOL** (cần mở rộng đồng bộ bảng kê mua vào MISA — hiện `misa_pu_detail`
+> mới phủ 09-22/10).
+> **Lưu ý kỹ thuật:** bảng kê chỉ có 397 dòng khớp danh mục 29 tên ⇒ phần lớn **ĐH
+> phải gán mã tay** trên web (đúng thiết kế PA-1) — nên dựng màn hình có gợi ý.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
+> repo con **11.4.1**.
+
+---
