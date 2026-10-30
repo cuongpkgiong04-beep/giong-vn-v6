@@ -188,6 +188,8 @@ export const BH_GROUPS: BhGroup[] = [
       { to: "/m/bc-matrix-xuat", label: "Báo cáo xuất kho — ma trận theo trung tâm" },
       // GĐ 430 / C.260 (14/10/2026 — yêu cầu Đại ca): Ma trận điều chuyển nội bộ Vắc Xin
       { to: "/m/bc-dieu-chuyen-matrix", label: "Điều chuyển nội bộ — Ma trận tổng hợp" },
+      // GĐ 590 (30/10/2026 — yêu cầu Đại ca): báo cáo số 11 — tồn kho × giá niêm yết
+      { to: "/m/bc-tonkho-niem-yet", label: "Báo cáo tồn kho theo giá niêm yết" },
     ],
   },
   {
