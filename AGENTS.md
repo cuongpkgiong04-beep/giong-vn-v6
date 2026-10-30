@@ -903,10 +903,13 @@ Backup tự động vào `backups/gd585-<timestamp>/` (ACL 2 cấp + config.json
 chuyển `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh tạo bản thứ hai) và **không** xoá
 `D:\CBMState`.
 
-### 16.4 Trạng thái & việc chờ ĐH quyết
-Đổi quyền trên thư mục chứa **toàn bộ dữ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động
-(hôm nay 30/10 3 máy vừa có sự cố mất ổ đĩa mạng — GĐ 582) ⇒ **phải có ĐH duyệt riêng** trước khi
-`--apply`. Cho tới lúc đó **state vẫn ở `D:\CBMState`** — vẫn đúng quy tắc 15.1 (ổ D, không dùng ổ C).
+### 16.4 Trạng thái — ĐH đã chốt (30/10/2026): **GHI NHẬN ĐỂ LÀM SAU**
+**Quyết định của ĐH (30/10/2026):** "Ghi nhận lại để làm sau" ⇒ **KHÔNG chuyển lúc này**; giữ nguyên
+`D:\CBMState` (vẫn đúng quy tắc 15.1 — ổ D, không dùng ổ C). Việc chuyển đã **CHỨNG MINH khả thi**
+và **có sẵn công cụ** (16.3): khi nào ĐH nói làm → chạy `--apply` → verify máy LAN (`.245` ổ `Y:`,
+`.27`/`.34` ổ `Z:`) → **restart phiên ZCode** để MCP nạp env mới.
+⚠️ Vì sao cần ĐH duyệt riêng (agent KHÔNG tự làm): phải đổi quyền trên thư mục chứa **toàn bộ dữ
+liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy vừa có sự cố mất ổ đĩa mạng — GĐ 582).
 <!-- SHARED-BLOCK:GD585-CBM-STATE-TRONG-DU-AN END -->
 
 ---
