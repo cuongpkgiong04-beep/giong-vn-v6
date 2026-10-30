@@ -8936,3 +8936,78 @@ repo con **10.1.0**.
 > (3) 1 phiếu LB 29/10 có trên MISA nhưng cột `is_uploaded` chưa gắn cờ (DB 156/157, MISA đủ 157).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / Repo con **11.3.0**.
+
+### GĐ 590 / C.378 (Trợ lý ZCode (máy chủ)): Báo cáo kho số 11 "Tồn kho theo giá niêm yết" (2 bảng: tổng hợp + ma trận 19 TT, header 2 tầng) + hộp KPI TỒN KHO tách SS/TT (7 cột chi tiết) — code XONG, chờ lệnh Push (2026-10-30)
+
+> **Yêu cầu của Đại ca (30/10, 3 ảnh):** (1) thêm báo cáo **"11. Báo cáo tồn kho theo
+> giá niêm yết"** vào nhóm BÁO CÁO KHO — Bảng 1 "Bảng tổng hợp tồn kho Vắc Xin theo
+> giá niêm yết" (STT · Tên Vắc xin · Số lượng tồn · Đơn giá niêm yết · Giá trị tồn
+> theo giá niêm yết) + Bảng 2 "Bảng ma trận tồn kho Vắc xin giá niêm yết theo trung
+> tâm" (STT · Tên Vắc xin · Tổng SL tồn · Tổng giá trị tồn · 19 TT, mỗi TT 2 cột SL
+> + giá trị); (2) hộp KPI **TỒN KHO** — dòng "Giá trị" đổi thành
+> `SS: 12.714.227.491 | TT: <tổng niêm yết>` + chi tiết trong hộp 7 cột: STT · Vắc
+> xin · Số lượng tồn · Đơn giá SS · Giá trị tồn SS · Đơn giá TT · Giá trị tồn TT.
+
+> **Bằng chứng probe TRƯỚC khi code (GiongDB máy chủ, 30/10):** snapshot tồn
+> 29/10/2026 = **30.383 liều · giá trị sổ sách 12.714.227.491** — khớp CHÍNH XÁC số
+> ĐH báo ⇒ đúng nguồn `stg_7BCNXT` (SL = col16, giá trị = col17, snapshot ngày mới
+> nhất ≤ cuối kỳ). Bảng giá `mh_bang_gia_vx`: 52 dòng nhưng cột **"Giá niêm yết"
+> TRỐNG toàn bộ (0/52)** ⇒ cột TT = 0 cho tới khi ĐH nhập giá (đúng như ảnh ĐH gửi).
+> Khớp tên tồn ↔ bảng giá: **49/54 trực tiếp + 3 alias tường minh** (VAXIGRIP 0.5ml /
+> GC FLU Pre-filled Syringe / INFLUVAC — cùng cách xử lý GĐ 517) + 2 tên KHÔNG có
+> trong bảng giá (Beyfortus 0.5ml/1ml) → ô giá để trống + banner nhắc.
+
+> **Vòng hỏi PA (quy trình 5 bước):** em trình 3 câu (nguồn giá TT khi trống · header
+> bảng 2 · lịch đêm) — ĐH chưa trả lời trong phiên ⇒ em dùng **mặc định khuyến nghị
+> đã trình**: (1) giá TT chỉ lấy ĐÚNG cột "Giá niêm yết" (không trộn giá nhập/giá
+> bán — minh bạch, ĐH nhập giá là số tự lên); (2) header **2 tầng** (mã TT dòng 1,
+> SL/Giá trị tồn dòng 2); (3) báo cáo CÓ trong lịch đêm Task_03. **ĐH đổi được bất cứ
+> lúc nào** — chỉ cần dặn, em chỉnh.
+
+> **Đã làm:** (a) **agent** `agent/etl/sql_reports.py`: builder `tonkho_niem_yet`
+> (nguồn TỒN = snapshot ≤ cuối kỳ — tồn là số dư, KHÔNG cộng theo kỳ; giá =
+> `mh_bang_gia_vx.gia_niem_yet` + 3 alias; root = bảng 1 + bảng 2 ở
+> `meta.sheets["mt-niem-yet"]` với `colGroups`; sort A→Z tiếng Việt; ô 0 để trống) +
+> whitelist `QUERY_KEYS` + dispatcher + `REPORT_SOURCE_TABLES` (nguồn xnkt/7BCNXT;
+> bảng giá nhập tay không khai — thiếu giá KHÔNG chặn job); `agent/task_runner.py`:
+> QUERY_KEY_LABELS + lịch đêm **28→29 key**; unit test mới
+> `agent/etl/sql_reports_niemyet.test.py`. (b) **web app con**: trang
+> `/m/bc-tonkho-niem-yet` (SqlDataModule root = bảng 1 + render-prop bảng 2) + nav +
+> `smed-auth.ts` (ROUTE_TO_GROUP + REPORT_GROUP) + `-smed.ts` (SQL_QUERY_LEAF) +
+> `job-labels.ts`; khung `report-result-table.tsx` thêm prop **`colGroups` OPT-IN**
+> (header 2 tầng — KHÔNG truyền = y như cũ, 0 ảnh hưởng báo cáo khác) + đo bề rộng
+> theo nhãn ngắn; KPI `-overview.ts` (thêm `stockValueNiemYet` + map giá niêm yết có
+> alias + chi tiết 7 cột SS/TT) + `overview-dashboard.tsx` (dòng Giá trị SS|TT +
+> render 7 cột). (c) **app tổng**: `banhang-catalog.ts` + lá quyền
+> `/m/bc-tonkho-niem-yet` (nhóm BÁO CÁO KHO).
+
+> **Verify (bằng chứng cụ thể):** chạy THẬT qua **đúng đường production**
+> `run_sql_report("tonkho-niem-yet","01/10/2026","29/10/2026")` = **54 dòng bảng 1 ·
+> Σ SL 30.383 liều** · bảng 2 = **42 cột × 54 dòng · 20 colGroups** ·
+> `niemYetMissing` = 54 tên (đúng — bảng giá trống) · unit mới **36/36 PASS** (alias
+> 3 tên, công thức SL×giá, ô 0 trống, sort, NoSourceDataError) · tsc app con + app
+> tổng **0 lỗi** file GĐ 590 · test catalog app tổng **9/9 PASS** · smed-expected
+> 21/21 + source-tool-map PASS. (FAIL còn lại trong repo con: `job-labels.test.ts`
+> thiếu nhãn 2 key `dc-*`, `mua-hang.test.ts` PA-3, task_runner test 39 — **đều là
+> bài dở của phiên khác**, không liên quan GĐ 590.)
+
+> **⚠️ Rà trùng lặp (nguyên tắc 3 — phiên khác chạy song song CÙNG worktree):**
+> GĐ 591/C.376 (báo cáo kiểm kê "Tổng Cộng" — **cùng sửa `report-result-table.tsx`**
+> nhánh chữ SUBTOTAL), GĐ 592-593/C.377 (PA-3 đọc trực tiếp bảng giá VX từ file —
+> cùng VÙNG "Bảng giá Vắc xin" nhưng khác file), GĐ 588/C.375 Mục 3 (đối chiếu HĐ
+> GTGT bán hàng). Commit GĐ 590 đã **tách hunk theo TỪNG DÒNG** (script
+> `scripts/_gd590_stage.py`) → bài dở các phiên khác GIỮ NGUYÊN trong working tree,
+> không bị commit hộ, không bị nuốt. File `routeTree.gen.ts` commit 11 hunk CHẴN
+> (route mới của GĐ 590) — 11 hunk LẺ (phiên khác) để lại.
+
+> **Tiêu chí kiểm chứng của Đại ca (sau Push):** (1) sidebar BÁO CÁO KHO → mục 11
+> "Báo cáo tồn kho theo giá niêm yết" → Chạy báo cáo: bảng 1 = 54 dòng, Σ Số lượng
+> tồn = 30.383; bảng 2 = 54 dòng × 19 TT (mỗi TT 2 cột, header 2 tầng). (2) Nhập giá
+> niêm yết ở NHẬP DỮ LIỆU | MUA HÀNG → Bảng giá Vắc xin → chạy lại báo cáo: cột Đơn
+> giá niêm yết + Giá trị tồn TT lên số. (3) Hộp KPI TỒN KHO (Tổng quan) → dòng Giá
+> trị hiện `SS: 12.714.227.491 | TT: …`; bấm hộp → bảng chi tiết 7 cột.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** /
+> repo con **11.3.0**. Code: repo con **83fd030** · app tổng **d3a287f** (đã commit,
+> CHƯA push). NB: file này còn bài dở của phiên khác (GĐ 591-593) — entry GĐ 590
+> commit riêng qua cổng shared-doc.
