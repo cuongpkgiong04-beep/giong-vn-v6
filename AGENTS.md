@@ -8774,6 +8774,31 @@ repo con **10.1.0**.
 > MISA-meInvoice-SMED-XK — 3 khối `_MS`/`_IV`/`_XK` + đối chiếu chéo 4.BKCCN) làm ở chặng kế
 > tiếp; registry GĐ 588 / C.375 còn 🔒 tới khi xong cả 2 mục.
 
+> **ĐÍNH CHÍNH + KẾT QUẢ CHẠY THẬT (30/10, 15:00-15:30) — mục CÒN LẠI ở trên đã có kết quả:**
+> 1. **Code Mục 2 ĐÃ LÊN PRODUCTION — không phải em push:** đợt **Push GĐ 589** của phiên máy chủ
+>    (lệnh ĐH "Push và restart Server"; main == origin/main cả 2 repo — app tổng **7.3.0** · repo con
+>    **11.3.0**) đã cuốn theo các commit Mục 2 `de1c56c` / `7b41613` / `169e9ed`. Agent máy chủ đã
+>    restart lúc ~14:53 (nạp builder mới).
+> 2. **Job đối chiếu chạy THẬT trên máy chủ** (`CEDA6D0B` 14:58 · `CE84F9C0` 15:28, kỳ 25/10):
+>    builder ra **905 dòng**; bước đồng bộ MISA chạy thật thành công → `misa_xk_detail` = **179 phiếu
+>    / 226 dòng** (đúng bằng số phiếu 25/10 đã đẩy MISA) → kết quả: **223 Khớp · 679 Thiếu MISA ·
+>    3 Thiếu SMED**. Mẫu dòng MISA đọc lại khớp SMED (PX-SD-20261025112911 · Prevenar 20 · MR7043 ·
+>    1.400.490) — tức vế MISA là dữ liệu THẬT của MISA, không phải chép từ SMED.
+> 3. **3 lỗi bắt được từ lượt chạy THẬT — đã sửa + commit** (`c831b24` · `1895c7f` · `1d27569`):
+>    (a) script sync chỉ nhận dd/mm/yyyy trong khi builder truyền ISO → ValueError → bảng rỗng
+>    (nay nhận cả 2); (b) ngưỡng so khớp quá chặt — MISA ghi TRÒN ĐỒNG (quy tắc GĐ 478) còn SMED giữ
+>    số lẻ ⇒ 73/223 dòng bị cờ "lệch" GIẢ (chênh ≤ 0,5 đồng; đối chứng: sau khi nới ngưỡng còn
+>    **0 dòng lệch thật**); (c) báo lỗi RÕ khi không bắt được headers MISA (thay AttributeError khó
+>    đoán). Unit test **32/32 PASS**.
+> 4. **CẦN RESTART agent khi rảnh** để nạp bản sửa ngưỡng (module `sql_reports` nạp 1 lần lúc khởi
+>    động — job hiện tại vẫn dùng bản cũ nên còn 73 dòng cờ lệch giả). Riêng script sync chạy dạng
+>    subprocess nên đã dùng bản mới NGAY (không cần restart).
+> 5. **PHÁT HIỆN CẦN ĐH XÁC NHẬN:** ngày 25/10 SMED ghi **697 phiếu PX-** (07:45 → 20:26, trải đều
+>    cả ngày) nhưng trên MISA chỉ có **179** ⇒ 679 dòng "Thiếu MISA". Số phiếu đã đẩy trải đều các
+>    giờ nên KHÔNG phải cắt theo giờ — nghi phạm vi đẩy/scan (loại phiếu) chứ không phải lỗi báo
+>    cáo. ĐH cho biết đây là tồn đọng thật hay do quy định chỉ đẩy một số loại phiếu. Ba dòng
+>    "Thiếu SMED (chỉ có trên MISA)" cũng cần xem riêng.
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / repo con **11.2.0**.
 
 ### GĐ 589 (Trợ lý ZCode (máy chủ)): PA Push đợt 30/10 (lệnh ĐH "Push và restart Server") — 38 commit 2 repo + bump 7.3.0/11.3.0 + restart server (tunnel mới) + verify production PASS (2026-10-30)
