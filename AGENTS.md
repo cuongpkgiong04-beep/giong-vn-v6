@@ -863,7 +863,7 @@ Chuỗi thư mục dự án hiện có `Authenticated Users:(Modify)` **kế th�
 ### 15.4 Quy tắc vận hành kèm theo
 1. Công cụ mới có sinh dữ liệu → đặt state **trong dự án**; nếu công cụ có hardening ACL chặn thì tạo thư mục riêng **trên ổ D sát dự án** và **ghi rõ lý do + đường dẫn vào AGENTS.md** (như `D:\CBMState`).
 2. KHÔNG để backup/log/temp của dự án trên ổ C. Phát hiện dữ liệu dự án trên ổ C → chuyển về ổ D rồi dọn.
-3. **Cảnh báo an ninh (phát hiện khi điều tra GĐ 576):** máy LAN truy cập share `\\<máy chủ>\DuLieuChung` bằng tài khoản **Guest (đang bật)** — rủi ro bảo mật; nên chuyển sang tài khoản riêng cho từng máy (việc riêng, chờ Đại Ca quyết).
+3. **Bảo mật truy cập share — ĐÃ XỬ LÝ (GĐ 582, 30/10/2026):** trước đây máy LAN truy cập `\<máy chủ>\DuLieuChung` bằng tài khoản **Guest** (bất kỳ máy nào trong mạng cũng vào được TOÀN QUYỀN, không cần mật khẩu). **Đã chuyển sang tài khoản riêng** `lan245` · `lan34` · `lan27` (tài khoản local trên máy chủ; mật khẩu lưu ở `giong-apps/apps/banhang/agent/.secrets/lan_accounts.txt` — trong dự án, đã gitignore), **Guest đã TẮT**, share chỉ còn `BUILTIN\Administrators` + 3 tài khoản đó. Máy mới cần truy cập → **tạo tài khoản riêng + cấp quyền `Change`, KHÔNG mở lại Guest/Everyone**.
 <!-- SHARED-BLOCK:GD576-QUY-TAC-LUU-TRU-DU-LIEU END -->
 
 ---
