@@ -8532,6 +8532,10 @@ repo con **10.1.0**.
 > chạy xong → restart **web_agent máy chủ** (không đụng api_server → tunnel URL giữ
 > nguyên) → đổi tên 21 dòng lịch sử `scheduled_tasks` (xuất kho 14 + mua hàng 7) →
 > verify chuỗi thật ở kỳ kế tiếp.
+> **ĐÃ LÀM XONG phần vận hành (30/10 ~11:00):** agent máy chủ đã nạp code mới — log `web_agent_301026_104916.log` dòng 7 in đúng chuỗi mới: *"chuỗi MISA tuần tự (GĐ 583): Task_05 mua hàng → Task_06 bán hàng → Task_07 xuất kho"*; sau đó **đổi tên 21 dòng lịch sử** trong `scheduled_tasks` (xuất kho 14 → `Task_07 · MISA xuất kho` · mua hàng 7 → `Task_05 · MISA mua hàng`; bán hàng 13 dòng giữ nguyên; tổng 34 dòng MISA không đổi, **0 dòng còn tên cũ**) — đổi SAU khi agent đã nạp code mới, vì bản cũ dùng khoá theo TÊN nên đổi tên trước sẽ sinh nhiệm vụ trùng.
+> **Dry-run trên dữ liệu THẬT** (`_probe27/gd583_dryrun_live.py` — 3 hàm spawn thay bằng bản chỉ ghi nhận, 0 ghi vào hệ thống): (1) kỳ 29/10 như hiện tại → **KHÔNG spawn gì** (không sinh bản trùng); (2) kỳ mới giả lập → **chỉ `Task_05 · MISA mua hàng`** được tạo; (3) kỳ mới + mua hàng đang chạy → **KHÔNG tạo gì** (bán hàng/xuất kho chờ) — đúng PA-2.
+> **CÒN LẠI (theo dõi):** chuỗi thật chạy ở kỳ tới — Task_03 (daily) 23:00 tối nay → Task_05 mua hàng → Task_06 bán hàng → Task_07 xuất kho; sáng mai mở /m/tasks xem 3 thẻ có đủ chip thứ tự *1/3 · 2/3 · 3/3* và thứ tự chạy đúng.
+> **Nhãn web** (tên Task_05/Task_07 trên /m/tasks) chỉ hiện đúng trên production SAU khi Đại Ca cho lệnh **Push** (em chỉ commit — quy tắc ĐA AGENT).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
 > repo con **11.2.0**.
