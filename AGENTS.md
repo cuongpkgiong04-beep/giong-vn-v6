@@ -8713,3 +8713,65 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
 > repo con **11.2.0**.
+
+### GĐ 588 / C.375 (Trợ lý ZCode (máy LAN-1)): ĐỐI CHIẾU SỐ LIỆU — Mục 2 "Đối chiếu số liệu xuất kho MISA-SMED" (chặng code XONG; Mục 3 đang làm) (2026-10-30)
+
+> **Yêu cầu ĐH (30/10):** thêm 2 phân hệ cùng bậc với Mục 1 trong nhóm sidebar ĐỐI CHIẾU SỐ
+> LIỆU — "2. Đối chiếu số liệu xuất kho MISA-SMED" và "3. Đối chiếu số liệu HĐ GTGT bán hàng
+> MISA-Ivoice-SMED-XK"; kết cấu giống Mục 1 (hộp Chạy đối chiếu + Lịch sử chạy + bảng chi
+> tiết), **em tư vấn lấy dữ liệu cho chuẩn xác**. **ĐH chốt PA-2 + 3 điều chỉnh:** (1) mức
+> **DÒNG HÀNG** (tên hàng · SL · đơn giá · **số lô** · **HSD**) cho CẢ 2 mục; (2) Mục 3 lấy
+> lô/HSD từ **Bảng kê chung cuối ngày 4.BKCCN** (theo khách + dịch vụ) làm **đối chiếu chéo**,
+> nguồn chính vẫn 6.BKX; (3) Mục 2 gồm **TẤT CẢ** phiếu xuất — PX- (xuất sử dụng/bán) LẪN PH-
+> (xuất hủy) — "đã là đối chiếu thì phải có tất cả các phiếu".
+
+> **CỔNG "GHI NHẬN TRÊN MÁY CHỦ" (ĐH yêu cầu BẮT BUỘC trước khi viết code):** phiên này chạy
+> ở **máy LAN-1 (PC-PKT-01)** nhưng làm việc **trực tiếp trong thư mục dự án TRÊN MÁY CHỦ**
+> (`Z:` = `D:\DuLieuChung\CUONG_2026\giong-vn-v6`, repo con `giong-apps` bên trong) — **KHÔNG**
+> dùng clone ổ C, **không tạo bản sao nào ngoài máy chủ**: file sửa là file THẬT máy chủ dùng,
+> commit đi thẳng vào `.git` máy chủ (claim `9e712f5` · code repo con `de1c56c` · app tổng
+> `7b41613`) → mọi phiên thấy ngay bằng `git log`, không phải "chép lên" gì. Đối chứng dữ liệu:
+> SQL login `giong_worker` qua **TCP 1433** (probe chạy THẬT builder trên GiongDB). Còn 1 việc
+> thuộc máy chủ: chạy script sync (cần Chrome CDP 9222 + phiên MISA) — ghi ở "CÒN LẠI" dưới.
+
+> **Đã làm (Mục 2 — xuất kho MISA ↔ SMED):**
+> 1. `agent/etl/sql_reports.py`: builder `dc_xuat_kho` + hàm ghép THUẦN `dc_xk_merge_rows` /
+>    `_dc_xk_flags` / `_dc_xk_row` + `_sync_misa_xk_detail` (gọi sync trước báo cáo, lỗi → bỏ
+>    qua không phá job, tắt bằng `MISA_SKIP_SYNC=1`) + `QUERY_KEYS` + map `run_sql_report` +
+>    `REPORT_SOURCE_TABLES` (nguồn gốc 6.BKX; **KHÔNG** khai bên MISA để job không treo hỏi
+>    download — thiếu dữ liệu MISA thì báo cáo vẫn chạy và hiện cờ "Thiếu MISA").
+> 2. `agent/misa_xk_detail_sync.py` (MỚI): **ĐỌC LẠI** chi tiết phiếu xuất kho từ MISA AMIS
+>    (`in_outward/v1/detail_full`, refid lấy từ `sm_xuatkho_phieu` — cách đã dùng thật ở
+>    gd478/gd501) → bảng **`misa_xk_detail`** (idempotent theo refid). Vì sao không dùng
+>    `sm_xuatkho_phieu` làm "bên MISA": bảng đó là kết quả QUÉT SMED ⇒ so SMED với SMED vô nghĩa.
+> 3. Trang `src/routes/m/doi-chieu-xuat-kho.tsx` (3 hộp giống Mục 1) + phân quyền 3 điểm:
+>    `src/lib/nav.ts` (DC_LEAFS) · `src/lib/smed-auth.ts` (ROUTE_TO_GROUP) · `src/routes/api/-smed.ts`
+>    (SQL_QUERY_GROUP + SQL_QUERY_LEAF) · app tổng `src/lib/banhang-catalog.ts` + test.
+> 4. `src/routeTree.gen.ts` sinh lại (vite dev KHÔNG chạy được qua SMB — lỗi file-watcher
+>    `UNKNOWN: unknown error, watch`; dùng `vite build` rồi dừng ngay khi route tree ghi xong).
+> 5. Test: `agent/gd588-doi-chieu-xk.test.py` (11 nhóm ca) · công cụ đối chứng
+>    `agent/gd588-doi-chieu-xk-probe.py`.
+
+> **Khóa ghép (chốt kỹ thuật):** MÃ PHIẾU + TÊN HÀNG + SỐ LÔ (consume 1-1); không khớp → thử
+> MÃ PHIẾU + TÊN HÀNG để bắt ca lệch/thiếu lô → cờ `Thiếu số lô` / `Lệch số lô` (KHÔNG bịa lô).
+> Cờ khác: Lệch số lượng · Lệch đơn giá xuất · Lệch thành tiền · Lệch hạn sử dụng · Thiếu MISA ·
+> Thiếu SMED. Kỳ = **NGÀY LẬP PHIẾU** (6.BKX `report_date` = ngày cột 2 = `refdate` bên MISA).
+> Dòng 6.BKX thiếu tên hàng (dòng tổng phụ của file Excel) bị loại — lý do số dòng ít hơn phép
+> đếm thô.
+
+> **Bằng chứng verify (30/10):** unit **29/29 PASS** · `tsc --noEmit` app con **EXIT 0** ·
+> `tsc --noEmit` app tổng **EXIT 0** · test catalog app tổng **9/9 PASS** · chạy THẬT builder
+> trên GiongDB kỳ 25/10: **902 dòng / 707 phiếu**, phép đếm ĐỘC LẬP `COUNT(DISTINCT col3)` trên
+> 6.BKX cùng ngày = **707** (khớp tuyệt đối) — trong đó **892 dòng "Xuất sử dụng" + 10 dòng
+> "Xuất hủy"** (đủ cả PX- lẫn PH-) · SMED SL **982** · tiền **571.319.175**. Kỳ 20→29/10:
+> 3.210 dòng / 2.573 phiếu (khớp `COUNT(DISTINCT col3)` = 2.573).
+
+> **CÒN LẠI (thuộc MÁY CHỦ — máy LAN không có Chrome CDP/MISA):** chạy
+> `python agent/misa_xk_detail_sync.py 25/10/2026 25/10/2026 --probe` (khi agent rảnh, CDP 9222
+> đã login MISA) để nạp bảng `misa_xk_detail` → bảng đối chiếu chuyển từ toàn bộ "Thiếu MISA"
+> sang Khớp/Lệch THẬT; `--probe` in tên trường dòng hàng MISA để chốt `lot_no`/`expiry_date`.
+> Sau Push cần **restart agent** để nạp builder mới. **Mục 3** (HĐ GTGT bán hàng
+> MISA-meInvoice-SMED-XK — 3 khối `_MS`/`_IV`/`_XK` + đối chiếu chéo 4.BKCCN) làm ở chặng kế
+> tiếp; registry GĐ 588 / C.375 còn 🔒 tới khi xong cả 2 mục.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / repo con **11.2.0**.
