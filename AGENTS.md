@@ -937,6 +937,31 @@ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy
   lịch sử.
 <!-- SHARED-BLOCK:GD584-TEN-DB-GIONGDB END -->
 
+<!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO START -->
+## 18. PHÂN BIỆT **GIÁ NIÊM YẾT MUA VÀO (Nhà cung cấp)** ↔ **GIÁ NIÊM YẾT BÁN RA (Công ty GIÓNG)** (Đại ca chốt 30/10/2026 — hiệu lực vĩnh viễn)
+
+> **Chỉ thị của Đại ca (30/10/2026):** *"GIÁ NHẬP · ĐƠN GIÁ (Bexsero 1.653.755) là
+> giá niêm yết của nhà cung cấp. Cột 'GIÁ NIÊM YẾT' từ Excel để làm báo cáo tồn
+> kho theo giá niêm yết là lấy ĐƠN GIÁ nhập của nhà cung cấp. Còn Giá niêm yết bán
+> ra là giá bán chưa cho khuyến mại của Công ty Gióng."*
+
+| Khái niệm | Ai quy định | Gồm những gì | Cột trong file NCC | Ví dụ (Bexsero) |
+|---|---|---|---|---|
+| **Giá niêm yết MUA VÀO** | **Nhà cung cấp** đề ra | giá NCC niêm yết + chiết khấu MUA HÀNG: **CK trên hóa đơn · CK tháng · CK quý** | vùng **"GIÁ NHẬP"** — cột **ĐƠN GIÁ** | 1.653.755 → CK hóa đơn 2% còn **1.620.680** |
+| **Giá niêm yết BÁN RA** | **Công ty GIÓNG** quy định | giá Gióng niêm yết + khuyến mại/ưu đãi/giảm giá/thưởng | vùng **"GIÁ BÁN"** — cột **GIÁ NIÊM YẾT** | 1.800.000 → ưu đãi 2% gói + thưởng 20.000đ/mũi cho NV còn **1.744.000** |
+
+- **Công ty GIÓNG = công ty của chúng ta** (bán hàng trên hệ thống SMED, MISA…) —
+  không nhầm với nhà cung cấp.
+- **Bảng "Bảng giá Vắc xin" (mua hàng, `mh_bang_gia_vx.gia_niem_yet`) lưu giá MUA
+  VÀO của NCC** ⇒ khi đọc file NCC: lấy **ĐƠN GIÁ vùng "GIÁ NHẬP"**, TUYỆT ĐỐI
+  KHÔNG lấy cột tên "GIÁ NIÊM YẾT" (đó là giá bán ra của Gióng). Báo cáo "tồn kho
+  theo giá niêm yết" cũng dùng đúng cột giá mua vào này.
+- 4 cột "chiết khấu" trong bảng mua hàng = chiết khấu MUA HÀNG của NCC (giá sau
+  chiết khấu, đơn vị đồng) — gồm hóa đơn · tháng · quý (+ khác nếu có).
+- Gặp file có **cả 2 vùng** giá ⇒ phải phân biệt bằng NHÓM/VÙNG trên tiêu đề file
+  ("GIÁ NHẬP" vs "GIÁ BÁN"), không chỉ nhìn tên cột (tên cột dễ trùng).
+<!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO END -->
+
 ---
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
