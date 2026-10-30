@@ -9214,3 +9214,47 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** /
 > repo con **11.3.0**. Code: repo con **fa50cb1** · **CHƯA PUSH** (registry GĐ 591
 > vẫn 🔒 → mở ✅ khi phiên đóng).
+
+### GĐ 595 (Trợ lý ZCode (máy chủ)): PA Push đợt 30/10 tối — 18 commit app tổng + 8 commit repo con (GĐ 587 + 588/590/591/592 các phiên) + bump 7.4.0 / 11.4.0 + kiểm OTP MISA đã về email (2026-10-30)
+
+> **Lệnh ĐH:** "Push. Anh đã xử lý nhận OTP chỉ qua email không qua SMS nữa rồi. Em kiểm tra lại."
+
+> **Kiểm OTP (ĐH hỏi) — ĐÃ XÁC NHẬN chuyển về EMAIL, đăng nhập tự động chạy lại được:**
+> probe `POST .../AuthenAPI/api/Account/login` cho cả 3 tài khoản MISA của hệ thống đều trả
+> **`UseEmail = true · UsePhoneNumber = false`** (trước đó là SMS) — và **đăng nhập tự động trọn
+> vẹn**: đọc mã từ Gmail → `OTP OK` → token **24 giờ** → lưu `.secrets/misa_http_session.json`.
+> · .245 `mrhungtm3@gmail.com` (NV_0111) · .34 `thuygiongvn290790@gmail.com` (NV_0175) ·
+> máy chủ `cuongpk.giong01@gmail.com` (NV_0174). ⇒ đường HTTP thuần (PA-2) tự đăng nhập lại được,
+> cơ chế `misa_http_bootstrap` (lấy phiên từ Chrome) chỉ còn là lớp dự phòng.
+
+> **Rà trùng lặp đa agent (nguyên tắc 3):** nhánh phụ `agent-cli` + `pipeline-work` **0 commit**
+> chưa merge; worktree khác sạch. Commit chưa push: app tổng **18** (GĐ 587/588/590/591/592/593/594
+> của 3 phiên + bump) · repo con **8** (C.374/C.375/C.376/C.377/C.378). Kiểm **không nuốt bài
+> nhau**: entry của mọi phiên còn đủ ở HEAD 2 repo (grep `### GĐ/C.x` khớp danh sách) ✓.
+> File bị nhiều commit trong loạt (AGENT_REGISTRY 9 · AGENTS 5 · sql_reports.py 3 · nav/smed-auth/
+> -smed/report-result-table 2) — là commit NỐI TIẾP của các phiên, không thấy dấu hiệu sửa đè.
+
+> **Bump (lúc Push — quy tắc ĐA AGENT):** app tổng **7.3.0 → 7.4.0** (minor — GĐ 587 feature:
+> PA-2 + bootstrap) — `package.json` + `package-lock.json` (2 chỗ) + `DEFAULT_VERSION`
+> (`src/components/app-shell.tsx`); repo con **11.3.0 → 11.4.0** — `apps/banhang/package.json` +
+> `DEFAULT_VERSION` (repo con không có package-lock chứa số này). Checklist GĐ 138 ✓ (mọi thành
+> phần 1 chữ số).
+
+> **Push:** app tổng `9aecb52..e8bd488` (main) · repo con `1d27569..733cae7` rồi `733cae7..878fc75`
+> (commit GĐ 588 của phiên LAN-1 tạo ngay sau lượt push đầu — đã push nốt, 2 repo còn **0 commit
+> chưa push**).
+
+> **✅ Verify production (bắt buộc sau push — GĐ 470):** env Vercel 2 app đủ
+> (`DATABASE_URL` · `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID` · `BETTER_AUTH_*`
+> app tổng · `ZAI_API_KEY` app con) ✓ · curl --compressed: app tổng `giong-vn-v6.vercel.app` =
+> **7.4.0**, app con `giong-banhang.vercel.app` = **11.4.0** ✓ · **đăng nhập thật** app tổng →
+> JSON có `user` (Phạm Kiên Cường) + `get-session` OK ✓ · **SSO** ký JWT (iss=giong-vn-v6,
+> aud=giong-banhang) → `302 → https://giong-banhang.vercel.app/` + `Set-Cookie: bh_session=…` ✓ ·
+> app con `/api/auth/me` → user `e003 · SuperAdmin` + **97 mục quyền** (gồm `bh-doi-chieu-so-lieu`
+> của GĐ 588 và 4 nhóm `bh-nhap-*` của GĐ 420) ✓.
+
+> **Công cụ kèm theo:** `scripts/gd588-kiem-tra-otp-misa.py` — kiểm kênh OTP MISA (email/SMS) +
+> thử đăng nhập tự động cho 1 tài khoản (dùng lại khi MISA đổi kênh lần nữa).
+> Dọn: xoá 5 script tạm `_gd587_*` trên .245 (đã giữ backup `.bak-gd587` của các file được vá).
+
+> **Version:** App tổng **7.4.0** / Repo con **11.4.0** — ĐÃ PUSH + LIVE.
