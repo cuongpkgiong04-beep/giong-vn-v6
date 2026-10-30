@@ -1,0 +1,11 @@
+# GIONG VN — GĐ 602 (PA-2 ĐH chốt 31/10/2026)
+# Loại khỏi đồ thị code entire-graph: tài liệu / ảnh / dữ liệu đính kèm.
+# Index tập trung vào CODE (ở app tổng Markdown chiếm 65% số symbol → gây nhiễu
+# ranked search + semantic diff). Syntax giống .gitignore.
+*.md
+attachments/
+screenshots/
+public/*.jpg
+public/*.jpeg
+public/*.png
+public/*.webp

@@ -1,0 +1,19 @@
+#!/bin/sh
+# GIONG VN — ENTIRE-GRAPH PREWARM (GĐ 602 / PA-2 ĐH chốt 31/10/2026)
+#
+# Sau mỗi commit: dựng lại cache entire-graph cho cây VỪA commit — chạy NỀN,
+# không bao giờ chặn commit (mọi lỗi/bất thường đều bỏ qua, luôn exit 0).
+# Cài bằng: bash scripts/tools/entire-graph/install.sh  (idempotent)
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+eg=""
+# repo con (giong-apps) không có bản sao script → lấy bản ở app tổng cạnh nó
+for cand in "$root/scripts/tools/entire-graph/eg.sh" "$root/../scripts/tools/entire-graph/eg.sh"; do
+  if [ -f "$cand" ]; then eg="$cand"; break; fi
+done
+[ -n "$eg" ] || exit 0
+if command -v nohup >/dev/null 2>&1; then
+  nohup sh "$eg" prewarm >/dev/null 2>&1 &
+else
+  sh "$eg" prewarm >/dev/null 2>&1 &
+fi
+exit 0
