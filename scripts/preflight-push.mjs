@@ -71,9 +71,9 @@ async function checkTunnel() {
       headers: env.API_TOKEN ? { "x-api-token": env.API_TOKEN } : {},
       signal: AbortSignal.timeout(15000),
     });
-    check("Tunnel sống (GiondDB)", res.ok, `${base} → HTTP ${res.status}`);
+    check("Tunnel sống (GiongDB)", res.ok, `${base} → HTTP ${res.status}`);
   } catch (e) {
-    check("Tunnel sống (GiondDB)", false, `${base} → ${e.message ?? "fetch failed"}`);
+    check("Tunnel sống (GiongDB)", false, `${base} → ${e.message ?? "fetch failed"}`);
   }
 }
 
