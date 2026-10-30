@@ -8879,3 +8879,60 @@ repo con **10.1.0**.
 > Sức khỏe "Cần xử lý: 1" + DTTHC 2/2; các chỗ ghi tên DB hiển thị "GiongDB".
 
 > **Version:** app tổng **7.3.0** / repo con **11.3.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 587 / C.374 (Trợ lý ZCode — máy chủ): PA-2 ĐH chốt (30/10) — GỐC lỗi upload MISA 3 phân hệ = MISA đổi cổng nhập khẩu `g1`→`g2`; vá + bật HTTP thuần + tự lấy phiên từ Chrome; chạy bù kỳ 29/10 đủ 3 phân hệ (2026-10-30)
+
+> **ĐH báo (30/10 sáng):** cả 3 phân hệ Upload MISA (chứng từ mua hàng · phiếu xuất kho · hóa
+> đơn GTGT bán hàng) đều lỗi — lượt tự động đêm 29/10 lẫn lượt anh chạy tay 10:17; hỏi
+> "phương thức mới đã áp dụng chưa". **ĐH chốt PA-2** (vá cổng + bật HTTP thuần), **cho chạy bù
+> kỳ 29/10** (+28/10 nếu thiếu), **KHÔNG** gửi danh sách mã lỗi cho MISA (anh tự làm thủ công).
+
+> **GỐC (bằng chứng — cùng file, cùng phiên MISA):** từ ~15:00 29/10, `/g1/api/import/v1/import/*`
+> trả `{"Success":false,"Code":99,...,"ExceptionID":"<uuid>"}` (lỗi hệ thống phía MISA, phản hồi
+> ~0,01 giây) ⇒ **mọi lượt nhập khẩu Excel chết**; cùng lời gọi trên `/g2/api/import/v1/import/*`
+> → `Success:true`; đã chạy trọn 6 bước dry-run (sheetname + step2 ghép 31/31 cột 2022/in_outward
+> · 46 cột ghép 26 với 302/pu_voucher + step3 + check_step3). Endpoint khác không đổi
+> (`file/multi` g1+g2 OK · `ai_search` g1 OK · `sa_voucher/full` g2 OK · `ledger post` g2 OK).
+> Thiếu token → g1 lẫn g2 đều 401 ⇒ lỗi phát sinh SAU auth ⇒ phía MISA.
+
+> **Đã làm (repo con `df02fa6` — chi tiết ở entry C.374 AGENTS.md repo con):**
+> 1. **Vá cổng nhập khẩu g1→g2** — `gd478_import_api.py` (đường Chrome đang chạy) + `misa_http_api.py`
+>    (đường HTTP thuần) + test canh trong `misa_http_api.test.py`.
+> 2. **Bật `MISA_UPLOAD_MODE=http`** (phương thức mới) trên **.245 GIANGKT** (nhóm misa-muahang).
+>    **Máy chủ KHÔNG bật** — đường cứu hộ giữ Chrome (phiên HTTP ở máy chủ không tự làm mới được);
+>    **.34 THANH-PC** (bán hàng) không dùng cổng nhập khẩu nên giữ nguyên.
+> 3. **`misa_http_bootstrap.py` (MỚI)** — MISA chuyển OTP đăng nhập sang **SMS điện thoại**
+>    (probe: `UsePhoneNumber=true · UseEmail=false`, gửi tới 0904***43) ⇒ login HTTP tự động hết
+>    đường; bù bằng cách lấy Bearer + x-misa-context + cookie từ **tab MISA trong Chrome** (phiên
+>    SPA vẫn sống, tự gia hạn — đo 23,6 giờ). Hàm **async** tái dùng CDP sẵn có (bẫy thật: gọi
+>    `asyncio.run()` trong event loop làm lượt xuất kho 17:24 rơi về Chrome rồi chết vì thiếu OTP)
+>    + chốt chế độ http MỘT LẦN cho cả bước import (trước đây bước import vẫn đọc env → đi http).
+> 4. **Sửa "kiểm file oan"** (`40_web_agent.py` + `MISA_UPLOAD_REPORTS`): job upload MISA không
+>    sinh file OUTPUT nhưng vẫn bị đếm file theo thư mục ngày → máy .245/.34 không giữ file nguồn
+>    → 0/1 → báo "THIẾU FILE" OAN + chạy lại tool 2 vòng thừa ~20 phút (mua hàng 16/16 xong vẫn
+>    bị đánh 'error').
+
+> **Deploy (máy chủ + 2 máy LAN, có backup `.bak-gd587` từng file + đối chiếu SHA256 + chạy test
+> tại máy):** .245 12 file (bản vá + module HTTP + nhánh http + 40_web_agent + smed_expected.py
+> THIẾU SÓT của đợt deploy trước — thiếu nó service kẹt "Paused") · .34 8 file (bản vá + bổ sung
+> `smed_expected.py`). Công cụ deploy: `scripts/gd587_deploy_lan.py` (idle-check qua api_server +
+> base64 qua SSH stdin + hash + test trên máy). Vận hành kèm: **Chrome CDP 9222 trên .245 đã chết**
+> (Chrome mở lại 10:47 không kèm cờ) → chạy lại task `GIONG_ChromeMISA`; **.34 còn 1 `worker_node`
+> CŨ từ 29/10 03:56** (code chưa vá, tranh job) → đã kill; `Restart-Service -Force` trên NSSM gây
+> trạng thái Paused ⇒ từ nay dùng `sc.exe stop/start`.
+
+> **VERIFY (thật):** test offline **16/16 + 13/13 + 36/36 + 6/6 + 72/72 + 65/65 PASS** (chạy lại cả
+> tại máy .245) · **chạy bù 29/10:** mua hàng **16/16 tạo + 16/16 ghi sổ** (job done) · xuất kho
+> **178/178 tạo + 176 ghi sổ** (job done; 2 phiếu chờ tồn lô/HSD — hệ thống tự thử lại) · bán hàng
+> **157/157** (MISA list `sa_voucher_get/paging_filter_v2` đếm đúng 157 = nguồn `stg_1HDDT`, gồm
+> 7 HM + 12 QO + 6 TD trước đây thiếu) · **đối chứng ai_search**: 7 phiếu mua hàng/xuất kho 29/10
+> nay **CÓ** trên MISA (trước 30/10 cùng cách tra → KHÔNG) · **28/10 đủ cả 3** (MH 24/24 · XK
+> 151/151 · BH 146/146) ⇒ chỉ cần bù 29/10.
+
+> **RỦI RO TỒN (báo ĐH):** (1) MISA OTP qua **SMS** — phiên Chrome hết hạn thật (bị đăng xuất) thì
+> cần người có điện thoại nhập mã 1 lần; phiên HTTP tự lấy từ Chrome nên không cần OTP.
+> (2) Trang SMED HĐĐT theo trung tâm có lần KHÔNG đổi dữ liệu giữa 2 trung tâm (sáng 30/10:
+> HM/QO dùng lại dữ liệu TD) — lượt chạy bù chiều nay lại đúng; cần theo dõi.
+> (3) 1 phiếu LB 29/10 có trên MISA nhưng cột `is_uploaded` chưa gắn cờ (DB 156/157, MISA đủ 157).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / Repo con **11.3.0**.
