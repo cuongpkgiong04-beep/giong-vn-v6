@@ -9462,3 +9462,85 @@ repo con **10.1.0**.
 > nút "Tải lại dữ liệu" từng ô lỗi + nút "Tải lại" theo ngày.
 
 > **Version:** app tổng **7.4.1** / repo con **11.5.0** — ĐÃ PUSH + LIVE.
+
+### GĐ 601 (Trợ lý ZCode (máy chủ)): KHẢO SÁT công cụ `entire-graph` (đồ thị code tree-sitter — CLI, không MCP) theo yêu cầu ĐH "nghiên cứu, áp dụng được vào dự án không" — KẾT LUẬN: ÁP DỤNG ĐƯỢC (đã chạy thật trên cả 2 repo) + trình 3 PA chờ ĐH chốt (2026-10-31)
+
+> **Yêu cầu của Đại ca (31/10 sáng):** "Nghiên cứu cái này đi. Áp dụng được vào dự
+> án hiện tại này không: `D:\DuLieuChung\CUONG_2026\Github\entire-graph-main`".
+> Em khảo sát source + tải bản release chính thức + **chạy thử THẬT** trên app tổng
+> và repo con (query · impact · def · diff · index) rồi đối chiếu với 2 công cụ đồ
+> thị đang dùng (codegraph + codebase-memory, mục 14). **CHƯA sửa code dự án — 3 PA
+> chờ ĐH chốt.**
+
+> **Công cụ là gì:** plugin đồ thị code của **Entire CLI** (entire.io, Go + tree-sitter,
+> MIT, 36 ngôn ngữ semantic / 185 filetype). **100% local** — `doctor` xác nhận
+> `no_egress=true` (không network, không telemetry, không API key). **KHÔNG có MCP
+> server** → agent gọi qua CLI/Bash (`entire-graph.exe <query|impact|def|diff|...>`).
+> Chạy **STANDALONE hoàn toàn** — không cần Entire CLI, không cần tài khoản (đã test:
+> `version`, `capabilities`, `query`, `impact`, `def`, `diff`, `index` đều chạy OK).
+
+> **Bản dùng + vị trí hiện tại (ngoài dự án, trên ổ D — không đụng gì trong dự án):**
+> release `entire-graph_0.6.0_windows_amd64.zip` (13,9 MB; exe 87 MB) →
+> `D:\DuLieuChung\CUONG_2026\Github\entire-graph-bin\` (kèm cache test); source khảo
+> sát ở `Github\entire-graph-main\`. **Build từ source FAIL** (thiếu generated grammar
+> — repo gốc dùng `mise` tasks sinh code): `build constraints exclude all Go files` ở
+> `internal/sem/grammars/*` ⇒ **dùng release binary, KHÔNG build local**.
+
+> **Bằng chứng chạy thật (đo trên máy chủ 31/10):**
+> - **Index app tổng:** 574 file → **8.017 symbols / 14.003 relations**
+>   (TypeScript 114 file/1.418 · Python 58/530 · **Markdown 303 file/5.267 symbol =
+>   65% toàn đồ thị** · SQL 32/83) · 1 partial failure `src/routes/huong-dan.tsx:116`
+>   — `&` không escape trong JSX (lỗi syntax THẬT, nhỏ) · `completeness: ok`.
+> - **Query repo con** "báo cáo công nợ đặt trước bccn builder sql_reports" → đúng
+>   cả 3 chỗ chủ chốt: `etl/sql_reports.py:4260 bccn_dattruoc` (s=48,0) ·
+>   `gd348-build-lht-ds.py:356 build_tra_no` (s=49,4) · `40_web_agent.py:657
+>   run_lht_report_task`.
+> - **Query app tổng** "check-in GPS ảnh bắt buộc chấm công" → `check-in.tsx:706`
+>   (s=43,8) · `bao-cao/bang-check-in.tsx:53 parseGps` (s=42,7) — **trùng khớp kết
+>   quả codegraph** (chạy cùng câu để đối chiếu).
+> - **`impact bccn_dattruoc`** → 5 callers (gd348 build_tra_no · gd338/gd390 verify
+>   scripts) + 10 callees + **13 CO-CHANGE FILES** (file hay đổi cùng nhau theo git
+>   history: `sql_reports_bccn.test.py`, `misa_xk_detail_sync.py`, …) — **thứ cả
+>   codegraph lẫn CBM KHÔNG có**.
+> - **`def cleanAddress`** → 6 chỗ khai báo cùng tên trong **1,2s** (refactor an toàn).
+> - **`diff --base main --head agent-cli -- src/`** → semantic diff **entity-level**:
+>   124 dòng, 41 removed / 27 body changed / **8 signature changed kèm số dependents**
+>   (VD `auth signature changed (63 dependents)` · `BH_GROUPS signature changed (8)`).
+> - **VERIFY tự đề xuất:** `python -m py_compile apps/banhang/agent/gd348-build-lht-ds.py`
+>   (tier=build-check) — hợp thẳng vòng kiểm chứng mục 14.3.
+> - **Tốc độ:** cold 16-28s (build index) · **cache-hit cùng bộ flag ~9s** · impact
+>   1,8s · def 1,2s · diff 11s · `index` prewarm 16,6s. Cache key gồm cả flag +
+>   profile + tree hash ⇒ **đổi flag = rebuild; commit mới = miss**.
+
+> **Đối chiếu 2 công cụ đang dùng (GĐ 568) — 3 điểm KHÁC BIỆT có giá trị:**
+> 1. **codegraph CHƯA index repo con `giong-apps`** (thông báo thật: *"it is its own
+>    git repository … the nearest index holds none of its files"*) — 204 file Python
+>    nghiệp vụ (agent + ETL + builder) hiện **không graph nào phủ**; CBM chỉ có
+>    `giong-apps/apps/banhang`. entire-graph index **mọi repo không cần cấu hình trước**.
+> 2. **Co-change + semantic diff** — codegraph trả verbatim source (giàu context),
+>    entire-graph trả ranked snippet ≤4 KB + co-change + diff entity-level (nhẹ context).
+> 3. **Không daemon/state/index-trước** → tránh đúng hàng rào ACL/state ổ C đang vướng
+>    ở CBM (GĐ 576/585). Chỉ cần binary + `--cache-dir`.
+
+> **Vướng đã kiểm chứng khi áp dụng (cần xử lý nếu ĐH chốt):** (a) cache mặc định
+> `%LocalAppData%` (**ổ C**) → PHẢI ép `--cache-dir`/`ENTIRE_PLUGIN_DATA_DIR` vào dự án
+> (quy tắc 15.1); (b) `setup` của công cụ sẽ **chèn managed block vào AGENTS.md/
+> CLAUDE.md** → đụng cổng shared-doc GĐ 495 ⇒ né bằng cách KHÔNG chạy `setup`, chỉ ghi
+> quy tắc qua cổng; (c) Markdown chiếm 65% symbol ⇒ cần `.graphignore` loại .md/
+> attachments/screenshots/OUTPUT; (d) mỗi commit mới → cache miss 16-28s ⇒ nên prewarm;
+> (e) binary không tự cập nhật.
+
+> **3 PHƯƠNG ÁN chờ ĐH chốt:**
+> - **PA-1 (khuyến nghị — nhẹ):** đặt binary + script bọc trong dự án
+>   (`scripts/tools/entire-graph/`, cố định `--cache-dir` + `--repo`) + `.graphignore`
+>   + 1 mục ngắn ở AGENTS.md mục 14 dùng cho 3 việc: (1) tra code **REPO CON** (chỗ
+>   codegraph chưa phủ), (2) xem **co-change** trước khi sửa hàm hay đổi, (3) **semantic
+>   diff** rà thay đổi trước Push. Không hook, không `setup`.
+> - **PA-2 (vừa):** PA-1 + script/hook **prewarm `index --head` sau mỗi commit** →
+>   query ~9s thay vì 16-28s (đổi lại: thêm 1 hook nữa vào hệ thống hook hiện có).
+> - **PA-3 (đầy đủ — KHÔNG khuyến nghị):** chạy `entire graph setup` (managed block
+>   AGENTS.md/CLAUDE.md + hook SubagentStart của Claude Code) → đụng cổng shared-doc +
+>   thêm file lạ + hook chỉ dùng cho Claude Code (dự án chạy ZCode).
+
+> **Version:** KHÔNG bump (chưa đụng code dự án). App tổng **7.4.1** / repo con **11.5.0**.
+> **Registry:** GĐ 601 — claim `8d1cd59`.
