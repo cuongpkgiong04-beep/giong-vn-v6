@@ -8608,6 +8608,11 @@ repo con **10.1.0**.
 > **CÒN LẠI (theo dõi):** chuỗi thật chạy ở kỳ tới — Task_03 (daily) 23:00 tối nay → Task_05 mua hàng → Task_06 bán hàng → Task_07 xuất kho; sáng mai mở /m/tasks xem 3 thẻ có đủ chip thứ tự *1/3 · 2/3 · 3/3* và thứ tự chạy đúng.
 > **Nhãn web** (tên Task_05/Task_07 trên /m/tasks) chỉ hiện đúng trên production SAU khi Đại Ca cho lệnh **Push** (em chỉ commit — quy tắc ĐA AGENT).
 
+> **⚠️ CẢNH BÁO khi deploy code agent xuống MÁY LAN (.27/.245/.34):** phải copy
+> KÈM `agent/smed_expected.py` (file MỚI — `40_web_agent.py` bản mới import nó;
+> thiếu file → ImportError làm worker vỡ). Bundle LAN hiện chạy bản CŨ (map inline
+> vẫn đúng) nên KHÔNG cần deploy ngay — chỉ nhớ kèm file khi deploy lần sau.
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
 > repo con **11.2.0**.
 
