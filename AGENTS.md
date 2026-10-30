@@ -937,53 +937,7 @@ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy
   lịch sử.
 <!-- SHARED-BLOCK:GD584-TEN-DB-GIONGDB END -->
 
-<!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH START -->
-## 18. ENTIRE-GRAPH — đồ thị code BỔ SUNG (PA-2 Đại Ca chốt 31/10/2026 — hiệu lực vĩnh viễn)
 
-> **PA-2 (tiếp GĐ 601):** `entire-graph` (tree-sitter, 100% local — `doctor` xác nhận
-> `no_egress=true`) là **nguồn tra cứu BỔ SUNG** cho codegraph + codebase-memory
-> (mục 14) — **KHÔNG thay thế**. Dùng cho ĐÚNG 3 việc:
-> 1. **Tra code REPO CON `giong-apps`** — codegraph chưa index repo này (204 file
->    Python nghiệp vụ: agent + ETL + builder); CBM chỉ có `apps/banhang`.
-> 2. **Co-change** — trước khi sửa hàm/interface hay đổi: xem file nào HAY ĐỔI CÙNG
->    theo lịch sử git (thứ codegraph/CBM không có).
-> 3. **Semantic diff trước Push** — symbol added/removed/signature-changed kèm số
->    dependents (rà trùng lặp đa agent, nguyên tắc 3).
-
-> **Cách gọi — BẮT BUỘC qua wrapper** (nó tự cố định cache TRONG DỰ ÁN):
-> ```bash
-> bash scripts/tools/entire-graph/eg.sh query --head --profile full --format agent --max-context-bytes 4096 --query "<mô tả việc>"
-> bash scripts/tools/entire-graph/eg.sh impact --head --symbol <Tên>
-> bash scripts/tools/entire-graph/eg.sh def --head <Tên>
-> bash scripts/tools/entire-graph/eg.sh diff --base main --head <nhánh> -- src/
-> ```
-> ⛔ **KHÔNG gọi binary trực tiếp mà thiếu `--cache-dir`** — cache sẽ rơi vào ổ C
-> (%LocalAppData%, vi phạm mục 15). Wrapper đã xử lý: `diff/commit/checkpoint/verify`
-> (v0.6.0 không nhận `--cache-dir`) + tự thêm `--repo`/`--cache-dir`.
-
-> **Vị trí cài (KHÔNG commit vào git):** `<git-common-dir>/giong-tools/entire-graph/`
-> — binary release + cache **dùng chung MỌI worktree** của repo, nằm TRONG dự án
-> (tiền lệ `.git/giong-shared-snapshots/` GĐ 495). Máy / worktree / clone mới chạy 1
-> lần cho MỖI repo:
-> ```bash
-> bash scripts/tools/entire-graph/install.sh                       # app tổng (+ hook)
-> bash scripts/tools/entire-graph/install.sh --repo giong-apps     # repo con (+ hook)
-> ```
-
-> **Hook prewarm (PA-2):** `post-commit` dựng lại cache ở NỀN sau mỗi commit
-> (throttle 10 phút, không bao giờ chặn commit, hook lạ tự backup `.pre602.bak`).
-> Repo con dùng chung `eg.sh` của app tổng (hook tự thử `../scripts/...`).
-> Log: `<git-common-dir>/giong-tools/entire-graph/cache/prewarm.log`.
-
-> **Đã loại khỏi index** (`.graphignore` mỗi repo): `*.md` + ảnh + attachments/
-> (INPUT/OUTPUT/LOG ở repo con). Kết quả app tổng: 574 → **273 file · 2.732 symbol**
-> (chỉ còn CODE). Mỗi query in 1 dòng `warning W_REPO_IGNORED_SOURCE … excluded by
-> .graphignore` — **bình thường**, là báo cáo số file bị loại có chủ đích.
->
-> **Số đo thật (31/10):** query cache-hit **~5,8s** (cold 12,9s) · repo con cold 25,5s
-> · index prewarm 10,9s · ổ C 0 byte cache. Hạn chế đã biết: T-SQL `migrations/*.sql`
-> parse lỗi một phần; `src/routes/huong-dan.tsx` có `&` chưa escape trong JSX.
-<!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH END -->
 
 <!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO START -->
 ## 18. PHÂN BIỆT **GIÁ NIÊM YẾT MUA VÀO (Nhà cung cấp)** ↔ **GIÁ NIÊM YẾT BÁN RA (Công ty GIÓNG)** (Đại ca chốt 30/10/2026 — hiệu lực vĩnh viễn)
