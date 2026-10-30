@@ -9410,3 +9410,55 @@ repo con **10.1.0**.
 > repo con **11.4.1**.
 
 ---
+
+### GĐ 600 (Trợ lý ZCode (máy chủ)): PA Push đợt 31/10 sáng — restart agent nạp GĐ 596 + push TOÀN BỘ commit đang đợi (app tổng 10 · repo con 6) + bump 7.4.1 / 11.5.0 + verify production + resume lịch cho chạy tiếp (2026-10-31)
+
+> **Lệnh của Đại ca (31/10 ~01:40):** *"Đã tạm dừng job để Restart agent và Push.
+> Hãy Restart agent và Push cho anh tất cả những gì đang đợi push. Sau đó em lệnh
+> cho chạy tiếp job. Mai anh kiểm tra sau."*
+
+> **Đã làm:**
+> 1. **Restart GIONG_SMED_Agent (01:40)** — dừng tiến trình hẹn-restart của GĐ 596,
+>    xoá `__pycache__` (agent + etl), `sc stop` → `sc start` khi job RỖNG (0 job
+>    pending/running) · **api_server GIỮ NGUYÊN** (không taskkill) nên tunnel URL
+>    không đổi, không cần cập nhật env Vercel. Log khởi động mới xác nhận đã nạp
+>    code GĐ 596: `chạy Task_02 · 23:00 — 20 bước download (nhiệm vụ TẢI DỮ LIỆU —
+>    không chạy báo cáo; báo cáo do nhiệm vụ Chạy báo cáo)`.
+> 2. **Rà trùng lặp (nguyên tắc 3):** nhánh phụ `agent-cli` / `pipeline-work`
+>    **RỖNG** cả 2 repo · `git fetch` xong remote 0 commit mới · working tree chỉ
+>    còn file dở của phiên KHÁC (app tổng: `AGENTS.md` + `AGENT_REGISTRY.md` +
+>    1 attachment xoá; repo con: 8 file) → **KHÔNG add, KHÔNG đụng**.
+> 3. **Verify env Vercel TRƯỚC push (mục A GĐ 470):** app tổng đủ `DATABASE_URL` ·
+>    `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID` ·
+>    `BETTER_AUTH_SECRET` · `BETTER_AUTH_URL`; app con đủ `DATABASE_URL` ·
+>    `APP_JWT_SECRET` · `TUNNEL_*` · `ZAI_API_KEY` · `SMED_AGENT_TOKEN`.
+> 4. **Bump version khi Push:** app tổng **7.4.0 → 7.4.1** (patch — đợt này 0 code
+>    app tổng, chỉ docs/registry) · repo con **11.4.1 → 11.5.0** (minor — 2 feature:
+>    GĐ 596/C.379 "chọn tất cả mục download + báo cáo cho Task_02/03/04" + C.380
+>    "trang Sức khoẻ dữ liệu"). Checklist GĐ 138 ✓ mọi thành phần 1 chữ số.
+> 5. **Push:** app tổng `fe1005f..30cbc50` (10 commit — docs/registry GĐ 596→599 +
+>    claim GĐ 600 + bump) · repo con `e50dc65..24549b9` (6 commit — code GĐ 596 +
+>    C.380 + 2 entry + bump).
+> 6. **✅ Verify production (curl + login THẬT + SSO):** app tổng
+>    `giong-vn-v6.vercel.app` = **7.4.1** · app con `giong-banhang.vercel.app` =
+>    **11.5.0** (curl lần đầu — không ghim deployment cũ) · đăng nhập
+>    `cuongpk.giong04@gmail.com` HTTP 200 + có `user` · `get-session` OK · **SSO**
+>    ký JWT (`iss=giong-vn-v6`, `aud=giong-banhang`) → **302 về app con +
+>    `Set-Cookie: bh_session`** (⇒ `APP_JWT_SECRET` 2 app KHỚP) · `/api/auth/me`
+>    = "Phạm Kiên Cường" · **97 nhóm quyền**.
+> 7. **Resume lịch + cho chạy tiếp:** `kv_settings.task_schedule_paused = '0'`
+>    (như nút "Tiếp tục" trên web) → log `[task] lịch định kỳ TIẾP TỤC — phục hồi
+>    spawn + claim bình thường`; nhiệm vụ TẢI DỮ LIỆU **kỳ 30/10 bị bỏ dở** (agent
+>    khởi động lại 23:05 hôm qua giữa bước 1/20, 3 lượt hddt lỗi liên tiếp) → đặt
+>    lại `pending` → **01:53:49 agent nhặt và chạy lại đủ 20 bước** (job hddt 30/10
+>    running) → xong sẽ tự spawn nhiệm vụ Chạy báo cáo kỳ 30/10 rồi chuỗi MISA
+>    (Task_05 mua hàng → Task_06 bán hàng → Task_07 xuất kho).
+
+> **ĐH kiểm tra sáng 31/10:** app con version **11.5.0** (góc trái) → trang
+> **NHIỆM VỤ**: dialog Task_03 / Task_04 nay có **ĐỦ 2 khối** (phân hệ download +
+> báo cáo) kèm nút **"Chọn tất cả" / "Bỏ chọn"**; tick báo cáo ở Task_04 → Lưu →
+> kỳ sau chạy đúng bấy nhiêu; Task_02 sửa config có hiệu lực (17:15 chạy **9 phân
+> hệ nguồn / 14 báo cáo nhanh**). Trang **Sức khoẻ dữ liệu**: khoảng ngày Từ→Đến +
+> nút "Tải lại dữ liệu" từng ô lỗi + nút "Tải lại" theo ngày.
+
+> **Version:** app tổng **7.4.1** / repo con **11.5.0** — ĐÃ PUSH + LIVE.
