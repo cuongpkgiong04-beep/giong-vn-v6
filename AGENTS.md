@@ -8775,3 +8775,59 @@ repo con **10.1.0**.
 > tiếp; registry GĐ 588 / C.375 còn 🔒 tới khi xong cả 2 mục.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / repo con **11.2.0**.
+
+### GĐ 589 (Trợ lý ZCode (máy chủ)): PA Push đợt 30/10 (lệnh ĐH "Push và restart Server") — 38 commit 2 repo + bump 7.3.0/11.3.0 + restart server (tunnel mới) + verify production PASS (2026-10-30)
+
+> **Lệnh ĐH (30/10 chiều):** "Push và restart Server cho anh nhé". Rà theo nguyên
+> tắc 3 + checklist GĐ 570 (push đồng loạt toàn dự án).
+
+> **RÀ TRÙNG LẶP:** app tổng **31 commit** chưa push (GĐ 579→585 + claim 586/587/588) ·
+> repo con **7 commit** (C.369/C.372/C.373 + GĐ 584) · nhánh `agent-cli` +
+> `pipeline-work` **0 commit chưa merge** (đã ở main) · worktree khác sạch ·
+> working tree CÓ file dở phiên khác (app tổng: AGENTS.md/AGENT_REGISTRY.md +
+> `-danh-muc.ts`/`danh-muc-khach-hang.tsx`/`misa_muahang_upload.py` + hunk layout
+> `overview-dashboard.tsx`; repo con: `gd478_import_api.py`/`misa_http_api.py` +
+> AGENTS.md) → **KHÔNG đụng, KHÔNG commit**.
+> **PHÂN LOẠI:** GĐ 579·580·581·582·583·584·585 = ĐÃ XONG (✅) → push. **GĐ 586
+> (vá cổng nhập khẩu MISA g1→g2) · GĐ 587/C.374 · GĐ 588/C.375 (đối chiếu số
+> liệu Mục 2+3)** = mới claim 🔒 (chưa có code) → CHỈ push commit claim registry
+> (để remote đồng bộ số), KHÔNG đụng code dở — để lần Push sau.
+
+> **BẢO HIỂM TRƯỚC PUSH:** `vercel env ls` 2 app — đủ `DATABASE_URL`,
+> `APP_JWT_SECRET`, `TUNNEL_API_BASE_URL`, `TUNNEL_GIST_ID`, `BETTER_AUTH_*` (app
+> tổng), `ZAI_API_KEY` (app con) ✓.
+
+> **BUMP (1 lần cho cả đợt):** app tổng **7.2.0 → 7.3.0** (minor: PA-2 HTTP thuần
+> 2 đường upload MISA · đổi thứ tự nhiệm vụ MISA · fix gốc expected_files · quy
+> tắc GiongDB) — package.json + lock (2 chỗ; sót `"7.2.0"` = supports-color thư
+> viện ngoài, giữ — lesson GĐ 328) + `DEFAULT_VERSION`. Repo con **11.2.0 →
+> 11.3.0** (C.372/C.373 + GĐ 584).
+
+> **PUSH:** app tổng `c8381f2..a356c1a` (32 commit) · repo con `cd9758f..54b1837`
+> (8 commit) — **KHÔNG cần merge nhánh**. Vercel auto-deploy CHẠY (webhook sống —
+> khác sự cố GĐ 498) → curl lần đầu đã thấy **7.3.0 / 11.3.0**.
+
+> **RESTART SERVER (theo lệnh ĐH):** check rảnh (0 job running/pending) → xoá
+> `__pycache__` 3 thư mục → `sc stop/start GIONG_SMED_Agent` (PID 28600) →
+> `sc stop/start GIONG_API_Server` (PID 10680; cloudflared chết theo — đúng thiết
+> kế) → **tunnel MỚI `zum-organization-started-nitrogen.trycloudflare.com`** →
+> `update-tunnel-env.py` (đọc URL từ Gist — kênh gist sống) + env Vercel
+> `TUNNEL_API_BASE_URL` 2 app + **redeploy 2 app** (Ready 45s/34s) để lấy env mới
+> (auto-deploy đã chạy TRƯỚC lúc đổi env → bắt buộc redeploy).
+
+> **VERIFY PRODUCTION (sau cùng):** version **7.3.0 / 11.3.0** ✓ · login app tổng
+> (JSON user + session) ✓ · SSO sang app con (200 → trang chủ + Set-Cookie
+> `bh_session`) ✓ · `/api/auth/me` trả user + empId (đọc GiongDB qua tunnel mới —
+> chứng minh tunnel sống) ✓ · agent chạy lại OK (job mới `sqlreport` done) ✓ ·
+> trang `/m/suc-khoe-du-lieu` giữ nguyên tốt: "Cần xử lý: **1 lượt**" (còn XNKT
+> 23/10 thiếu 1 file TIÊN DU — vấn đề nguồn SMED, không liên quan GĐ 584) ·
+> UI "GiondDB" trên trang hiển thị = **0 chỗ**; còn lại **6 chỗ "GiondDB" là LOG
+> LỖI ETL CŨ trong dữ liệu job** (85 job ngày 27/10 — bằng chứng sự cố typo
+> GĐ 547, `Cannot open database "GiondDB"`), KHÔNG phải code — giữ nguyên văn làm
+> bản ghi lịch sử; ĐH muốn dọn thì 1 lệnh (có backup).
+
+> **Tiêu chí kiểm chứng của ĐH:** app tổng + app con mở bình thường (version
+> 7.3.0/11.3.0 góc dưới trái), đăng nhập + bấm "Bán hàng" vào app con OK; trang
+> Sức khỏe "Cần xử lý: 1" + DTTHC 2/2; các chỗ ghi tên DB hiển thị "GiongDB".
+
+> **Version:** app tổng **7.3.0** / repo con **11.3.0** — ĐÃ PUSH + ĐÃ LIVE.
