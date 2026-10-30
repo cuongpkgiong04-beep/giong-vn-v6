@@ -57,9 +57,11 @@ test("GĐ 420 — cấu trúc: 17 nhóm, 4 nhóm NHẬP DỮ LIỆU đúng số 
   ]);
   // GĐ 504/C.322 (22/10 — yêu cầu Đại ca): nhóm ĐỐI CHIẾU SỐ LIỆU — mục 1 nhập kho
   // GĐ 588/C.375 (30/10 — PA-2 ĐH chốt): + mục 2 đối chiếu số liệu xuất kho
+  // GĐ 588/C.375 (30/10 — PA-2 ĐH chốt): + mục 3 đối chiếu số liệu HĐ GTGT bán hàng
   assert.deepEqual(routesOf("bh-doi-chieu-so-lieu"), [
     "/m/doi-chieu-nhap-kho",
     "/m/doi-chieu-xuat-kho",
+    "/m/doi-chieu-hoadon-banhang",
   ]);
 });
 

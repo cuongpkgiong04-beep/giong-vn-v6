@@ -240,6 +240,10 @@ export const BH_GROUPS: BhGroup[] = [
       // GĐ 588/C.375 (30/10/2026 — PA-2 ĐH chốt): Mục 2 — đối chiếu số liệu xuất
       // kho MISA ↔ SMED mức DÒNG HÀNG (số lô + hạn sử dụng; gồm cả phiếu xuất hủy).
       { to: "/m/doi-chieu-xuat-kho", label: "Đối chiếu số liệu xuất kho MISA-SMED" },
+      // GĐ 588/C.375 (30/10/2026 — PA-2 ĐH chốt): Mục 3 — HĐ GTGT bán hàng mức
+      // DÒNG HÀNG (tên hàng · SL · đơn giá · số lô · HSD): MISA + HĐ GTGT (Ivoice)
+      // + SMED-XK; lô/HSD đối chứng chéo với Bảng kê chung cuối ngày (4.BKCCN).
+      { to: "/m/doi-chieu-hoadon-banhang", label: "Đối chiếu số liệu HĐ GTGT bán hàng MISA-Ivoice-SMED-XK" },
     ],
   },
   // GĐ 229 (26/09/2026 — yêu cầu Đại ca): nhóm ĐIỀU HÀNH — NHIỆM VỤ (bậc 0
