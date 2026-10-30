@@ -31,8 +31,24 @@ export CBM_CACHE_DIR='D:\CBMState\cache' CBM_RUNTIME_DIR='D:\CBMState\runtime'  
 "$CB" cli query_graph --project <tên> --query "MATCH (f:Function) WHERE NOT EXISTS { (f)<-[:CALLS]-() } RETURN f.name LIMIT 10"
 ```
 
+## Luật THẬT của CBM về state dir (kiểm chứng GĐ 585 bằng 4 cây thử + CBM CLI thật)
+- CBM chặn **mọi quyền GHI** ngoài `{owner · SYSTEM · Administrators}` trên **mọi thư mục trên
+  đường dẫn tới state dir** (trừ gốc ổ đĩa): `Everyone:(F)` → chặn · `Authenticated Users:(M)` →
+  chặn · **`lan245:(Modify)` (tài khoản cụ thể) → CŨNG CHẶN** · `Everyone:(RX)`/`lan245:(RX)`
+  (**chỉ đọc**) → **PASS**.
+- Thông báo lỗi khi bị chặn: `could not load saved runtime settings` (hoặc `secure CLI coordination
+  could not be created (endpoint)` khi state dir vừa được tạo). Gặp lỗi này → soi ACL các cấp CHA.
+- **Trạng thái 30/10/2026:** state vẫn ở `D:\CBMState`; đã chứng minh khả thi đưa vào
+  `D:\DuLieuChung\CUONG_2026\.cbmstate` nhưng **chờ ĐH duyệt** (phải đổi quyền thư mục dữ liệu
+  công ty) — xem mục 16 AGENTS.md + `scripts/gd585-chuyen-cbm-state.py` (`--apply` / `--rollback`).
+  **Nếu state được chuyển**: cập nhật lại đường dẫn trong skill này + `config.json` là xong.
+
 ## Bẫy đã gặp thật (GĐ 568 — đừng mất thời gian lại)
-- **CBM cần 2 biến môi trường state**: `CBM_CACHE_DIR=D:\CBMState\cache`, `CBM_RUNTIME_DIR=D:\CBMState\runtime`. Để mặc định → chết vì kiểm tra DACL của công cụ (`could not load saved runtime settings` / `secure CLI coordination could not be created`). Hai thư mục này đã tạo sẵn với ACL chỉ-chủ-sở-hữu trên **Ổ D** — **đừng xoá** (mất là phải index lại từ đầu).
+- **CBM cần 2 biến môi trường state**: `CBM_CACHE_DIR`, `CBM_RUNTIME_DIR` — giá trị thật đọc trong
+  `C:\Users\Administrator\.zcode\cli\config.json` (GĐ 568→585: `D:\CBMState\{cache,runtime}`; sau
+  khi chuyển sẽ là `<dự án>\.cbmstate\{cache,runtime}`). Để mặc định → chết vì kiểm tra DACL của
+  công cụ (`could not load saved runtime settings`). Thư mục state đã tạo sẵn với ACL
+  chỉ-chủ-sở-hữu trên **Ổ D** — **đừng xoá** (mất là phải index lại từ đầu).
 - **Quy tắc lưu trữ dữ liệu (mục 15 AGENTS.md — ĐH chốt 29/10):** dữ liệu dự án (index/cache/state/backup) **KHÔNG đặt trên ổ C**; ưu tiên trong thư mục gốc dự án. Riêng state CBM buộc phải ở `D:\CBMState` (ổ D, cạnh dự án) vì công cụ từ chối mọi đường dẫn có thư mục cha cấp quyền GHI cho "identity không tin cậy" (Everyone · Authenticated Users — kể cả kế thừa từ gốc ổ D; junction cũng bị chặn). Chi tiết + bằng chứng: entry GĐ 576.
 - **File rác tên thiết bị Windows** (`nul`, `con`, `aux`, `prn`): có 1 file `nul` là CBM **hủy index ngay** (`aborted_previous_preserved`, chết trong ~4s). Đã xoá + thêm guard trong `.cbmignore`; nếu gặp lại → xoá bằng đường dẫn `\\?\D:\...\nul`.
 - Index theo **từng working tree** (repo này có 3 worktree) — mỗi nơi một index riêng.
