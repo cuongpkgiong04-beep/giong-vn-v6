@@ -9140,3 +9140,77 @@ repo con **10.1.0**.
 > ĐH cần rà khi Push** (không đè code của nhau, chỉ dùng chung file).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** / repo con **11.3.0**.
+
+### GĐ 591 / C.376 (Trợ lý ZCode (máy chủ)): 7. BÁO CÁO KHO "Kiểm kê cuối tháng" — cột "Nhận xét chất lượng cảm quan" = Đạt + dòng "Tổng Cộng" CỐ ĐỊNH KHI CUỘN + bảng mới "Bảng chi tiết kiểm kê theo trung tâm" (In A4 ngang) + FIX bug bảng phụ 18 dòng cùng số (2026-10-30)
+
+> **Yêu cầu của Đại ca (30/10, kèm 4 file Excel `Biên bản kiểm kê <TT> T9.26.xlsx`
+> + ảnh trang /m/bc-kiem-ke):** (1) thêm cột "Nhận xét chất lượng cảm quan" BÊN PHẢI
+> "Cuối kỳ (Giá trị)" — mọi dòng = "Đạt"; (2) thêm dòng CUỐI + CỐ ĐỊNH KHI CUỘN tên
+> "Tổng Cộng" = cộng Đầu kỳ · Nhập kho · Xuất kho · Cuối kỳ · Cuối kỳ (Giá trị);
+> (3) tạo mới bảng CUỐI TRANG "Bảng chi tiết kiểm kê theo trung tâm": 3 hộp MỘT DÒNG
+> (dropdown trung tâm tên đầy đủ "Trung tâm TC Gióng Bích Hòa" + Tải Excel + In) theo
+> khuôn các file Excel biên bản, in A4 NGANG cho từng trung tâm.
+
+> **⚠️ 2 PHÁT HIỆN khi điều tra (bằng chứng thật, đã verify):**
+> 1. **BUG bảng phụ "Tổng hợp kiểm kê theo trung tâm"** (có từ GĐ C.69): comprehension
+>    `bc_rows` dùng biến `a` SÓT từ vòng lặp → **18 dòng trung tâm in CÙNG số của
+>    trung tâm CUỐI**. Probe kỳ 30/09/2026: mọi dòng = TD (1.297/0/12/1.285/480.719.138)
+>    trong khi BH phải là 1.690/40/3/1.727/589.587.249 (`meta.totals` vẫn đúng).
+> 2. **stg_7BCNXT là báo cáo 1 NGÀY**, không phải báo cáo KỲ: col6 = tồn đầu ngày,
+>    col8 = nhập trong ngày, col10+col12 = xuất + tiêm trong ngày, col16/17 = tồn
+>    cuối ngày. Bảng chính (snapshot ngày cuối kỳ) vì vậy có Đầu kỳ/Nhập/Xuất = phát
+>    sinh 1 NGÀY → không khớp file biên bản (báo cáo KỲ 01/09→30/09).
+>    **Đối chứng 18 file biên bản (1.339 lô, dung sai 1 đồng) khi gom theo KỲ:**
+>    Cuối kỳ 99,6% · Đầu kỳ 98,4% · Giá trị 98,1% · **Nhập kho 91,1% · Xuất kho 81,6%**.
+>    Lệch còn lại do NGUỒN (DB thiếu ngày 02-13/09, 17, 19, 26 · có lượt tải trùng:
+>    MVVAC lô M-1225 "nhập 100" xuất hiện cả 14/09 và 18/09 → Σ 200 vs biên bản 100) —
+>    KHÔNG sửa được bằng code. Muốn khớp 100% phải **tải file KỲ từ SMED** (tool 7 có
+>    tham số khoảng ngày) + bảng nạp riêng — **việc chờ ĐH chốt** (3 PA đã trình).
+
+> **Đã làm (repo con `fa50cb1` code + `733cae7` entry):**
+> - **Builder `kiem_ke_cuoi_ky`** (agent/etl/sql_reports.py): cột "Nhận xét chất lượng
+>   cảm quan"="Đạt" (columns + mọi dòng) · FIX `bc_rows` · helper `_kiem_ke_detail_rows()`
+>   + `_hsd_dmy()` + hằng `KIEM_KE_DETAIL_COLS`/`KIEM_KE_NX_COLS` · meta `detailRows`
+>   (gom KỲ: Đầu kỳ = tồn NGÀY ĐẦU · Nhập/Xuất = Σ phát sinh · Cuối kỳ = tồn NGÀY CUỐI
+>   · Đơn giá = Giá trị cuối ÷ SL cuối (SL=0 → rỗng — Excel để #DIV/0!) · GIỮ lô cuối
+>   kỳ = 0 · loại lô không phát sinh · STT đánh lại theo TỪNG TT) + `detailColumns` +
+>   `centers` (short/name/address từ dbo.centers cho dropdown + đầu biên bản).
+> - **Web**: `components/kiem-ke-chi-tiet.tsx` MỚI (3 hộp 1 dòng + bảng 13 cột + dòng
+>   "Tổng" + tờ in A4 ngang qua portal với `@page size: A4 landscape`; khi in ẩn mọi
+>   con trực tiếp của body trừ `#kke-print-root`) · `lib/kiem-ke-chi-tiet.ts` (logic
+>   thuần) · `report-result-table.tsx` prop `subtotalLabel` (đổi chữ dòng tổng sticky;
+>   KHÔNG truyền = giữ "SUBTOTAL (N dòng)") · `sql-data-module.tsx` passthrough ·
+>   `routes/m/bc-kiem-ke.tsx`.
+> - **In đúng khuôn biên bản**: CÔNG TY… / TRUNG TÂM TIÊM CHỦNG GIÓNG … / BIÊN BẢN
+>   KIỂM KÊ VẮC-XIN / Từ ngày… đến hết ngày… / "Hôm nay, ngày… tại…" / 5 dòng Ông-bà /
+>   bảng / câu kết / 2 khối chữ ký (tên người để trống "…" điền tay; Giám đốc + Kế toán
+>   ghi sẵn theo mẫu file Excel).
+
+> **Verify:** unit Python **20/20 PASS** (`agent/gd591_kiem_ke.test.py`, giả lập `_conn()`
+> — không cần DB) · unit web **21 check PASS** (`src/lib/kiem-ke-chi-tiet.test.ts`, đã
+> vào `npm test`) · **tsc app con EXIT 0** (4 lỗi `-mua-hang.ts` của phiên khác đã hết)
+> · chạy builder THẬT kỳ 09/2026: bảng chính 1.205 dòng · byCenter 18 dòng ĐÃ KHÁC NHAU
+> · detail 1.347 dòng/18 TT · **BH: 71 lô = đúng số lô file Excel GBH, tổng cuối kỳ
+> 1.727 + giá trị 589.587.249 khớp TỪNG ĐỒNG biên bản** · kỳ 10/2026 (trang ĐH đang
+> xem): dòng "Tổng Cộng" web tự cộng = meta.totals TỪNG ĐỒNG (29.896/840/242/30.494/
+> 15.807.267.695).
+
+> **Tiêu chí kiểm chứng của ĐH (sau Push):** /m/bc-kiem-ke → bảng chính có cột "Nhận
+> xét chất lượng cảm quan" = Đạt + dòng "Tổng Cộng" dính đáy khi cuộn; cuối trang là
+> "Bảng chi tiết kiểm kê theo trung tâm" → chọn TT → bảng 13 cột + Tổng → In (A4
+> NGANG 1 tờ biên bản) / Tải Excel. **LƯU Ý: cần JOB MỚI** (job chạy trước 30/10 chưa
+> có meta.detailRows → bảng chi tiết hiện ghi chú "chạy lại báo cáo") + **restart
+> agent** (máy chủ GIONG_SMED_Agent · máy LAN-1 worker .27) để nạp builder.
+
+> **⚠️ Rà trùng lặp (nguyên tắc 3) — CẢNH BÁO ĐH:** 2 file dùng chung đang bị phiên
+> khác sửa song song: `sql_reports.py` (GĐ 588/C.375 + GĐ 590/C.378) và
+> `report-result-table.tsx` (GĐ 590 colGroups). Em commit bằng **INDEX TẠM**
+> (`GIT_INDEX_FILE`, script `scripts/_gd591_stage.py`) → **KHÔNG đụng index chung**,
+> giữ nguyên bài dở của phiên khác; commit `fa50cb1` chỉ chứa hunk GĐ 591 (đã kiểm:
+> staged version vẫn giữ đủ builder GĐ 590 + compile OK). Kèm 1 dòng khai báo
+> `colGroups?:` của GĐ 590 (commit `83fd030` của họ THIẾU dòng khai báo này → file ở
+> HEAD không typecheck nếu thiếu) — đã ghi rõ trong commit message.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** /
+> repo con **11.3.0**. Code: repo con **fa50cb1** · **CHƯA PUSH** (registry GĐ 591
+> vẫn 🔒 → mở ✅ khi phiên đóng).
