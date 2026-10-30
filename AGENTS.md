@@ -8481,3 +8481,57 @@ repo con **10.1.0**.
 > **✅ ĐÃ HOÀN TẤT bước cuối (30/10/2026 — ĐH cho phép "đang rảnh làm nốt"):** đã bỏ `Everyone` khỏi share + `Disable-LocalUser Guest`. **Quyền share cuối cùng:** `BUILTIN\Administrators` (Full) + `lan245` · `lan34` · `lan27` (Change) — không còn ACE ẩn danh nào. **Bằng chứng kiểm chứng thật (3 máy LAN, chạy trong phiên người dùng KHÔNG nhập tài khoản):** `dir` share OK + **GHI FILE OK** — đo trước và sau khi tắt Guest đều đạt; phiên SMB của `.27` hiển thị **`GIONGPC\lan27`** (đúng tài khoản riêng); truy cập không tài khoản giờ bị **"Access is denied"** (trước đây toàn quyền). **Lưu ý:** các máy KHÁC từng truy cập ẩn danh (`.11` · `.28` · `.32` · IP Tailscale) **đã hết truy cập** — nếu là máy cần dùng, Đại Ca báo để cấp tài khoản riêng. **Sự cố nhỏ ĐÃ KHÔI PHỤC (30/10):** trong lúc kiểm chứng em chạy `net use * /delete` nên **mất Ổ ĐĨA MẠNG trên máy LAN** (`.245` mất `Y:` — ĐH báo "chưa vào được"; `.27`/`.34` mất `Z:`) → **đã map lại bằng chính tài khoản riêng + `/persistent:yes`, kiểm chứng đọc/ghi OK cả 3 máy** (script dùng lại: `python D:\CBMState\_lan\khoi_phuc_o_dia_mang.py`). **Đã kiểm chứng lại tầng service (SYSTEM) cả 3 máy SAU khi tắt ẩn danh: đăng nhập + đọc + ghi OK** ⇒ worker chạy job bình thường. Phiên SMB hiện tại trên máy chủ: `.245=lan245`, `.34=lan34`, `.27=lan27` (không còn Guest). Cần khôi phục tạm toàn bộ (bật lại Guest + Everyone): `python D:\CBMState\_lan\hoan_tat_hoac_khoi_phuc.py --rollback`.
 
 > **Version:** KHÔNG bump (không sửa code app). App tổng **7.2.0** / repo con **11.2.0**.
+
+### GĐ 583 / C.373 (Trợ lý ZCode — máy chủ): Đổi số + thứ tự chạy nhiệm vụ MISA theo đúng nghiệp vụ "nhập mua TRƯỚC xuất kho" (PA-2 ĐH chốt) (2026-10-30)
+
+> **Yêu cầu của Đại Ca (30/10 08:18, kèm ảnh trang /m/tasks):** *"Phần Nhiệm vụ —
+> theo thứ tự nhập mua phải trước xuất kho và chứng từ bán hàng nên đổi lại số thứ
+> tự và đổi lại cách chạy nhiệm vụ theo thứ tự đúng: Upload chứng từ mua hàng lên
+> MISA đang là Task_07 đổi thành Task_05 cho chạy trước; Task_05 Upload phiếu xuất
+> kho lên MISA đổi thành Task_07 cho chạy sau. Để các Task hiện tại chạy xong và áp
+> dụng cách đổi này vào hôm nay."*
+
+> **Chẩn đoán (probe GiondDB thật — kỳ 29/10, tạo 08:15 ngày 30/10):** thứ tự chạy
+> do **thứ tự TẠO** nhiệm vụ quyết định, không do số: `created_at` xuất kho
+> **08:15:31.672** → bán hàng **.732** → mua hàng **.824**,
+> `api_server._task_claim_impl` nhặt `pending` bằng `ORDER BY created_at ASC` ⇒
+> xuất kho chạy **08:15:31.854** (xong 08:38:03, lỗi), bán hàng 08:38:34, mua hàng
+> còn "Chờ chạy" — đúng như ảnh ĐH chụp. 5 kỳ trước (24→29/10) cùng khuôn ⇒ **xuất
+> kho luôn chạy trước, mua hàng chạy cuối** (ngược nghiệp vụ). Gốc: `task_runner.py`
+> gọi spawn theo thứ tự xuất kho → bán hàng → mua hàng ở 2 chỗ (vòng loop 30s +
+> fast-path cuối Task_03 daily); `created_at` là datetime2(7) → thứ tự xác định.
+
+> **ĐH chốt PA-2** (trong 3 PA em trình: PA-1 đổi thứ tự tạo · **PA-2 thêm tuần tự
+> cứng** · PA-3 chỉ đổi nhãn): số khớp thứ tự chạy + nhiệm vụ sau CHỜ nhiệm vụ
+> trước kết thúc.
+
+> **Đã làm (repo con `9b5a1f4` code + `1ebc060` entry):**
+> 1. `agent/task_runner.py` — spawn `'Task_05 · MISA mua hàng'` (kind `misa-mua-hang`)
+>    và `'Task_07 · MISA xuất kho'` (kind `misa-xuat-kho`); bán hàng giữ `Task_06`.
+> 2. **Khoá guard "1 lần/kỳ" đổi từ `name LIKE 'Task_0x%'` sang `kind`** — tên đổi
+>    số nên không còn là khoá an toàn với 34 dòng lịch sử cũ trong `scheduled_tasks`.
+> 3. **Tuần tự PA-2**: `_maybe_spawn_misa_bh` chờ mua hàng kết thúc
+>    (`done/error/cancel`) + mới hơn bản bán hàng cuối; `_maybe_spawn_misa_xk` chờ
+>    bán hàng tương tự; bản lỗi/hủy VẪN cho đi tiếp — không kẹt chuỗi.
+> 4. **Đổi thứ tự gọi spawn thành mua hàng → bán hàng → xuất kho ở CẢ 2 chỗ** (loop
+>    30s + fast-path cuối Task_03) — chỗ quyết định thứ tự chạy.
+> 5. Web app con: `tasks-page.tsx` (nhãn `KIND_NAMES` + 3 chip thứ tự 1/3·2/3·3/3 +
+>    `cfgDesc` — sửa luôn mô tả SAI "Backfill dữ liệu 01/01/2025…" của bán hàng/xuất
+>    kho như trong ảnh) · `-smed.ts` nhãn "(Task_07 — /kho/xuatkho)" · comment đồng bộ.
+> 6. Test mới `agent/task_runner_misa_order.test.py` — **28/28 PASS**.
+
+> **Verify:** `py_compile` OK · `tsc` app con **EXIT 0** · `task_runner_quick` 39/40
+> (FAIL 39 "Đọc config bản Task_04" **CÓ SẴN** — bản HEAD fail y hệt) ·
+> `gd536_xk_api` **72/72 PASS** · `npm test` 7/8 (FAIL `upload-history-scope`
+> **CÓ SẴN** — regex test cũ vs code thật `{ data: { reports: … } }`, file không đụng).
+
+> **Luồng mới:** Task_05 mua hàng (sau Task_03) → Task_06 bán hàng (sau Task_05 xong)
+> → Task_07 xuất kho (sau Task_06 xong).
+
+> **Vận hành (làm tiếp ngay trong hôm nay, cùng GĐ 583):** chờ 3 nhiệm vụ hôm nay
+> chạy xong → restart **web_agent máy chủ** (không đụng api_server → tunnel URL giữ
+> nguyên) → đổi tên 21 dòng lịch sử `scheduled_tasks` (xuất kho 14 + mua hàng 7) →
+> verify chuỗi thật ở kỳ kế tiếp.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
+> repo con **11.2.0**.
