@@ -9072,3 +9072,71 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** /
 > repo con **11.3.0**.
+
+### GĐ 588 / C.375 (Trợ lý ZCode (máy LAN-1)): MỤC 3 — "Đối chiếu số liệu HĐ GTGT bán hàng MISA-Ivoice-SMED-XK" XONG (mức DÒNG HÀNG: 3 khối _MS/_IV/_XK + đối chứng chéo lô/HSD 4.BKCCN) (2026-10-30)
+
+> **Yêu cầu ĐH (30/10):** phân hệ thứ 3 cùng bậc với Mục 1/2 trong nhóm sidebar ĐỐI CHIẾU SỐ LIỆU —
+> kết cấu giống Mục 1 (hộp Chạy đối chiếu + Lịch sử chạy + bảng chi tiết). **ĐH chốt PA-2 + 3 điều
+> chỉnh:** mức **DÒNG HÀNG** (tên hàng · SL · đơn giá · **số lô** · **HSD**) · lô/HSD nguồn chính
+> **6.BKX** + **đối chứng chéo 4.BKCCN** · (Mục 2 gồm cả phiếu PH- — xong ở chặng trước của cùng GĐ này).
+
+> **Đã làm (repo con `97eb04b` · app tổng `94aa526`):**
+> 1. `agent/etl/sql_reports.py`: builder **`dc_hoadon_banhang`** + hàm ghép THUẦN **`dc_hd_merge_rows`** ·
+>    `_dc_hd_flags` · `_dc_hd_row` · `_dc_hd_kn_hit` · `_dc_norm_hd_item` · `_dc_norm_kh` ·
+>    **`_dc_hd_center_from_symbol`** (suy trung tâm từ KÝ HIỆU HĐ: dùng `HD_SYMBOL_MAP` chuẩn của module
+>    + nhánh riêng chịu được ĐỔI TIỀN TỐ NĂM `1C27MAx`) + `_sync_misa_sa_detail` (gọi sync trước báo cáo,
+>    lỗi → bỏ qua không phá job, tắt bằng `MISA_SKIP_SYNC=1`) + QUERY_KEYS + `_REPORT_BUILDERS` +
+>    `REPORT_SOURCE_TABLES` (3 nguồn TẢI VỀ; bảng MISA tự đồng bộ KHÔNG khai để khỏi treo job hỏi download).
+> 2. `agent/misa_sa_detail_sync.py` (MỚI): **ĐỌC LẠI** chi tiết chứng từ BÁN HÀNG từ MISA AMIS
+>    (`sa/v1/sa_voucher/detail_full` — helper `build_detail_req` có sẵn trong `misa_banhang_api.py`; danh
+>    sách refid lấy từ `sm_banhang_phieu`) → bảng **`misa_sa_detail`** (idempotent theo refid; nhận ngày
+>    CẢ ISO lẫn dd/mm/yyyy; guard báo RÕ khi không bắt được headers MISA thay vì AttributeError khó đoán).
+>    Vì sao KHÔNG dùng `sm_banhang_phieu` làm "bên MISA": bảng đó là kết quả QUÉT SMED ⇒ so SMED với SMED vô nghĩa.
+> 3. Trang `src/routes/m/doi-chieu-hoadon-banhang.tsx` (3 hộp giống Mục 1/2) + phân quyền 3 điểm
+>    (app con: `lib/nav.ts` · `lib/smed-auth.ts` · `routes/api/-smed.ts` SQL_SOURCES/QUERY_GROUP/QUERY_LEAF;
+>    app tổng: `src/lib/banhang-catalog.ts` + test catalog) + `routeTree.gen.ts` sinh lại.
+> 4. Test `agent/gd588-doi-chieu-hd.test.py` (12 nhóm ca) + công cụ đối chứng `agent/gd588-doi-chieu-hd-probe.py`
+>    (monkeypatch `sql_reports._conn` → 192.168.1.250,1433 login `giong_worker`).
+
+> **Nguồn + khóa ghép (chốt bằng PROBE THẬT 30/10 — ngày 25/10 có 892 dòng 11.BKCT):**
+> `_IV` = `stg_11BKCT` (col2 ký hiệu · col3 số HĐ · col4 ngày HĐ · **col10 NGƯỜI MUA** · col11 hình thức TT ·
+> col13 tên hàng · col17 SL · col18 đơn giá · col19 thành tiền — ⚠️ **ghi chú cột cũ trong file SAI**:
+> col6 rỗng, col27 là TRẠNG THÁI HĐ chứ không phải số lô) · `_MS` = `misa_sa_detail` (MISA đọc lại) ·
+> `_XK` = `stg_6BKX` **CHỈ phiếu PX-** (xuất bán; PH- là xuất hủy, không thuộc HĐ bán hàng) ·
+> `_KN` = `stg_4BKCCN` (chéo lô/HSD theo trung tâm + khách + tên hàng, kiểu KIỂM TRA THÀNH VIÊN — peek,
+> KHÔNG tiêu thụ dòng). Neo = `_IV`; `_MS↔_IV` theo (SỐ HĐ + KÝ HIỆU + tên hàng + SL) consume 1-1 rồi nới dần
+> (cột "Mức khớp" ghi rõ đã nới tới đâu); **`_IV↔_XK` là GHÉP MỜ** (6.BKX KHÔNG chứa số HĐ) theo (trung tâm
+> suy từ ký hiệu + ngày + tên hàng + SL) ⇒ **cột "Mức khớp XK" nói rõ mức tin cậy** (đúng khóa / mờ n dòng
+> trùng khóa / mờ lệch SL / mờ tên hàng gần đúng / thiếu). Dòng dư CẢ 2 bên vẫn vào bảng (cờ "Thiếu HĐ GTGT").
+
+> **⚠️ BẪY PHÁT HIỆN KHI CHẠY THẬT (đã sửa — cần biết cho lần sau):** so đơn giá/thành tiền
+> **HĐ ↔ xuất kho là SAI BẢN CHẤT** — HĐ ghi GIÁ BÁN còn 6.BKX ghi giá xuất kho/giá vốn: probe cho thấy
+> **152/152 dòng khớp khóa DUY NHẤT đều khác giá** (MVVAC 390.000 ↔ 27.000 · Verorab 470.000 ↔ 284.390
+> · Quimi-Hib 350.000 ↔ 164.937) ⇒ cờ "lệch giá" chỉ tạo nhiễu 883/890 dòng. Đã **BỎ so giá ở cặp `_IV↔_XK`**
+> (giữ so SỐ LƯỢNG; 2 cột vẫn hiện để đối chiếu bằng mắt); vẫn so đơn giá/tiền ở cặp MISA↔HĐ (cùng giá bán)
+> + có test chặn hồi quy.
+
+> **Bằng chứng verify (30/10):** unit **55/55 PASS** · không hồi quy Mục 2 (**32/32**) · `tsc --noEmit`
+> **app tổng EXIT 0** · app con **0 lỗi ở file của em** (4 lỗi còn lại thuộc `api/-mua-hang.ts` đang dở của
+> phiên khác) · test catalog app tổng **9/9 PASS** · **chạy THẬT trên GiongDB** (máy LAN → TCP 1433):
+> kỳ **25/10** builder trả **897 dòng** = 890 dòng HĐ (nguồn thô 892 dòng → gộp ký hiệu+số HĐ+tên hàng = 890;
+> SL 892 · tiền **712.210.000** khớp từng đồng) + 7 dòng dư xuất kho; khối XK 893 dòng PX-/697 phiếu ·
+> **569.251.803** khớp nguồn; kỳ 20→29/10: **3.165 dòng** (3.117 nhóm HĐ + 48 dư XK) khớp nguồn.
+> `misa_sa_detail` CHƯA đồng bộ (máy LAN không có Chrome CDP/MISA) ⇒ mọi dòng HĐ hiện cờ **"Thiếu MISA"**
+> — nói đúng thực tế, KHÔNG bịa số.
+
+> **CÒN LẠI (thuộc MÁY CHỦ):** chạy `python agent/misa_sa_detail_sync.py 25/10/2026 25/10/2026 --probe`
+> (cần Chrome CDP 9222 đã login MISA, khi agent rảnh) để nạp `misa_sa_detail` → bảng chuyển từ toàn bộ
+> "Thiếu MISA" sang Khớp/Lệch THẬT; `--probe` in tên trường dòng hàng MISA để chốt `lot_no`/`expiry_date`.
+> **Sau Push cần restart agent** để nạp builder mới.
+
+> **⚠️ CẢNH BÁO PHIÊN SONG SONG (ĐH đọc trước khi Push):** lúc làm, phiên **máy chủ** commit liên tục trên
+> cùng worktree (`83fd030` GĐ 590 · `fa50cb1` GĐ 591 · `b519428`/`d6c7e07` docs GĐ 592) và sửa CHƯA COMMIT
+> cùng `sql_reports.py`/`-smed.ts`/`nav.ts`/`smed-auth.ts`/`routeTree.gen.ts`. Phiên này **chỉ commit phần
+> CỦA MÌNH** bằng index riêng + `commit-tree` + `update-ref` CAS (parent = HEAD đọc tại chỗ, tự lọc patch
+> theo marker) ⇒ **0 dòng của phiên khác lọt vào** (repo con `97eb04b`: 9 file / +1.492 dòng — đúng bài Mục 3).
+> Đã **reset index chung về HEAD** vì index bị cũ (chứa "xoá" các file vừa thêm — ai commit nguyên index đó
+> sẽ mất file). Phiên máy chủ cũng đã tự gỡ 1 commit lỡ nuốt 5 file staged (`b519428`) ⇒ **TRÙNG VÙNG FILE,
+> ĐH cần rà khi Push** (không đè code của nhau, chỉ dùng chung file).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** / repo con **11.3.0**.
