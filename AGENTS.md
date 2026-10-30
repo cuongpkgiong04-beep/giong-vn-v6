@@ -866,6 +866,49 @@ Chuỗi thư mục dự án hiện có `Authenticated Users:(Modify)` **kế th�
 3. **Bảo mật truy cập share — ĐÃ XỬ LÝ (GĐ 582, 30/10/2026):** trước đây máy LAN truy cập `\<máy chủ>\DuLieuChung` bằng tài khoản **Guest** (bất kỳ máy nào trong mạng cũng vào được TOÀN QUYỀN, không cần mật khẩu). **Đã chuyển sang tài khoản riêng** `lan245` · `lan34` · `lan27` (tài khoản local trên máy chủ; mật khẩu lưu ở `giong-apps/apps/banhang/agent/.secrets/lan_accounts.txt` — trong dự án, đã gitignore), **Guest đã TẮT**, share chỉ còn `BUILTIN\Administrators` + 3 tài khoản đó. Máy mới cần truy cập → **tạo tài khoản riêng + cấp quyền `Change`, KHÔNG mở lại Guest/Everyone**.
 <!-- SHARED-BLOCK:GD576-QUY-TAC-LUU-TRU-DU-LIEU END -->
 
+<!-- SHARED-BLOCK:GD585-CBM-STATE-TRONG-DU-AN START -->
+## 16. ĐƯA CBM STATE VÀO THƯ MỤC DỰ ÁN — điều kiện & công cụ (GĐ 585, 30/10/2026)
+
+> **ĐH yêu cầu (30/10/2026):** đặt state codebase-memory-mcp vào `D:\DuLieuChung\CUONG_2026`
+> thay vì `D:\CBMState` ("nếu được em chuyển luôn"). Kết quả điều tra: **ĐƯỢC, kèm điều kiện**
+> — xem 16.1/16.2; **chưa thực thi**, chờ ĐH duyệt phần ACL (16.4).
+
+### 16.1 Luật THẬT của CBM về state dir (kiểm chứng GĐ 585 — 4 cây thử cô lập + CBM CLI thật)
+| Cấu hình thư mục CHA của state dir | Kết quả |
+|---|---|
+| `Everyone:(F)` | ❌ CHẶN |
+| `Authenticated Users:(M)` | ❌ CHẶN |
+| **`lan245:(Modify)` — tài khoản cụ thể** | ❌ **CHẶN** ← *điểm GĐ 576 chưa từng thử* |
+| `Everyone:(RX)` + `lan245:(RX)` — chỉ đọc | ✅ **PASS** |
+
+⇒ CBM chặn **mọi quyền GHI** ngoài `{owner · SYSTEM · Administrators}` trên **mọi thư mục
+trên đường dẫn tới state dir** (trừ gốc ổ đĩa); **quyền CHỈ-ĐỌC được chấp nhận**. Vì vậy muốn
+state nằm trong dự án thì phải **chuyển quyền ghi của máy LAN từ 2 cấp cha xuống các thư mục con**,
+chứ không thể giữ quyền ghi ở cấp cha.
+
+### 16.2 Hiện trạng chặn (30/10/2026)
+`D:\DuLieuChung` (124 thư mục cấp 1 — dữ liệu công ty) và `D:\DuLieuChung\CUONG_2026` đều còn
+`Everyone:(F)` + `Authenticated Users:(M)` kế thừa từ gốc ổ D ⇒ CBM chặn. Ba máy LAN map ổ
+`Y:`/`Z:` vào **gốc share** `\\192.168.1.250\DuLieuChung` ⇒ cần quyền đọc ở gốc + quyền ghi ở
+các thư mục con (giữ nguyên trải nghiệm hiện tại).
+
+### 16.3 Công cụ đã chuẩn bị — `scripts/gd585-chuyen-cbm-state.py`
+```bash
+python scripts/gd585-chuyen-cbm-state.py            # DRY-RUN (mặc định — không đụng gì)
+python scripts/gd585-chuyen-cbm-state.py --verify   # kiểm chứng trạng thái hiện tại
+python scripts/gd585-chuyen-cbm-state.py --apply    # thực thi (tự backup ACL + config trước)
+python scripts/gd585-chuyen-cbm-state.py --rollback # khôi phục ACL + config về như trước
+```
+Backup tự động vào `backups/gd585-<timestamp>/` (ACL 2 cấp + config.json). Script **không**
+chuyển `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh tạo bản thứ hai) và **không** xoá
+`D:\CBMState`.
+
+### 16.4 Trạng thái & việc chờ ĐH quyết
+Đổi quyền trên thư mục chứa **toàn bộ dữ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động
+(hôm nay 30/10 3 máy vừa có sự cố mất ổ đĩa mạng — GĐ 582) ⇒ **phải có ĐH duyệt riêng** trước khi
+`--apply`. Cho tới lúc đó **state vẫn ở `D:\CBMState`** — vẫn đúng quy tắc 15.1 (ổ D, không dùng ổ C).
+<!-- SHARED-BLOCK:GD585-CBM-STATE-TRONG-DU-AN END -->
+
 ---
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
@@ -8539,3 +8582,36 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
 > repo con **11.2.0**.
+
+### GĐ 585 (Trợ lý ZCode (máy chủ)): Điều tra "đưa CBM state vào thư mục dự án" — CHỨNG MINH ĐƯỢC khả thi, phát hiện CBM chặn cả quyền ghi của TÀI KHOẢN CỤ THỂ; chuẩn bị công cụ chuyển an toàn (CHƯA thực thi — chờ ĐH duyệt phần ACL) (2026-10-30)
+
+> **Yêu cầu của Đại Ca (30/10):** "Anh muốn cho state vào trong thư mục của dự án là
+> `D:\DuLieuChung\CUONG_2026` có được không? Nếu được em chuyển luôn cho anh và
+> thông báo cho mọi việc tuân theo việc thay đổi này."
+
+> **Đã kiểm chứng thật (4 cây thử cô lập trên ổ D + CBM CLI thật, không suy đoán):**
+> - cha `Everyone:(F)` → **CHẶN** · cha `Authenticated Users:(M)` → **CHẶN**
+> - cha **`lan245:(Modify)` — tài khoản cụ thể CŨNG BỊ CHẶN** (điểm GĐ 576 chưa từng thử)
+> - cha `Everyone:(RX)` + `lan245:(RX)` (chỉ đọc) → **PASS**
+> ⇒ Luật thật của CBM: chặn **mọi quyền GHI** ngoài `{owner · SYSTEM · Administrators}` ở mọi
+> cấp trên đường dẫn tới state dir; **quyền chỉ-đọc được chấp nhận**.
+
+> **Hệ quả:** muốn state trong `CUONG_2026` phải bỏ quyền ghi ở 2 cấp cha (`D:\DuLieuChung` —
+> 124 thư mục dữ liệu công ty — và `CUONG_2026`) và **chuyển quyền ghi đó xuống các thư mục CON**
+> cho `lan245/lan34/lan27`. Đây là đổi quyền trên thư mục dữ liệu công ty + ảnh hưởng 3 máy LAN
+> đang map ổ `Y:`/`Z:` vào gốc share (hôm nay 3 máy vừa có sự cố mất ổ đĩa mạng GĐ 582) ⇒
+> **cần ĐH duyệt riêng** — em DỪNG, không tự đổi quyền.
+
+> **Đã chuẩn bị (chưa chạy):** `scripts/gd585-chuyen-cbm-state.py` — DRY-RUN mặc định;
+> `--apply` tự backup ACL 2 cấp + config.json vào `backups/gd585-<timestamp>/` trước khi sửa;
+> `--verify`; `--rollback`. Đã chạy thật dry-run + verify: đọc đúng 3 ACE ghi ngoài trusted ở
+> mỗi cấp, đúng 124 + 16 mục cấp 1; CBM hiện vẫn **PASS** với state cũ. Script KHÔNG chuyển
+> `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh bản thứ hai) và KHÔNG xoá `D:\CBMState`.
+
+> **Thông báo cho mọi phiên (mục 16 AGENTS.md — block `GD585-CBM-STATE-TRONG-DU-AN`):** luật
+> state dir của CBM + điều kiện chuyển + công cụ + trạng thái "chờ ĐH duyệt". Khi ĐH chốt,
+> phiên nào nhận việc chạy `--apply` rồi kiểm chứng máy LAN (.245 Y:, .27/.34 Z:) + restart
+> phiên ZCode để MCP nạp env mới.
+
+> **Version:** KHÔNG bump (docs + script vận hành, chờ lệnh Push — quy tắc ĐA AGENT).
+> App tổng **7.2.0** / repo con **11.2.0**.
