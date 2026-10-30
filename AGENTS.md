@@ -8799,6 +8799,29 @@ repo con **10.1.0**.
 >    cáo. ĐH cho biết đây là tồn đọng thật hay do quy định chỉ đẩy một số loại phiếu. Ba dòng
 >    "Thiếu SMED (chỉ có trên MISA)" cũng cần xem riêng.
 
+> **CHECKPOINT CHO PHIÊN LÀM MỤC 3 (chép nguyên khối này sang phiên mới là vào việc được ngay):**
+> **Việc:** builder `dc_hoadon_banhang` (trang `/m/doi-chieu-hoadon-banhang`, cùng nhóm ĐỐI CHIẾU
+> SỐ LIỆU) + script `misa_sa_detail_sync.py` → bảng `misa_sa_detail`.
+> **Nguồn:** `_MS` = `misa_sa_detail` (ĐỌC LẠI từ MISA: `sa_voucher/detail_full?req=build_detail_req(refid)`
+> — helper có sẵn trong `misa_banhang_api.py`; danh sách refid lấy từ `sm_banhang_phieu` refid <> )
+> · `_IV` = `stg_11BKCT` (ký hiệu col2 · số HĐ col3 · ngày HĐ col4 · người mua col10 · tên hàng col13 ·
+> SL col17 · đơn giá col18 · thành tiền col19 · tổng TT col24) · `_XK` = `stg_6BKX` (phiếu PX-, lô col6,
+> HSD col5 = serial Excel, SL col7, tiền col9) · chéo `_KN` = `stg_4BKCCN` (khách col2, tên hàng col13,
+> lô col14, HSD col15).
+> **Khóa ghép:** `_MS`↔`_IV` theo (SỐ HĐ + KÝ HIỆU + tên hàng + SL) consume 1-1; `_IV`↔`_XK` theo (trung
+> tâm suy từ ký hiệu HĐ bằng `_center_from_hd_symbol` + ngày + tên hàng + SL) — đây là GHÉP MỜ (6.BKX
+> không chứa số HĐ) nên CỘT CỜ phải nói rõ mức tin cậy; lô/HSD đối chứng chéo với `_KN` theo (trung tâm
+> + khách + tên hàng). Lệch ngày giữa 2 nguồn thì hiện cờ, KHÔNG tự bù.
+> **Bẫy đã gặp thật (đừng lặp):** MISA ghi TRÒN ĐỒNG ⇒ ngưỡng 0.51 (đơn giá) và 0.51 × SL (thành tiền);
+> ngày nhận CẢ ISO lẫn dd/mm/yyyy; kiểm `hdrs["v"]` trước khi gọi `make_fetcher`; `routeTree.gen.ts`
+> sinh bằng `node node_modules/vite/bin/vite.js build` (vite dev chết qua SMB); sửa builder PHẢI restart
+> agent (script sync chạy subprocess thì không cần).
+> **Wiring:** 7 điểm như Mục 2. **Test/probe mẫu:** `agent/gd588-doi-chieu-xk.test.py` (hàm ghép thuần)
+> + `agent/gd588-doi-chieu-xk-probe.py` (monkeypatch `sql_reports._conn` → 192.168.1.250,1433 bằng login
+> `giong_worker`). **Verify cuối:** trigger job thật qua tunnel `POST /jobs` rồi đọc `dbo.smed_pull_jobs`.
+> **Bằng chứng nguồn đã đo (30/10):** bán hàng 25/10 — 702/702 số HĐ của chứng từ đã upload có trong
+> `stg_11BKCT`, 698/702 khớp tiền (4 lệch THẬT = đúng loại lỗi cần bắt).
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / repo con **11.2.0**.
 
 ### GĐ 589 (Trợ lý ZCode (máy chủ)): PA Push đợt 30/10 (lệnh ĐH "Push và restart Server") — 38 commit 2 repo + bump 7.3.0/11.3.0 + restart server (tunnel mới) + verify production PASS (2026-10-30)
