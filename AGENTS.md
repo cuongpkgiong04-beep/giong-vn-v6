@@ -9011,3 +9011,64 @@ repo con **10.1.0**.
 > repo con **11.3.0**. Code: repo con **83fd030** · app tổng **d3a287f** (đã commit,
 > CHƯA push). NB: file này còn bài dở của phiên khác (GĐ 591-593) — entry GĐ 590
 > commit riêng qua cổng shared-doc.
+
+### GĐ 592 / C.377 (Trợ lý ZCode (máy chủ · PA-3 giá VX)): PA-3 ĐH chốt (30/10) — "Nhập liệu từ file" Bảng giá Vắc xin: ĐỌC SỐ TRỰC TIẾP TỪ Ô Excel + AI CHỈ GHÉP TÊN (2026-10-30)
+
+> **ĐH chốt PA-3** sau khi em điều tra câu hỏi "up file Excel mà sao chưa thấy AI
+> cập nhật giá" (30/10 15:30, file `BẢNG GIÁ VĂC XIN - LỢI NHUẬN GỘP.xlsx`).
+
+> **GỐC LỖI (đo thật):** đường cũ đưa CẢ BẢNG cho LLM sinh lại toàn bộ dòng — file
+> 15.517 ký tự / 83 dòng chạy **quá trần `AbortSignal.timeout(120_000)`** trong
+> `-mua-hang.ts` → web nhận `"The operation was aborted due to timeout"` sau **đúng
+> 122 giây** (em bấm lại trên production, bắt được response `{ok:false,error:…}`
+> ms=121.980). Vì vậy `mh_files.so_dong_ai` NULL cho MỌI file lớn (id 16/17/18/30)
+> và `mh_bang_gia_vx` **52/52 dòng giá TRỐNG** từ seed. Đối chứng KHÔNG phải lỗi
+> khoá/cấu hình: Trợ lý AI (cùng `ZAI_API_KEY`) trả lời **8,8s** · api.z.ai 401
+> trong 0,66s · file docx nhỏ 1.653 ký tự AI đọc xong trong **35,7s** ⇒ nghẽn do
+> KHỐI LƯỢNG phải sinh, không phải kết nối. Phụ: hàm xử lý nút "AI đọc" **thiếu
+> catch** nên lỗi mạng/timeout = màn hình không phản ứng gì (ĐH thấy "không có
+> gì xảy ra").
+
+> **ĐÃ LÀM (repo con `6c038c1` + docs `b519428`) — 4 file:**
+> `src/lib/mua-hang.ts` (+`readSheetGrid` dò tiêu đề 2 TẦNG + nhãn kế thừa ô gộp ·
+> `guessColumnMapping` · `mergeGridGroups` gộp nhóm tên · `readBangGiaVxRows` đọc số
+> từ ô · `matchVaccineName`) · `src/routes/api/-mua-hang.ts` (nhánh PA-3 trong
+> `parseMuaHangFile` · `mapNamesViaAi` AI chỉ ghép tên, lỗi thì giữ nguyên tên file ·
+> `buildBangGiaDraft` dùng chung · **`remapMuaHangDraft`** đọc lại theo cột) ·
+> `mua-hang-page.tsx` (khối "Cột đọc từ bảng …" + nút "Đọc lại theo cột này" +
+> bắt lỗi tiếng Việt).
+
+> **3 LUẬT ĐỌC rút từ file thật:** (a) số thập phân kiểu Anh `1620679.9` = 1.620.679,9
+> (nhóm đầu ≥4 chữ số + 1 dấu chấm = dấu THẬP PHÂN, `parseVnNumber` mặc định hiểu là
+> nghìn) · (b) cột CK phải lấy VÙNG GIÁ NHẬP — vùng "LỢI NHUẬN GỘP" cũng có cột tên
+> "CK trên hóa đơn/tháng/quý" nhưng đó là LỢI NHUẬN; cột "% CK" bị trừ điểm, cột tiền
+> ("TT") được cộng điểm (lưu ý `deaccent` xoá dấu `%` nên phải soi nhãn GỐC) ·
+> (c) NCC là Ô GỘP theo KHỐI nhà cung cấp (file thật: **8 ô cho 83 dòng**) → điền
+> xuôi trong khối, chỉ khi cột đúng kiểu khối (≤ 1/3 số dòng có giá trị).
+
+> **VERIFY:** unit **84/84 PASS** · `tsc` 0 · `vite build` PASS 3,04s · **file THẬT
+> của ĐH (id=30) đọc trong 10ms** → 53 nhóm/53 có giá, cột tự chọn: VACXIN(5) ·
+> «GIÁ BÁN · GIÁ NIÊM YẾT»(15) · «GIÁ NHẬP · CK trên hóa đơn · TT»(10/12/14) ·
+> NCC(4) điền theo khối — **khớp TỪNG Ô Excel**: Bexsero 1.800.000/1.620.680 ·
+> Boostrix 770.000/592.020 · Infanrix 1.045.000/907.876 · máy ghép tên **40/53**
+> ngay, 13 tên còn lại chờ AI (lỗi AI thì giữ nguyên văn + cảnh báo).
+
+> **⚠️ CHỜ ĐH CHỐT 1 ĐIỂM:** file NCC có 2 vùng giá — "GIÁ NHẬP · ĐƠN GIÁ"
+> (Bexsero 1.653.755) và "GIÁ BÁN · GIÁ NIÊM YẾT" (1.800.000). Mặc định lấy cột
+> tên đúng "GIÁ NIÊM YẾT" (khớp câu ĐH "lấy giá niêm yết từ file Excel" + khớp
+> hướng **GĐ 590** phiên khác đang làm "Báo cáo tồn kho theo giá niêm yết" đọc
+> chính cột này) — ĐH đổi sang ĐƠN GIÁ bằng 1 ô chọn trong hộp xem trước nếu muốn
+> giá nhập. **Chưa verify:** phần gọi AI ghép tên trên production (cần `ZAI_API_KEY`
+> Vercel — chỉ chạy sau khi Push).
+
+> **Test đỏ SẴN (không phải GĐ 592):** `src/lib/job-labels.test.ts` fail vì phiên
+> khác (GĐ 588/C.375) mới thêm queryKey `dc-xuat-kho`/`dc-hoadon-banhang` chưa vào
+> `QUERY_KEY_LABELS` — ngoài phạm vi, không sửa.
+
+> **Tiêu chí kiểm chứng của ĐH (sau Push):** /m/mua-hang-bang-gia-vx → bấm "AI đọc"
+> file Excel của anh → hộp xem trước hiện ~53 dòng CÓ GIÁ trong vài giây (hết cảnh
+> chờ 2 phút) · khối "Cột đọc từ bảng BG" cho đổi cột + Đọc lại · bấm "Lưu" → cột
+> Giá niêm yết của 52 dòng được điền (chỉ điền ô TRỐNG — GĐ 448).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** /
+> repo con **11.3.0**.
