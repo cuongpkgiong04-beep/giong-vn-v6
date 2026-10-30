@@ -912,6 +912,31 @@ và **có sẵn công cụ** (16.3): khi nào ĐH nói làm → chạy `--apply`
 liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy vừa có sự cố mất ổ đĩa mạng — GĐ 582).
 <!-- SHARED-BLOCK:GD585-CBM-STATE-TRONG-DU-AN END -->
 
+<!-- SHARED-BLOCK:GD584-TEN-DB-GIONGDB START -->
+## 17. TÊN CƠ SỞ DỮ LIỆU DUY NHẤT: **GiongDB** — KHÔNG "GiondDB" (Đại ca chốt 30/10/2026 — hiệu lực vĩnh viễn)
+
+> **Chỉ thị của Đại ca (30/10/2026):** *"Dữ liệu của dự án này là: 'GiongDB'
+> không phải như hiển thị ở một số chỗ là: 'GiondDB'."*
+
+- Tên DB THẬT của toàn hệ thống (SQL Server Express trên máy chủ — app đọc/ghi
+  qua Cloudflare Tunnel → api_server) là **GiongDB**. Viết ĐÚNG CHÍNH XÁC
+  "GiongDB" ở: **UI text · thông báo lỗi · nhãn nút/desc/tooltip · mô tả tool cho
+  Trợ lý AI · chuỗi kết nối (Database=GiongDB) · tài liệu/entry ghi mới**.
+- **"GiondDB" = SAI CHÍNH TẢ** — gặp ở đâu sửa ngay ở đó (code/UI); KHÔNG dùng
+  cho nội dung ghi mới. **Đã từng gây lỗi thật (GĐ 547, 27/10):** chuỗi kết nối
+  fallback gõ `Database=GiondDB` → SQL báo *"Database 'GiondDB' does not exist"*
+  → 85 báo cáo Task_02 chặn ở bước ETL.
+- **Phạm vi:** UI/hiển thị + thông báo + chuỗi kết nối phải đúng tuyệt đối.
+  Comment/docstring/entry lịch sử cũ được giữ nguyên (bản ghi lịch sử) — nhưng
+  khi SỬA dòng đó vì việc khác thì đổi luôn sang "GiongDB".
+- **Đã dọn (GĐ 584):** 33 dòng hiển thị trong 20 file web repo con (UI text ·
+  tooltip · desc sidebar · runLabel nút chạy · thông báo lỗi · mô tả tool Trợ lý
+  AI) + `scripts/preflight-push.mjs`. Ngoại lệ giữ nguyên có chủ đích:
+  `scripts/gionddb-backup.py` (tên thư mục/backup-set `GiondDB` đang chạy thật —
+  đổi phải làm kèm migrate, chờ lúc đụng tới) và các script one-off ghi entry
+  lịch sử.
+<!-- SHARED-BLOCK:GD584-TEN-DB-GIONGDB END -->
+
 ---
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
@@ -8618,3 +8643,68 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (docs + script vận hành, chờ lệnh Push — quy tắc ĐA AGENT).
 > App tổng **7.2.0** / repo con **11.2.0**.
+
+### GĐ 584 (Trợ lý ZCode (máy chủ)): Fix gốc "báo thiếu file OAN" — api_server 2 đường tạo job thiếu cột expected_files (ĐH báo DTTHC "2/19", thật 2 file) + dọn 709 job cũ + dữ liệu trùng 29/10 + nguyên tắc tên DB "GiongDB" (2026-10-30)
+
+> **Đại ca báo (30/10 kèm 2 ảnh — trang /m/suc-khoe-du-lieu):** phân hệ "DT tổng
+> hợp Chuỗi" báo thiếu file (2/19 · "Thiếu 17 file – chạy lại để bù đủ") — nhưng
+> phân hệ này **CHỈ CÓ 2 FILE**; ngày 04/10 + 05/10 hiện 2/2 đúng → lỗi nằm ở số
+> file CHUẨN, không phải chạy thiếu. Kèm chỉ thị: tên dữ liệu dự án là **"GiongDB"**,
+> không phải "GiondDB" như một số chỗ hiển thị.
+
+> **CHẨN ĐOÁN (probe DB thật):** bảng `smed_pull_jobs` có DEFAULT **19** cho cột
+> `expected_files`. Web đã dùng map `expectedFilesForReport` (GĐ 384) — nhưng
+> **`api_server.py`** có **2 đường INSERT job KHÔNG truyền cột này**: (1)
+> `/task/create-job` — đường Task-runner (`task_runner.py:120` gọi); (2) `/jobs`
+> POST — web gọi qua api_server. → job rơi DEFAULT 19. Hệ quả thật: **709 job từ
+> 01/10 lưu sai** (dtthc 2→19 · mia/misa/bank 1→19 · dattruoc 76→19) → web báo
+> thiếu file OAN + agent tự retry 3 vòng rồi chuyển job sang **LỖI oan** (job
+> dtthc 29/10: *"THIẾU FILE sau 3 lần chạy: 14/19"* trong khi tool 20 mỗi lượt
+> chỉ ra 2 file) → dữ liệu 29/10 bị nạp trùng **147 dòng** (đúng phải 21).
+
+> **ĐÃ LÀM — code (repo con `9c87259`):**
+> 1. `agent/smed_expected.py` (MỚI) — map số file chuẩn per phân hệ, **1 nguồn
+>    Python** (mirror `src/lib/smed-expected.ts`); nhận 'dd/mm/yyyy' hoặc date.
+> 2. `api_server.py` — CẢ 2 đường INSERT truyền `expected_files`
+>    (`_expected_files_for`; thiếu module → fallback 19, service không vỡ).
+> 3. `40_web_agent.py` + `gd554_audit_backfill.py` — bỏ 2 bản chép tay → import
+>    chung; `smed-expected.ts` gộp nhánh MISA thành tiền tố `misa-` (agent có
+>    `misa-mua-hang`/`misa-nk-chitiet` mà TS không khai → 2 nguồn lệch).
+> 4. **Test canh 2 nguồn 2 lớp:** `agent/gd584-smed-expected.test.py` (đọc TS, so
+>    từng nhánh) + `src/lib/smed-expected-python.test.ts` (npm test, so ngược) —
+>    thêm phân hệ mới quên 1 bên → FAIL ngay.
+> 5. `upload-history-scope.test.ts` — sửa regex lỗi thời (test đỏ SẴN, không liên
+>    quan GĐ 584: code đã đổi sang dạng gọi createServerFn `{data:{...}}`).
+
+> **ĐÃ LÀM — dữ liệu:** UPDATE `expected_files` **709 job** (01/10→nay) theo map
+> chuẩn — tool `scripts/_gd584_fix_expected.py` (dry-run mặc định; backup JSON
+> `scripts/_gd584_backup_expected_20261030_112641.json` đủ rollback); bỏ qua job
+> `sqlreport` (báo cáo SQL — không tải file, không thuộc map). **Dọn trùng
+> dtthc 29/10:** thư mục máy LAN-1 (.27) có **14 file = 7 bặp trùng nội dung y
+> hệt** (2 nhóm hash nội dung `e12bf0ed`/`69a3cf40` — 7 lượt chụp 23:14→23:23
+> số liệu không đổi) → backup 14 file vào
+> `C:\CUONG_2026\giong-vn-v6-agent-lan\_backup\gd584-dtthc-2026-10-29\` +
+> xoá khỏi OUTPUT; DB xoá dòng của 12 file cũ → **147 → 21 dòng** (khớp mọi ngày
+> 24-28/10).
+
+> **VERIFY (thật):** py_compile 4 file agent OK · **npm test repo con 11/11 file
+> PASS** (gồm 2 test mới: 21/21) · tsc 0 · **restart GIONG_SMED_Agent +
+> GIONG_API_Server** (nạp code — xoá `__pycache__` 3 thư mục trước) → tạo job
+> verify qua **ĐÚNG đường đã bug** (`/task/create-job`) → DB
+> **`expected_files=2`** (trước là 19) → worker .27 claim → **done 2/2 file** →
+> ETL wipe-ngày nạp lại → `stg_3DTTHC` 29/10 = **21 dòng** (2 file mới
+> 123019+123041). Restart api_server đổi tunnel URL → đồng bộ `.env.local` 2 app
+> (`update-tunnel-env.py`) + env Vercel `TUNNEL_API_BASE_URL` 2 app + **redeploy
+> CẢ 2 app** (Ready 57s/35s).
+
+> **NGUYÊN TẮC MỚI (ĐH chốt 30/10):** tên DB duy nhất = **GiongDB** — ghi thành
+> **mục 17** (SHARED-BLOCK GD584-TEN-DB-GIONGDB) + dọn **33 dòng hiển thị**
+> "GiondDB"→"GiongDB" trong **20 file** web repo con + `preflight-push.mjs`.
+
+> **Tiêu chí kiểm chứng của Đại ca:** mở /m/suc-khoe-du-lieu → cột "DT tổng hợp
+> Chuỗi" mọi ngày hiện **2/2** (29/10 xanh done, hết "Job lỗi — chạy lại"); bảng
+> "Cần xử lý" hết dòng dtthc báo thiếu 17 file; các chỗ ghi tên DB trên web hiển
+> thị đúng "GiongDB".
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
+> repo con **11.2.0**.
