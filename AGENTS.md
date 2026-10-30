@@ -9283,3 +9283,55 @@ repo con **10.1.0**.
 > Dọn: xoá 5 script tạm `_gd587_*` trên .245 (đã giữ backup `.bak-gd587` của các file được vá).
 
 > **Version:** App tổng **7.4.0** / Repo con **11.4.0** — ĐÃ PUSH + LIVE.
+
+### GĐ 597 / C.380 (Trợ lý ZCode (máy chủ)): Trang "Sức khoẻ dữ liệu" (app con) — khoảng ngày Từ→Đến · cố định tiêu đề ma trận · nút "Tải lại dữ liệu" từng ô lỗi/thiếu · nút "Tải lại" theo ngày có hộp thoại xác nhận (2026-10-30)
+
+> **Yêu cầu của ĐH (30/10, 3 ảnh chụp trang `/m/suc-khoe-du-lieu` app con):**
+> (1) thêm khoảng thời gian **"Từ ngày … đến ngày …"** có lịch bung ra để chọn,
+> đặt GIỮA nhóm 7/10/14/30 ngày và hộp "Chỉ hiện ngày có vấn đề"; (2) **cố định
+> tiêu đề** khối "Ma trận theo ngày × phân hệ"; (3) thêm nút **"Tải lại dữ liệu"**
+> cạnh hộp "Mở trang tải" trong khối "Cần xử lý" — bấm là dữ liệu THIẾU/LỖI của ô
+> đó được tải lại; (4) thêm nút **"Tải lại"** ở mỗi dòng theo ngày trong ma trận
+> (bên phải cột ngày) — tải lại tất cả dữ liệu của ngày đó, kèm cảnh báo *"Bạn
+> chắc chắn tải lại toàn bộ dữ liệu của ngày …. đúng không"* với "Chắc chắn" /
+> "Hủy bỏ".
+
+> **Đã làm — TOÀN BỘ CODE Ở REPO CON (entry đầy đủ: AGENTS.md repo con C.380):**
+> - Repo con `9f932cf` (2 file): `apps/banhang/src/routes/api/-data-health.ts`
+>   (nhận khoảng `from`/`to` + `isoRange()` + `lookbackDays()` + lọc `stg_*` theo
+>   khoảng + trả thêm `id` job) và `apps/banhang/src/routes/m/suc-khoe-du-lieu.tsx`
+>   (khối lọc khoảng ngày có lịch chọn · tiêu đề ma trận `sticky top-20 z-[15]` ·
+>   nút "Tải lại dữ liệu" mỗi dòng khối Cần xử lý · nút "Tải lại" trong ô Ngày +
+>   modal xác nhận + banner kết quả).
+> - Repo con `7c78362`: entry AGENTS.md (ghép blob trên HEAD, 65 dòng thêm / 0
+>   dòng xoá — giữ nguyên bài dở phiên khác trong worktree).
+> - **Không thêm endpoint mới, không sửa agent/builder:** nút tải lại dùng lại
+>   `retrySmedJob` (job lỗi → chạy lại toàn bộ; thiếu file → agent bù trung tâm
+>   thiếu) và `createSmedJob` (chưa có job / retry bị từ chối → tạo job cho đúng
+>   ngày). Nút theo NGÀY = tạo job cho MỌI phân hệ của ngày đó (bỏ qua phân hệ
+>   đang chờ/chạy) → đúng nghĩa "tải lại toàn bộ".
+
+> **Verify (E2E thật — build production chạy local: `vite preview`
+> 127.0.0.1:8101 + phiên SSO tự ký bằng `APP_JWT_SECRET`, dữ liệu đọc GiongDB qua
+> tunnel):** đủ 4 mục hiển thị đúng — khối "Từ 22/10/2026 đến 31/10/2026" đúng vị
+> trí ĐH chỉ · nhãn "Lần rà soát lúc 00:36:46 · khoảng 22/10/2026 → 31/10/2026 (10
+> ngày)" · "Cần xử lý: 2 lượt thiếu file / lỗi" có cả "Mở trang tải" + "Tải lại dữ
+> liệu" · cuộn scrollY 760 → tiêu đề "Ma trận theo ngày × phân hệ" vẫn dính y=80
+> dưới header app (`position: sticky`, `top: 80px`, `z-index: 15`) · bấm "Tải lại"
+> dòng 30/10 → hộp thoại đúng nguyên văn "Bạn chắc chắn tải lại toàn bộ dữ liệu
+> của ngày 30/10/2026 đúng không?" + "Hủy bỏ"/"Chắc chắn" → bấm "Hủy bỏ" → đóng,
+> KHÔNG tạo job · đổi ô "Từ ngày" = 25/10 → tự rà soát lại thành "khoảng 25/10/2026
+> → 31/10/2026 (7 ngày)", 4 nút preset tắt highlight · bấm "30 ngày" → "02/10/2026
+> → 31/10/2026 (30 ngày)" + 30 dòng ma trận. `tsc --noEmit` EXIT 0 · `npm run
+> build` EXIT 0. **KHÔNG bấm "Chắc chắn"/"Tải lại dữ liệu" để tránh tạo job thật
+> ngoài ý ĐH** — luồng tạo job dùng đúng 2 server fn mọi trang tải đang chạy.
+
+> **Tiêu chí kiểm chứng (sau Push):** chọn khoảng ngày bất kỳ → bảng đúng khoảng ·
+> cuộn ma trận → tiêu đề luôn nằm dưới header app · bấm "Tải lại dữ liệu" ở ô đỏ →
+> job vào hàng chờ (theo dõi thanh trạng thái), ô xanh lại khi tải xong · bấm "Tải
+> lại" cạnh ngày → "Chắc chắn" → 12 phân hệ của ngày đó vào hàng chờ tải lại.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
+> repo con **11.4.1**.
+
+---
