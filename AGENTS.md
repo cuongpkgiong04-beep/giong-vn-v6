@@ -9860,3 +9860,17 @@ repo con **10.1.0**.
 > bắt được trong 3 giây.
 
 > **Version:** app tổng **7.5.0** (docs-only — không bump) / repo con **11.6.2**.
+
+### GĐ 619 / C.387 (Trợ lý ZCode (máy chủ)): Dropdown "Thêm mới" Vắc xin — mở rộng nguồn mã SMED 10 bảng + lọc ≥5 nguồn → 40 mã vắc xin thật còn thiếu (2026-10-31)
+
+> **Yêu cầu ĐH 31/10 tối:** dropdown Mã SMED = "danh sách Vắc xin theo mã SMED"
+> chỉ hiện mã CHƯA có trong danh mục; hiện "lộn xộn và chưa đủ vắc xin còn
+> thiếu" (đang chỉ 7 mã). **Chi tiết entry C.387 repo con — code `3c8f72c`
+> (unit 36/36 · tsc 0 · build 0).**
+
+> **Nguồn gợi ý mới:** 10 cột "Mã hàng" các báo cáo SMED đã tải (nhập/xuất kho,
+> NXT, biên lai, hóa đơn, công nợ…) — chỉ nhận mã xuất hiện **≥5 nguồn** + lọc
+> rác (ghép nhiều hàng hóa đơn "(Vắc xin đặt trước)" mã phiếu/kỳ/hợp đồng) →
+> **40 mã**; option đầu ghi "(N mã)"; note hướng dẫn. Validator thêm rộng hơn
+> (mọi mã đơn lẻ) để không chặn oan. **Chờ lệnh Push** — deploy tay bị
+> rate-limit Vercel free 24h (GĐ 616). App tổng **7.5.0** / repo con **11.6.2**.
