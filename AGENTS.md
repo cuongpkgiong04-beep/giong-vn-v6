@@ -9467,7 +9467,7 @@ repo con **10.1.0**.
 >    Số thứ tự dạng 4 số `0000`, lấy tiếp theo từ mapping hiện có.
 > 4. **Commit:** repo con `a73c61d` — `misa_hddt_dauvao.py` cập nhật kho VP, đơn vị VP, load mapping Excel, sinh mã tự động.
 
-> **✅ PUSH ĐÃ THỰC HIỆN (31/10):**
+> **✅ PUSH ĐÃ THỰC HIỆN (31/10 — đợt 1):**
 > - **App tổng**: `c4fe640` (docs GĐ 603) → deploy 7.5.0 (minor từ GĐ 608 trước đó) · `https://giong-vn-v6.vercel.app` live 7.5.0
 > - **Repo con**: `a73c61d` (code) + `f374a8e` (bump 11.6.0 → **11.6.1** patch) → `https://giong-banhang.vercel.app` live 11.6.1
 > - **Verify production** (GĐ 470):
@@ -9476,6 +9476,27 @@ repo con **10.1.0**.
 >   3. `/api/auth/me` app con → user structure ✅
 >   4. Hook GĐ 607 tự rà trùng lặp trước push → 0 file code trùng (worktree khác 7 file sửa dở không đụng)
 > - **Chờ ĐH**: tạo 2 kho MISA `NVL`/`CCDC` để upload thật (GĐ 603 mục "VIỆC CHỜ ĐẠI CA")
+>
+> **✅ PUSH ĐÃ THỰC HIỆN (31/10 — đợt 2, PA-1 ĐH chốt Web UI):**
+> - **Repo con**: `b14f4d3` (feat: Web UI `/m/up-hoadon-dauvao.tsx` + server fn `-hddt-dauvao.ts` + engine agent mode + REPORT_MAP) + **app tổng** `fe7d708` (docs)
+> - **Verify production** (GĐ 470):
+>   1. App tổng 7.5.0 / Repo con 11.6.1 live ✅
+>   2. Login app tổng → user + session JSON ✅
+>   3. SSO app con: `APP_JWT_SECRET` đồng bộ 2 app → redirect + `Set-Cookie: bh_session` ✅
+> - **Web UI `/m/up-hoadon-dauvao.tsx` hoàn thiện (PA-1):**
+>   * TanStack Table 413 dòng (194 HĐ) với filter: Loại phiếu (NVL/CCDC/DV/HH), Trạng thái, Ngày
+>   * Edit inline: mã hàng MISA, tên MISA, TK Nợ, TK Có, Kho, Loại phiếu, Ghi chú
+>   * Badge màu: Loại (NVL/CCDC/DV/HH), Trạng thái (Mới/Đã upload/Lỗi)
+>   * Nút **Kiểm tra** (dry-run step2+step3) + **Upload** (ghi thật) cho từng loại
+>   * Áp dụng mặc định hàng loạt (TK/kho VP) cho dòng trống
+>   * Pagination, thống kê cards (số dòng/tiền/thuế theo loại+trạng thái)
+> - **Engine Python agent mode (`misa_hddt_dauvao.py`) test OK:**
+>   * `SMED_ACTION=export SMED_LOAI=NVL python misa_hddt_dauvao.py 01/09/2026 31/10/2026` → sinh Excel 1 dòng ✅
+>   * `SMED_ACTION=kiem-tra SMED_LOAI=NVL ...` → step2+step3: lỗi kho NVL/CCDC (chưa có trên MISA) ✅
+>   * `SMED_ACTION=kiem-tra SMED_LOAI=DV ...` → step2+step3: lỗi mã hàng "DVMN-PHẦN MỀM SMED" không tồn tại ✅
+>   * `SMED_ACTION=upload SMED_LOAI=NVL ...` → step4 OK nhưng lỗi kho ✅
+> - **REPORT_MAP 40_web_agent.py** thêm 4 key: `hddt-dauvao-nvl|ccdc|dv|hh` → script `misa_hddt_dauvao.py`
+> - **Chờ ĐH**: tạo 2 kho MISA `NVL` (TK 152_BH) + `CCDC` (TK 153_BH) trên UI MISA AMIS để upload thật thành công
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
 > repo con **11.4.1**.
