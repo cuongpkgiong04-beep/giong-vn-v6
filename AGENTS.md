@@ -9908,3 +9908,40 @@ repo con **10.1.0**.
 > **40 mã**; option đầu ghi "(N mã)"; note hướng dẫn. Validator thêm rộng hơn
 > (mọi mã đơn lẻ) để không chặn oan. **Chờ lệnh Push** — deploy tay bị
 > rate-limit Vercel free 24h (GĐ 616). App tổng **7.5.0** / repo con **11.6.2**.
+
+### GĐ 614 / C.384 (Trợ lý ZCode (máy chủ)): 4 phân hệ SMED lên PA-1 + MISA_UPLOAD_MODE http mặc định (upload mua/xuất/bán) + Task_02 21 phân hệ (2026-10-31)
+
+> **Lệnh ĐH 31/10 (sau báo cáo bản đồ Download/Upload):** (1) 5 phân hệ SMED
+> còn browse → cách mới gọi thẳng API SMED, mặc định bật; (2) upload MISA AMIS
+> set nhánh HTTP đã dựng sẵn thành MẶC ĐỊNH; (3) Task_02 23:00 download full —
+> báo cáo do Task_03 chạy, Task_02 không chạy báo cáo; (4) chính tả GiongDB.
+> Chốt qua hỏi-đáp: SA **dựng thêm nhánh http** · bank-vcb **giữ chỉ 17:15**
+> (Task_02 = **21** phân hệ) · "Phiếu cần xử lý" khi http → **tự quay browser**.
+
+> **Kết quả (code `14304d9` · entry repo con `1ef5293`):** PA-1 thêm **4/5**
+> phân hệ (dtthc · blth · tkgvvxdt · tkkh + **pha 2 ngày GD đầu qua API**
+> `phieuBanHang/GetLichSuSuDungByKhachHangId`); **dattruoc CHƯA lên** (tool tải
+> tới 4 loại file/TT — cần khảo sát thêm 3 endpoint, giữ browser). Payload bắt
+> từ NETWORK THẬT (Playwright + AbpServiceProxies): bẫy TKKH `skipCount` = SỐ
+> TRANG (1..N) + maxResultCount ≤1000. MISA_UPLOAD_MODE http mặc định (mua/xuất
+> + **nhánh http mới cho SA**) + Phiếu cần xử lý tự về browser. Task_02:
+> task_runner vũ trụ 22 + `_TASK_DEFAULT_EXCLUDE={bank-vcb}` + dialog web +tkkh
+> +tonkho-niem-yet (sót GĐ 590) + **UPDATE config seed 'daily' trong GiongDB**.
+> Đính chính: Task_02 (kind daily) ĐÃ chỉ download từ GĐ C.164 (báo cáo trước
+> đọc nhầm header cũ); số báo cáo nhiệm vụ Chạy báo cáo = **30**.
+
+> **Verify (đối chứng chạy thật):** dtthc TO 25/10 khớp file gốc **từng đồng**
+> (87 mũi·3.250.000·75.590.000) · tkkh TD 21/10 **4.905 dòng** khớp từng ô dòng
+> #1 · blth LB 30/10 **20 dòng·22.290.000 khớp DB stg_12BLTH từng đồng** ·
+> tkgvvxdt TD snapshot 35 dòng + 30 gói/142 đặt trước · SA http 28/28 bỏ qua
+> 0 lỗi. Đã deploy máy chủ (restart 22:59:25 — trước Task_02 23:00) + .245 +
+> .34. **.27 CHƯA deploy** (phiên song song đang dùng máy — job dattruoc 22:47).
+
+> **⚠️ CẢNH BÁO TRÙNG LẶP (nguyên tắc Push ĐA AGENT):** phiên song song cùng
+> máy (cùng tên "Trợ lý ZCode (máy chủ)") đang hoạt động — GĐ 615/616/617 +
+> `_backup/blth|dattruoc|tkgvvxdt|chietkhau` + job test lan-1 (blth 21:08,
+> dattruoc 22:47) — **khả năng ĐANG LÀM CÙNG phạm vi PA-1 4 phân hệ** → khi Push
+> phải rà trùng (smed_api.py / _pa1_fetch.py / 40_web_agent.py), thống nhất
+> 1 bản trước khi push.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.5.0** / repo con **11.6.2**.
