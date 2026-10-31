@@ -9789,3 +9789,55 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
 > App tổng **7.4.1** / repo con **11.5.0**. Registry: GĐ 607 (claim `005e9e9`).
+
+### GĐ 608 (Trợ lý ZCode (máy chủ)): PA PUSH đợt 31/10 sáng (lệnh ĐH) — rà trùng lặp bằng công cụ GĐ 607 (lần đầu chạy thật) + bump 7.5.0 / 11.6.0 + LIVE + phát hiện `.env.local` secret SSO lỗi thời (2026-10-31)
+
+> **Lệnh ĐH (31/10):** "Push" — đợt gồm công việc NHIỀU phiên đang chờ: GĐ 601 (khảo sát
+> entire-graph) · GĐ 602/C.382 (PA-2 tích hợp) · GĐ 603/C.381 (phân hệ UPLOAD Hóa đơn đầu
+> vào của phiên khác) · GĐ 605 (SMED đổi mật khẩu + hover sidebar) · GĐ 606 (tự động hoá
+> hook) · GĐ 607 (rà trùng lặp tự động) · GĐ 604 ⛔ (claim dư gộp vào 602).
+
+> **Bước 1 — Rà trùng lặp (dùng `scripts/agents/ra-trung-lap.py` — lần chạy THẬT đầu tiên
+> trong đợt push):** nhánh phụ (`agent-cli` · `pipeline-work` · `gd541-push`) = **0 commit
+> riêng, 0 file trùng** với main ở CẢ 2 repo ✓. CẢNH BÁO (không chặn push): app tổng
+> `AGENTS.md`+`AGENT_REGISTRY.md` là **bản CŨ hơn HEAD** (lệch 66 dòng — bài dở phiên
+> khác; mọi sửa file dùng chung đi qua cổng GĐ 495) · repo con **7 file sửa dở của phiên
+> khác** (`sql_reports.py` · `misa_muahang_upload.py` · `overview-dashboard.tsx` ·
+> `job-labels.ts` · package-lock…) → **KHÔNG đụng file nào**.
+
+> **Bước 2 — Bump version (chỉ lúc Push):** app tổng **7.4.1 → 7.5.0** (minor — entire-graph
+> + tự động hoá + rà trùng lặp; 3 file: package.json + package-lock 2 chỗ + DEFAULT_VERSION)
+> · repo con **11.5.0 → 11.6.0** (minor — GĐ 603 phân hệ UPLOAD HĐ đầu vào + GĐ 605 +
+> C.382; 2 file). Checklist GĐ 138 ✓.
+
+> **Bước 3 — Verify env Vercel CẢ 2 app (GĐ 470 A):** ✅ đủ — app tổng 6 biến
+> (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL/GIST_ID · BETTER_AUTH_SECRET/URL) ·
+> app con 5 biến (+ZAI_API_KEY). Đều ở Production.
+
+> **Bước 4 — Push:** app tổng `deeedf9..a8e90ff` (27 commit) · repo con `24549b9..794eb90`
+> (6 commit).
+
+> **Bước 5 — ✅ Verify production (curl + login thật + E2E browser):** app tổng
+> `giong-vn-v6.vercel.app` = **7.5.0** · app con `giong-banhang.vercel.app` = **11.6.0**
+> (curl lần đầu — không ghim deployment) · login `cuongpk.giong04@gmail.com` **HTTP 200 +
+> user "Phạm Kiên Cường"** · get-session OK · **SSO E2E THẬT bằng browser**
+> (`scripts/test-sso-e2e.mjs`, Playwright headless): **7/9 PASS — mọi mục quan trọng PASS**:
+> bấm nút "Bán hàng" → app con mở · URL sạch (hết `?sso=`) · **hiện tên user** · cookie
+> `bh_session` httpOnly ✓ (2 mục fail = selector "phiên 7 ngày" + timeout `networkidle` ở
+> bước đăng-xuất-cuối — KHÔNG liên quan SSO).
+
+> **⚠️ Phát hiện quan trọng (đừng mất thời gian lại):** `APP_JWT_SECRET` trong `.env.local`
+> 2 app (giá trị `StNz6…`) **KHÁC giá trị trên Vercel** (env Secret — `vercel env pull`
+> trả `[SENSITIVE]`, không đọc được). Test SSO bằng JWT tự ký từ `.env.local` → **verify
+> FAIL** (302 về `/login?next=bahang`) trong khi **E2E browser PASS** ⇒ **secret 2 app
+> TRÊN VERCEL vẫn khớp**, chỉ `.env.local` trên máy lỗi thời. **Quy tắc rút ra: verify SSO
+> sau Push phải dùng E2E browser (`node scripts/test-sso-e2e.mjs`) — KHÔNG kết luận "secret
+> lệch 2 app" từ JWT tự ký bằng .env.local.**
+
+> **Không restart agent:** đợt này code agent-side gồm `misa_hddt_dauvao.py` (module MỚI —
+> CHƯA được `40_web_agent.py`/`task_runner.py` import → chờ tích hợp GĐ sau) và
+> `19_smed_Lichhentiem.py` (tool spawn theo job → tự nạp bản mới) ⇒ service
+> `GIONG_SMED_Agent` đang RUNNING, không cần restart.
+
+> **Version:** app tổng **7.5.0** / repo con **11.6.0** — ĐÃ PUSH + LIVE. Registry: GĐ 608
+> (claim `efb2610` · bump `a8e90ff`/`794eb90`).
