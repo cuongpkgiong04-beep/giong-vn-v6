@@ -21,7 +21,11 @@ Hook ZCode tự chạy — **không ai phải gõ lệnh**:
 |---|---|---|
 | `UserPromptSubmit` | Tra code liên quan cho câu Đại Ca vừa giao → **chèn thẳng vào hội thoại** (agent thấy ngay, không tốn lượt gọi) | 1 lần/4 phút/phiên · budget 9s · ≤1.800 ký tự |
 | `PreToolUse` (Edit/Write) | File sắp sửa → báo **file HAY ĐỔI CÙNG** (co-change, git history) để cập nhật kèm | 1 lần/file/phiên · budget 6s |
+| `PreToolUse` (Bash) | Thấy `git push` → **TỰ RÀ TRÙNG LẶP** (GĐ 607, nguyên tắc 3 ĐA AGENT) rồi chèn cảnh báo trước khi push chạy | 1 lần/2 phút/phiên · rà 3s |
 | `SessionStart` | Prewarm cache chạy **nền** (mở phiên là cache ấm, không chặn) | — |
+
+Rà trùng lặp chạy tay khi cần: `python scripts/agents/ra-trung-lap.py` (thêm `--json`
+hoặc `--symbols` để soi mức symbol qua entire-graph diff).
 
 Cài ở **2 tầng**: user config `~/.zcode/cli/config.json` (chạy ngay, ZCode không hỏi)
 + workspace `.zcode/config.json` trong repo (chuẩn, share qua git; ZCode có thể hiện

@@ -38,7 +38,10 @@ def entry(mode, timeout_ms, status, matcher=None):
 EVENTS = {
     "SessionStart": [entry("session-start", 6000, "entire-graph: giữ cache đồ thị ấm (nền)")],
     "UserPromptSubmit": [entry("prompt-context", 12000, "entire-graph: tự tra code liên quan cho việc này")],
-    "PreToolUse": [entry("pre-edit", 8000, "entire-graph: co-change của file sắp sửa", matcher="Edit|Write|ApplyPatch")],
+    "PreToolUse": [
+        entry("pre-edit", 8000, "entire-graph: co-change của file sắp sửa", matcher="Edit|Write|ApplyPatch"),
+        entry("push-guard", 25000, "entire-graph: rà trùng lặp trước khi push", matcher="Bash"),
+    ],
 }
 
 

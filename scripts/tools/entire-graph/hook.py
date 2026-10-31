@@ -36,6 +36,7 @@ EG = HERE / "eg.sh"
 MODE = (sys.argv[1] if len(sys.argv) > 1 else "").strip()
 EVENT = {"prompt-context": "UserPromptSubmit",
          "pre-edit": "PreToolUse",
+         "push-guard": "PreToolUse",
          "session-start": "SessionStart"}.get(MODE, "")
 CODE_EXT = re.compile(r"\.(ts|tsx|js|jsx|mjs|cjs|py|sql|sh)$", re.I)
 
@@ -172,6 +173,43 @@ def main():
                 "\n[Tra sâu hơn: bash scripts/tools/entire-graph/eg.sh query|impact|def — "
                 "quy tắc mục 19 AGENTS.md]")
         log(cache, f"chèn {len(out)} ký tự cho prompt: {q[:60]!r}")
+        emit(text)
+        return
+
+    # ── PreToolUse (Bash): thấy 'git push' → TỰ RÀ TRÙNG LẶP trước khi push ──
+    if MODE == "push-guard":
+        ti = d.get("tool_input") or d.get("toolInput") or {}
+        if not isinstance(ti, dict):
+            emit(None)
+            return
+        cmd = str(ti.get("command") or "")
+        if not re.search(r"\bgit\b[^\n]{0,60}\bpush\b", cmd):
+            emit(None)
+            return
+        if seen(marks, f"push-{sid}", ttl=120):
+            log(cache, "skip push-guard: throttle 2 phút/phiên")
+            emit(None)
+            return
+        script = Path(repo) / "scripts" / "agents" / "ra-trung-lap.py"
+        if not script.exists():
+            emit(None)
+            return
+        try:
+            r = subprocess.run([sys.executable, str(script)], cwd=repo, capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=20)
+            out = (r.stdout or "").strip()
+        except Exception as e:
+            log(cache, f"push-guard lỗi chạy script: {e}")
+            emit(None)
+            return
+        if not out:
+            emit(None)
+            return
+        text = ("[RÀ TRÙNG LẶP TỰ ĐỘNG TRƯỚC PUSH (GĐ 607 · nguyên tắc 3 ĐA AGENT)]\n"
+                + out[:1600] +
+                "\n→ Có ⚠️ thì BÁO ĐẠI CA (liệt kê file/phiên trùng) TRƯỚC khi push; "
+                "sạch thì push bình thường rồi verify production.")
+        log(cache, f"push-guard: đã rà ({'có cảnh báo' if '⚠️' in out else 'sạch'}) cho: {cmd[:60]!r}")
         emit(text)
         return
 

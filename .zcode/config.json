@@ -40,6 +40,18 @@
               "statusMessage": "entire-graph: co-change của file sắp sửa"
             }
           ]
+        },
+        {
+          "matcher": "Bash",
+          "hooks": [
+            {
+              "type": "process",
+              "command": "python",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/tools/entire-graph/hook.py", "push-guard"],
+              "timeoutMs": 25000,
+              "statusMessage": "entire-graph: rà trùng lặp trước khi push"
+            }
+          ]
         }
       ]
     }
