@@ -979,6 +979,14 @@ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy
 > `<git-common-dir>/giong-tools/entire-graph/cache/hooks.log`. An toàn: LUÔN exit 0 +
 > fail-open (repo không có đồ thị → in `{}`, KHÔNG bao giờ chặn phiên).
 
+> **19.2 RÀ TRÙNG LẶP TỰ ĐỘNG TRƯỚC PUSH (GĐ 607 — ĐH chốt "tự động luôn việc rà trùng
+> lặp rồi Push"):** hook `push-guard` (PreToolUse matcher `Bash`) thấy lệnh chứa
+> `git push` → **tự chạy `python scripts/agents/ra-trung-lap.py`** (~3s) rồi chèn báo cáo
+> vào hội thoại TRƯỚC khi push chạy: (a) nhánh phụ vs main — **file CẢ 2 BÊN sửa**
+> (`--symbols`: soi mức symbol qua entire-graph diff) · (b) **mọi worktree** có file SỬA
+> DỞ chưa commit (phiên khác đang làm) · (c) **commit chưa push** từng nhánh. Throttle 2
+> phút/phiên; lệnh Bash khác bỏ trong 0,32s. **Có ⚠️ ⇒ BÁO ĐẠI CA trước khi push.**
+
 > **PA-2 (tiếp GĐ 601):** `entire-graph` (tree-sitter, 100% local — `doctor` xác nhận
 > `no_egress=true`) là **nguồn tra cứu BỔ SUNG** cho codegraph + codebase-memory
 > (mục 14) — **KHÔNG thay thế**. Dùng cho ĐÚNG 3 việc:
@@ -9749,3 +9757,35 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
 > App tổng **7.4.1** / repo con **11.5.0**. Registry: GĐ 606 (claim `8006043`).
+
+### GĐ 607 (Trợ lý ZCode (máy chủ)): TỰ ĐỘNG RÀ TRÙNG LẶP TRƯỚC PUSH theo yêu cầu ĐH (31/10, tiếp GĐ 606) — script `ra-trung-lap.py` + hook `push-guard` (2026-10-31)
+
+> **Lệnh Đại Ca (31/10):** *"bước tiếp em có thể làm: tự động luôn việc rà trùng lặp
+> rồi Push cho anh"* ⇒ bước rà trùng lặp (nguyên tắc 3 Push ĐA AGENT) từ nay **TỰ CHẠY**,
+> không ai phải nhớ gọi nữa.
+
+> **Đã làm:**
+> 1. **`scripts/agents/ra-trung-lap.py`** — quét CẢ 2 repo trong ~3s: (a) nhánh phụ vs
+>    `main` theo merge-base → **file CẢ 2 BÊN sửa** (⚠️ nguy cơ trùng), tùy chọn
+>    `--symbols` soi mức SYMBOL qua entire-graph `diff`; (b) **mọi worktree** có file
+>    SỬA DỞ chưa commit (phiên khác đang làm); (c) **commit chưa push** trên từng nhánh.
+>    Có `--json` cho hook dùng.
+> 2. **Hook `push-guard`** (thêm vào `hook.py` + cả 2 tầng config): PreToolUse matcher
+>    `Bash` — thấy lệnh chứa `git push` → tự chạy script (budget 20s, throttle 2
+>    phút/phiên) → **chèn báo cáo vào hội thoại TRƯỚC khi push chạy**, kèm nhắc "có ⚠️
+>    thì BÁO ĐẠI CA trước khi push". Lệnh Bash khác → bỏ trong **0,32s** (không làm chậm).
+
+> **Bằng chứng chạy thật (31/10, sửa 2 lỗi lộ ra khi chạy: tên file bị cụt do `strip()`
+> cắt space đầu dòng `git status` → parse bằng regex; bỏ 1 lệnh status thừa → 8,5s → 3,1s):**
+> chạy thật phát hiện đúng thứ cần — app tổng **22 commit chưa push** · repo con **5
+> commit chưa push** + **7 file SỬA DỞ của phiên khác**: `apps/banhang/agent/etl/
+> sql_reports.py`, `misa_muahang_upload.py`, `overview-dashboard.tsx`, `job-labels.ts`…
+> · hook test bằng input thật `git push origin main` → chèn **1.782 ký tự** ✓ · `git
+> status` → `{}` 0,32s ✓ · throttle 2 phút ghi log ✓.
+
+> **ĐH kiểm chứng:** nói **"Push"** như thường — ngay trước khi lệnh push chạy, hội thoại
+> sẽ có khối **"RÀ TRÙNG LẶP TỰ ĐỘNG TRƯỚC PUSH"**; nếu có ⚠️ em **báo ĐH trước khi push**
+> (liệt kê file/phiên trùng), sạch thì push rồi verify production như quy trình GĐ 470.
+
+> **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
+> App tổng **7.4.1** / repo con **11.5.0**. Registry: GĐ 607 (claim `005e9e9`).
