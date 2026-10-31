@@ -9723,3 +9723,34 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (không có commit mới; sản phẩm đã chạy 7.5.0/11.6.1 do phiên song song).
 > **Ghi chú:** tool mua hàng GĐ 612 (`c33c8c2`) đã triển khai máy .245; tool Lịch hẹn tiêm GĐ 605 (`3e02838`) đã được Agent máy chủ nạp sau restart. 2 phiếu mua hàng vướng kỳ 30/10 (QO chưa hiện trên SMED · ML import chưa thấy trên MISA) đang chờ Đại ca xem.
+
+### GĐ 616 / C.385 (Trợ lý ZCode (máy chủ)): HOÀN TẤT hạ tầng web GĐ 603/C.381 thiếu — gỡ chặn Vercel build fail từ 15:08 (production không nhận GĐ 611) (2026-10-31)
+
+> **ĐH hỏi "production không thấy thay đổi" → điều tra:** GĐ 611 (Danh mục Vắc
+> xin — code `6b0107e`) đã trên GitHub từ đợt push 15:08 NHƯNG mọi deployment
+> sau đó build FAIL → production đứng ở bundle cũ. Gốc rễ: code web GĐ 603/C.381
+> của phiên song song thiếu hạ tầng — thiếu 1 dấu `}` (up-hoadon-dauvao.tsx,
+> commit c1a7f20) + 26 lỗi TS (app con không có components/ui/, lib/format,
+> lib/banhang-catalog; 4 chỗ gọi serverFn thiếu bọc data:; import conflict
+> getBanhangGroups dùng user.id; Badge/Button props variant kiểu shadcn).
+> Bằng chứng: log build Vercel qua API v2 events + tsc local.
+
+> **Đã làm (repo con code `dedc4e3`, 15 file +1595/−43 — chi tiết entry
+> C.385):** copy components/ui + lib/utils/format/banhang-catalog từ app tổng,
+> tạo table/select shadcn, install 4 gói, sửa -hddt-dauvao (getBanhangGroups
+> chuẩn smed-auth + empId + null-safe), up-hoadon bọc data: + formatNum + vá `}`.
+> **tsc 0 · build local 0.**
+
+> **Deploy tay bị chặn Vercel free:** EBUSY (Chrome CDP khóa cookies → tạo
+> `.vercelignore` chặn agent/.env.local/.grok/LOG — đã được phiên khác commit)
+> rồi **rate-limit api-upload-free quá 5000 request — chặn 24h** (kể cả
+> --archive=tgz). → Còn lại duy nhất: PUSH commit để Vercel auto-deploy
+> (webhook sống). ĐANG CHỜ ĐH lệnh "Push".
+
+> **Bẫy mới:** `npx tsc | head; echo $?` = exit của head (luôn 0) — dùng
+> `${PIPESTATUS[0]}`; đếm balance `{}` bằng python tìm thiếu ngoặc trong 10s;
+> build log Vercel: `GET /v2/deployments/<id>/events` + token
+> `%APPDATA%\xdg.data\com.vercel.cli\auth.json`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.5.0** / repo con
+> **11.6.2**.
