@@ -9467,6 +9467,16 @@ repo con **10.1.0**.
 >    Số thứ tự dạng 4 số `0000`, lấy tiếp theo từ mapping hiện có.
 > 4. **Commit:** repo con `a73c61d` — `misa_hddt_dauvao.py` cập nhật kho VP, đơn vị VP, load mapping Excel, sinh mã tự động.
 
+> **✅ PUSH ĐÃ THỰC HIỆN (31/10):**
+> - **App tổng**: `c4fe640` (docs GĐ 603) → deploy 7.5.0 (minor từ GĐ 608 trước đó) · `https://giong-vn-v6.vercel.app` live 7.5.0
+> - **Repo con**: `a73c61d` (code) + `f374a8e` (bump 11.6.0 → **11.6.1** patch) → `https://giong-banhang.vercel.app` live 11.6.1
+> - **Verify production** (GĐ 470):
+>   1. Login app tổng → user + session JSON ✅
+>   2. SSO app con: đồng bộ `APP_JWT_SECRET` 2 app → redirect `https://giong-banhang.vercel.app/` + `Set-Cookie: bh_session` ✅
+>   3. `/api/auth/me` app con → user structure ✅
+>   4. Hook GĐ 607 tự rà trùng lặp trước push → 0 file code trùng (worktree khác 7 file sửa dở không đụng)
+> - **Chờ ĐH**: tạo 2 kho MISA `NVL`/`CCDC` để upload thật (GĐ 603 mục "VIỆC CHỜ ĐẠI CA")
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
 > repo con **11.4.1**.
 
