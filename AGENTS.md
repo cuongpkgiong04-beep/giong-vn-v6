@@ -967,6 +967,18 @@ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy
 <!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH START -->
 ## 19. ENTIRE-GRAPH — đồ thị code BỔ SUNG (PA-2 Đại Ca chốt 31/10/2026 — hiệu lực vĩnh viễn)
 
+> **19.1 TỰ ĐỘNG HOÁ (ĐH yêu cầu 31/10: "không phải gõ lệnh thủ công") — 3 hook ZCode
+> tự chạy, KHÔNG ai phải gõ lệnh:** `UserPromptSubmit` (tự tra code liên quan cho câu
+> giao việc → chèn THẲNG vào hội thoại; 1 lần/4 phút/phiên · budget 9s · ≤1.800 ký tự)
+> · `PreToolUse` Edit|Write (file sắp sửa → báo file HAY ĐỔI CÙNG — co-change; 1
+> lần/file/phiên) · `SessionStart` (prewarm cache chạy NỀN, không chặn mở phiên).
+> Cài ở **2 tầng**: **user config** `~/.zcode/cli/config.json` (chạy ngay, không cần
+> duyệt) + **workspace** `.zcode/config.json` (chuẩn, share qua git — ZCode có thể hiện
+> banner duyệt 1 lần, KHÔNG bắt buộc). Máy mới:
+> `python scripts/tools/entire-graph/install-zcode-hook.py`. Kiểm chứng hook chạy:
+> `<git-common-dir>/giong-tools/entire-graph/cache/hooks.log`. An toàn: LUÔN exit 0 +
+> fail-open (repo không có đồ thị → in `{}`, KHÔNG bao giờ chặn phiên).
+
 > **PA-2 (tiếp GĐ 601):** `entire-graph` (tree-sitter, 100% local — `doctor` xác nhận
 > `no_egress=true`) là **nguồn tra cứu BỔ SUNG** cho codegraph + codebase-memory
 > (mục 14) — **KHÔNG thay thế**. Dùng cho ĐÚNG 3 việc:
@@ -9700,3 +9712,40 @@ repo con **10.1.0**.
 > repo con **11.4.1**.
 
 ---
+
+### GĐ 606 (Trợ lý ZCode (máy chủ)): TỰ ĐỘNG HOÁ entire-graph theo yêu cầu ĐH (31/10) — hook ZCode 3 event tự tra code + tự chèn vào hội thoại, KHÔNG phải gõ lệnh thủ công (2026-10-31)
+
+> **Lệnh Đại Ca (31/10, sau báo cáo PA-2 GĐ 602):** *"Em cho triển khai luôn thì có
+> cần anh phải tự gõ lệnh thủ công không? Hay em cho nó tự động… Em phải cho nó tự
+> động vào dự án này nhé."* ⇒ 3 hook ZCode tự chạy + cài 2 tầng (mục 19.1).
+
+> **Đã làm (chưa push):**
+> 1. **`scripts/tools/entire-graph/hook.py`** (3 mode, LUÔN exit 0 + fail-open + log):
+>    `prompt-context` (UserPromptSubmit — tra code liên quan cho câu giao việc → in
+>    `hookSpecificOutput.additionalContext` để ZCode chèn thẳng vào hội thoại; throttle
+>    4 phút/phiên · prompt ≥ 20 ký tự · bỏ qua "/…" · budget 9s · ≤1.800 ký tự) ·
+>    `pre-edit` (PreToolUse Edit|Write — stream `FILE_CHANGES_WITH`, báo file HAY ĐỔI
+>    CÙNG trước khi sửa; 1 lần/file/phiên) · `session-start` (prewarm cache chạy NỀN,
+>    detach).
+> 2. **`.zcode/config.json`** (workspace, commit vào repo) — `hooks.enabled: true` + 3
+>    event, `type: process` + `${ZCODE_PROJECT_DIR}` (portable).
+> 3. **`scripts/tools/entire-graph/install-zcode-hook.py`** — cài vào **user config**
+>    `~/.zcode/cli/config.json` (chạy NGAY, **không cần duyệt** — ZCode bắt duyệt
+>    workspace hooks bằng banner, còn user hooks thì không), idempotent + backup
+>    `config.json.pre606-*.bak`, **giữ nguyên `mcp`** (2 server).
+
+> **Bằng chứng chạy thật (test bằng đúng định dạng input của ZCode):** prompt app tổng
+> → chèn **1.747 ký tự** ✓ · cwd ở **repo con** → chèn **1.926 ký tự** (đúng code Python
+> nghiệp vụ: builder bccn…) ✓ · `pre-edit src/lib/banhang-catalog.ts` → báo đúng
+> `src/lib/banhang-catalog.test.ts` *(files changed together in 3 recent commits)* ✓ ·
+> `session-start` trả về trong **0,27s** (spawn prewarm nền, không chặn) ✓ · mọi lần
+> chạy ghi 1 dòng vào `hooks.log` ✓.
+
+> **ĐH kiểm chứng: KHÔNG phải gõ gì** — mở phiên ZCode mới rồi giao việc bình thường:
+> hook tự tra code và chèn vào hội thoại (thấy dòng "entire-graph: tự tra code liên
+> quan…"). Muốn xem bằng chứng: `<git-common-dir>/giong-tools/entire-graph/cache/hooks.log`.
+> Nếu ZCode hiện banner "workspace hooks chờ duyệt" → bấm **Cho phép** 1 lần — **KHÔNG
+> bắt buộc** (tầng user đã chạy).
+
+> **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
+> App tổng **7.4.1** / repo con **11.5.0**. Registry: GĐ 606 (claim `8006043`).
