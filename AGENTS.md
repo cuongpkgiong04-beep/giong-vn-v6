@@ -9816,3 +9816,47 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (data-only + tools_tmp; không sửa code app/web). App
 > tổng **7.5.0** / repo con **11.6.2**.
+
+### GĐ 617 (Trợ lý ZCode (máy chủ)): PA Push tối 31/10 — sửa tiếp lỗi build Vercel (thiếu @tanstack/react-query) — production ĐÃ nhận đầy đủ GĐ 603/611 + 11.6.2 (2026-10-31)
+
+> **Lệnh của Đại ca (31/10 tối):** "Push" (sau báo cáo rà soát toàn bộ công việc
+> hôm nay — yêu cầu tránh bỏ dở việc đã hoàn thành chưa lên Production).
+
+> **Rà trùng lặp (nguyên tắc 3):** app tổng 5 commit docs chờ đẩy (GĐ 614/615/616)
+> · repo con 2 commit (dedc4e3 code GĐ 616 + entry) · nhánh phụ RỖNG. **3 file dở
+> phiên khác KHÔNG đụng:** AGENTS.md máy (bản lệch thiếu entry GĐ 613),
+> AGENT_REGISTRY.md máy (bản stale quay ngược 5 dòng ✅→🔒), .gitignore (+.env*).
+> ⇒ chỉ push commit có sẵn, không add gì.
+
+> **Push lần 1:** app tổng 71b5bd0..731efbe (7 commit) · repo con 76620af..c461c98
+> (3 commit, thêm C.386 chính tả BKCCN 3 chỗ: 40_web_agent.py:133/594 +
+> gd554_audit_backfill.py:69). **→ Deployment c461c98 VẪN ERROR!**
+
+> **Chẩn đoán từ build log Vercel thật (vercel inspect --logs):** Rolldown không
+> resolve import "@tanstack/react-query" từ up-hoadon-dauvao.tsx — GĐ 616 thêm 4
+> gói (radix-select/slot + cva + tailwind-merge) nhưng THIẾU gói này; package-lock
+> cũng 0 match. Local xanh vì node_modules có sẵn từ trước. **Rà toàn bộ import
+> của file mới (script so khớp package.json) → chỉ thiếu đúng 1 gói** (clsx đã có
+> trong lock qua cva).
+
+> **Đã làm:** npm install @tanstack/react-query@^5.105.0 --workspace apps/banhang
+> (c022b6a — package.json + lock) → **build local THẬT xanh** (vite build +
+> fix-ssr-exports + db:migrate) → push → deployment c022b6a **READY** — kết thúc
+> chuỗi 8 deployment ERROR từ 15:08.
+
+> **✅ Verify production 4/4 (curl):** (1) app tổng 7.5.0 · app con **11.6.2**
+> lần đầu · (2) login app tổng → JSON có user · (3) SSO ký JWT (iss/aud, secret
+> .env.local 2 app CÙNG GIÁ TRỊ) → 302 về giong-banhang + Set-Cookie bh_session
+> · (4) /api/auth/me → user e003 + đủ nhóm (có 4 nhóm NHẬP DỮ LIỆU mới).
+
+> **Production giờ có:** Web UI /m/up-hoadon-dauvao (GĐ 603/C.381) · Danh mục
+> Vắc xin CRUD + sticky 7 trang (GĐ 611/C.383) · fix nhập bảng giá VX (ff739ee)
+> · version 11.6.2.
+
+> **Bài học:** (1) build local xanh ≠ Vercel xanh khi gói chỉ nằm node_modules
+> mà thiếu trong package.json/lock — trước Push file import mới phải rà deps
+> (script so khớp import ↔ package.json, mẫu GĐ 617); (2) log build Vercel lấy
+> nhanh: vercel inspect <url> --logs; (3) GĐ 616 bỏ sót 1/5 gói — rà bằng script
+> bắt được trong 3 giây.
+
+> **Version:** app tổng **7.5.0** (docs-only — không bump) / repo con **11.6.2**.
