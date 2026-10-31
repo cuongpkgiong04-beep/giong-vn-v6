@@ -9709,3 +9709,17 @@ repo con **10.1.0**.
 > dòng → DB 53 + ten_smed tự điền · sửa khóa mã · xóa về 52 nguyên trạng ·
 > sticky chênh 1px. KHÔNG push, KHÔNG bump — chờ lệnh. App tổng **7.5.0** /
 > repo con **11.6.1**.
+
+### GĐ 613 (Trợ lý ZCode — máy chủ): PA Push 31/10 chiều + RESTART Agent nạp code mới — phục vụ quy trình tối nay/đêm nay (2026-10-31)
+
+> **Lệnh của Đại ca (31/10 ~16:11):** *"Push và restart lại Agent để mọi việc được mới hoàn toàn phục vụ quy trình làm việc tiếp theo tối nay và đêm nay."*
+
+> **Đã làm:**
+> 1. **Rà trùng lặp trước push (nguyên tắc 3):** `git fetch` + đối chiếu — **CẢ 2 kho đều 0 commit chờ đẩy** (các bản ghi GĐ 596→612 + mã nguồn GĐ 612 đã lên kho nhờ phiên song song đẩy khi làm việc) · nhánh phụ `agent-cli`/`pipeline-work`/`gd541-push` RỖNG · chỉ còn tệp dở của phiên khác (không đụng). ⇒ **KHÔNG bump version, KHÔNG cần push** — sản phẩm đang chạy **7.5.0 / 11.6.1** (mới hơn bản tại máy — phiên song song đã nâng cấp + đẩy).
+> 2. **Verify môi trường Vercel 2 ứng dụng** (mục A GĐ 470): đủ biến bắt buộc. Lưu ý `APP_JWT_SECRET` app con vừa được phiên song song đổi (1 giờ trước) ⇒ kiểm chứng **SSO thật: HTTP 302 + Set-Cookie `bh_session`** (khóa 2 ứng dụng KHỚP) + đăng nhập thật + `/api/auth/me` 97 nhóm quyền ✓.
+> 3. **Restart GIONG_SMED_Agent — chờ máy chủ rảnh**: 15:51→16:59 máy chủ bận chuỗi tải bù ngày 30/10 của phiên song song (dattruoc · blth · tkgvvxdt · sqlreport) — **KHÔNG giết việc của phiên khác**, chờ đến 16:59 khi xong hẳn → xoá `__pycache__` 3 thư mục (agent/api_server/etl) → `sc stop` (STOPPED) → `sc start` (**RUNNING**) lúc **16:59:16** — api_server GIỮ NGUYÊN (tunnel không đổi).
+> 4. **Kiểm sau restart:** log mới `web_agent_311026_165916.log` khởi động sạch (Task runner bật · Task_02 23:00 + Task_04 17:15 · chuỗi MISA tuần tự GĐ 583) · cờ tạm dừng lịch = 0 (lịch TIẾP TỤC) · **0 việc/0 nhiệm vụ treo** ✓.
+> 5. Lịch tối nay: Task_02 · 23:00 tải dữ liệu → chuỗi MISA (mua → bán → xuất) — toàn bộ chạy trên mật khẩu SMED mới + mã đã nạp.
+
+> **Version:** KHÔNG bump (không có commit mới; sản phẩm đã chạy 7.5.0/11.6.1 do phiên song song).
+> **Ghi chú:** tool mua hàng GĐ 612 (`c33c8c2`) đã triển khai máy .245; tool Lịch hẹn tiêm GĐ 605 (`3e02838`) đã được Agent máy chủ nạp sau restart. 2 phiếu mua hàng vướng kỳ 30/10 (QO chưa hiện trên SMED · ML import chưa thấy trên MISA) đang chờ Đại ca xem.
