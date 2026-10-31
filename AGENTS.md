@@ -187,39 +187,6 @@
 > - `git diff HEAD` — working tree có file modified của session KHÁC (không phải của mình) → KHÔNG add, KHÔNG đụng, báo Đại ca.
 > - Đối chiếu GĐ mới nhất trong AGENTS.md cả 2 repo — Agent khác vừa ghi GĐ trùng phạm vi → CẢNH BÁO.
 
-<!-- SHARED-BLOCK:GD570-PUSH-DONG-LOAT START -->
-### 🌍 PUSH ĐỒNG LOẠT TOÀN DỰ ÁN — lệnh Push ở đâu cũng rà hết nhiệm vụ ĐÃ XONG (hiệu lực GĐ 570, 29/10/2026 — chỉ thị Đại ca):
-
-> **Chỉ thị của Đại ca (29/10, nguyên văn rút gọn):** *"Đặt lệnh Push ở bất kỳ đâu
-> (trong máy này, trong máy trạm mạng LAN, ngoài mạng LAN) thì đều phải rà soát lại
-> các nhiệm vụ đã xong ở các Sessions (nhiệm vụ đợi Push) để đồng loạt Push lên
-> Github. Nhiệm vụ nào đang dở dang ở các nơi khác nhau thì để Push lần tiếp theo."*
-
-> **Hiện tượng ĐH phát hiện (29/10):** lệnh Push phát ở Session A thì việc ĐÃ XONG
-> của Session B không được đẩy lên — vì mỗi Agent chỉ thấy working tree của mình;
-> việc của B nằm trên nhánh riêng/worktree khác/máy LAN/máy nhà, agent A không rà
-> thì KHÔNG ai đẩy. Sau khi A push xong, các session khác push riêng dễ bị chặn
-> (non-fast-forward — chưa pull · index.lock dùng chung · nhánh chưa gộp) → phải
-> KẾT THÚC bằng MỘT đợt push duy nhất do agent nhận lệnh điều phối.
-
-> **CHECKLIST bắt buộc cho agent NHẬN LỆNH "Push" (áp dụng MỌI nơi phát lệnh):**
-> 1. `git fetch origin` + `git log --branches --not --remotes` **CẢ 2 repo, MỌI
->    nhánh** (main · agent-cli · pipeline-work...) — liệt kê commit ĐÃ XONG chưa push.
-> 2. Đọc AGENTS.md + AGENT_REGISTRY.md (mọi entry mới nhất ghi "KHÔNG push chờ
->    lệnh" + dòng registry ✅) — phân loại: **ĐÃ XONG** (commit xong + entry hoàn
->    tất + registry ✅) vs **ĐANG DỞ** (registry còn 🔒 không kèm code / entry ghi
->    "dở dang").
-> 3. Việc ngoài git (máy nhà Z: · máy LAN · session khác): entry ĐÃ XONG mà chưa
->    commit (tiền lệ GĐ 498 — code máy nhà không git) → **commit hộ** + push cùng
->    đợt; đang sửa dở → **KHÔNG đụng**, ghi lại để lần sau.
-> 4. Merge các nhánh ĐÃ XONG về `main` (CẢ 2 repo) + **bump version MỘT lần duy
->    nhất cho cả đợt** + rà trùng lặp (nguyên tắc 3) + **push 1 lần**.
-> 5. BÁO Đại ca: danh sách GĐ đã push + danh sách BỎ QUA vì đang dở (ở đâu, việc
->    gì) — anh biết rõ còn lại gì cho lần Push sau.
-> 6. Sau đợt push: các session khác KHÔNG push thêm trong đợt đó — việc mới xong
->    sau đợt → commit + ghi AGENTS.md + **chờ lệnh Push kế tiếp**.
-<!-- SHARED-BLOCK:GD570-PUSH-DONG-LOAT END -->
-
 ### 🧪 KIỂM TRA TRƯỚC & SAU MỌI LẦN PUSH (BẮT BUỘC — MỌI AGENT — hiệu lực GĐ 470, 2026-10-19):
 
 > **Lệnh của Đại ca (19/10/2026) nguyên văn:** *"Áp dụng chung cho tất cả các Agents.
@@ -863,7 +830,7 @@ Chuỗi thư mục dự án hiện có `Authenticated Users:(Modify)` **kế th�
 ### 15.4 Quy tắc vận hành kèm theo
 1. Công cụ mới có sinh dữ liệu → đặt state **trong dự án**; nếu công cụ có hardening ACL chặn thì tạo thư mục riêng **trên ổ D sát dự án** và **ghi rõ lý do + đường dẫn vào AGENTS.md** (như `D:\CBMState`).
 2. KHÔNG để backup/log/temp của dự án trên ổ C. Phát hiện dữ liệu dự án trên ổ C → chuyển về ổ D rồi dọn.
-3. **Bảo mật truy cập share — ĐÃ XỬ LÝ (GĐ 582, 30/10/2026):** trước đây máy LAN truy cập `\<máy chủ>\DuLieuChung` bằng tài khoản **Guest** (bất kỳ máy nào trong mạng cũng vào được TOÀN QUYỀN, không cần mật khẩu). **Đã chuyển sang tài khoản riêng** `lan245` · `lan34` · `lan27` (tài khoản local trên máy chủ; mật khẩu lưu ở `giong-apps/apps/banhang/agent/.secrets/lan_accounts.txt` — trong dự án, đã gitignore), **Guest đã TẮT**, share chỉ còn `BUILTIN\Administrators` + 3 tài khoản đó. Máy mới cần truy cập → **tạo tài khoản riêng + cấp quyền `Change`, KHÔNG mở lại Guest/Everyone**.
+3. **Cảnh báo an ninh (phát hiện khi điều tra GĐ 576):** máy LAN truy cập share `\\<máy chủ>\DuLieuChung` bằng tài khoản **Guest (đang bật)** — rủi ro bảo mật; nên chuyển sang tài khoản riêng cho từng máy (việc riêng, chờ Đại Ca quyết).
 <!-- SHARED-BLOCK:GD576-QUY-TAC-LUU-TRU-DU-LIEU END -->
 
 <!-- SHARED-BLOCK:GD585-CBM-STATE-TRONG-DU-AN START -->
@@ -903,13 +870,10 @@ Backup tự động vào `backups/gd585-<timestamp>/` (ACL 2 cấp + config.json
 chuyển `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh tạo bản thứ hai) và **không** xoá
 `D:\CBMState`.
 
-### 16.4 Trạng thái — ĐH đã chốt (30/10/2026): **GHI NHẬN ĐỂ LÀM SAU**
-**Quyết định của ĐH (30/10/2026):** "Ghi nhận lại để làm sau" ⇒ **KHÔNG chuyển lúc này**; giữ nguyên
-`D:\CBMState` (vẫn đúng quy tắc 15.1 — ổ D, không dùng ổ C). Việc chuyển đã **CHỨNG MINH khả thi**
-và **có sẵn công cụ** (16.3): khi nào ĐH nói làm → chạy `--apply` → verify máy LAN (`.245` ổ `Y:`,
-`.27`/`.34` ổ `Z:`) → **restart phiên ZCode** để MCP nạp env mới.
-⚠️ Vì sao cần ĐH duyệt riêng (agent KHÔNG tự làm): phải đổi quyền trên thư mục chứa **toàn bộ dữ
-liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy vừa có sự cố mất ổ đĩa mạng — GĐ 582).
+### 16.4 Trạng thái & việc chờ ĐH quyết
+Đổi quyền trên thư mục chứa **toàn bộ dữ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động
+(hôm nay 30/10 3 máy vừa có sự cố mất ổ đĩa mạng — GĐ 582) ⇒ **phải có ĐH duyệt riêng** trước khi
+`--apply`. Cho tới lúc đó **state vẫn ở `D:\CBMState`** — vẫn đúng quy tắc 15.1 (ổ D, không dùng ổ C).
 <!-- SHARED-BLOCK:GD585-CBM-STATE-TRONG-DU-AN END -->
 
 <!-- SHARED-BLOCK:GD584-TEN-DB-GIONGDB START -->
@@ -938,99 +902,6 @@ liệu công ty** + ảnh hưởng 3 máy LAN đang hoạt động (30/10 3 máy
 <!-- SHARED-BLOCK:GD584-TEN-DB-GIONGDB END -->
 
 
-
-<!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO START -->
-## 18. PHÂN BIỆT **GIÁ NIÊM YẾT MUA VÀO (Nhà cung cấp)** ↔ **GIÁ NIÊM YẾT BÁN RA (Công ty GIÓNG)** (Đại ca chốt 30/10/2026 — hiệu lực vĩnh viễn)
-
-> **Chỉ thị của Đại ca (30/10/2026):** *"GIÁ NHẬP · ĐƠN GIÁ (Bexsero 1.653.755) là
-> giá niêm yết của nhà cung cấp. Cột 'GIÁ NIÊM YẾT' từ Excel để làm báo cáo tồn
-> kho theo giá niêm yết là lấy ĐƠN GIÁ nhập của nhà cung cấp. Còn Giá niêm yết bán
-> ra là giá bán chưa cho khuyến mại của Công ty Gióng."*
-
-| Khái niệm | Ai quy định | Gồm những gì | Cột trong file NCC | Ví dụ (Bexsero) |
-|---|---|---|---|---|
-| **Giá niêm yết MUA VÀO** | **Nhà cung cấp** đề ra | giá NCC niêm yết + chiết khấu MUA HÀNG: **CK trên hóa đơn · CK tháng · CK quý** | vùng **"GIÁ NHẬP"** — cột **ĐƠN GIÁ** | 1.653.755 → CK hóa đơn 2% còn **1.620.680** |
-| **Giá niêm yết BÁN RA** | **Công ty GIÓNG** quy định | giá Gióng niêm yết + khuyến mại/ưu đãi/giảm giá/thưởng | vùng **"GIÁ BÁN"** — cột **GIÁ NIÊM YẾT** | 1.800.000 → ưu đãi 2% gói + thưởng 20.000đ/mũi cho NV còn **1.744.000** |
-
-- **Công ty GIÓNG = công ty của chúng ta** (bán hàng trên hệ thống SMED, MISA…) —
-  không nhầm với nhà cung cấp.
-- **Bảng "Bảng giá Vắc xin" (mua hàng, `mh_bang_gia_vx.gia_niem_yet`) lưu giá MUA
-  VÀO của NCC** ⇒ khi đọc file NCC: lấy **ĐƠN GIÁ vùng "GIÁ NHẬP"**, TUYỆT ĐỐI
-  KHÔNG lấy cột tên "GIÁ NIÊM YẾT" (đó là giá bán ra của Gióng). Báo cáo "tồn kho
-  theo giá niêm yết" cũng dùng đúng cột giá mua vào này.
-- 4 cột "chiết khấu" trong bảng mua hàng = chiết khấu MUA HÀNG của NCC (giá sau
-  chiết khấu, đơn vị đồng) — gồm hóa đơn · tháng · quý (+ khác nếu có).
-- Gặp file có **cả 2 vùng** giá ⇒ phải phân biệt bằng NHÓM/VÙNG trên tiêu đề file
-  ("GIÁ NHẬP" vs "GIÁ BÁN"), không chỉ nhìn tên cột (tên cột dễ trùng).
-<!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO END -->
-
-<!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH START -->
-## 19. ENTIRE-GRAPH — đồ thị code BỔ SUNG (PA-2 Đại Ca chốt 31/10/2026 — hiệu lực vĩnh viễn)
-
-> **19.1 TỰ ĐỘNG HOÁ (ĐH yêu cầu 31/10: "không phải gõ lệnh thủ công") — 3 hook ZCode
-> tự chạy, KHÔNG ai phải gõ lệnh:** `UserPromptSubmit` (tự tra code liên quan cho câu
-> giao việc → chèn THẲNG vào hội thoại; 1 lần/4 phút/phiên · budget 9s · ≤1.800 ký tự)
-> · `PreToolUse` Edit|Write (file sắp sửa → báo file HAY ĐỔI CÙNG — co-change; 1
-> lần/file/phiên) · `SessionStart` (prewarm cache chạy NỀN, không chặn mở phiên).
-> Cài ở **2 tầng**: **user config** `~/.zcode/cli/config.json` (chạy ngay, không cần
-> duyệt) + **workspace** `.zcode/config.json` (chuẩn, share qua git — ZCode có thể hiện
-> banner duyệt 1 lần, KHÔNG bắt buộc). Máy mới:
-> `python scripts/tools/entire-graph/install-zcode-hook.py`. Kiểm chứng hook chạy:
-> `<git-common-dir>/giong-tools/entire-graph/cache/hooks.log`. An toàn: LUÔN exit 0 +
-> fail-open (repo không có đồ thị → in `{}`, KHÔNG bao giờ chặn phiên).
-
-> **19.2 RÀ TRÙNG LẶP TỰ ĐỘNG TRƯỚC PUSH (GĐ 607 — ĐH chốt "tự động luôn việc rà trùng
-> lặp rồi Push"):** hook `push-guard` (PreToolUse matcher `Bash`) thấy lệnh chứa
-> `git push` → **tự chạy `python scripts/agents/ra-trung-lap.py`** (~3s) rồi chèn báo cáo
-> vào hội thoại TRƯỚC khi push chạy: (a) nhánh phụ vs main — **file CẢ 2 BÊN sửa**
-> (`--symbols`: soi mức symbol qua entire-graph diff) · (b) **mọi worktree** có file SỬA
-> DỞ chưa commit (phiên khác đang làm) · (c) **commit chưa push** từng nhánh. Throttle 2
-> phút/phiên; lệnh Bash khác bỏ trong 0,32s. **Có ⚠️ ⇒ BÁO ĐẠI CA trước khi push.**
-
-> **PA-2 (tiếp GĐ 601):** `entire-graph` (tree-sitter, 100% local — `doctor` xác nhận
-> `no_egress=true`) là **nguồn tra cứu BỔ SUNG** cho codegraph + codebase-memory
-> (mục 14) — **KHÔNG thay thế**. Dùng cho ĐÚNG 3 việc:
-> 1. **Tra code REPO CON `giong-apps`** — codegraph chưa index repo này (204 file
->    Python nghiệp vụ: agent + ETL + builder); CBM chỉ có `apps/banhang`.
-> 2. **Co-change** — trước khi sửa hàm/interface hay đổi: xem file nào HAY ĐỔI CÙNG
->    theo lịch sử git (thứ codegraph/CBM không có).
-> 3. **Semantic diff trước Push** — symbol added/removed/signature-changed kèm số
->    dependents (rà trùng lặp đa agent, nguyên tắc 3).
-
-> **Cách gọi — BẮT BUỘC qua wrapper** (nó tự cố định cache TRONG DỰ ÁN):
-> ```bash
-> bash scripts/tools/entire-graph/eg.sh query --head --profile full --format agent --max-context-bytes 4096 --query "<mô tả việc>"
-> bash scripts/tools/entire-graph/eg.sh impact --head --symbol <Tên>
-> bash scripts/tools/entire-graph/eg.sh def --head <Tên>
-> bash scripts/tools/entire-graph/eg.sh diff --base main --head <nhánh> -- src/
-> ```
-> ⛔ **KHÔNG gọi binary trực tiếp mà thiếu `--cache-dir`** — cache sẽ rơi vào ổ C
-> (%LocalAppData%, vi phạm mục 15). Wrapper đã xử lý: `diff/commit/checkpoint/verify`
-> (v0.6.0 không nhận `--cache-dir`) + tự thêm `--repo`/`--cache-dir`.
-
-> **Vị trí cài (KHÔNG commit vào git):** `<git-common-dir>/giong-tools/entire-graph/`
-> — binary release + cache **dùng chung MỌI worktree** của repo, nằm TRONG dự án
-> (tiền lệ `.git/giong-shared-snapshots/` GĐ 495). Máy / worktree / clone mới chạy 1
-> lần cho MỖI repo:
-> ```bash
-> bash scripts/tools/entire-graph/install.sh                       # app tổng (+ hook)
-> bash scripts/tools/entire-graph/install.sh --repo giong-apps     # repo con (+ hook)
-> ```
-
-> **Hook prewarm (PA-2):** `post-commit` dựng lại cache ở NỀN sau mỗi commit
-> (throttle 10 phút, không bao giờ chặn commit, hook lạ tự backup `.pre602.bak`).
-> Repo con dùng chung `eg.sh` của app tổng (hook tự thử `../scripts/...`).
-> Log: `<git-common-dir>/giong-tools/entire-graph/cache/prewarm.log`.
-
-> **Đã loại khỏi index** (`.graphignore` mỗi repo): `*.md` + ảnh + attachments/
-> (INPUT/OUTPUT/LOG ở repo con). Kết quả app tổng: 574 → **273 file · 2.732 symbol**
-> (chỉ còn CODE). Mỗi query in 1 dòng `warning W_REPO_IGNORED_SOURCE … excluded by
-> .graphignore` — **bình thường**, là báo cáo số file bị loại có chủ đích.
->
-> **Số đo thật (31/10):** query cache-hit **~5,8s** (cold 12,9s) · repo con cold 25,5s
-> · index prewarm 10,9s · ổ C 0 byte cache. Hạn chế đã biết: T-SQL `migrations/*.sql`
-> parse lỗi một phần; `src/routes/huong-dan.tsx` có `&` chưa escape trong JSX.
-<!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH END -->
 
 ---
 
@@ -7258,150 +7129,7 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con
 > **10.7.0** (phiên khác đã push 26/10).
 
-> **CẬP NHẬT 27/10 (ĐH cấp App Password Gmail → tự động hoá hoàn toàn):**
-> - **Google KHÔNG có CLI đọc Gmail** → dùng **App Password + IMAP** (ĐH tạo "GIONG MISA"
->   cho 2 hộp thư). Em viết `gmail_otp.py` (đọc mã; đã sửa 2 bug thật: số trong địa chỉ email
->   `vuthuy290790@` bị bắt nhầm thành mã, và mã giả `000000`) + `misa_auto_login.py`
->   (**đăng nhập MISA hoàn toàn tự động**: điền user/pass → tự đọc Gmail lấy mã → mã hết hạn
->   thì tự đăng nhập lại lấy mã mới). Đặc điểm MISA cần nhớ: **mã hiệu lực 7 phút, TIÊU ĐỀ
->   thư chính là mã**.
-> - **✅ CẢ 2 MÁY ĐÃ ĐĂNG NHẬP MISA** (.245 GIANGKT + .34 THANH-PC, công ty KETOAN_2026) —
->   verify bằng `misa_verify.py` (mở `actapp.misa.vn/app/PU` → vào đúng phân hệ Mua hàng).
-> - **✅ PILOT MÁY .245 THÀNH CÔNG TRỌN VẸN**: job `misa-mua-hang-api` kỳ 22/10 →
->   **`claimed_by='giangkt'` sau 10 giây** → chạy **23 phút** → **done, 0 lỗi** ·
->   tổng kết `{created:0, posted:0, skipped:36, failed:0, aliasCount:3}` (kỳ đã upload trước
->   → bỏ qua hết, không tạo trùng). Máy chủ (core) KHÔNG nhận job này ✓ đúng thiết kế PA-1.
-> - **⏳ PILOT MÁY .34**: job `misa-ban-hang-api` kỳ 22/10 đang chạy (`claimed_by='thanh-pc'`).
-> - **3 LỖI THẬT phát hiện khi chạy (đã sửa, commit `5538aec`):**
->   1. `misa_muahang_upload.py` **hardcode `Server=.\SQLEXPRESS` + Trusted_Connection** →
->      máy LAN không có SQL Server local → job lỗi 08001. Sửa: đọc `AGENT_SQL_CONN` trước
->      (cả 3 builder mua hàng/xuất kho/bán hàng dùng chung hằng này).
->   2. Thiếu **`danh_sach_nha_cung_cap.xlsx`** (138 NCC — builder cần) → đã copy sang 2 máy.
->   3. **Chrome CDP chết khi phiên SSH đóng** và sau logoff → file env `.bat` nay **tự mở
->      Chrome CDP nếu chưa chạy** trước khi chạy worker (tự phục hồi sau reboot/logoff).
-> - **Lưu ý vận hành:** phiên MISA hết hạn → chạy `*-login-misa.bat` (tự lấy mã Gmail, không
->   cần ai đọc mã). Máy .245/.34 phải BẬT + Chrome CDP sống khi cần upload; tắt 1 máy → job
->   chuyên biệt chờ 15' sẽ được máy chủ cứu hộ (PA-1).
-> - **Máy .19 LATITUDE3550**: đã cài đủ công cụ (ODBC 18 + code + secrets + Chrome) — **chưa
->   giao việc**, chờ ĐH chỉ đạo (đề xuất: MIA / bank / dự phòng).
-
-> **CẬP NHẬT 27/10 (tiếp) — PILOT MÁY .34 HOÀN TẤT + xác nhận câu hỏi của ĐH về máy chủ:**
-> - **✅ PILOT MÁY .34 THÀNH CÔNG**: job `misa-ban-hang-api` kỳ 22/10 → `claimed_by='thanh-pc'`
->   → **done** · tổng kết `{created:0, posted:0, skipped:167, failed:0}` (bỏ qua hết — không tạo
->   trùng). Lần đầu lỗi do thiếu template `LOG/gd463/ui_save_full_BH_body.json` → đã copy cả
->   thư mục `LOG/gd463` sang 2 máy LAN.
-> - **⇒ CẢ 3 NHÓM ĐÃ CHẠY THẬT**: `smed` (.27, từ GĐ 534) · `misa-muahang` (.245 GIANGKT) ·
->   `misa-banhang` (.34 THANH-PC) — phân tải 3 máy + máy chủ điều phối ✓.
-> - **Máy chủ (.250) — ĐH hỏi "đã lấy App Password để tự đọc Gmail lấy mã MISA
->   `cuongpk.giong01@gmail.com` chưa?":** ✅ **ĐÃ CÓ TỪ LÂU** — `.secrets/gmail_app_pass.txt`
->   (16 ký tự); em TEST lại 27/10 → **đăng nhập Gmail IMAP OK** (không có thư mã trong 24h là
->   bình thường vì phiên MISA máy chủ đang sống, không phát sinh mã). Máy chủ cũng có sẵn cơ
->   chế tự đọc OTP: `fetch_otp_from_gmail()` dùng bởi `30_misa_BKCT_HD.py` (tải meInvoice) và
->   `LOG/gd442/_cdp_login_misa.py` (login MISA AMIS). **Khác 2 máy LAN**: LAN chạy script mới
->   `misa_auto_login.py` (tự thử lại khi mã hết hạn + tự đăng nhập lại); máy chủ vẫn dùng script
->   login cũ (GĐ 444) — cùng nằm trong `agent/`, dùng chung `.secrets` nên muốn đồng bộ chỉ cần
->   chạy `misa_auto_login.py` trên máy chủ khi phiên hết hạn.
->   (Test thử script mới trên máy chủ báo `connect_over_cdp: Connection closed` — do tranh Chrome
->   CDP lúc builder đang chạy job ở máy chủ; không phải lỗi cấu hình.)
-
-> **ĐỒNG BỘ MÁY CHỦ DÙNG CHUNG SCRIPT + TỰ PHỤC HỒI ĐỊNH KỲ (ĐH yêu cầu "làm luôn đồng bộ", 27/10 — commit `465dc8c`):**
-> - **CẢ 3 MÁY + MÁY CHỦ giờ dùng CHUNG một quy trình**: `misa_auto_login.py` (tự điền
->   user/pass → tự đọc mã OTP từ Gmail → mã hết hạn thì tự đăng nhập lại lấy mã mới)
->   + `misa-login-auto.bat` trên máy chủ (đọc `.secrets\misa_user.txt`/`misa_pass.txt`,
->   KHÔNG hardcode) và `*-login-misa.bat` trên 2 máy LAN.
-> - **TỰ PHỤC HỒI TỰ ĐỘNG**: scheduled task **`GIONG_MISA_KEEPALIVE`** chạy **30 phút/lần**
->   trên **cả 3 máy** (máy chủ `/ru SYSTEM`, máy LAN theo user) — phiên còn sống thì script
->   thoát ngay (~5s, không tác dụng phụ), **hết phiên thì tự đăng nhập lại bằng mã Gmail**
->   → không cần ai can thiệp.
-> - **🚨 SỰ CỐ ĐÃ SỬA trong lúc làm:** **Chrome CDP máy chủ TREO WebSocket** (HTTP
->   `/json/version` vẫn 200 nhưng WS không phản hồi — đúng dấu hiệu từng làm Task_05/06 lỗi
->   25/10). Đã: kill Chrome cũ → tạo task **`GIONG_ChromeCDP`** (`mo-chrome-cdp.bat`, mở lại
->   với profile `.secrets\chrome-cdp`) → verify WS OK, **phiên MISA còn nguyên**
->   (`amisapp.misa.vn/home` — Phạm Kiên Cường). *Nếu lần sau CDP treo: chạy `mo-chrome-cdp.bat`
->   (hoặc `schtasks /run /tn GIONG_ChromeCDP`).*
-> - **Bug nhận diện đã sửa**: script cũ chỉ coi `actapp.misa.vn` là đã đăng nhập → phiên sống
->   ở `amisapp.misa.vn/home` bị báo nhầm "chưa đăng nhập". Nay nhận CẢ 2 domain.
-> - **Kiểm chứng trên máy chủ**: task chạy 27/10 13:22 → log `👤 cuongpk.giong01@gmail.com ·
->   App Password Gmail: CÓ` + `✅ đã đăng nhập sẵn` · Next Run 13:52 ✓.
-
-> **CHẠY ẨN CỬA SỔ MISA (ĐH cấp phép lại 27/10 — commit `c733826`):** *"Cấp lại phép cho việc
-> chạy ẩn cửa sổ phần Upload - Misa Amis... để máy không bị phân tâm và không vô ý đóng cửa
-> sổ gây lỗi tiến trình. Chỉ để phần trên thanh trạng thái tiến trình hoàn thiện."*
-> - Cơ chế đã có sẵn từ GĐ 515: env **`MISA_CHROME_HIDDEN=1`** → `misa_tab_guard.ensure_window_bounds`
->   đẩy cửa sổ ra **(-32000,-32000)** và giữ ẩn suốt job (đọc lại mỗi lần cleanup).
-> - **ĐÃ BẬT cho cả 3 máy:** máy chủ = env NSSM `GIONG_SMED_Agent` + restart; 2 máy LAN =
->   thêm vào `*-env.bat` của worker + `mo-chrome-misa.bat` mở Chrome kèm `--window-position=-32000,-32000`
->   + restart Chrome/worker.
-> - **Bằng chứng đo thật** (`check_hidden.py` — đọc `Browser.getWindowForTarget`): máy chủ
->   `left=-21845` · .245 `left=-32000` · .34 `left=-26214` → **cả 3 ĐANG ẨN** ✓; tiến trình vẫn
->   theo dõi trên web (thanh trạng thái + `Đã tạo X/Y phiếu · Z%`).
-> - Muốn HIỆN lại (khi cần xem thao tác): bỏ env `MISA_CHROME_HIDDEN` hoặc chạy
->   `mo-chrome-*.bat` không kèm `--window-position`.
-> - **⏳ ĐH đang hỏi ý kiến** về việc hiển thị **ICON ở khay hệ thống (thanh bottom)** cho máy
->   LAN (rảnh/đang chạy/lỗi, có nên vẽ % tiến trình lên icon) — em đã trình 3 PA, chờ ĐH chốt
->   mới code.
-
-> **ICON KHAY HỆ THỐNG CHO MÁY LAN — ĐÃ LÀM XONG (ĐH chốt PA-1, 27/10 — commit `16ae4f7`):**
-> - **ĐH hỏi "cho thêm % tiến trình vào ICON nhỉ?"** → em phân tích: icon khay chỉ **16×16 px**
->   nên **số % không đọc được**; thay vào đó dùng **VÒNG TRÒN tiến trình** (liếc 1 giây biết
->   chạy tới đâu), còn **số % để trong tooltip**. ĐH chốt PA-1 theo hướng này.
-> - **`lan_tray.py` (mới)**: 🟢 xanh lá = rảnh · 🔵 vòng xanh dương đầy dần theo % = đang chạy
->   · 🔴 đỏ = job lỗi gần nhất. Tooltip: `<MÁY> · <tên việc> · <kỳ> · X/Y · Z% · <người tạo>`
->   (nhãn việc tiếng Việt, đồng bộ `job-labels.ts`). Chuột phải: mở thư mục log · kiểm tra
->   api_server · thoát.
-> - **Nguồn dữ liệu = đọc TRỰC TIẾP GiondDB** (`pyodbc` + `AGENT_SQL_CONN` của máy LAN).
->   Lý do: **middleware LAN guard của api_server chặn `/jobs` từ LAN** (đúng thiết kế bảo mật —
->   từ LAN chỉ `/agent/*` + `/health`) → không dùng API được, cũng không cần mở thêm cổng.
-> - **Đã cài CẢ 3 MÁY + MÁY CHỦ** (`pip pystray Pillow` + task **`GIONG_LAN_TRAY`** `/sc onlogon
->   /it`): verify tooltip THẬT — `GIANGKT · RẢNH (việc cuối: UPLOAD MISA — phiếu MUA HÀNG ·
->   22/10/2026)` · `THANH-PC · RẢNH (… hóa đơn GTGT BÁN HÀNG · 22/10/2026)` ·
->   `CORE · RẢNH (… phiếu MUA HÀNG · 26/10/2026)`; process tray nằm đúng **Console session**
->   của user.
-> - **2 bài học vận hành:** (1) task tray PHẢI có **`/it`** (interactive) — thiếu thì chạy ở
->   session 0 và **icon vô hình**; (2) `schtasks /run` bỏ qua nếu task còn "Running" → phải
->   **`schtasks /end`** trước (đã gói vào `restart_tray.ps1`).
-> - Ảnh mẫu icon: `agent/tray_preview/*.png` (rảnh · 25% · 70% · lỗi). Lưu ý: nếu máy đang bật
->   **auto-hide taskbar** thì icon chỉ hiện khi rê chuột xuống đáy màn hình.
-
-> **ĐỔI TÀI KHOẢN MISA CHO 2 MÁY LAN (ĐH yêu cầu 27/10 chiều — commit `5a98d32`):**
-> - **.245 GIANGKT**: `mrhungtm2@gmail.com` → **`mrhungtm3@gmail.com`** (app password mới
->   `obse…ffur`) · **.34 THANH-PC**: `vuthuy290790@gmail.com` → **`thuygiongvn290790@gmail.com`**
->   (app password `isuh…jduh`).
-> - **Cách làm (`misa_switch_account.py` mới):** ĐĂNG XUẤT tài khoản cũ = **`clear_cookies()`
->   toàn phiên Chrome** rồi chạy `misa_auto_login.py` (điền user/pass MỚI + tự lấy mã OTP từ
->   Gmail mới). ⚠️ **Bài học:** bản CDP `Storage.getCookies` **không trả cookie** → xóa được 0
->   (tưởng xong nhưng chưa đăng xuất); `Playwright ctx.cookies()` đọc được (6-20 cookie
->   `misa.vn`) → phải dùng `clear_cookies()`. Xóa cookie cũng xóa phiên SMED nhưng builder tự
->   đăng nhập lại bằng `center_pass` khi chạy job.
-> - **Mật khẩu MISA của tài khoản mới = mật khẩu buổi sáng** (ĐH không cấp lại; thử và ĐÚNG):
->   .245 `Hungtm@123` · .34 `Gvn290790@`.
-> - **✅ Kết quả verify:** cả 2 máy đăng nhập TỰ ĐỘNG bằng tài khoản mới (mã OTP lấy từ Gmail
->   mới) → vào đúng **công ty KETOAN_2026** + phân hệ **Mua hàng** (`misа_verify.py`).
-> - **Đang chạy pilot xác nhận quyền hạn tài khoản mới**: job `misa-mua-hang-api` (`giangkt`)
->   + `misa-ban-hang-api` (`thanh-pc`) kỳ 22/10 (đã upload trước → kỳ vọng skip hết, 0 lỗi).
->   Worker cả 2 máy đã restart để nạp env tài khoản mới.
-> - File app password CŨ vẫn giữ ở `.secrets/` máy chủ (chưa xóa — phòng khi cần tra cứu).
-
-> **🚀 PA PUSH ĐỢT 27/10 (lệnh ĐH "Push tất cả các công việc"):** push **CẢ 2 REPO** —
-> app tổng `21de581..e40df7b` (15 commit: GĐ 543 ×14 của em + GĐ 544/545 của phiên khác) rồi
-> push tiếp `e40df7b..0958704` (5 commit dọn sổ sách: unlock 4 dòng registry cũ GĐ 498/506/520/533
-> + sửa dòng 543 vỡ format 3 ô → 7 ô) · repo con `d76c0a5..361dc36` (11 commit).
-> **Bump:** app tổng **6.9.0 → 7.0.0** (minor 9 → nhớ sang major) · repo con **10.8.0 → 10.9.0** —
-> cả 2 `package.json` + `DEFAULT_VERSION` (app-shell.tsx) đồng bộ; **build cả 2 app PASS** trước push.
-> **Rà trùng lặp (nguyên tắc 3):** nhánh phụ `agent-cli` + `pipeline-work` = **0 commit** (không cần
-> merge) · remote app tổng 0 commit mới · **repo con có 4 commit mới từ phiên máy LAN-1** → đã
-> **MERGE** và phát hiện **TRÙNG SỐ KÉP C.350 + C.351** (2 phiên cùng dùng, nội dung khác nhau):
-> theo GĐ 285 (ai commit trước giữ số — local 14:45 sớm hơn remote 15:41) → **phiên máy chủ giữ
-> C.350/C.351**, entry phiên máy LAN-1 đổi thành **C.352/C.353** (giữ đủ bài 2 bên: kiểm bằng
-> script `set(entry)` sau merge ⊇ HEAD và ⊇ origin/main — **158 entry, 0 mất**).
-> **✅ VERIFY PRODUCTION (checklist GĐ 470):** env Vercel 2 app đủ (DATABASE_URL · APP_JWT_SECRET ·
-> TUNNEL_API_BASE_URL/GIST_ID · BETTER_AUTH_* / ZAI_API_KEY) · curl: app tổng **7.0.0** / app con
-> **10.9.0** · **login thật 200** · get-session có user · **SSO 302 → https://giong-banhang.vercel.app/
-> + Set-Cookie bh_session** (khớp secret 2 app ✓) · `/api/auth/me` 200.
-> **⚠️ SỰ CỐ VẬN HÀNH phát hiện trong đợt này:** Chrome CDP **treo WebSocket** ở **máy chủ** (đã sửa
-> bằng task `GIONG_ChromeCDP`) và ở **máy .34** (job bán hàng lỗi `Timeout 180000ms`). **Bài học:
-> restart Chrome phải kill TOÀN BỘ tiến trình `chrome`** (`Get-Process chrome | Stop-Process`), chỉ
-> kill theo cmdline `*chrome-cdp-misa*` **KHÔNG đủ** (còn tiến trình con không chứa chuỗi đó).
+---
 
 ### GĐ 542 / C.349 (Trợ lý Freebuff): Hộp KPI "NGÂN HÀNG" (tầng 1 + tầng 2) và "XUẤT VẮC XIN" (tầng 1) — cùng chuẩn Nhập Vắc Xin: thead + TỔNG CỘNG DÍNH + cột text thu hẹp/truncate (2026-10-26)
 
@@ -7458,24 +7186,7 @@ repo con **10.1.0**.
 > **KHÔNG bump** (đợt này app tổng chỉ docs/registry — tiền lệ GĐ 417). App tổng **6.9.0** /
 > repo con **10.8.0**.
 
-> **✅ PA PUSH (26/10 ~19:20 — ĐH cho phép ngoại lệ "anh đi ngủ, mai kiểm tra"):** ĐÃ PUSH
-> cả 2 repo — app con `9d2aedb..5e30637` (11 commit: C.344→C.349 + gộp lịch sử 2 máy) ·
-> app tổng `cb86861..804b07c` (9 commit: GĐ 537-542/C.344-C.349 + merge union). **Bump repo
-> con 10.7.0 → 10.8.0** (2 nơi: `package.json` + `DEFAULT_VERSION`) · app tổng giữ **6.9.0**
-> (đợt này app tổng chỉ docs/registry).
->
-> **Verify production sau push:** app con `giong-banhang.vercel.app` = **10.8.0** (curl lần
-> đầu ✓) · app tổng `giong-vn-v6.vercel.app` = **6.9.0** ✓ · **login app tổng HTTP 200 +
-> `get-session` trả session** (⇒ tunnel + GiongDB chạy; gist-fallback GĐ 426 tự dùng URL mới
-> `vegetarian-…` vì URL trong env đã chết — `/health`: jobs 3.209 · tunnel_ok true) ·
-> **SSO sang app con: 302 → `https://giong-banhang.vercel.app/` + `Set-Cookie: bh_session`**
-> (⇒ `APP_JWT_SECRET` 2 app TRÙNG) · **`/api/auth/me` app con trả `user`** ✓. KHÔNG phải sửa
-> env Vercel.
->
-> ⚠️ **Việc còn lại cho phiên tại máy cty:** `.env.local` 2 app còn URL tunnel CŨ (đã chết)
-> — production không ảnh hưởng (nhờ fallback gist) nhưng nên chạy
-> `scripts/update-tunnel-env.py` khi rảnh; và xử **trùng số giữa 2 máy** (C.341/GĐ 533) theo
-> quy tắc GĐ 285.
+---
 
 ### GĐ 544 / C.350 (Trợ lý Freebuff): Hộp KPI "HÓA ĐƠN GTGT" (Tổng quan app con) — đổi tên "MISA | SMED" + hiện CẢ 2 nguồn "MISA tờ|mũi - SMED tờ|mũi" (2026-10-27)
 
@@ -7504,7 +7215,7 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **6.9.0** / repo con **10.8.0**.
 
-> **⚠️ PHÁT HIỆN khi verify (27/10) — THIẾU DỮ LIỆU SMED:** stg_1HDDT (OUTPUT\1.HDDT) THIẾU hẳn 3 ngày **04/10 · 06/10 · 07/10** và một phần **03/10** (68 dòng, MISA cùng ngày 391) ⇒ dòng “Tháng này” sẽ thấy SMED (6.117) thấp hơn MISA (7.399) khoảng 1.280 tờ — **KHÔNG phải lỗi đếm** (probe các ngày 20→26/10 hai nguồn khớp: 154/154 · 186/185 · 168/167 · 170/168 · 443/440 · 704/702 · 178/175). import_log: **06/10 không có file 1HDDT**; 04/10 + 07/10 có file nhưng thuộc kỳ 02→03/10 (nạp lại thư mục cũ) ⇒ **việc còn lại: chạy job tải bù report `hddt` cho 03→07/10 rồi ETL lại** (quy trình Download→ETL→Báo cáo) để hộp đủ số tháng.
+---
 
 ### GĐ 545 / C.351 (Trợ lý Freebuff): Hộp HĐ GTGT (phần SMED) — CHỈ lấy dòng "Trạng thái = Đã gửi" của báo cáo tình hình SD-HĐĐT (2026-10-27)
 
@@ -7528,7 +7239,6 @@ repo con **10.1.0**.
 > Trạng thái) để đối chiếu; Đại ca muốn lọc cả trang báo cáo thì báo em.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **6.9.0** / repo con **10.8.0**.
-
 ### GĐ 546 / C.356 (Trợ lý Freebuff): PA-1 — 3 máy LAN chạy worker bằng WINDOWS SERVICE (vá 4 lỗ hổng bản GĐ 534) + verify thật (2026-10-28)
 
 > **Bối cảnh:** ĐH gửi 2 ảnh phiên ZCode trên máy LAN-1 (.27) đang hướng dẫn ĐH chạy TAY
@@ -7585,7 +7295,6 @@ repo con **10.1.0**.
 > đồng bộ code** giữa 3 máy.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
-
 ### GĐ 548 / C.355 (Trợ lý ZCode — máy chủ): Ẩn cửa sổ worker/icon khay máy trạm + watchdog tự hồi sinh + dọn http.server 8899 (2026-10-28)
 
 > **Yêu cầu Đại Ca (27/10 tối, kèm ảnh chụp màn hình máy trạm):** trên máy trạm hiện 2 cửa sổ
@@ -7645,7 +7354,6 @@ repo con **10.1.0**.
 > `agent\LOG\web_agent_*.log` + `lan_tray.log`.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
-
 ### GĐ 551 (Trợ lý Freebuff): PA Push đợt 28/10 — push 2 repo (agent-side + docs) + verify production login/SSO (2026-10-28)
 
 > **Lệnh "Push" của ĐH (28/10, sau GĐ 546 worker máy LAN sang Windows Service).**
@@ -7687,6 +7395,8 @@ repo con **10.1.0**.
 > trực tiếp qua `gd546_deploy_service.py`, không cần pull để chạy).
 
 > **Version:** app tổng **7.0.0** / repo con **10.9.0** — ĐÃ PUSH + LIVE (không đổi — 0 thay đổi web).
+
+---
 
 ### GĐ 550 / C.357 (Trợ lý ZCode — máy chủ): Cổng GDT đổi luật — "máy tính tiền" (sco-query) bắt buộc captcha ckey/cvalue; vá tool MIA 43_mia_hddt.py (PA-1 ĐH chốt 28/10) (2026-10-28)
 
@@ -7732,6 +7442,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
 
+---
+
 ### GĐ 552 / C.358 (Trợ lý ZCode — máy chủ): PA Push đợt 28/10 — push 2 repo (agent-side MIA captcha + docs, KHÔNG bump) + verify production; SỬA NGAY sự cố SSO (APP_JWT_SECRET app tổng LỆCH) (2026-10-28)
 
 > **Lệnh ĐH "Push" (sau GĐ 550/C.357).** Rà trùng lặp nguyên tắc 3: nhánh phụ `agent-cli` +
@@ -7758,6 +7470,8 @@ repo con **10.1.0**.
 > thẳng endpoint SSO; (4) `APP_JWT_SECRET` là KHOÁ KÉP ở app con (SSO + mã hoá SMED).
 
 > **Version:** KHÔNG bump. App tổng **7.0.0** / repo con **10.9.0** — ĐÃ PUSH.
+
+---
 
 ### GĐ 553 (Trợ lý ZCode (máy chủ)): Điều tra "vì sao máy chủ .250 vẫn đăng nhập MISA `cuongpk.giong01@gmail.com`" — trả lời ĐH 3 câu về phiên MISA (2026-10-28)
 
@@ -7825,6 +7539,7 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (điều tra docs-only, 0 code đổi). App tổng **7.0.0** / repo con **10.9.0**.
 
+
 ### GĐ 555 (Trợ lý Freebuff): Điều tra "BKCCN 27/10 chạy lần 3 lỗi 3/19 file" + KHÔI PHỤC dữ liệu 27/10 đủ 19 TT + trình 3 PA cơ chế tự rà soát/bù thiếu mọi phân hệ download (2026-10-28)
 
 > **ĐH hỏi (28/10 sáng — 3 ảnh):** "Bảng kê chung cuối ngày" ngày 27/10 chạy lần thứ 3 thì lỗi 3/19 file (2 lần trước OK). Hỏi: (1) nhiệm vụ này chạy 3 lần hay 2 lần? (2) chạy lại thì dữ liệu lần trước bị xóa hết đúng không? Yêu cầu: nghiên cứu cơ chế TỰ RÀ SOÁT khi chưa đủ file → TỰ CHẠY LẠI cho đủ (báo cáo đúng), áp cho MỌI tác vụ download; trường hợp bất khả kháng (lỗi hệ thống) phải có cảnh báo cụ thể + đề xuất hướng khắc phục.
@@ -7849,6 +7564,8 @@ repo con **10.1.0**.
 > **Verify:** job `0C213738` done 19/19 file (12:46) · `stg_4BKCCN` 27/10 = 18 TT/240 dòng · file→TT mapping đúng thứ tự · backup 3 file cũ + 2 file mẫu giữ tại `_probe27/`.
 
 > **Version:** KHÔNG bump (không sửa code — điều tra + vận hành job/DB). App tổng **7.0.0** / repo con **10.9.0**.
+
+---
 
 ### GĐ 554 (Trợ lý ZCode (máy chủ)): Thống kê + TẢI BÙ dữ liệu SMED thiếu phục vụ báo cáo tháng 10/2026 — 22/22 job done trên máy PC-PKT-01 (.27), +14.780 dòng vào GiongDB (2026-10-28)
 
@@ -7952,16 +7669,7 @@ repo con **10.1.0**.
 > hàm mới — id `c75aaa51-8f05-4eb8-96be-9a3a830316b1` · đơn vị Liều · nhóm HH;
 > danh mục có đúng 2 item GC FLU (mới + cũ giữ nguyên).
 >
-> **BỔ SUNG 29/10 — ĐÃ SỬA TỰ ĐỘNG 18/18 PHIẾU (ĐH gật "làm đi em"):** quy
-> trình bỏ ghi sổ (`DELETE g2/api/ledger/v1/ledger/unpost` + PassWarnings 2 bước
-> chấp nhận cảnh báo mềm 'đã có phiếu xuất sau chứng từ') → xóa → import lại
-> (đúng item mới + đủ 3 cột HĐ: số · ký hiệu K26TDK · ngày) → verify từng đồng
-> → ghi sổ lại. **Verify ĐỘC LẬP 18/18 ĐẠT**: khớp tiền từng đồng · GC FLU trỏ
-> item mới `c75aaa51` · posted=True · HĐ giữ · **Mã địa điểm KD nay ĐÚNG mã
-> kho** (phiếu cũ dính bug = số lô). Hàm `bo_ghi_so_misa()` đã code hóa vào
-> misa_muahang_api.py (commit repo con `2bcdf0c`) + test PASS.
->
-> **Danh sách 18 phiếu (đã sửa xong — lưu đối chiếu):** 12 phiếu 21/10
+> **18 phiếu từ 21/10/2026 ĐH tự sửa tay trên MISA (PA-2):** 12 phiếu 21/10
 > (TP/TĐ/TO/LM/ML/TT/CĐ/TA/SĐ/BH/LB/NL — PN-20261021135040…PN-20261021162725)
 > + 3 phiếu 22/10 (HM 60×188.124 · TD 36 · TS 60) + 3 phiếu 23/10 (QO 120 ·
 > PY 120 · ĐX 96) — đổi dòng hàng sang item mới, SL/giá giữ nguyên; đã ghi sổ
@@ -8012,6 +7720,7 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.0.0** / repo con **10.9.0**.
+
 
 ### GĐ 556 (Trợ lý ZCode — máy chủ): VẤN ĐỀ 1 — PA-3 ĐH chốt: hết treo "Chờ dữ liệu" ở 66% (watchdog Chrome CDP + agent tự đánh thức job báo cáo) — ĐÃ LIVE-VERIFY trọn chuỗi; sửa khẩn lỗi cú pháp làm chết tool MISA mua/bán hàng (2026-10-28)
 
@@ -8103,6 +7812,7 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**
 > (giữ nguyên — đợt push 28/10 của GĐ 552 là docs/agent-side, không bump).
 
+
 ### GĐ 557 / C.360 (Trợ lý Freebuff): PA-3 ĐH chốt — TỰ RÀ SOÁT + TỰ BÙ thiếu file cho MỌI phân hệ download + trang SỨC KHOẺ DỮ LIỆU (2026-10-28)
 
 > **Lệnh của ĐH (28/10, sau điều tra GĐ 555):** chốt **PA-3** — "khi chạy lại giữ liệu mà bị lỗi vì tỷ lệ hoàn thành chưa đủ thì tự động rà soát và chạy lại cho đủ file để báo cáo cho đúng; áp dụng với TẤT CẢ các tác vụ download; trường hợp bất khả kháng (lỗi hệ thống) phải có cảnh báo cụ thể và đề xuất hướng khắc phục" + lưới quan sát "Sức khoẻ dữ liệu".
@@ -8116,6 +7826,8 @@ repo con **10.1.0**.
 > **Việc còn lại (nhỏ):** (1) thêm 1 dòng `NAV_GROUP_TO_MOD` cho nhóm mới trong `app-shell.tsx` — file đang bị phiên khác sửa dở nên KHÔNG đụng (quy tắc đa agent); (2) test `upload-history-scope.test.ts` **fail SẴN từ trước** (regex chưa cập nhật theo cú pháp `{data:{...}}` của GĐ 539 — đã chứng minh fail cả ở HEAD, không liên quan GĐ 557).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
+---
 
 ### GĐ 564 (Trợ lý ZCode — máy chủ): Nghiên cứu CodeGraph (semantic code intelligence + MCP) — chạy thử THẬT trên code dự án, trình 3 PA (2026-10-28)
 
@@ -8145,6 +7857,8 @@ repo con **10.1.0**.
 > **3 PA trình ĐH:** PA-1 (khuyến nghị) dùng cho phiên ZCode — cắm MCP user-scope + index app tổng & app con + tắt telemetry + thêm `.gitignore`; PA-2 cài cho MỌI agent (ZCode/Freebuff/CLI) + dùng `codegraph affected` trong quy trình test trước commit; PA-3 chỉ dùng CLI thủ công khi điều tra việc lớn (refactor/điều tra bug lan rộng).
 
 > **Version:** KHÔNG bump (docs-only + công cụ ngoài repo — chờ lệnh Push). App tổng **7.0.0** / repo con **10.9.0**.
+
+---
 
 ### GĐ 562 / C.364 (Trợ lý ZCode — máy chủ): PA 1-a — cấp tài khoản SMED cho MÁY CHỦ khi cứu hộ + đóng gói CÔNG CỤ CHUẨN rà soát/tải bù download 4 nhóm (2026-10-28/29)
 
@@ -8197,6 +7911,7 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (agent-side + docs — web không đổi; tiền lệ GĐ 422/554). App tổng **7.0.0** /
 > repo con **10.9.0**.
 
+
 ### GĐ 566 / C.365 (Trợ lý Freebuff): Deploy PA-3 (GĐ 557) xuống máy trạm .27 + phát hiện service LocalSystem thiếu Playwright — chuyển worker về task user phamcuong + E2E verify thật (2026-10-29)
 
 > **Việc:** sau khi triển khai GĐ 557 (agent tự bù thiếu file + trang Sức khoẻ dữ liệu), copy 6 file (commit `3d26907`) xuống `.27` và chuyển worker sang chạy bằng service — thì **lộ 2 lỗi hạ tầng có sẵn**: (1) service NSSM `GIONG_SMED_Worker` cài **SAI AppParameters** (`agent\worker.env.bat` — không tồn tại; đúng là `C:\CUONG_2026\worker-lan1\worker-lan1.env.bat`) → start là thoát ngay → service PAUSED (log `worker_service_err.log` đầy "is not recognized"); (2) sau khi sửa path, job **FAIL ngay**: `BrowserType.launch: Executable doesn't exist at C:\Windows\system32\config\systemprofile\AppData\Local\ms-playwright\...` — **LocalSystem KHÔNG có Playwright browsers** (browsers nằm ở `C:\Users\phamcuong\AppData\Local\ms-playwright`). ⟹ Đây là lý do worker .27 vốn chạy dạng PROCESS **user phamcuong** từ 26/10 (mồ côi 2 ngày vì task bị Disabled ở GĐ 546) chứ không qua service.
@@ -8208,6 +7923,8 @@ repo con **10.1.0**.
 > **⚠️ Bài học cho mọi máy LAN:** worker chạy job SMED/BANK **PHẢI dưới user có Playwright browsers** — service LocalSystem chỉ dùng được cho loại job KHÔNG cần browser (hoặc phải cài browsers cho systemprofile). Khi thêm máy/đổi cơ chế chạy: kiểm tra `Test-Path "$env:LOCALAPPDATA\ms-playwright"` của ĐÚNG user chạy task.
 
 > **Version:** KHÔNG bump (docs + vận hành; chưa push — chờ lệnh ĐH). App tổng **7.0.0** / repo con **10.9.0**.
+
+---
 
 ### GĐ 565 (Trợ lý ZCode — máy chủ): Nghiên cứu ECC + codebase-memory-mcp và GỘP phương pháp 3 công cụ thành cách làm cho dự án (2026-10-29)
 
@@ -8237,6 +7954,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (docs + công cụ ngoài repo — chờ lệnh Push). App tổng **7.0.0** / repo con **10.9.0**.
 
+---
+
 ### GĐ 563 / C.363 (Trợ lý ZCode — máy chủ): VĐ2 PA-3 — Task_05/07 hết "báo lỗi mà không khắc phục được": lý do MISA THẬT vào DB · hết import lặp/gộp · "chờ ghi sổ" không tính lỗi + tự thử lại · khối "Phiếu cần xử lý" trên web (2026-10-29)
 
 > **Lệnh của Đại Ca (28/10 tối):** "làm VĐ2 theo PA-3" + 6 bước (VĐ2 = Task_05 xuất kho + Task_07 mua hàng báo LỖI mà không có biện pháp khắc phục — điều tra ở GĐ 556).
@@ -8253,11 +7972,10 @@ repo con **10.1.0**.
 
 > **Verify:** unit `misa_xuatkho_import.test.py` **57 PASS** (24 test mới GĐ 563: số CT ≤20/duy nhất/idempotent · fallback ngày · Excel ghi số CT + mã gốc · record chờ ghi sổ · _sach_msg · invalidMap) · `misa_xuatkho_api.test.py` 41 PASS · mua hàng/bán hàng PASS · py_compile 6 file OK · **tsc app con EXIT 0**.
 
-> **Triển khai:** migration DB đã áp trên GiongDB (err 1000 + cho_ghi_so + post_tries + bảng sm_phieu_xuly ✓) + chuẩn hóa 8 dòng thô + migrate 35 dòng chờ-ghi-sổ. Deploy 8 file agent xuống **máy .34** (0 job — đã restart service, verify hash OK) qua `scripts/_gd563_deploy_lan.py` + bản vá 024cd12; **.245** đang chạy job mua hàng (03:07→) → script `scripts/_gd563_wait_deploy_clean.py` tự chờ rảnh rồi deploy + restart worker (đang chạy nền, tối đa 150 phút).
+> **Triển khai:** migration DB đã áp trên GiongDB (err 1000 + cho_ghi_so + post_tries + bảng sm_phieu_xuly ✓) + chuẩn hóa 8 dòng thô + migrate 35 dòng chờ-ghi-sổ. Deploy 8 file agent xuống **máy .34** (0 job — đã restart service, verify hash OK) qua `scripts/_gd563_deploy_lan.py`; **.245 HOÃN** (đang chạy job mua hàng 03:07→; sẽ deploy + chạy dọn khi rảnh).
 
 > **⚠️ TỒN ĐỌNG (báo ĐH):**
-> - ✅ **DỌN 8 PHIẾU MISA SAI — ĐÃ CHẠY XONG 04:12 29/10 trên máy LAN .34** (tài khoản MISA riêng `thuygiongvn290790`; phiên máy chủ `cuongpk.giong01` bị MISA chặn vì ĐH đang dùng cùng tài khoản ở (14.177.60.105) — đúng vấn đề GĐ 553 ⇒ em **KHÔNG bấm “Tiếp tục đăng nhập”** (sẽ đá phiên của ĐH) mà **chuyển việc sang máy LAN** — bài học: máy LAN có tài khoản MISA riêng thì thay được máy chủ mọi việc MISA). Kết quả: **XÓA 8 OK · 0 lỗi — TẠO LẠI 11 OK · 0 lỗi** (10 đã ghi sổ · 1 chờ ghi sổ kèm lý do thật “vượt quá số lượng tồn theo lô/HSD”) · 2 cặp trùng mã 27/10 ra **4 chứng từ riêng** `SD-202610279318_CĐ/_ML` + `SD-20261027101925_QO/_ĐX` (số CT riêng theo TT chạy THẬT) · phát hiện thêm phiếu QO `PX-SD-20261025165258` (từng bị gộp vào chứng từ TA, chưa từng có dòng DB) nay có chứng từ riêng 2 dòng 1.841.911đ ✓ · **khối “Phiếu cần xử lý” 45 → 36 dòng, 0 dòng “lệch” còn lại**.
-> - ✅ **LƯỢT “TỰ THỬ GHI SỔ LẠI” CHẠY THẬT 04:19–04:22 trên .34 (live-verify tính năng bước 5):** quét 36 phiếu chờ → **9 phiếu GHI SỔ ĐƯỢC luôn** (tồn lô/HSD đã về: LB 22/10, LB 23/10, LB 25/10, 6 phiếu LB 27/10) — trước đây nằm im vì job chỉ chạy đúng ngày của kỳ; 20 phiếu còn chặn (tồn âm thật) nay lưu **LÝ DO MISA THẬT** (“… <Morcvax> với số lô MO-041025 … còn tồn: (19,00)”) thay chuỗi mơ hồ — **DB nay 0 dòng “chưa ghi sổ được (xem log)”**; 7 phiếu còn lại ngoài lượt (quá limit 40) sẽ tự thử ở lượt sau.
+> - **Dọn 8 phiếu MISA sai CHƯA chạy:** phiên MISA máy chủ (`cuongpk.giong01`) bị MISA chặn — "Đang có người dùng khác sử dụng tài khoản này … (14.177.60.105)" = ĐH đang dùng cùng tài khoản ở máy khác (đúng vấn đề GĐ 553). Em **KHÔNG bấm "Tiếp tục đăng nhập"** (sẽ đá phiên của ĐH) → kế hoạch: chạy `gd563_don_phieu_loi.py --apply` trên **.245** (tài khoản riêng mrhungtm3) khi job đang chạy xong.
 > - **25 job đỏ đêm 28→29/10 (ngoài phạm vi VĐ2 — thuộc GĐ 557):** 9 phân hệ × 3 lượt "THIẾU FILE sau 3 lần chạy: 2/19 file" (bank-tcb/tpb · bkct/bkth-hdgtgt · 4 MIA · blth) — **GỐC:** `api_server.py /task/job` (INSERT job do Task-runner tạo) KHÔNG set `expected_files` → cột mặc định **19**, còn runner (GĐ 557) ưu tiên `job.expectedFiles` trước helper per-tool (MIA/bank/HDDT = 1–2 file/kỳ) ⇒ báo thiếu file OAN (bằng chứng: job mia-banra-chitiet đủ 2 file xlsx, done_centers 19/19). Fix đề xuất: set `expected_files` theo report ở api_server `/task/job` (cùng map `smed-expected.ts`).
 
 > **Tiêu chí kiểm chứng (sau Push):** (1) /m/up-xuat-kho → khối "Phiếu cần xử lý" hiện đúng nhóm + lý do THẬT (hết "xem log"); (2) bấm "Ghi sổ lại"/"Chạy lại phiếu này" → job tạo đúng ngày → kết quả cập nhật trên khối; (3) Task_05/07 đêm: phiếu chờ ghi sổ KHÔNG làm job đỏ + tự thử lại lượt sau; (4) 2 TT trùng mã → 2 chứng từ riêng (số CT `SD-…_<TT>`), mã SMED gốc ở "Số chứng từ kèm theo".
@@ -8320,6 +8038,8 @@ repo con **10.1.0**.
 > **Version:** app tổng **7.1.0 → 7.2.0** / repo con **11.0.0 → 11.1.0**
 > (minor — feature mới) — ĐÃ PUSH theo lệnh ĐH.
 
+---
+
 ### GĐ 567 / C.366 (Trợ lý ZCode — máy chủ): PA Push đợt 29/10 — lệnh ĐH "Push hết tất cả": đẩy 2 repo (VĐ2 + toàn bộ tồn đọng GĐ 554→566) + bump 7.1.0/11.0.0 + verify production trọn checklist GĐ 470 (2026-10-29)
 
 > **Lệnh của Đại Ca (29/10 08:35):** "Push hết tất cả nhé". Rà trùng lặp TRƯỚC push: fetch 2 repo → remote KHÔNG có commit mới · nhánh phụ `agent-cli`/`pipeline-work` RỖNG · working tree còn file dở của phiên khác (app tổng: `src/routes/index.tsx` GĐ 559 · repo con: `overview-dashboard.tsx`, `dashboard-data.ts`, `-danh-muc.ts`, `-overview.ts`, `app-shell.tsx`, `misa_muahang_upload.py`…) → **KHÔNG đụng, KHÔNG add** (báo ĐH).
@@ -8335,6 +8055,38 @@ repo con **10.1.0**.
 > **Tồn đọng báo ĐH (KHÔNG tự xử lý — bài dở của phiên khác):** repo con còn 4 file chưa commit sau đợt push của họ: `apps/banhang/src/components/overview-dashboard.tsx` · `src/routes/api/-danh-muc.ts` · `src/routes/m/danh-muc-khach-hang.tsx` · `agent/misa_muahang_upload.py` (phiên nào làm xong tự commit) · app tổng: `src/routes/index.tsx` (GĐ 559) · `package-lock.json` (lệch 6.4.0→6.8.0, bài cũ) · `attachments/*.zip` deleted (phiên cũ).
 
 > **Version:** app tổng **7.2.0** / repo con **11.1.0** — ĐÃ PUSH + ĐÃ LIVE (7.1.0/11.0.0 là mốc bump của đợt em; 7.2.0/11.1.0 là đợt GĐ 559 push tiếp).
+<!-- SHARED-BLOCK:GD570-PUSH-DONG-LOAT START -->
+### 🌍 PUSH ĐỒNG LOẠT TOÀN DỰ ÁN — lệnh Push ở đâu cũng rà hết nhiệm vụ ĐÃ XONG (hiệu lực GĐ 570, 29/10/2026 — chỉ thị Đại ca):
+
+> **Chỉ thị của Đại ca (29/10, nguyên văn rút gọn):** *"Đặt lệnh Push ở bất kỳ đâu
+> (trong máy này, trong máy trạm mạng LAN, ngoài mạng LAN) thì đều phải rà soát lại
+> các nhiệm vụ đã xong ở các Sessions (nhiệm vụ đợi Push) để đồng loạt Push lên
+> Github. Nhiệm vụ nào đang dở dang ở các nơi khác nhau thì để Push lần tiếp theo."*
+
+> **Hiện tượng ĐH phát hiện (29/10):** lệnh Push phát ở Session A thì việc ĐÃ XONG
+> của Session B không được đẩy lên — vì mỗi Agent chỉ thấy working tree của mình;
+> việc của B nằm trên nhánh riêng/worktree khác/máy LAN/máy nhà, agent A không rà
+> thì KHÔNG ai đẩy. Sau khi A push xong, các session khác push riêng dễ bị chặn
+> (non-fast-forward — chưa pull · index.lock dùng chung · nhánh chưa gộp) → phải
+> KẾT THÚC bằng MỘT đợt push duy nhất do agent nhận lệnh điều phối.
+
+> **CHECKLIST bắt buộc cho agent NHẬN LỆNH "Push" (áp dụng MỌI nơi phát lệnh):**
+> 1. `git fetch origin` + `git log --branches --not --remotes` **CẢ 2 repo, MỌI
+>    nhánh** (main · agent-cli · pipeline-work...) — liệt kê commit ĐÃ XONG chưa push.
+> 2. Đọc AGENTS.md + AGENT_REGISTRY.md (mọi entry mới nhất ghi "KHÔNG push chờ
+>    lệnh" + dòng registry ✅) — phân loại: **ĐÃ XONG** (commit xong + entry hoàn
+>    tất + registry ✅) vs **ĐANG DỞ** (registry còn 🔒 không kèm code / entry ghi
+>    "dở dang").
+> 3. Việc ngoài git (máy nhà Z: · máy LAN · session khác): entry ĐÃ XONG mà chưa
+>    commit (tiền lệ GĐ 498 — code máy nhà không git) → **commit hộ** + push cùng
+>    đợt; đang sửa dở → **KHÔNG đụng**, ghi lại để lần sau.
+> 4. Merge các nhánh ĐÃ XONG về `main` (CẢ 2 repo) + **bump version MỘT lần duy
+>    nhất cho cả đợt** + rà trùng lặp (nguyên tắc 3) + **push 1 lần**.
+> 5. BÁO Đại ca: danh sách GĐ đã push + danh sách BỎ QUA vì đang dở (ở đâu, việc
+>    gì) — anh biết rõ còn lại gì cho lần Push sau.
+> 6. Sau đợt push: các session khác KHÔNG push thêm trong đợt đó — việc mới xong
+>    sau đợt → commit + ghi AGENTS.md + **chờ lệnh Push kế tiếp**.
+<!-- SHARED-BLOCK:GD570-PUSH-DONG-LOAT END -->
 
 ### GĐ 570 (Trợ lý Freebuff): Ghi nguyên tắc PUSH ĐỒNG LOẠT TOÀN DỰ ÁN vào AGENTS.md (chỉ thị Đại ca 29/10) (2026-10-29)
 
@@ -8360,6 +8112,8 @@ repo con **10.1.0**.
 > mục 🧪 KIỂM TRA...); 0 dòng bị xoá (cổng ghép sạch, giữ nguyên bài dở phiên khác).
 >
 > **Version:** KHÔNG bump (docs-only — quy tắc, 0 code) — KHÔNG push chờ lệnh.
+
+---
 
 ### GĐ 568 (Trợ lý ZCode — máy chủ): TRIỂN KHAI PA-2 — mở khoá codebase-memory-mcp + cắm MCP 2 công cụ đồ thị vào ZCode + index 2 repo thật + skills nạp-theo-việc + chuẩn hoá vòng kiểm chứng (2026-10-29)
 
@@ -8394,6 +8148,7 @@ repo con **10.1.0**.
 > **Việc còn lại cho phiên sau:** (1) **khởi động lại ZCode** để nạp 2 MCP server (config chỉ đọc lúc mở phiên); (2) cân nhắc `codebase-memory-mcp daemon start` để có UI đồ thị 3D (mặc định chỉ chạy khi có phiên); (3) nếu muốn, thêm 2 skill tương tự cho repo con (C.366 đã ghi).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.0.0** / repo con **10.9.0**.
+
 
 ### GĐ 569 (Trợ lý ZCode — máy nhà LAN-1): NGHIÊN CỨU độc lập kênh UPLOAD dữ liệu lên MISA AMIS — phát hiện API "Nhập khẩu Excel" dùng chung + chứng minh chạy được KHÔNG cần trình duyệt (2026-10-29)
 
@@ -8455,6 +8210,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (nghiên cứu, 0 code app — chờ lệnh Push). App tổng **7.1.0** / repo con **10.9.0**.
 
+---
+
 ### GĐ 575 (Trợ lý ZCode — máy chủ): PA Push đợt 29/10 — push CẢ 2 repo (13 commit), KHÔNG bump (0 file code production) + verify production login/SSO PASS (2026-10-29)
 
 > **Lệnh của Đại Ca:** "Push". Rà trùng lặp theo nguyên tắc ĐA AGENT + quy tắc **Push đồng loạt (GĐ 570)** → push TOÀN BỘ commit đã xong đang đợi push của mọi phiên.
@@ -8473,6 +8230,7 @@ repo con **10.1.0**.
 
 > **Version:** app tổng **7.2.0** / repo con **11.1.0** — ĐÃ PUSH + ĐÃ LIVE (không đổi số đợt này).
 
+
 ### GĐ 572 / C.368 (Trợ lý ZCode — máy nhà LAN-1): PA-2 (ĐH chốt 29/10) — ĐĂNG NHẬP MISA AMIS BẰNG HTTP THUẦN (bỏ hẳn trình duyệt) + client HTTP thuần cho đường upload (2026-10-29)
 
 > **Lệnh của Đại Ca (29/10, sau báo cáo nghiên cứu GĐ 569):** chốt **PA-2** — tức làm PA-1 (chuyển đường upload sang HTTP thuần) **và** đăng nhập cũng bằng HTTP thuần. Chi tiết đầy đủ ở entry **C.368 trong AGENTS.md repo con** (giong-apps).
@@ -8489,6 +8247,8 @@ repo con **10.1.0**.
 > **Ghi chép:** claim `GĐ 572 / C.368` (registry đã commit) · repo con `857111e` (4 file mới) · entry C.368 ghi vào AGENTS.md repo con (đang có phiên khác dọn bài cũ nên **file đó KHÔNG được commit trong phiên này** — để phiên sau commit qua cổng) · toàn bộ probe + báo cáo: `C:\CUONG_2026\misa-upload-research\`.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.1.0** / repo con **10.9.0**.
+
+---
 
 ### GĐ 576 (Trợ lý ZCode — máy chủ): Chuyển dữ liệu công cụ khỏi ổ C về ổ D + điều tra rào cản ACL của CBM + ghi QUY TẮC LƯU TRỮ DỮ LIỆU DỰ ÁN (2026-10-29)
 
@@ -8516,6 +8276,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (docs + công cụ ngoài repo — chờ lệnh Push). App tổng **7.2.0** / repo con **11.1.0**.
 
+---
+
 ### GĐ 578 / C.371 (Trợ lý ZCode — máy chủ): PA Push đợt 29/10 tối — 2 repo (10 commit), bump repo con 11.2.0, verify production PASS (2026-10-29)
 
 > **Lệnh của Đại Ca:** "Push hết cho anh" (sau khi xác nhận **PA-A** cho quy tắc lưu trữ dữ liệu — state CBM giữ ở `D:\CBMState`).
@@ -8537,6 +8299,8 @@ repo con **10.1.0**.
 > **Còn lại cho phiên sau:** **khởi động lại ZCode** để MCP nạp state mới `D:\CBMState` (phiên hiện tại báo MCP codebase-memory "not connected" vì state cũ `C:\CBM` đã xoá).
 
 > **Version:** app tổng **7.2.0** / repo con **11.2.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+---
 
 ### GĐ 579 (Trợ lý ZCode — máy chủ): Restart GIONG_SMED_Agent nạp code PA-1 7 phân hệ (máy LAN-1 `da70d7e`) + trả lời 2 câu hỏi máy LAN (2026-10-29)
 
@@ -8624,6 +8388,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.2.0** / repo con **11.2.0**.
 
+---
+
 ### GĐ 582 (Trợ lý ZCode — máy chủ): Bảo mật share `DuLieuChung` — chuyển từ tài khoản Guest sang tài khoản riêng cho máy LAN (2/3 bước; bước cuối chờ thời điểm máy LAN rảnh) (2026-10-29)
 
 > **Yêu cầu của Đại Ca:** xử lý rủi ro "4 máy LAN (.245 · .27 · .34 · .11) đang truy cập dữ liệu công ty qua tài khoản Guest" (em phát hiện ở GĐ 576).
@@ -8644,9 +8410,11 @@ repo con **10.1.0**.
 > - `C:\Windows\Temp` KHÔNG ghi được bởi user thường → log kiểm chứng phải ghi vào `%TEMP%` của chính user đó.
 > - Lỗi `System error 67`/`The system cannot find the file specified` khi `dir \\IP\share` từ phiên SSH là **hành vi bình thường**, KHÔNG phải share hỏng.
 
-> **✅ ĐÃ HOÀN TẤT bước cuối (30/10/2026 — ĐH cho phép "đang rảnh làm nốt"):** đã bỏ `Everyone` khỏi share + `Disable-LocalUser Guest`. **Quyền share cuối cùng:** `BUILTIN\Administrators` (Full) + `lan245` · `lan34` · `lan27` (Change) — không còn ACE ẩn danh nào. **Bằng chứng kiểm chứng thật (3 máy LAN, chạy trong phiên người dùng KHÔNG nhập tài khoản):** `dir` share OK + **GHI FILE OK** — đo trước và sau khi tắt Guest đều đạt; phiên SMB của `.27` hiển thị **`GIONGPC\lan27`** (đúng tài khoản riêng); truy cập không tài khoản giờ bị **"Access is denied"** (trước đây toàn quyền). **Lưu ý:** các máy KHÁC từng truy cập ẩn danh (`.11` · `.28` · `.32` · IP Tailscale) **đã hết truy cập** — nếu là máy cần dùng, Đại Ca báo để cấp tài khoản riêng. **Sự cố nhỏ ĐÃ KHÔI PHỤC (30/10):** trong lúc kiểm chứng em chạy `net use * /delete` nên **mất Ổ ĐĨA MẠNG trên máy LAN** (`.245` mất `Y:` — ĐH báo "chưa vào được"; `.27`/`.34` mất `Z:`) → **đã map lại bằng chính tài khoản riêng + `/persistent:yes`, kiểm chứng đọc/ghi OK cả 3 máy** (script dùng lại: `python D:\CBMState\_lan\khoi_phuc_o_dia_mang.py`). **Đã kiểm chứng lại tầng service (SYSTEM) cả 3 máy SAU khi tắt ẩn danh: đăng nhập + đọc + ghi OK** ⇒ worker chạy job bình thường. Phiên SMB hiện tại trên máy chủ: `.245=lan245`, `.34=lan34`, `.27=lan27` (không còn Guest). Cần khôi phục tạm toàn bộ (bật lại Guest + Everyone): `python D:\CBMState\_lan\hoan_tat_hoac_khoi_phuc.py --rollback`.
+> **CHƯA LÀM — BƯỚC CUỐI (cố ý, chờ thời điểm an toàn):** bỏ `Everyone` khỏi share + tắt `Guest`. Lý do chưa làm ngay: (a) các phiên AI trên `.245`/`.27` **đang mở repo qua share** — tắt Guest sẽ buộc chúng tạo kết nối mới, nếu credential chưa được dùng đúng thì công việc của các phiên đó đứt giữa lúc làm; (b) máy `.11` chưa xác định nên chưa biết có cần cấp tài khoản không.
+> **Sẵn sàng hoàn tất bất cứ lúc nào (1 lệnh):** `python D:\CBMState\_lan\hoan_tat_hoac_khoi_phuc.py --finish` (bỏ Everyone + tắt Guest + in trạng thái) — có **`--rollback`** để khôi phục trong 5 giây nếu có sự cố, và `--status` để xem trạng thái.
 
 > **Version:** KHÔNG bump (không sửa code app). App tổng **7.2.0** / repo con **11.2.0**.
+---
 
 ### GĐ 583 / C.373 (Trợ lý ZCode — máy chủ): Đổi số + thứ tự chạy nhiệm vụ MISA theo đúng nghiệp vụ "nhập mua TRƯỚC xuất kho" (PA-2 ĐH chốt) (2026-10-30)
 
@@ -8698,51 +8466,9 @@ repo con **10.1.0**.
 > chạy xong → restart **web_agent máy chủ** (không đụng api_server → tunnel URL giữ
 > nguyên) → đổi tên 21 dòng lịch sử `scheduled_tasks` (xuất kho 14 + mua hàng 7) →
 > verify chuỗi thật ở kỳ kế tiếp.
-> **ĐÃ LÀM XONG phần vận hành (30/10 ~11:00):** agent máy chủ đã nạp code mới — log `web_agent_301026_104916.log` dòng 7 in đúng chuỗi mới: *"chuỗi MISA tuần tự (GĐ 583): Task_05 mua hàng → Task_06 bán hàng → Task_07 xuất kho"*; sau đó **đổi tên 21 dòng lịch sử** trong `scheduled_tasks` (xuất kho 14 → `Task_07 · MISA xuất kho` · mua hàng 7 → `Task_05 · MISA mua hàng`; bán hàng 13 dòng giữ nguyên; tổng 34 dòng MISA không đổi, **0 dòng còn tên cũ**) — đổi SAU khi agent đã nạp code mới, vì bản cũ dùng khoá theo TÊN nên đổi tên trước sẽ sinh nhiệm vụ trùng.
-> **Dry-run trên dữ liệu THẬT** (`_probe27/gd583_dryrun_live.py` — 3 hàm spawn thay bằng bản chỉ ghi nhận, 0 ghi vào hệ thống): (1) kỳ 29/10 như hiện tại → **KHÔNG spawn gì** (không sinh bản trùng); (2) kỳ mới giả lập → **chỉ `Task_05 · MISA mua hàng`** được tạo; (3) kỳ mới + mua hàng đang chạy → **KHÔNG tạo gì** (bán hàng/xuất kho chờ) — đúng PA-2.
-> **CÒN LẠI (theo dõi):** chuỗi thật chạy ở kỳ tới — Task_03 (daily) 23:00 tối nay → Task_05 mua hàng → Task_06 bán hàng → Task_07 xuất kho; sáng mai mở /m/tasks xem 3 thẻ có đủ chip thứ tự *1/3 · 2/3 · 3/3* và thứ tự chạy đúng.
-> **Nhãn web** (tên Task_05/Task_07 trên /m/tasks) chỉ hiện đúng trên production SAU khi Đại Ca cho lệnh **Push** (em chỉ commit — quy tắc ĐA AGENT).
-
-> **⚠️ CẢNH BÁO khi deploy code agent xuống MÁY LAN (.27/.245/.34):** phải copy
-> KÈM `agent/smed_expected.py` (file MỚI — `40_web_agent.py` bản mới import nó;
-> thiếu file → ImportError làm worker vỡ). Bundle LAN hiện chạy bản CŨ (map inline
-> vẫn đúng) nên KHÔNG cần deploy ngay — chỉ nhớ kèm file khi deploy lần sau.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
 > repo con **11.2.0**.
-
-### GĐ 585 (Trợ lý ZCode (máy chủ)): Điều tra "đưa CBM state vào thư mục dự án" — CHỨNG MINH ĐƯỢC khả thi, phát hiện CBM chặn cả quyền ghi của TÀI KHOẢN CỤ THỂ; chuẩn bị công cụ chuyển an toàn (CHƯA thực thi — chờ ĐH duyệt phần ACL) (2026-10-30)
-
-> **Yêu cầu của Đại Ca (30/10):** "Anh muốn cho state vào trong thư mục của dự án là
-> `D:\DuLieuChung\CUONG_2026` có được không? Nếu được em chuyển luôn cho anh và
-> thông báo cho mọi việc tuân theo việc thay đổi này."
-
-> **Đã kiểm chứng thật (4 cây thử cô lập trên ổ D + CBM CLI thật, không suy đoán):**
-> - cha `Everyone:(F)` → **CHẶN** · cha `Authenticated Users:(M)` → **CHẶN**
-> - cha **`lan245:(Modify)` — tài khoản cụ thể CŨNG BỊ CHẶN** (điểm GĐ 576 chưa từng thử)
-> - cha `Everyone:(RX)` + `lan245:(RX)` (chỉ đọc) → **PASS**
-> ⇒ Luật thật của CBM: chặn **mọi quyền GHI** ngoài `{owner · SYSTEM · Administrators}` ở mọi
-> cấp trên đường dẫn tới state dir; **quyền chỉ-đọc được chấp nhận**.
-
-> **Hệ quả:** muốn state trong `CUONG_2026` phải bỏ quyền ghi ở 2 cấp cha (`D:\DuLieuChung` —
-> 124 thư mục dữ liệu công ty — và `CUONG_2026`) và **chuyển quyền ghi đó xuống các thư mục CON**
-> cho `lan245/lan34/lan27`. Đây là đổi quyền trên thư mục dữ liệu công ty + ảnh hưởng 3 máy LAN
-> đang map ổ `Y:`/`Z:` vào gốc share (hôm nay 3 máy vừa có sự cố mất ổ đĩa mạng GĐ 582) ⇒
-> **cần ĐH duyệt riêng** — em DỪNG, không tự đổi quyền.
-
-> **Đã chuẩn bị (chưa chạy):** `scripts/gd585-chuyen-cbm-state.py` — DRY-RUN mặc định;
-> `--apply` tự backup ACL 2 cấp + config.json vào `backups/gd585-<timestamp>/` trước khi sửa;
-> `--verify`; `--rollback`. Đã chạy thật dry-run + verify: đọc đúng 3 ACE ghi ngoài trusted ở
-> mỗi cấp, đúng 124 + 16 mục cấp 1; CBM hiện vẫn **PASS** với state cũ. Script KHÔNG chuyển
-> `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh bản thứ hai) và KHÔNG xoá `D:\CBMState`.
-
-> **Thông báo cho mọi phiên (mục 16 AGENTS.md — block `GD585-CBM-STATE-TRONG-DU-AN`):** luật
-> state dir của CBM + điều kiện chuyển + công cụ + trạng thái "chờ ĐH duyệt". Khi ĐH chốt,
-> phiên nào nhận việc chạy `--apply` rồi kiểm chứng máy LAN (.245 Y:, .27/.34 Z:) + restart
-> phiên ZCode để MCP nạp env mới.
-
-> **Version:** KHÔNG bump (docs + script vận hành, chờ lệnh Push — quy tắc ĐA AGENT).
-> App tổng **7.2.0** / repo con **11.2.0**.
 
 ### GĐ 584 (Trợ lý ZCode (máy chủ)): Fix gốc "báo thiếu file OAN" — api_server 2 đường tạo job thiếu cột expected_files (ĐH báo DTTHC "2/19", thật 2 file) + dọn 709 job cũ + dữ liệu trùng 29/10 + nguyên tắc tên DB "GiongDB" (2026-10-30)
 
@@ -8809,6 +8535,39 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** /
 > repo con **11.2.0**.
 
+### GĐ 585 (Trợ lý ZCode (máy chủ)): Điều tra "đưa CBM state vào thư mục dự án" — CHỨNG MINH ĐƯỢC khả thi, phát hiện CBM chặn cả quyền ghi của TÀI KHOẢN CỤ THỂ; chuẩn bị công cụ chuyển an toàn (CHƯA thực thi — chờ ĐH duyệt phần ACL) (2026-10-30)
+
+> **Yêu cầu của Đại Ca (30/10):** "Anh muốn cho state vào trong thư mục của dự án là
+> `D:\DuLieuChung\CUONG_2026` có được không? Nếu được em chuyển luôn cho anh và
+> thông báo cho mọi việc tuân theo việc thay đổi này."
+
+> **Đã kiểm chứng thật (4 cây thử cô lập trên ổ D + CBM CLI thật, không suy đoán):**
+> - cha `Everyone:(F)` → **CHẶN** · cha `Authenticated Users:(M)` → **CHẶN**
+> - cha **`lan245:(Modify)` — tài khoản cụ thể CŨNG BỊ CHẶN** (điểm GĐ 576 chưa từng thử)
+> - cha `Everyone:(RX)` + `lan245:(RX)` (chỉ đọc) → **PASS**
+> ⇒ Luật thật của CBM: chặn **mọi quyền GHI** ngoài `{owner · SYSTEM · Administrators}` ở mọi
+> cấp trên đường dẫn tới state dir; **quyền chỉ-đọc được chấp nhận**.
+
+> **Hệ quả:** muốn state trong `CUONG_2026` phải bỏ quyền ghi ở 2 cấp cha (`D:\DuLieuChung` —
+> 124 thư mục dữ liệu công ty — và `CUONG_2026`) và **chuyển quyền ghi đó xuống các thư mục CON**
+> cho `lan245/lan34/lan27`. Đây là đổi quyền trên thư mục dữ liệu công ty + ảnh hưởng 3 máy LAN
+> đang map ổ `Y:`/`Z:` vào gốc share (hôm nay 3 máy vừa có sự cố mất ổ đĩa mạng GĐ 582) ⇒
+> **cần ĐH duyệt riêng** — em DỪNG, không tự đổi quyền.
+
+> **Đã chuẩn bị (chưa chạy):** `scripts/gd585-chuyen-cbm-state.py` — DRY-RUN mặc định;
+> `--apply` tự backup ACL 2 cấp + config.json vào `backups/gd585-<timestamp>/` trước khi sửa;
+> `--verify`; `--rollback`. Đã chạy thật dry-run + verify: đọc đúng 3 ACE ghi ngoài trusted ở
+> mỗi cấp, đúng 124 + 16 mục cấp 1; CBM hiện vẫn **PASS** với state cũ. Script KHÔNG chuyển
+> `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh bản thứ hai) và KHÔNG xoá `D:\CBMState`.
+
+> **Thông báo cho mọi phiên (mục 16 AGENTS.md — block `GD585-CBM-STATE-TRONG-DU-AN`):** luật
+> state dir của CBM + điều kiện chuyển + công cụ + trạng thái "chờ ĐH duyệt". Khi ĐH chốt,
+> phiên nào nhận việc chạy `--apply` rồi kiểm chứng máy LAN (.245 Y:, .27/.34 Z:) + restart
+> phiên ZCode để MCP nạp env mới.
+
+> **Version:** KHÔNG bump (docs + script vận hành, chờ lệnh Push — quy tắc ĐA AGENT).
+> App tổng **7.2.0** / repo con **11.2.0**.
+
 ### GĐ 588 / C.375 (Trợ lý ZCode (máy LAN-1)): ĐỐI CHIẾU SỐ LIỆU — Mục 2 "Đối chiếu số liệu xuất kho MISA-SMED" (chặng code XONG; Mục 3 đang làm) (2026-10-30)
 
 > **Yêu cầu ĐH (30/10):** thêm 2 phân hệ cùng bậc với Mục 1 trong nhóm sidebar ĐỐI CHIẾU SỐ
@@ -8868,54 +8627,6 @@ repo con **10.1.0**.
 > Sau Push cần **restart agent** để nạp builder mới. **Mục 3** (HĐ GTGT bán hàng
 > MISA-meInvoice-SMED-XK — 3 khối `_MS`/`_IV`/`_XK` + đối chiếu chéo 4.BKCCN) làm ở chặng kế
 > tiếp; registry GĐ 588 / C.375 còn 🔒 tới khi xong cả 2 mục.
-
-> **ĐÍNH CHÍNH + KẾT QUẢ CHẠY THẬT (30/10, 15:00-15:30) — mục CÒN LẠI ở trên đã có kết quả:**
-> 1. **Code Mục 2 ĐÃ LÊN PRODUCTION — không phải em push:** đợt **Push GĐ 589** của phiên máy chủ
->    (lệnh ĐH "Push và restart Server"; main == origin/main cả 2 repo — app tổng **7.3.0** · repo con
->    **11.3.0**) đã cuốn theo các commit Mục 2 `de1c56c` / `7b41613` / `169e9ed`. Agent máy chủ đã
->    restart lúc ~14:53 (nạp builder mới).
-> 2. **Job đối chiếu chạy THẬT trên máy chủ** (`CEDA6D0B` 14:58 · `CE84F9C0` 15:28, kỳ 25/10):
->    builder ra **905 dòng**; bước đồng bộ MISA chạy thật thành công → `misa_xk_detail` = **179 phiếu
->    / 226 dòng** (đúng bằng số phiếu 25/10 đã đẩy MISA) → kết quả: **223 Khớp · 679 Thiếu MISA ·
->    3 Thiếu SMED**. Mẫu dòng MISA đọc lại khớp SMED (PX-SD-20261025112911 · Prevenar 20 · MR7043 ·
->    1.400.490) — tức vế MISA là dữ liệu THẬT của MISA, không phải chép từ SMED.
-> 3. **3 lỗi bắt được từ lượt chạy THẬT — đã sửa + commit** (`c831b24` · `1895c7f` · `1d27569`):
->    (a) script sync chỉ nhận dd/mm/yyyy trong khi builder truyền ISO → ValueError → bảng rỗng
->    (nay nhận cả 2); (b) ngưỡng so khớp quá chặt — MISA ghi TRÒN ĐỒNG (quy tắc GĐ 478) còn SMED giữ
->    số lẻ ⇒ 73/223 dòng bị cờ "lệch" GIẢ (chênh ≤ 0,5 đồng; đối chứng: sau khi nới ngưỡng còn
->    **0 dòng lệch thật**); (c) báo lỗi RÕ khi không bắt được headers MISA (thay AttributeError khó
->    đoán). Unit test **32/32 PASS**.
-> 4. **CẦN RESTART agent khi rảnh** để nạp bản sửa ngưỡng (module `sql_reports` nạp 1 lần lúc khởi
->    động — job hiện tại vẫn dùng bản cũ nên còn 73 dòng cờ lệch giả). Riêng script sync chạy dạng
->    subprocess nên đã dùng bản mới NGAY (không cần restart).
-> 5. **PHÁT HIỆN CẦN ĐH XÁC NHẬN:** ngày 25/10 SMED ghi **697 phiếu PX-** (07:45 → 20:26, trải đều
->    cả ngày) nhưng trên MISA chỉ có **179** ⇒ 679 dòng "Thiếu MISA". Số phiếu đã đẩy trải đều các
->    giờ nên KHÔNG phải cắt theo giờ — nghi phạm vi đẩy/scan (loại phiếu) chứ không phải lỗi báo
->    cáo. ĐH cho biết đây là tồn đọng thật hay do quy định chỉ đẩy một số loại phiếu. Ba dòng
->    "Thiếu SMED (chỉ có trên MISA)" cũng cần xem riêng.
-
-> **CHECKPOINT CHO PHIÊN LÀM MỤC 3 (chép nguyên khối này sang phiên mới là vào việc được ngay):**
-> **Việc:** builder `dc_hoadon_banhang` (trang `/m/doi-chieu-hoadon-banhang`, cùng nhóm ĐỐI CHIẾU
-> SỐ LIỆU) + script `misa_sa_detail_sync.py` → bảng `misa_sa_detail`.
-> **Nguồn:** `_MS` = `misa_sa_detail` (ĐỌC LẠI từ MISA: `sa_voucher/detail_full?req=build_detail_req(refid)`
-> — helper có sẵn trong `misa_banhang_api.py`; danh sách refid lấy từ `sm_banhang_phieu` refid <> )
-> · `_IV` = `stg_11BKCT` (ký hiệu col2 · số HĐ col3 · ngày HĐ col4 · người mua col10 · tên hàng col13 ·
-> SL col17 · đơn giá col18 · thành tiền col19 · tổng TT col24) · `_XK` = `stg_6BKX` (phiếu PX-, lô col6,
-> HSD col5 = serial Excel, SL col7, tiền col9) · chéo `_KN` = `stg_4BKCCN` (khách col2, tên hàng col13,
-> lô col14, HSD col15).
-> **Khóa ghép:** `_MS`↔`_IV` theo (SỐ HĐ + KÝ HIỆU + tên hàng + SL) consume 1-1; `_IV`↔`_XK` theo (trung
-> tâm suy từ ký hiệu HĐ bằng `_center_from_hd_symbol` + ngày + tên hàng + SL) — đây là GHÉP MỜ (6.BKX
-> không chứa số HĐ) nên CỘT CỜ phải nói rõ mức tin cậy; lô/HSD đối chứng chéo với `_KN` theo (trung tâm
-> + khách + tên hàng). Lệch ngày giữa 2 nguồn thì hiện cờ, KHÔNG tự bù.
-> **Bẫy đã gặp thật (đừng lặp):** MISA ghi TRÒN ĐỒNG ⇒ ngưỡng 0.51 (đơn giá) và 0.51 × SL (thành tiền);
-> ngày nhận CẢ ISO lẫn dd/mm/yyyy; kiểm `hdrs["v"]` trước khi gọi `make_fetcher`; `routeTree.gen.ts`
-> sinh bằng `node node_modules/vite/bin/vite.js build` (vite dev chết qua SMB); sửa builder PHẢI restart
-> agent (script sync chạy subprocess thì không cần).
-> **Wiring:** 7 điểm như Mục 2. **Test/probe mẫu:** `agent/gd588-doi-chieu-xk.test.py` (hàm ghép thuần)
-> + `agent/gd588-doi-chieu-xk-probe.py` (monkeypatch `sql_reports._conn` → 192.168.1.250,1433 bằng login
-> `giong_worker`). **Verify cuối:** trigger job thật qua tunnel `POST /jobs` rồi đọc `dbo.smed_pull_jobs`.
-> **Bằng chứng nguồn đã đo (30/10):** bán hàng 25/10 — 702/702 số HĐ của chứng từ đã upload có trong
-> `stg_11BKCT`, 698/702 khớp tiền (4 lệch THẬT = đúng loại lỗi cần bắt).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / repo con **11.2.0**.
 
@@ -9031,6 +8742,8 @@ repo con **10.1.0**.
 > (3) 1 phiếu LB 29/10 có trên MISA nhưng cột `is_uploaded` chưa gắn cờ (DB 156/157, MISA đủ 157).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.2.0** / Repo con **11.3.0**.
+
+---
 
 ### GĐ 590 / C.378 (Trợ lý ZCode (máy chủ)): Báo cáo kho số 11 "Tồn kho theo giá niêm yết" (2 bảng: tổng hợp + ma trận 19 TT, header 2 tầng) + hộp KPI TỒN KHO tách SS/TT (7 cột chi tiết) — code XONG, chờ lệnh Push (2026-10-30)
 
@@ -9167,74 +8880,7 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** /
 > repo con **11.3.0**.
-
-### GĐ 588 / C.375 (Trợ lý ZCode (máy LAN-1)): MỤC 3 — "Đối chiếu số liệu HĐ GTGT bán hàng MISA-Ivoice-SMED-XK" XONG (mức DÒNG HÀNG: 3 khối _MS/_IV/_XK + đối chứng chéo lô/HSD 4.BKCCN) (2026-10-30)
-
-> **Yêu cầu ĐH (30/10):** phân hệ thứ 3 cùng bậc với Mục 1/2 trong nhóm sidebar ĐỐI CHIẾU SỐ LIỆU —
-> kết cấu giống Mục 1 (hộp Chạy đối chiếu + Lịch sử chạy + bảng chi tiết). **ĐH chốt PA-2 + 3 điều
-> chỉnh:** mức **DÒNG HÀNG** (tên hàng · SL · đơn giá · **số lô** · **HSD**) · lô/HSD nguồn chính
-> **6.BKX** + **đối chứng chéo 4.BKCCN** · (Mục 2 gồm cả phiếu PH- — xong ở chặng trước của cùng GĐ này).
-
-> **Đã làm (repo con `97eb04b` · app tổng `94aa526`):**
-> 1. `agent/etl/sql_reports.py`: builder **`dc_hoadon_banhang`** + hàm ghép THUẦN **`dc_hd_merge_rows`** ·
->    `_dc_hd_flags` · `_dc_hd_row` · `_dc_hd_kn_hit` · `_dc_norm_hd_item` · `_dc_norm_kh` ·
->    **`_dc_hd_center_from_symbol`** (suy trung tâm từ KÝ HIỆU HĐ: dùng `HD_SYMBOL_MAP` chuẩn của module
->    + nhánh riêng chịu được ĐỔI TIỀN TỐ NĂM `1C27MAx`) + `_sync_misa_sa_detail` (gọi sync trước báo cáo,
->    lỗi → bỏ qua không phá job, tắt bằng `MISA_SKIP_SYNC=1`) + QUERY_KEYS + `_REPORT_BUILDERS` +
->    `REPORT_SOURCE_TABLES` (3 nguồn TẢI VỀ; bảng MISA tự đồng bộ KHÔNG khai để khỏi treo job hỏi download).
-> 2. `agent/misa_sa_detail_sync.py` (MỚI): **ĐỌC LẠI** chi tiết chứng từ BÁN HÀNG từ MISA AMIS
->    (`sa/v1/sa_voucher/detail_full` — helper `build_detail_req` có sẵn trong `misa_banhang_api.py`; danh
->    sách refid lấy từ `sm_banhang_phieu`) → bảng **`misa_sa_detail`** (idempotent theo refid; nhận ngày
->    CẢ ISO lẫn dd/mm/yyyy; guard báo RÕ khi không bắt được headers MISA thay vì AttributeError khó đoán).
->    Vì sao KHÔNG dùng `sm_banhang_phieu` làm "bên MISA": bảng đó là kết quả QUÉT SMED ⇒ so SMED với SMED vô nghĩa.
-> 3. Trang `src/routes/m/doi-chieu-hoadon-banhang.tsx` (3 hộp giống Mục 1/2) + phân quyền 3 điểm
->    (app con: `lib/nav.ts` · `lib/smed-auth.ts` · `routes/api/-smed.ts` SQL_SOURCES/QUERY_GROUP/QUERY_LEAF;
->    app tổng: `src/lib/banhang-catalog.ts` + test catalog) + `routeTree.gen.ts` sinh lại.
-> 4. Test `agent/gd588-doi-chieu-hd.test.py` (12 nhóm ca) + công cụ đối chứng `agent/gd588-doi-chieu-hd-probe.py`
->    (monkeypatch `sql_reports._conn` → 192.168.1.250,1433 login `giong_worker`).
-
-> **Nguồn + khóa ghép (chốt bằng PROBE THẬT 30/10 — ngày 25/10 có 892 dòng 11.BKCT):**
-> `_IV` = `stg_11BKCT` (col2 ký hiệu · col3 số HĐ · col4 ngày HĐ · **col10 NGƯỜI MUA** · col11 hình thức TT ·
-> col13 tên hàng · col17 SL · col18 đơn giá · col19 thành tiền — ⚠️ **ghi chú cột cũ trong file SAI**:
-> col6 rỗng, col27 là TRẠNG THÁI HĐ chứ không phải số lô) · `_MS` = `misa_sa_detail` (MISA đọc lại) ·
-> `_XK` = `stg_6BKX` **CHỈ phiếu PX-** (xuất bán; PH- là xuất hủy, không thuộc HĐ bán hàng) ·
-> `_KN` = `stg_4BKCCN` (chéo lô/HSD theo trung tâm + khách + tên hàng, kiểu KIỂM TRA THÀNH VIÊN — peek,
-> KHÔNG tiêu thụ dòng). Neo = `_IV`; `_MS↔_IV` theo (SỐ HĐ + KÝ HIỆU + tên hàng + SL) consume 1-1 rồi nới dần
-> (cột "Mức khớp" ghi rõ đã nới tới đâu); **`_IV↔_XK` là GHÉP MỜ** (6.BKX KHÔNG chứa số HĐ) theo (trung tâm
-> suy từ ký hiệu + ngày + tên hàng + SL) ⇒ **cột "Mức khớp XK" nói rõ mức tin cậy** (đúng khóa / mờ n dòng
-> trùng khóa / mờ lệch SL / mờ tên hàng gần đúng / thiếu). Dòng dư CẢ 2 bên vẫn vào bảng (cờ "Thiếu HĐ GTGT").
-
-> **⚠️ BẪY PHÁT HIỆN KHI CHẠY THẬT (đã sửa — cần biết cho lần sau):** so đơn giá/thành tiền
-> **HĐ ↔ xuất kho là SAI BẢN CHẤT** — HĐ ghi GIÁ BÁN còn 6.BKX ghi giá xuất kho/giá vốn: probe cho thấy
-> **152/152 dòng khớp khóa DUY NHẤT đều khác giá** (MVVAC 390.000 ↔ 27.000 · Verorab 470.000 ↔ 284.390
-> · Quimi-Hib 350.000 ↔ 164.937) ⇒ cờ "lệch giá" chỉ tạo nhiễu 883/890 dòng. Đã **BỎ so giá ở cặp `_IV↔_XK`**
-> (giữ so SỐ LƯỢNG; 2 cột vẫn hiện để đối chiếu bằng mắt); vẫn so đơn giá/tiền ở cặp MISA↔HĐ (cùng giá bán)
-> + có test chặn hồi quy.
-
-> **Bằng chứng verify (30/10):** unit **55/55 PASS** · không hồi quy Mục 2 (**32/32**) · `tsc --noEmit`
-> **app tổng EXIT 0** · app con **0 lỗi ở file của em** (4 lỗi còn lại thuộc `api/-mua-hang.ts` đang dở của
-> phiên khác) · test catalog app tổng **9/9 PASS** · **chạy THẬT trên GiongDB** (máy LAN → TCP 1433):
-> kỳ **25/10** builder trả **897 dòng** = 890 dòng HĐ (nguồn thô 892 dòng → gộp ký hiệu+số HĐ+tên hàng = 890;
-> SL 892 · tiền **712.210.000** khớp từng đồng) + 7 dòng dư xuất kho; khối XK 893 dòng PX-/697 phiếu ·
-> **569.251.803** khớp nguồn; kỳ 20→29/10: **3.165 dòng** (3.117 nhóm HĐ + 48 dư XK) khớp nguồn.
-> `misa_sa_detail` CHƯA đồng bộ (máy LAN không có Chrome CDP/MISA) ⇒ mọi dòng HĐ hiện cờ **"Thiếu MISA"**
-> — nói đúng thực tế, KHÔNG bịa số.
-
-> **CÒN LẠI (thuộc MÁY CHỦ):** chạy `python agent/misa_sa_detail_sync.py 25/10/2026 25/10/2026 --probe`
-> (cần Chrome CDP 9222 đã login MISA, khi agent rảnh) để nạp `misa_sa_detail` → bảng chuyển từ toàn bộ
-> "Thiếu MISA" sang Khớp/Lệch THẬT; `--probe` in tên trường dòng hàng MISA để chốt `lot_no`/`expiry_date`.
-> **Sau Push cần restart agent** để nạp builder mới.
-
-> **⚠️ CẢNH BÁO PHIÊN SONG SONG (ĐH đọc trước khi Push):** lúc làm, phiên **máy chủ** commit liên tục trên
-> cùng worktree (`83fd030` GĐ 590 · `fa50cb1` GĐ 591 · `b519428`/`d6c7e07` docs GĐ 592) và sửa CHƯA COMMIT
-> cùng `sql_reports.py`/`-smed.ts`/`nav.ts`/`smed-auth.ts`/`routeTree.gen.ts`. Phiên này **chỉ commit phần
-> CỦA MÌNH** bằng index riêng + `commit-tree` + `update-ref` CAS (parent = HEAD đọc tại chỗ, tự lọc patch
-> theo marker) ⇒ **0 dòng của phiên khác lọt vào** (repo con `97eb04b`: 9 file / +1.492 dòng — đúng bài Mục 3).
-> Đã **reset index chung về HEAD** vì index bị cũ (chứa "xoá" các file vừa thêm — ai commit nguyên index đó
-> sẽ mất file). Phiên máy chủ cũng đã tự gỡ 1 commit lỡ nuốt 5 file staged (`b519428`) ⇒ **TRÙNG VÙNG FILE,
-> ĐH cần rà khi Push** (không đè code của nhau, chỉ dùng chung file).
-
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.3.0** / repo con **11.3.0**.
+---
 
 ### GĐ 591 / C.376 (Trợ lý ZCode (máy chủ)): 7. BÁO CÁO KHO "Kiểm kê cuối tháng" — cột "Nhận xét chất lượng cảm quan" = Đạt + dòng "Tổng Cộng" CỐ ĐỊNH KHI CUỘN + bảng mới "Bảng chi tiết kiểm kê theo trung tâm" (In A4 ngang) + FIX bug bảng phụ 18 dòng cùng số (2026-10-30)
 
@@ -9353,6 +8999,31 @@ repo con **10.1.0**.
 > Dọn: xoá 5 script tạm `_gd587_*` trên .245 (đã giữ backup `.bak-gd587` của các file được vá).
 
 > **Version:** App tổng **7.4.0** / Repo con **11.4.0** — ĐÃ PUSH + LIVE.
+
+<!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO START -->
+## 18. PHÂN BIỆT **GIÁ NIÊM YẾT MUA VÀO (Nhà cung cấp)** ↔ **GIÁ NIÊM YẾT BÁN RA (Công ty GIÓNG)** (Đại ca chốt 30/10/2026 — hiệu lực vĩnh viễn)
+
+> **Chỉ thị của Đại ca (30/10/2026):** *"GIÁ NHẬP · ĐƠN GIÁ (Bexsero 1.653.755) là
+> giá niêm yết của nhà cung cấp. Cột 'GIÁ NIÊM YẾT' từ Excel để làm báo cáo tồn
+> kho theo giá niêm yết là lấy ĐƠN GIÁ nhập của nhà cung cấp. Còn Giá niêm yết bán
+> ra là giá bán chưa cho khuyến mại của Công ty Gióng."*
+
+| Khái niệm | Ai quy định | Gồm những gì | Cột trong file NCC | Ví dụ (Bexsero) |
+|---|---|---|---|---|
+| **Giá niêm yết MUA VÀO** | **Nhà cung cấp** đề ra | giá NCC niêm yết + chiết khấu MUA HÀNG: **CK trên hóa đơn · CK tháng · CK quý** | vùng **"GIÁ NHẬP"** — cột **ĐƠN GIÁ** | 1.653.755 → CK hóa đơn 2% còn **1.620.680** |
+| **Giá niêm yết BÁN RA** | **Công ty GIÓNG** quy định | giá Gióng niêm yết + khuyến mại/ưu đãi/giảm giá/thưởng | vùng **"GIÁ BÁN"** — cột **GIÁ NIÊM YẾT** | 1.800.000 → ưu đãi 2% gói + thưởng 20.000đ/mũi cho NV còn **1.744.000** |
+
+- **Công ty GIÓNG = công ty của chúng ta** (bán hàng trên hệ thống SMED, MISA…) —
+  không nhầm với nhà cung cấp.
+- **Bảng "Bảng giá Vắc xin" (mua hàng, `mh_bang_gia_vx.gia_niem_yet`) lưu giá MUA
+  VÀO của NCC** ⇒ khi đọc file NCC: lấy **ĐƠN GIÁ vùng "GIÁ NHẬP"**, TUYỆT ĐỐI
+  KHÔNG lấy cột tên "GIÁ NIÊM YẾT" (đó là giá bán ra của Gióng). Báo cáo "tồn kho
+  theo giá niêm yết" cũng dùng đúng cột giá mua vào này.
+- 4 cột "chiết khấu" trong bảng mua hàng = chiết khấu MUA HÀNG của NCC (giá sau
+  chiết khấu, đơn vị đồng) — gồm hóa đơn · tháng · quý (+ khác nếu có).
+- Gặp file có **cả 2 vùng** giá ⇒ phải phân biệt bằng NHÓM/VÙNG trên tiêu đề file
+  ("GIÁ NHẬP" vs "GIÁ BÁN"), không chỉ nhìn tên cột (tên cột dễ trùng).
+<!-- SHARED-BLOCK:GD592-GIA-NIEM-YET-MUA-VAO END -->
 
 ### GĐ 597 / C.380 (Trợ lý ZCode (máy chủ)): Trang "Sức khoẻ dữ liệu" (app con) — khoảng ngày Từ→Đến · cố định tiêu đề ma trận · nút "Tải lại dữ liệu" từng ô lỗi/thiếu · nút "Tải lại" theo ngày có hộp thoại xác nhận (2026-10-30)
 
@@ -9480,7 +9151,6 @@ repo con **10.1.0**.
 > repo con **11.4.1**.
 
 ---
-
 ### GĐ 600 (Trợ lý ZCode (máy chủ)): PA Push đợt 31/10 sáng — restart agent nạp GĐ 596 + push TOÀN BỘ commit đang đợi (app tổng 10 · repo con 6) + bump 7.4.1 / 11.5.0 + verify production + resume lịch cho chạy tiếp (2026-10-31)
 
 > **Lệnh của Đại ca (31/10 ~01:40):** *"Đã tạm dừng job để Restart agent và Push.
@@ -9532,6 +9202,8 @@ repo con **10.1.0**.
 > nút "Tải lại dữ liệu" từng ô lỗi + nút "Tải lại" theo ngày.
 
 > **Version:** app tổng **7.4.1** / repo con **11.5.0** — ĐÃ PUSH + LIVE.
+
+---
 
 ### GĐ 601 (Trợ lý ZCode (máy chủ)): KHẢO SÁT công cụ `entire-graph` (đồ thị code tree-sitter — CLI, không MCP) theo yêu cầu ĐH "nghiên cứu, áp dụng được vào dự án không" — KẾT LUẬN: ÁP DỤNG ĐƯỢC (đã chạy thật trên cả 2 repo) + trình 3 PA chờ ĐH chốt (2026-10-31)
 
@@ -9614,6 +9286,75 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chưa đụng code dự án). App tổng **7.4.1** / repo con **11.5.0**.
 > **Registry:** GĐ 601 — claim `8d1cd59`.
+<!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH START -->
+## 19. ENTIRE-GRAPH — đồ thị code BỔ SUNG (PA-2 Đại Ca chốt 31/10/2026 — hiệu lực vĩnh viễn)
+
+> **19.1 TỰ ĐỘNG HOÁ (ĐH yêu cầu 31/10: "không phải gõ lệnh thủ công") — 3 hook ZCode
+> tự chạy, KHÔNG ai phải gõ lệnh:** `UserPromptSubmit` (tự tra code liên quan cho câu
+> giao việc → chèn THẲNG vào hội thoại; 1 lần/4 phút/phiên · budget 9s · ≤1.800 ký tự)
+> · `PreToolUse` Edit|Write (file sắp sửa → báo file HAY ĐỔI CÙNG — co-change; 1
+> lần/file/phiên) · `SessionStart` (prewarm cache chạy NỀN, không chặn mở phiên).
+> Cài ở **2 tầng**: **user config** `~/.zcode/cli/config.json` (chạy ngay, không cần
+> duyệt) + **workspace** `.zcode/config.json` (chuẩn, share qua git — ZCode có thể hiện
+> banner duyệt 1 lần, KHÔNG bắt buộc). Máy mới:
+> `python scripts/tools/entire-graph/install-zcode-hook.py`. Kiểm chứng hook chạy:
+> `<git-common-dir>/giong-tools/entire-graph/cache/hooks.log`. An toàn: LUÔN exit 0 +
+> fail-open (repo không có đồ thị → in `{}`, KHÔNG bao giờ chặn phiên).
+
+> **19.2 RÀ TRÙNG LẶP TỰ ĐỘNG TRƯỚC PUSH (GĐ 607 — ĐH chốt "tự động luôn việc rà trùng
+> lặp rồi Push"):** hook `push-guard` (PreToolUse matcher `Bash`) thấy lệnh chứa
+> `git push` → **tự chạy `python scripts/agents/ra-trung-lap.py`** (~3s) rồi chèn báo cáo
+> vào hội thoại TRƯỚC khi push chạy: (a) nhánh phụ vs main — **file CẢ 2 BÊN sửa**
+> (`--symbols`: soi mức symbol qua entire-graph diff) · (b) **mọi worktree** có file SỬA
+> DỞ chưa commit (phiên khác đang làm) · (c) **commit chưa push** từng nhánh. Throttle 2
+> phút/phiên; lệnh Bash khác bỏ trong 0,32s. **Có ⚠️ ⇒ BÁO ĐẠI CA trước khi push.**
+
+> **PA-2 (tiếp GĐ 601):** `entire-graph` (tree-sitter, 100% local — `doctor` xác nhận
+> `no_egress=true`) là **nguồn tra cứu BỔ SUNG** cho codegraph + codebase-memory
+> (mục 14) — **KHÔNG thay thế**. Dùng cho ĐÚNG 3 việc:
+> 1. **Tra code REPO CON `giong-apps`** — codegraph chưa index repo này (204 file
+>    Python nghiệp vụ: agent + ETL + builder); CBM chỉ có `apps/banhang`.
+> 2. **Co-change** — trước khi sửa hàm/interface hay đổi: xem file nào HAY ĐỔI CÙNG
+>    theo lịch sử git (thứ codegraph/CBM không có).
+> 3. **Semantic diff trước Push** — symbol added/removed/signature-changed kèm số
+>    dependents (rà trùng lặp đa agent, nguyên tắc 3).
+
+> **Cách gọi — BẮT BUỘC qua wrapper** (nó tự cố định cache TRONG DỰ ÁN):
+> ```bash
+> bash scripts/tools/entire-graph/eg.sh query --head --profile full --format agent --max-context-bytes 4096 --query "<mô tả việc>"
+> bash scripts/tools/entire-graph/eg.sh impact --head --symbol <Tên>
+> bash scripts/tools/entire-graph/eg.sh def --head <Tên>
+> bash scripts/tools/entire-graph/eg.sh diff --base main --head <nhánh> -- src/
+> ```
+> ⛔ **KHÔNG gọi binary trực tiếp mà thiếu `--cache-dir`** — cache sẽ rơi vào ổ C
+> (%LocalAppData%, vi phạm mục 15). Wrapper đã xử lý: `diff/commit/checkpoint/verify`
+> (v0.6.0 không nhận `--cache-dir`) + tự thêm `--repo`/`--cache-dir`.
+
+> **Vị trí cài (KHÔNG commit vào git):** `<git-common-dir>/giong-tools/entire-graph/`
+> — binary release + cache **dùng chung MỌI worktree** của repo, nằm TRONG dự án
+> (tiền lệ `.git/giong-shared-snapshots/` GĐ 495). Máy / worktree / clone mới chạy 1
+> lần cho MỖI repo:
+> ```bash
+> bash scripts/tools/entire-graph/install.sh                       # app tổng (+ hook)
+> bash scripts/tools/entire-graph/install.sh --repo giong-apps     # repo con (+ hook)
+> ```
+
+> **Hook prewarm (PA-2):** `post-commit` dựng lại cache ở NỀN sau mỗi commit
+> (throttle 10 phút, không bao giờ chặn commit, hook lạ tự backup `.pre602.bak`).
+> Repo con dùng chung `eg.sh` của app tổng (hook tự thử `../scripts/...`).
+> Log: `<git-common-dir>/giong-tools/entire-graph/cache/prewarm.log`.
+
+> **Đã loại khỏi index** (`.graphignore` mỗi repo): `*.md` + ảnh + attachments/
+> (INPUT/OUTPUT/LOG ở repo con). Kết quả app tổng: 574 → **273 file · 2.732 symbol**
+> (chỉ còn CODE). Mỗi query in 1 dòng `warning W_REPO_IGNORED_SOURCE … excluded by
+> .graphignore` — **bình thường**, là báo cáo số file bị loại có chủ đích.
+>
+> **Số đo thật (31/10):** query cache-hit **~5,8s** (cold 12,9s) · repo con cold 25,5s
+> · index prewarm 10,9s · ổ C 0 byte cache. Hạn chế đã biết: T-SQL `migrations/*.sql`
+> parse lỗi một phần; `src/routes/huong-dan.tsx` có `&` chưa escape trong JSX.
+<!-- SHARED-BLOCK:GD602-ENTIRE-GRAPH END -->
+
+---
 
 ### GĐ 602 / C.382 (Trợ lý ZCode (máy chủ)): PA-2 ĐH chốt (31/10, tiếp GĐ 601) — TÍCH HỢP entire-graph vào dự án: wrapper `eg.sh` + binary/cache trong `.git/giong-tools` (không rơi ổ C) + hook `post-commit` prewarm chạy nền + `.graphignore` 2 repo (2026-10-31)
 
@@ -9636,7 +9377,7 @@ repo con **10.1.0**.
 > 4. **`.graphignore` 2 repo:** loại `*.md` + ảnh + `attachments/` (+ `INPUT/OUTPUT/LOG`
 >    repo con) — app tổng từ 574 file/8.017 symbol → **273 file/2.732 symbol** (chỉ CODE;
 >    Markdown trước chiếm 65% symbol).
-> 5. **AGENTS.md mục 18** (block `GD602-ENTIRE-GRAPH` qua cổng shared-doc): quy tắc
+> 5. **AGENTS.md mục 19** (block `GD602-ENTIRE-GRAPH` qua cổng shared-doc): quy tắc
 >    dùng entire-graph cho ĐÚNG 3 việc + cảnh báo không gọi binary thiếu `--cache-dir`.
 
 > **Verify bằng chứng thật (31/10):** `eg.sh version` = v0.6.0 · query app tổng
@@ -9716,8 +9457,20 @@ repo con **10.1.0**.
 > **Lưu ý kỹ thuật:** bảng kê chỉ có 397 dòng khớp danh mục 29 tên ⇒ phần lớn **ĐH
 > phải gán mã tay** trên web (đúng thiết kế PA-1) — nên dựng màn hình có gợi ý.
 
+> **CẬP NHẬT 31/10 (tiếp GĐ 603 theo ĐH):**
+> 1. **Kho/Đơn vị/Mã thống kê:** ĐH chốt dùng **kho mã "VP"/tên "VP"** cho mọi NVL/CCDC/HH; **đơn vị "VP"**, mã thống kê "VP". Đã đổi `KHO_MAC_DINH` → "VP", `DON_VI` → "VP" trong `misa_hddt_dauvao.py`.
+> 2. **Danh mục mã mới:** file `Danh muc VTTH_CCDC_MDV sua lai .xlsx` (cột C = Mã Mới) được load làm mapping tên → mã MISA; ưu tiên mã từ mapping/Excel trước khi tự sinh.
+> 3. **Tạo mã tự động:** khi `ma_hang` thiếu, ưu tiên mã SMED đã có; nếu vẫn thiếu → tra mapping Excel (Tên hàng), nếu chưa có → tự sinh mã mới theo quy tắc:
+>    - VTTH (TK 152) → tiền tố `VTTH_`
+>    - CCDC (TK 153) → tiền tố `CCDC_`
+>    - MDV (TK 242/642/632) → tiền tố `MDV_`
+>    Số thứ tự dạng 4 số `0000`, lấy tiếp theo từ mapping hiện có.
+> 4. **Commit:** repo con `a73c61d` — `misa_hddt_dauvao.py` cập nhật kho VP, đơn vị VP, load mapping Excel, sinh mã tự động.
+
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
 > repo con **11.4.1**.
+
+---
 
 ---
 
@@ -9758,6 +9511,8 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
 > App tổng **7.4.1** / repo con **11.5.0**. Registry: GĐ 606 (claim `8006043`).
 
+---
+
 ### GĐ 607 (Trợ lý ZCode (máy chủ)): TỰ ĐỘNG RÀ TRÙNG LẶP TRƯỚC PUSH theo yêu cầu ĐH (31/10, tiếp GĐ 606) — script `ra-trung-lap.py` + hook `push-guard` (2026-10-31)
 
 > **Lệnh Đại Ca (31/10):** *"bước tiếp em có thể làm: tự động luôn việc rà trùng lặp
@@ -9789,6 +9544,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (công cụ vận hành — không đụng code app/agent).
 > App tổng **7.4.1** / repo con **11.5.0**. Registry: GĐ 607 (claim `005e9e9`).
+
+---
 
 ### GĐ 608 (Trợ lý ZCode (máy chủ)): PA PUSH đợt 31/10 sáng (lệnh ĐH) — rà trùng lặp bằng công cụ GĐ 607 (lần đầu chạy thật) + bump 7.5.0 / 11.6.0 + LIVE + phát hiện `.env.local` secret SSO lỗi thời (2026-10-31)
 
@@ -9842,6 +9599,8 @@ repo con **10.1.0**.
 > **Version:** app tổng **7.5.0** / repo con **11.6.0** — ĐÃ PUSH + LIVE. Registry: GĐ 608
 > (claim `efb2610` · bump `a8e90ff`/`794eb90`).
 
+---
+
 ### GĐ 609 (Trợ lý ZCode (máy chủ)): ĐIỀU TRA & GỠ CHẶN hook ZCode chặn phiên — lỗi "hooks_prompt_block" (2026-10-31)
 
 > **Đại Ca hỏi (31/10 ~10:31):** phiên "Xây dựng phân hệ Upload hóa đơn đầu vào MISA"
@@ -9879,21 +9638,7 @@ repo con **10.1.0**.
 > → làm việc ở thư mục con KHÁC (chưa có stub) sẽ bị chặn lại y như cũ. Stub là chữa
 > cháy, KHÔNG phải fix gốc.
 
-> **ĐH CHỐT PA-A (31/10 ~12:2x) — ĐÃ THỰC HIỆN XONG (PA-B/C bỏ):**
-> 1. Xoá 4 hook tầng workspace: `.zcode/config.json` = `{"hooks":{"enabled":false,"events":{}}}`
->    (backup `.zcode/config.json.pa609-*.json`) — commit `adbc8ac`.
-> 2. Bật lại 4 hook tầng User (path tuyệt đối, an toàn mọi cwd) — config user 12:32.
-> 3. Fix phụ `find_bash` (hook.py `7d592ec`): ưu tiên Git Bash TRƯỚC which() — PATH kiểu
->    app desktop gặp bash WSL (System32) → eg.sh in lỗi WSL thay vì kết quả tra code.
-> 4. Dọn 3 stub tạm (nested + 2 repo con) — sạch, hook thật nguyên vẹn.
-> 5. **LƯU Ý VẬN HÀNH:** app desktop NẠP hooks theo SNAPSHOT (lần `hooks.loadHooks` cuối
->    = 12:05:26 — TRƯỚC cả 2 lần sửa file 12:28/12:32) → sửa config ngoài UI KHÔNG tự
->    reload; hook workspace CŨ còn trong bộ nhớ tới khi vào lại Settings→Hooks / mở task
->    mới (em từng kết luận vội "đã nạp" — test cwd repo cha không phân biệt được, sau đó
->    bị chặn lần 2 ở cwd `scripts/tools/entire-graph` mới lộ thật; nhờ subagent tạo stub
->    nested `scripts/tools/entire-graph/scripts/tools/entire-graph/hook.py` mới thoát).
-> Bài học: test reload PHẢI test từ cwd KHÁC gốc repo; mọi lệnh Bash giữ cwd = gốc repo
-> khi đang thao tác quanh hook.
+> **3 PA chờ ĐH chốt (sửa gốc):**
 > - **PA-A (em đề xuất):** xoá hẳn 4 hook khỏi `.zcode/config.json` (tầng workspace) —
 >   chỉ giữ tầng user (đường dẫn tuyệt đối, an toàn mọi cwd, không cần duyệt). Muốn
 >   bật lại: chạy `python scripts/tools/entire-graph/install-zcode-hook.py` rồi bật ở
@@ -9910,3 +9655,4 @@ repo con **10.1.0**.
 > nhưng 1 lần prompt bị chèn text lỗi WSL ("no installed distributions") do
 > `eg.sh query` — nghi 1 ngữ cảnh nào đó gọi nhầm bash WSL → prompt-context có lúc
 > in rác thay vì kết quả. Xử lý cùng lúc với PA chốt.
+
