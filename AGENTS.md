@@ -9817,6 +9817,40 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (data-only + tools_tmp; không sửa code app/web). App
 > tổng **7.5.0** / repo con **11.6.2**.
 
+> **BỔ SUNG (31/10 22:00→23:00) — 2 fix CODE báo cáo cuối ngày + restart agent nạp builder:**
+> khi chạy lại 15 báo cáo nhanh, 2 báo cáo còn lỗi — chẩn đoán tới gốc:
+> (1) **`dsxk-comparison`** nổ `'<' not supported between instances of 'NoneType'
+> and 'str'` — `stg_6BKX` kỳ 31/10 có **19 dòng `center` NULL** → khóa None lọt
+> vào `sorted(set(...))`; (2) **`nk-matrix` needsData OAN** — kỳ ĐÃ TẢI file mà
+> 0 dòng nhập: verify TRỰC TIẾP trên SMED (tài khoản LB) thấy ô thời gian mặc
+> định **"31/10/2026 - 31/10/2026"** + bảng **"0 Không có dữ liệu"** ⇒ 31/10
+> (thứ Bảy) THẬT SỰ không phát sinh nhập kho, 19 file 5.BKN nạp 0 dòng là ETL
+> ĐÚNG — nhưng builder `nk_matrix` raise `NoSourceDataError` VÔ ĐIỀU KIỆN, chưa
+> áp quy tắc GĐ 244 (đã-tải-file + 0 dòng = rỗng HỢP LỆ). Sửa
+> `apps/banhang/agent/etl/sql_reports.py` (commit repo con **`ec36a8b`**,
+> +18/−3): gom nhãn `"(Không xác định)"` cho center NULL; `nk_matrix` chỉ raise
+> khi `import_log` TRỐNG kỳ (có file ⇒ bảng rỗng hợp lệ — nk-matrix ∈
+> EMPTY_OK_KEYS). Verify tại chỗ: nk-matrix 2 dòng "(không phát sinh nhập trong
+> kỳ)" + TỔNG CỘNG · dsxk 20 dòng (TỔNG bán ra **524** · xuất kho **534** ·
+> HĐGTGT **525**).
+>
+> **Bẫy vận hành (gặp thật, đáng nhớ):** sửa builder XONG mà agent vẫn trả
+> message CŨ (`result.missing` y bản cũ) — agent giữ module trong RAM từ lúc
+> start 16:59 ⇒ phải **restart GIONG_SMED_Agent** (13.3: xóa `__pycache__` 3
+> thư mục → `sc stop/start`, **api_server GIỮ NGUYÊN** → tunnel URL không đổi,
+> verify `/health` `tunnel_ok:true`) — sau restart **3/3 nk-matrix done +
+> 3/3 dsxk done**. Restart lúc 22:5x — TRƯỚC Task_02 23:00 nên đêm nay chạy
+> code mới. Xác nhận thêm: **sqlreport chỉ chạy trên core** (62/62 job hôm
+> nay) — sửa code trên máy chủ là đủ cho mọi báo cáo.
+>
+> **Kết quả cuối ngày 31/10:** 15/15 báo cáo nhanh Task_02 chạy lại ĐỦ (12 done
+> lần 2 + 3 dsxk + 3 nk-matrix) · 7 phân hệ SMED Done 19/19 (dtdt/dtthc/bkccn/
+> nhapkho/xuatkho/xnkt/blth + hddt/chietkhau) · còn **dattruoc + tkgvvxdt thiếu
+> QO — CHỜ ĐH đổi mật khẩu tài khoản QO** (mục trên).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — repo con có 1 commit code `ec36a8b`). App
+> tổng **7.5.0** / repo con **11.6.2**.
+
 ### GĐ 617 (Trợ lý ZCode (máy chủ)): PA Push tối 31/10 — sửa tiếp lỗi build Vercel (thiếu @tanstack/react-query) — production ĐÃ nhận đầy đủ GĐ 603/611 + 11.6.2 (2026-10-31)
 
 > **Lệnh của Đại ca (31/10 tối):** "Push" (sau báo cáo rà soát toàn bộ công việc
