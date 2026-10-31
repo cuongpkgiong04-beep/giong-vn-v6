@@ -9754,3 +9754,65 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.5.0** / repo con
 > **11.6.2**.
+
+### GĐ 615 (Trợ lý ZCode (máy chủ)): Fix báo cáo cuối ngày 31/10 — USERNAME account 16 nạp sai trong smed_accounts (đăng nhập fail âm thầm) + phát hiện tài khoản QO bị sót đổi mật khẩu (2026-10-31)
+
+> **Lệnh của Đại Ca (31/10 ~17:20):** "Lỗi khi chạy báo cáo cuối ngày. Sửa gấp
+> để thực hiện lại báo cáo." Ảnh: trang /m/smed-doanhthu-doituong — 2 job dtdt
+> (17:15/17:17) lỗi `Locator.click Timeout 30000ms waiting for
+> get_by_role("link", name="Báo cáo")`; /m/tasks Task_02 [3/9] các bước SMED lỗi.
+
+> **Chẩn đoán (bằng chứng thật, không đoán):** log .27 (`agent/LOG/dtdt_*.log`,
+> `bkccn_*.log`, `dtthc_*.log`) — **account 3 TT (tcgiongts) chạy SẠCH 3/3**,
+> chết 100% tại chặng **"ACCOUNT 16 TRUNG TÂM"** ngay sau đăng nhập khi click
+> menu "Báo cáo" (tool 2 · 20 · bkccn… đều vậy). Probe Playwright trên máy chủ
+> giải mã `dbo.smed_accounts` → **DB đang lưu username user_16
+> `tcgiongts_vanphong_pkcuong` (chép nhầm của user_3!)** — đúng phải
+> `tcgiong_vanphong_pkcuong`. Thử thật 2 combo: combo ĐÚNG → vào
+> `/Application#!/welcome` + hover sidebar thấy menu "Báo cáo" ✓; combo trong DB
+> → đá về `/Account/Login` (SMED không báo lỗi rõ). **Tool login không kiểm
+> chứng URL → báo "Đăng nhập thành công" OAN** → menu không bao giờ hiện →
+> timeout 30s. DB ghi username sai lúc `updated_by` 10:08 31/10.
+
+> **Đã sửa (data-only, không đụng code app):** `tools_tmp/gd614_sua_user16_username.py`
+> — UPDATE `smed_accounts.username_enc` (AES-256-GCM đúng format crypto.ts) →
+> verify đọc LẠI DB + đăng nhập THẬT → welcome + menu Báo cáo ✓. Hiệu lực ngay
+> (agent đọc DB lúc claim job, không cần restart).
+
+> **Chạy lại (kích đúng như nút "Thử chạy lại" của web — server fn retrySmedJob:
+> job error → pending, files='[]', retry_partial=0):** reset 5 job lỗi Task_02
+> (dtdt/dtthc/bkccn/nhapkho/xuatkho) → **cả 5 done 19/19** (nhapkho/dtdt/xuatkho
+> claimed_by `core` · bkccn/dtthc `lan-1` — phân tải 2 máy) · đối chứng file
+> OUTPUT: máy chủ 2.DTTDT=19 · 5.BKN=19 · 6.BKX=19; .27 4.BKCCN=19 · 3.DTTHC=2
+> (khớp expected) ✓ · Task_02 **lần 2 tự chạy lại các bước thành công** (dtdt
+> 18:39 · dtthc 18:41 · bkccn 19:02 done 19/19) · `xnkt` 19/19 · `blth` 19/19.
+> Tool: `tools_tmp/gd614_kich_lai_task02.py`.
+
+> **Audit mở rộng (`gd554_audit_backfill.py`) → phát hiện thêm 4 phân hệ THIẾU
+> job 31/10:** hddt · chietkhau · dattruoc · tkgvvxdt → tạo tải bù
+> (tag `gd615-bu-31-10`) → **hddt 19/19 ✓ · chietkhau ✓**; **dattruoc 72/76 +
+> tkgvvxdt 18/19 LỖI — cùng DUY NHẤT 1 nguyên nhân: TRUNG TÂM QUỐC OAI (QO)
+> 0 file** (18/19 TT khác đủ 4/4).
+
+> **🔴 PHÁT HIỆN MỚI — TÀI KHOẢN QO BỊ SÓT ĐỔI MẬT KHẨU (chờ ĐH):** probe
+> `tcgiongts_quocoai_pkcuong` + `@Cuongpk@123@` → SMED: *"Tài khoản đăng nhập
+> không đúng"*. Rà file OUTPUT: QO **đủ 4/4 file đến hết 29/10** (76 file/ngày
+> trên .27), **hỏng từ 30/10** (máy chủ 30/10 + 31/10 = 72 file, QO=0) — đúng
+> thời điểm SMED bật chính sách hết hạn mật khẩu (18:47 30/10) ⇒ **QO bị sót
+> khi đổi mật khẩu 19 tài khoản trung tâm (GĐ 610)**. Cần ĐH đổi mật khẩu QO
+> (`https://tcgiongts.smed.vn` → nếu không vào được mở thẳng `/Account/ForgotPassword`
+> — cần đúng email đăng ký) → báo em để chạy lại dattruoc/tkgvvxdt 30/10 + 31/10.
+
+> **Chạy lại 15 báo cáo nhanh Task_02:** 11 báo cáo chạy 17:58-18:03 lúc nguồn
+> CHƯA đủ (5 phân hệ đang tải lại) + `nk-matrix` needsData → đưa về pending
+> (`tools_tmp/gd615_chay_lai_bao_cao.py`) — agent chạy lại với nguồn đã đủ.
+
+> **Lesson:** (1) tool SMED login **không kiểm chứng URL sau đăng nhập** → "Đăng
+> nhập thành công" OAN khi mật khẩu/tên sai; gặp menu timeout 30s phải soi
+> CREDENTIAL trước khi nghi sidebar/menu. (2) Nạp tài khoản qua UI dễ chép nhầm
+> username của tài khoản khác (vụ 10:08 31/10) — khi verify phải kiểm cả username
+> LẪN mật khẩu + đăng nhập THẬT. (3) 1 tài khoản trung tâm bị sót → dattruoc/
+> tkgvvxdt thiếu file âm thầm nhiều ngày (diff file theo ngày phát hiện nhanh).
+
+> **Version:** KHÔNG bump (data-only + tools_tmp; không sửa code app/web). App
+> tổng **7.5.0** / repo con **11.6.2**.
