@@ -9666,3 +9666,24 @@ repo con **10.1.0**.
 > `eg.sh query` — nghi 1 ngữ cảnh nào đó gọi nhầm bash WSL → prompt-context có lúc
 > in rác thay vì kết quả. Xử lý cùng lúc với PA chốt.
 
+### GĐ 611 / C.383 (Trợ lý ZCode (máy chủ)): DANH MỤC 1 Vắc Xin — CRUD THẬT + gợi ý mã SMED chặn gõ tay + ten_smed + cố định tiêu đề bảng 7 trang Danh mục (2026-10-31)
+
+> **ĐH duyệt 31/10:** PA-1 (CRUD thật, chỉ Admin, mã SMED chỉ CHỌN — không
+> gõ tay, mã lạ chặn + nhắc tải SMED) · PA-1a (tách `ten_smed` khớp máy khỏi
+> `ten_hang` tên chuẩn) · PA-A (cố định tiêu đề bảng cả 7 trang Danh mục).
+> Chi tiết đầy đủ + verify + bẫy: entry C.383 AGENTS.md repo con (code
+> `6b0107e`, khôi phục entry `c53920e`).
+
+> **Kết quả chính:** DB `vaccines` + cột `ten_smed` (backfill 52/52 = ma_smed —
+> SMED thô không khai tên đầy đủ); serverFn riêng `-danh-muc-vaccine.ts` (add
+> chặn mã không có trong `stg_7BCNXT.col3 ≡ stg_5BKN.col6` — 7 mã chưa có trong
+> danh mục: Beyfortus 0.5ml/1ml, GC FLU Pre-filled, INFLUVAC, IVACFLU-S, Vắc xin
+> uốn ván (TT), VAXIGRIP 0.5ml) · sửa KHÓA mã · PA-A khung bảng
+> `max-h-[calc(100dvh-190px)]` (thead sticky có sẵn chưa từng kích hoạt — shell
+> app con cuộn ở cửa sổ ngoài). Rà GĐ 611: KHÔNG chỗ nào map theo
+> `vaccines.ten_hang` → ĐH sửa Tên hàng an toàn.
+
+> **Verify:** tsc 0 · unit 17/17 · E2E local (preview 8101 + SSO tự ký): thêm
+> dòng → DB 53 + ten_smed tự điền · sửa khóa mã · xóa về 52 nguyên trạng ·
+> sticky chênh 1px. KHÔNG push, KHÔNG bump — chờ lệnh. App tổng **7.5.0** /
+> repo con **11.6.1**.
