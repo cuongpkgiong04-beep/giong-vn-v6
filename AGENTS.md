@@ -9879,7 +9879,21 @@ repo con **10.1.0**.
 > → làm việc ở thư mục con KHÁC (chưa có stub) sẽ bị chặn lại y như cũ. Stub là chữa
 > cháy, KHÔNG phải fix gốc.
 
-> **3 PA chờ ĐH chốt (sửa gốc):**
+> **ĐH CHỐT PA-A (31/10 ~12:2x) — ĐÃ THỰC HIỆN XONG (PA-B/C bỏ):**
+> 1. Xoá 4 hook tầng workspace: `.zcode/config.json` = `{"hooks":{"enabled":false,"events":{}}}`
+>    (backup `.zcode/config.json.pa609-*.json`) — commit `adbc8ac`.
+> 2. Bật lại 4 hook tầng User (path tuyệt đối, an toàn mọi cwd) — config user 12:32.
+> 3. Fix phụ `find_bash` (hook.py `7d592ec`): ưu tiên Git Bash TRƯỚC which() — PATH kiểu
+>    app desktop gặp bash WSL (System32) → eg.sh in lỗi WSL thay vì kết quả tra code.
+> 4. Dọn 3 stub tạm (nested + 2 repo con) — sạch, hook thật nguyên vẹn.
+> 5. **LƯU Ý VẬN HÀNH:** app desktop NẠP hooks theo SNAPSHOT (lần `hooks.loadHooks` cuối
+>    = 12:05:26 — TRƯỚC cả 2 lần sửa file 12:28/12:32) → sửa config ngoài UI KHÔNG tự
+>    reload; hook workspace CŨ còn trong bộ nhớ tới khi vào lại Settings→Hooks / mở task
+>    mới (em từng kết luận vội "đã nạp" — test cwd repo cha không phân biệt được, sau đó
+>    bị chặn lần 2 ở cwd `scripts/tools/entire-graph` mới lộ thật; nhờ subagent tạo stub
+>    nested `scripts/tools/entire-graph/scripts/tools/entire-graph/hook.py` mới thoát).
+> Bài học: test reload PHẢI test từ cwd KHÁC gốc repo; mọi lệnh Bash giữ cwd = gốc repo
+> khi đang thao tác quanh hook.
 > - **PA-A (em đề xuất):** xoá hẳn 4 hook khỏi `.zcode/config.json` (tầng workspace) —
 >   chỉ giữ tầng user (đường dẫn tuyệt đối, an toàn mọi cwd, không cần duyệt). Muốn
 >   bật lại: chạy `python scripts/tools/entire-graph/install-zcode-hook.py` rồi bật ở
