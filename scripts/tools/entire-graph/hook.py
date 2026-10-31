@@ -52,8 +52,12 @@ def emit(text):
 
 
 def find_bash():
-    for c in (shutil.which("bash"), r"C:\Program Files\Git\bin\bash.exe",
-              r"C:\Program Files\Git\usr\bin\bash.exe", "/bin/bash"):
+    # Windows: ưu tiên Git Bash TUYỆT ĐỐI trước which() — trong PATH của app desktop,
+    # bash đầu tiên có thể là bash WSL (System32) → eg.sh in lỗi
+    # "Windows Subsystem for Linux has no installed distributions" thay vì kết quả (GĐ 609).
+    for c in (r"C:\Program Files\Git\bin\bash.exe",
+              r"C:\Program Files\Git\usr\bin\bash.exe",
+              shutil.which("bash"), "/bin/bash"):
         if c and Path(c).exists():
             return c
     return None
