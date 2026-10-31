@@ -1,0 +1,47 @@
+{
+  "hooks": {
+    "enabled": true,
+    "events": {
+      "SessionStart": [
+        {
+          "hooks": [
+            {
+              "type": "process",
+              "command": "python",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/tools/entire-graph/hook.py", "session-start"],
+              "timeoutMs": 6000,
+              "statusMessage": "entire-graph: giữ cache đồ thị ấm (chạy nền)"
+            }
+          ]
+        }
+      ],
+      "UserPromptSubmit": [
+        {
+          "hooks": [
+            {
+              "type": "process",
+              "command": "python",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/tools/entire-graph/hook.py", "prompt-context"],
+              "timeoutMs": 12000,
+              "statusMessage": "entire-graph: tự tra code liên quan cho việc này"
+            }
+          ]
+        }
+      ],
+      "PreToolUse": [
+        {
+          "matcher": "Edit|Write|ApplyPatch",
+          "hooks": [
+            {
+              "type": "process",
+              "command": "python",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/tools/entire-graph/hook.py", "pre-edit"],
+              "timeoutMs": 8000,
+              "statusMessage": "entire-graph: co-change của file sắp sửa"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

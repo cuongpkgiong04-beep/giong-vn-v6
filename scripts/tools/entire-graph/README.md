@@ -13,6 +13,26 @@ codebase-memory (mục 14 AGENTS.md), KHÔNG thay thế.
 3. **Semantic diff trước Push** — `diff --base main --head <nhánh>`: symbol
    added/removed/signature-changed kèm số dependents (rà trùng lặp đa agent).
 
+## TỰ ĐỘNG (GĐ 606 — Đại Ca yêu cầu 31/10: "không phải gõ lệnh thủ công")
+
+Hook ZCode tự chạy — **không ai phải gõ lệnh**:
+
+| Event | Việc tự động | Throttle |
+|---|---|---|
+| `UserPromptSubmit` | Tra code liên quan cho câu Đại Ca vừa giao → **chèn thẳng vào hội thoại** (agent thấy ngay, không tốn lượt gọi) | 1 lần/4 phút/phiên · budget 9s · ≤1.800 ký tự |
+| `PreToolUse` (Edit/Write) | File sắp sửa → báo **file HAY ĐỔI CÙNG** (co-change, git history) để cập nhật kèm | 1 lần/file/phiên · budget 6s |
+| `SessionStart` | Prewarm cache chạy **nền** (mở phiên là cache ấm, không chặn) | — |
+
+Cài ở **2 tầng**: user config `~/.zcode/cli/config.json` (chạy ngay, ZCode không hỏi)
++ workspace `.zcode/config.json` trong repo (chuẩn, share qua git; ZCode có thể hiện
+banner "workspace hooks" — bấm Cho phép 1 lần, **không bắt buộc** vì tầng user đã chạy).
+
+- Cài lại cho máy mới: `python scripts/tools/entire-graph/install-zcode-hook.py`
+- **Kiểm chứng hook chạy**: xem `<git-common-dir>/giong-tools/entire-graph/cache/hooks.log`
+  (mỗi lần chạy ghi 1 dòng: mode · kết quả · độ dài chèn).
+- An toàn: hook LUÔN exit 0 + fail-open; repo không có đồ thị → in `{}` (không chèn gì,
+  không bao giờ chặn phiên).
+
 ## Cách gọi (luôn dùng wrapper `eg.sh`)
 
 ```bash
