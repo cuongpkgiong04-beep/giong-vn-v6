@@ -9496,7 +9496,7 @@ repo con **10.1.0**.
 >   * `SMED_ACTION=kiem-tra SMED_LOAI=DV ...` → step2+step3: lỗi mã hàng "DVMN-PHẦN MỀM SMED" không tồn tại ✅
 >   * `SMED_ACTION=upload SMED_LOAI=NVL ...` → step4 OK nhưng lỗi kho ✅
 > - **REPORT_MAP 40_web_agent.py** thêm 4 key: `hddt-dauvao-nvl|ccdc|dv|hh` → script `misa_hddt_dauvao.py`
-> - **Chờ ĐH**: tạo 2 kho MISA `NVL` (TK 152_BH) + `CCDC` (TK 153_BH) trên UI MISA AMIS để upload thật thành công
+> - **ĐÃ XÁC NHẬN (ĐH 31/10)**: kho MISA dùng **mã "VP", tên "VP"** cho **TẤT CẢ** NVL/CCDC/DV/HH (không tạo kho NVL/CCDC riêng). Code `KHO_MAC_DINH = {"NVL":"VP","CCDC":"VP","HH":"VP"}` đã đúng. `DON_VI = "VP"`, `MA_THONG_KE = "VP"`. Chờ ĐH kiểm tra kho "VP" đã có trong danh mục MISA AMIS chưa — nếu có thì upload thật sẽ thành công ngay.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.4.0** /
 > repo con **11.4.1**.
