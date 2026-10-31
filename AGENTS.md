@@ -9666,6 +9666,7 @@ repo con **10.1.0**.
 > `eg.sh query` — nghi 1 ngữ cảnh nào đó gọi nhầm bash WSL → prompt-context có lúc
 > in rác thay vì kết quả. Xử lý cùng lúc với PA chốt.
 
+
 ### GĐ 611 / C.383 (Trợ lý ZCode (máy chủ)): DANH MỤC 1 Vắc Xin — CRUD THẬT + gợi ý mã SMED chặn gõ tay + ten_smed + cố định tiêu đề bảng 7 trang Danh mục (2026-10-31)
 
 > **ĐH duyệt 31/10:** PA-1 (CRUD thật, chỉ Admin, mã SMED chỉ CHỌN — không
