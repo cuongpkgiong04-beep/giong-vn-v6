@@ -9841,3 +9841,58 @@ repo con **10.1.0**.
 
 > **Version:** app tổng **7.5.0** / repo con **11.6.0** — ĐÃ PUSH + LIVE. Registry: GĐ 608
 > (claim `efb2610` · bump `a8e90ff`/`794eb90`).
+
+### GĐ 609 (Trợ lý ZCode (máy chủ)): ĐIỀU TRA & GỠ CHẶN hook ZCode chặn phiên — lỗi "hooks_prompt_block" (2026-10-31)
+
+> **Đại Ca hỏi (31/10 ~10:31):** phiên "Xây dựng phân hệ Upload hóa đơn đầu vào MISA"
+> (sess_60c59c19) không chạy tiếp, hiện chip đỏ
+> `hooks_prompt_block: C:\...\Programs\Pyth...` — hook GĐ 606/607 xử lý thế nào?
+
+> **Nguyên nhân gốc (bằng chứng đủ):** hook khai trong `.zcode/config.json` (tầng
+> workspace) dùng `${ZCODE_PROJECT_DIR}` — ZCode đặt biến này = **thư mục làm việc
+> HIỆN TẠI của phiên, KHÔNG phải gốc repo**. Khi phiên `cd` vào thư mục con (phiên đó
+> làm việc trong `giong-appsppsanhanggent`), đường dẫn hook thành
+> `<thư mục con>/scripts/tools/entire-graph/hook.py` → file không tồn tại →
+> `python.exe: can't open file ...` → **exit code 2** → ZCode theo chuẩn hook coi
+> exit 2 = **BLOCK** → chặn MỌI lệnh Bash (hook push-guard, matcher Bash) + MỌI prompt
+> (hook prompt-context, UserPromptSubmit) ⇒ phiên chết cứng, chip đỏ mỗi lần gửi.
+> - Bằng chứng 1: bản ghi trong DB app (`~/.zcode/cli/db/db.sqlite`, bảng `part`,
+>   phiên sess_60c59c19 10:17:56): `"error":"...python.exe: can't open file
+>   'D:\...\giong-appsppsanhanggent\scripts	ools\entire-graph\hook.py':
+>   [Errno 2]"` — agent trong phiên đó than "mọi lệnh Bash đều biến thành python".
+> - Bằng chứng 2: tái hiện ngay tại phiên điều tra 11:31 — `cd giong-apps` rồi lệnh
+>   sau bị chặn y hệt (cả Bash lẫn Write). Phiên con (subagent) KHÔNG bị chặn.
+> - Tầng USER (`~/.zcode/cli/config.json`) dùng đường dẫn TUYỆT ĐỐI → không bao giờ
+>   lỗi; tầng gây lỗi là tầng WORKSPACE.
+
+> **Đã xử lý (2 bước):**
+> 1. **ĐH tắt 4 hook tầng USER** (Settings → Hooks → User → Disable — `enabled:false`
+>    cả 4, ~12:03) → tính năng GĐ 606/607 tạm NGỦ (kể cả push-guard tự rà trùng lặp
+>    — trước Push làm thủ công `python scripts/agents/ra-trung-lap.py`).
+> 2. **Stub tạm 2 file (GĐ 609, 12:04, untracked KHÔNG commit):**
+>    `giong-apps/scripts/tools/entire-graph/hook.py` +
+>    `giong-apps/apps/banhang/agent/scripts/tools/entire-graph/hook.py` — in `{}` và
+>    exit 0 → hook workspace (vẫn enabled) trỏ vào stub → hết chặn. Verify: Bash chạy
+>    lại OK 12:19; stub EXIT=0; prompt ĐH sau đó KHÔNG còn chip lỗi.
+
+> **⚠️ RỦI RO CÒN:** tầng workspace vẫn `enabled:true` + vẫn dùng `${ZCODE_PROJECT_DIR}`
+> → làm việc ở thư mục con KHÁC (chưa có stub) sẽ bị chặn lại y như cũ. Stub là chữa
+> cháy, KHÔNG phải fix gốc.
+
+> **3 PA chờ ĐH chốt (sửa gốc):**
+> - **PA-A (em đề xuất):** xoá hẳn 4 hook khỏi `.zcode/config.json` (tầng workspace) —
+>   chỉ giữ tầng user (đường dẫn tuyệt đối, an toàn mọi cwd, không cần duyệt). Muốn
+>   bật lại: chạy `python scripts/tools/entire-graph/install-zcode-hook.py` rồi bật ở
+>   Settings → Hooks → User. Nhẹ nhất, 0 rủi ro chặn; đổi lại máy/worktree khác muốn
+>   có tính năng phải cài 1 lần riêng.
+> - **PA-B:** giữ 2 tầng, tầng workspace đổi sang `type:"command"` + shell tự tìm gốc
+>   repo: `python "$(git rev-parse --show-toplevel)/scripts/tools/entire-graph/hook.py"
+>   <mode> || exit 0` — portable + fail-open (cwd lạ/file thiếu vẫn exit 0, KHÔNG BAO
+>   GIỜ chặn). Cần verify ZCode chạy shell nào (cmd/bash) cho hook `command` trước khi áp.
+> - **PA-C:** giữ nguyên + tạo stub ở từng thư mục con (phiên khác từng làm 11:26 rồi
+>   bị xoá) — KHÔNG khuyến nghị: vô số thư mục con, bẩn repo, dễ sót chỗ.
+
+> **Phát hiện phụ (kiểm chứng sau):** `shutil.which('bash')` = Git Bash ✔ (12:19);
+> nhưng 1 lần prompt bị chèn text lỗi WSL ("no installed distributions") do
+> `eg.sh query` — nghi 1 ngữ cảnh nào đó gọi nhầm bash WSL → prompt-context có lúc
+> in rác thay vì kết quả. Xử lý cùng lúc với PA chốt.
