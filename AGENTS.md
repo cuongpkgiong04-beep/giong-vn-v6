@@ -10068,6 +10068,16 @@ repo con **10.1.0**.
 > **SỰ CỐ ĐÃ SỬA (`8121be1`):** commit `43a1bf4` vô tình nuốt 10 dòng bài phiên
 > khác trong AGENTS.md repo con (index bẩn lọt vào commit — repo con không có
 > cổng shared-doc) → đã khôi phục nguyên văn từ `4ce9771`.
+> **SỰ CỐ TỐI 01/11 (Task_08 needsData — ĐH báo "tải OK mà không ra báo cáo") — ĐÃ
+> CHẨN ĐOÁN ĐỦ BẰNG CHỨNG, CHỜ ĐH CHỐT PA SỬA GỐC:** Task_08 17:05 tự tải 3 nguồn
+> OK nhưng job dtthc/xuatkho rơi vào **MÁY LAN** (.34/lan-1 — phân tải GĐ 621) →
+> file trên .34, **auto-ETL máy LAN chu kỳ 60'** chưa nạp → staging
+> `stg_3DTTHC=0` + `stg_6BKX=0` (nguồn E máy chủ tải: `stg_11BKCT=838`) → báo cáo
+> needsData. Phụ đã sửa ngay `85cf671`: log spam 'đã spawn Task_08' mỗi 30s
+> (COUNT TRƯỚC — chỉ log, không tạo trùng). **3 PA:** PA-1 máy LAN ETL NGAY sau
+> job (khóa chống trùng) · PA-2 Task_08 tải bằng MÁY CHỦ (ghim core) · PA-3 chờ
+> staging có dữ liệu mới chạy. Automation một lần 19:12 kiểm + tự chạy lại báo
+> cáo khi đủ; ĐH có thể bấm "Chạy ngay" Task_08 sau khi ETL .34 nạp.
 > **SÓT PHIÊN KHÁC (không tự sửa):** `job-labels.test.ts` fail — thiếu nhãn
 > `dc-xuat-kho` + `dc-hoadon-banhang` (đuôi sót GĐ 588/C.375) — npm test đỏ;
 > đề nghị phiên GĐ 588 bổ sung 2 dòng.
