@@ -10063,3 +10063,47 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 7.5.0 /
 > repo con 11.7.0.
+
+### GĐ 627 (Trợ lý ZCode (máy chủ)): PA Push 01/11 theo lệnh ĐH + tổng hợp: ETL máy .34 (ODBC Driver 18 treo → đổi driver cũ) + chạy bù QO đủ 19/19 (2026-11-01)
+
+> **Lệnh của ĐH (01/11 sáng):** *"Anh đã đổi mật khẩu QO theo mật khẩu chung. Em kiểm tra
+> lại và làm tiếp các việc còn dang dở. Điều tra nguyên nhân ETL nạp trên máy .34. Làm
+> xong thì Push hết cho anh"* — Push đợt này là **ngoại lệ theo yêu cầu ĐH**, không phải
+> nguyên tắc chung.
+
+> **1. QO sống — 19/19 tài khoản trung tâm hoạt động:** đăng nhập HTTP thật
+> `tcgiongts_quocoai_pkcuong` → TRUNG TÂM TIÊM CHỦNG GIÓNG QUỐC OAI (cosoId 10995) ✓
+> (trước đó SMED báo "Tài khoản đăng nhập không đúng").
+
+> **2. Chạy bù dữ liệu QO (7 job):** tkgvvxdt 30+31 · xuatkho 31 · hentiem 31 · dattruoc
+> 30+31 → **done 19/19 mỗi job** (xuatkho 31: giangkt · còn lại thanh-pc);
+> **stg_6BKX QO: 30/10 = 20 dòng · 31/10 = 56 dòng** (trước đó 31/10 = 0) — xuất kho
+> 31/10 giờ đã có QO + 3 phiếu PH-. Riêng **xuatkho 30/10 lỗi "0/19 file" tại .27
+> (lan-1)** → đã kích chạy lại.
+
+> **3. ETL máy .34 — NGUYÊN NHÂN + KHẮC PHỤC (điều tra theo yêu cầu ĐH):**
+> worker báo `ETL sau download: exit=1` sau **16 giây** — khớp chính xác
+> `pyodbc.connect(CONN_STR, timeout=15)` (dòng đầu `main()` etl_import.py); **lý do trắng
+> trong log vì code cũ chỉ in STDOUT còn traceback Python nằm ở STDERR**. Kiểm chứng từ
+> .34: TCP 1433 MỞ · **.NET SqlClient Open OK** (cùng server/tài khoản) · **ODBC Driver 18
+> CÓ SẴN** nhưng **pyodbc (Driver 18) TREO khi kết nối** (thử 4 biến thể — không cái nào
+> trả về trong 25s) ⇒ **gốc = ODBC Driver 18 trên .34 treo handshake**, không phải mạng/
+> SQL/env. **Đã sửa (data/config, có backup):** đổi `ETL_SQL_CONN`/`AGENT_SQL_CONN` của .34
+> sang **driver cũ `{SQL Server}`** (`worker.env` + `worker.env.bat`, backup `.bak-gd622`)
+> → **ETL chạy OK, nạp 72 file 10GDTVX vào `import_log`** ✓. Fix kèm (commit `7175d4b`):
+> 40_web_agent in cả **stderr** khi ETL lỗi — lần sau lộ lý do ngay, không phải mò tay.
+
+> **4. PA PUSH (lệnh ĐH — ngoại lệ):** rà trùng lặp: nhánh phụ `agent-cli`/`pipeline-work`
+> RỖNG cả 2 repo; commit chưa push app tổng 19 (docs/registry + code em) · repo con 15
+> (PA-1 100% + fix log, **commit tách hunk theo phiên**); **KHÔNG đẩy bài dở phiên khác**
+> (`task_runner.py` · `report-result-table.tsx` · `sql-data-module.tsx` · `tasks-page.tsx`
+> · `bc-cuoi-ngay.tsx` — vẫn nguyên trong working tree). Bump theo quy tắc: app tổng
+> **7.5.0 → 7.6.0** (minor) · repo con **11.6.2 → 11.7.0** (minor) — checklist GĐ 138 ✓.
+> Push: app tổng `9c0f258..a5d0d82` · repo con `7688886..236f34c`.
+
+> **5. Verify production (test thật, không tin chữ Ready):** app tổng **7.6.0** · app con
+> **11.7.0** (curl --compressed) · **login thật HTTP 200 + có user** · `get-session` 200 ✓ ·
+> **SSO sang app con: 302 → `https://giong-banhang.vercel.app/` + Set-Cookie `bh_session`** ✓
+> — không có lỗi "sai mật khẩu sau push".
+
+> **Version:** app tổng **7.6.0** / repo con **11.7.0** — ĐÃ PUSH + ĐÃ LIVE.
