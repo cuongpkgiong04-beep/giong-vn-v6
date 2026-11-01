@@ -10054,9 +10054,20 @@ repo con **10.1.0**.
 > job thật kỳ 31/10 khớp từng đồng** (524 mũi · 418.815.000); 2 bảng DB đã
 > tạo; seed Task_08 có trong DB; **agent đã restart 09:48** (nạp code mới).
 
-> **⚠️ TỒN ĐỌNG:** Chrome CDP máy chủ chưa đăng nhập Zalo Web (probe
-> chat.zalo.me → id.zalo.me) — cần ĐH đăng nhập zalo.me 1 lần trong Chrome CDP
-> để nút Gửi ZL chạy thật; chưa đăng nhập thì job báo lỗi rõ hướng dẫn.
+> **E2E THẬT 01/11 + 2 FIX (`43a1bf4`, test 15/15):** chạy trọn chuỗi trên local
+> build+preview 8101 + SSO e003: ghi chú gõ ô Long Biên → `bc_dsxk_notes` có
+> dòng thật, F5 vẫn còn ✓ · "Lưu BC" → badge "Đã lưu 10:39" + `bc_dsxk_saved`
+> có dòng ✓ · "Gửi ZL" → job `bc-zalo` được agent máy chủ nhặt, VẼ ẢNH THẬT
+> `OUTPUT/11.BCZalo/2026-10-31/BC_DSXK_2026-10-31.png` (247KB), kết nối Chrome
+> CDP OK → dừng ĐÚNG ở "Chưa đăng nhập Zalo Web" ✓. 2 bug lộ qua chạy thật đã
+> fix: Playwright SYNC API trong asyncio loop (bọc thread riêng) + kỳ
+> 'YYYY/MM/DD' từ cột DATE SQL Server (`_fmt_period_iso` từng đảo nhầm thư mục
+> ảnh thành 31-10-2026). Dữ liệu test đã dọn sạch (notes/saved = 0).
+> **⚠️ CHỜ ĐH:** đăng nhập Zalo Web (zalo.me) 1 lần trong Chrome CDP 9222 máy
+> chủ — sau đó nút Gửi ZL gửi ảnh thật; chưa đăng nhập → job báo lỗi rõ hướng dẫn.
+> **SỰ CỐ ĐÃ SỬA (`8121be1`):** commit `43a1bf4` vô tình nuốt 10 dòng bài phiên
+> khác trong AGENTS.md repo con (index bẩn lọt vào commit — repo con không có
+> cổng shared-doc) → đã khôi phục nguyên văn từ `4ce9771`.
 > **SÓT PHIÊN KHÁC (không tự sửa):** `job-labels.test.ts` fail — thiếu nhãn
 > `dc-xuat-kho` + `dc-hoadon-banhang` (đuôi sót GĐ 588/C.375) — npm test đỏ;
 > đề nghị phiên GĐ 588 bổ sung 2 dòng.
