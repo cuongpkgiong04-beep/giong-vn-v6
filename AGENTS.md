@@ -10069,7 +10069,7 @@ repo con **10.1.0**.
 > khác trong AGENTS.md repo con (index bẩn lọt vào commit — repo con không có
 > cổng shared-doc) → đã khôi phục nguyên văn từ `4ce9771`.
 > **SỰ CỐ TỐI 01/11 (Task_08 needsData — ĐH báo "tải OK mà không ra báo cáo") — ĐÃ
-> CHẨN ĐOÁN ĐỦ BẰNG CHỨNG, CHỜ ĐH CHỐT PA SỬA GỐC:** Task_08 17:05 tự tải 3 nguồn
+> SỬA XONG (PA-1 ĐH chốt) — GỐC RỄ 2 TẦNG, ĐÃ CHẠY THẬT THÀNH CÔNG:** Task_08 17:05 tự tải 3 nguồn
 > OK nhưng job dtthc/xuatkho rơi vào **MÁY LAN** (.34/lan-1 — phân tải GĐ 621) →
 > file trên .34, **auto-ETL máy LAN chu kỳ 60'** chưa nạp → staging
 > `stg_3DTTHC=0` + `stg_6BKX=0` (nguồn E máy chủ tải: `stg_11BKCT=838`) → báo cáo
