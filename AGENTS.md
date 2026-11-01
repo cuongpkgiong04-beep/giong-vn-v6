@@ -10178,3 +10178,25 @@ repo con **10.1.0**.
 > - Tổng cộng toàn 19 trung tâm khớp Báo cáo bán hàng.
 >
 > **Version:** KHÔNG bump — chờ lệnh Push theo quy tắc ĐA AGENT. App tổng 7.6.0 / repo con 11.7.0.
+
+### GĐ 631 / C.395 (Trợ lý ZCode máy chủ): Hoàn thiện PA-1 module Zalo — crawl sync agent + tabs tin nhắn/file + AI phân tích nhãn
+
+> **Tiếp GĐ 629:** đã có migration 0031, UI placeholder, API cơ bản. Anh duyệt chạy zalo_sync.py trên máy chủ, thêm tabs, nâng cấp AI.
+
+> **Đã làm:**
+> - **Agent `zalo_sync.py`** (giong-apps/apps/banhang/agent/): crawl Zalo Web CDP 9222, 5 phút/lần.
+>   - `sync_groups()`: discover groups → upsert `zalo_groups` (MERGE SQL Server).
+>   - `sync_messages()`: crawl tin nhắn mới từ `last_sync_at` từng nhóm bật `is_sync_enabled` → upsert `zalo_messages`, `zalo_files`, `zalo_price_signals`.
+>   - Regex từ khóa giá → ghi tín hiệu giá.
+> - **UI `/zalo`**: 3 tabs (Quản trị nhóm / Tin nhắn / File đính kèm).
+>   - Tab 1: bảng nhóm với Switch, Select nhãn, nút "Gợi ý" (tên) + "Phân tích" (AI 20 tin mẫu).
+>   - Tab 2: tin nhắn phân trang, tìm kiếm, xuất JSON.
+>   - Tab 3: file đính kèm phân trang, xuất JSON, link mở.
+> - **API `src/routes/api/zalo.ts`** thêm: `loadZaloMessages`, `loadZaloFiles`, `analyzeGroupLabel` (AI phân tích tên + 20 tin mẫu).
+> - **Components mới**: `Tabs.tsx`, `Switch.tsx`, `Select.tsx`.
+> - **QueryClientProvider** trong `__root.tsx` fix lỗi SSR "No QueryClient set".
+
+> **Verify:** Build local 7.77s, migration up-to-date. GiongDB: 4 bảng Zalo tồn tại (0 dòng — chờ agent crawl).
+> Agent skeleton sẵn sàng chạy trên máy chủ (Chrome CDP 9222 đã đăng nhập Zalo Web).
+
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng 7.7.0 / repo con 11.7.0.
