@@ -10118,3 +10118,18 @@ repo con **10.1.0**.
 > — không có lỗi "sai mật khẩu sau push".
 
 > **Version:** app tổng **7.6.0** / repo con **11.7.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 629 / C.393 (Trợ lý ZCode máy chủ): PA-1 khởi tạo module Zalo quản trị nhóm — migration 0031 + UI + API
+
+> **Yêu cầu ĐH 01/11:** xây dựng phần "Zalo" trong phân hệ Dự án app tổng — lấy dữ liệu từ Zalo máy chủ, phân loại nhóm, lưu DB tức thời, dùng cho báo cáo/AI/trigger giá.
+> **Chốt PA-1:** Zalo Web CDP 9222, crawl 5 phút/lần, Hybrid DB, AI gợi ý nhãn + duyệt thủ công.
+
+> **Đã làm:**
+> - Migration `0031_zalo_sync.sql`: `zalo_groups`, `zalo_messages`, `zalo_files`, `zalo_price_signals` — Hybrid chuẩn hoá + raw_json, index sync/label.
+> - UI `src/routes/zalo.tsx`: trang quản trị nhóm với bảng TanStack, toggle `is_sync_enabled`, Select nhãn mục đích, nút Gợi ý AI, hiển thị last_sync.
+> - API server fn `src/routes/api/zalo.ts`: `loadZaloGroups`, `updateZaloGroup`, `suggestLabel` — placeholder AI gợi ý theo tên nhóm.
+> - Agent skeleton `giong-apps/apps/banhang/agent/zalo_sync.py` — chuẩn bị crawl Zalo Web CDP, discover groups, upsert DB, trigger giá.
+
+> **Verify:** code compile, migration tạo được, UI render không lỗi type, API route đăng ký đúng.
+
+> **Version:** KHÔNG bump — chờ lệnh Push theo quy tắc ĐA AGENT. App tổng 7.6.0 / repo con 11.7.0.
