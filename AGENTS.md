@@ -10063,8 +10063,18 @@ repo con **10.1.0**.
 > fix: Playwright SYNC API trong asyncio loop (bọc thread riêng) + kỳ
 > 'YYYY/MM/DD' từ cột DATE SQL Server (`_fmt_period_iso` từng đảo nhầm thư mục
 > ảnh thành 31-10-2026). Dữ liệu test đã dọn sạch (notes/saved = 0).
-> **⚠️ CHỜ ĐH:** đăng nhập Zalo Web (zalo.me) 1 lần trong Chrome CDP 9222 máy
-> chủ — sau đó nút Gửi ZL gửi ảnh thật; chưa đăng nhập → job báo lỗi rõ hướng dẫn.
+> **✅ GỬI ZL ĐÃ CHẠY THẬT (02/11 00:16 — ĐH yêu cầu kiểm + tự động đăng nhập):** tìm
+> ra Chrome CDP 9222 chạy ở SESSION 0 (không có màn hình) nên cửa sổ QR không bao giờ
+> hiện được cho ĐH → đã kill + mở lại qua task `GIONG_ChromeCDP` (Interactive → SESSION 1),
+> cửa sổ hiện được, phiên Zalo/MISA giữ nguyên. Zalo Web mới phải dùng: ô tìm kiếm
+> `#contact-search` (input sinh sau khi click), gửi ảnh bằng **PASTE** vào `.rich-input`
+> (không có input[type=file]), nút gửi `.chat-box-input-button.btn-tertiary-primary` —
+> verify thật: job bc-zalo done 00:16:55, ảnh `BC_DSXK_2026-11-01.png` + caption vào
+> hội thoại Zalo (My Documents). Kèm `zalo-login.py` (1 lệnh đăng nhập) + job tự chờ
+> ĐH quét QR 4 phút rồi tự tiếp tục gửi khi phiên hết hạn.
+> **⚠️ TỒN ĐỌNG:** agent máy chủ bị restart NGOÀI Ý MUỐN 2 lần (23:54:58 + 23:55:24 —
+> SCM id=7000 "parameter is incorrect" rồi tự chạy lại) → Task_02 kẹt running 2 lần
+> (đã đưa pending chạy tiếp; đêm nay chạy lần 2/3) — CHƯA rõ thủ phạm, cần theo dõi.
 > **SỰ CỐ ĐÃ SỬA (`8121be1`):** commit `43a1bf4` vô tình nuốt 10 dòng bài phiên
 > khác trong AGENTS.md repo con (index bẩn lọt vào commit — repo con không có
 > cổng shared-doc) → đã khôi phục nguyên văn từ `4ce9771`.
