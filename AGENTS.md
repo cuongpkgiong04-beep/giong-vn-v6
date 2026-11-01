@@ -10210,3 +10210,25 @@ repo con **10.1.0**.
 > Agent skeleton sẵn sàng chạy trên máy chủ (Chrome CDP 9222 đã đăng nhập Zalo Web).
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng 7.7.0 / repo con 11.7.0.
+
+### GĐ 632 / C.396 (Trợ lý ZCode (máy chủ)): Task_08 tự động gửi Zalo sau khi báo cáo thành công + PUSH đợt 02/11 (2026-11-02)
+
+> **ĐH yêu cầu (02/11):** đặt nhiệm vụ tự gửi Zalo tới "Document của anh" sau khi
+> Task_08 thành công (thử trước khi chốt người nhận chính thức) + Push luôn.
+> **Đã làm (code `6dcc9d0`):** báo cáo `done` → tự tạo job `bc-zalo` (ảnh + caption),
+> chờ tối đa 4' ghi kết quả vào Nhiệm vụ; đích = `kv_settings k='bcn_zalo_target'`
+> (đổi người nhận = 1 dòng DB, không cần sửa code/restart) → fallback
+> `BCN_ZALO_TARGET = "My Documents"`; lỗi gửi không làm task lỗi.
+> **Verify thật 01:29:** `_load_zalo_target()` → 'My Documents' · `_send_bcn_zalo` → OK
+> (job `19904978` done 01:29:29, log agent "✅ đã gửi Zalo tới 'My Documents'"); bản
+> task test kỳ 01/11 để chạy trọn luồng orchestration; test cũ 46/46 + 28/28 PASS.
+
+> **PUSH (lệnh ĐH):** rà trùng lặp — nhánh phụ RỖNG cả 2 repo; bài dở phiên khác
+> (`task_runner.py` guard GĐ 629) KHÔNG đụng (tách hunk: revert tạm → commit phần
+> mình → apply phục hồi). Bump repo con **11.7.0 → 11.8.0** (minor); app tổng giữ
+> **7.7.0** (docs-only). Push: repo con `068381e..f85bbdb` · app tổng
+> `b51f415..<sau>`. **Verify production: 11.8.0 / 7.7.0 · login ✓ · session ✓ ·
+> SSO app con 302 + cookie ✓** (đúng quy trình GĐ 470).
+
+> **Đổi người nhận chính thức:** `INSERT/UPDATE dbo.kv_settings k='bcn_zalo_target'`
+> = tên hội thoại Zalo — Task_08 đọc mỗi lần chạy.
