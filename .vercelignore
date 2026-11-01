@@ -1,0 +1,40 @@
+# Exclude giong-apps monorepo subdirectory (separate repo, not part of this build)
+giong-apps/
+giong-apps-cli/
+
+# Exclude Chrome CDP profile and runtime files
+**/chrome-cdp/
+
+# Exclude agent secrets and runtime
+**/agent/.secrets/
+
+# Exclude scripts cache and temp
+scripts/__pycache__/
+scripts/tools/entire-graph/__pycache__/
+scripts/agents/__pycache__/
+
+# Exclude test files
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Exclude temp and cache
+*.log
+*.tmp
+.tmp/
+_temp/
+tmp/
+node_modules/
+
+# Exclude untracked attachments
+attachments/
+
+# Exclude screenshots
+screenshots/
+
+# Exclude other tool outputs
+*.whl
+*.json.pa609-backup-*.json
+.zcodeignore
+.zcode/
