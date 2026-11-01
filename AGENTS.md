@@ -10069,7 +10069,13 @@ repo con **10.1.0**.
 > khác trong AGENTS.md repo con (index bẩn lọt vào commit — repo con không có
 > cổng shared-doc) → đã khôi phục nguyên văn từ `4ce9771`.
 > **SỰ CỐ TỐI 01/11 (Task_08 needsData — ĐH báo "tải OK mà không ra báo cáo") — ĐÃ
-> SỬA XONG (PA-1 ĐH chốt) — GỐC RỄ 2 TẦNG, ĐÃ CHẠY THẬT THÀNH CÔNG:** Task_08 17:05 tự tải 3 nguồn
+> SỬA XONG (PA-1 ĐH chốt) — GỐC RỄ 2 TẦNG, ĐÃ CHẠY THẬT THÀNH CÔNG:** (a) worker
+> máy LAN ETL NGAY sau job tải + khóa `etl_lock`; (b) **etl_import.py cả 3 máy LAN là
+> bản CŨ** (chuỗi kết nối CỨNG `\SQLEXPRESS` local — chưa từng đọc ETL_SQL_CONN)
+> + **.34/.245 thiếu ODBC Driver 18** → đã deploy bản chuẩn + cài driver 18 + đổi env,
+> **nạp bù .34: 429 file / 5.528 dòng** (dữ liệu nhiều ngày trước bị kẹt). **Báo cáo
+> 01/11 ĐÃ RA** (job A0B60C0F: 842 mũi bán ra · 600.230.000 doanh thu · 839 xuất kho ·
+> 482.062.337 giá vốn · chênh 3 mũi) — xem trang BÁO CÁO KẾ TOÁN · 1. Task_08 17:05 tự tải 3 nguồn
 > OK nhưng job dtthc/xuatkho rơi vào **MÁY LAN** (.34/lan-1 — phân tải GĐ 621) →
 > file trên .34, **auto-ETL máy LAN chu kỳ 60'** chưa nạp → staging
 > `stg_3DTTHC=0` + `stg_6BKX=0` (nguồn E máy chủ tải: `stg_11BKCT=838`) → báo cáo
