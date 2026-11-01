@@ -4,6 +4,8 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { AppShell } from "@/components/app-shell";
 import { registerServiceWorker } from "@/lib/pwa/register-sw";
 import appCss from "../styles.css?url";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 
 // Register Service Worker for PWA offline support
 if (typeof window !== "undefined") {
@@ -11,6 +13,18 @@ if (typeof window !== "undefined") {
 }
 
 const APP_NAME = "GIONG VN";
+
+function getQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -25,8 +39,6 @@ export const Route = createRootRoute({
       },
     ],
     links: [
-      // GĐ 153: favicon + PWA icon = logo Gióng (tách hình tròn từ logo gốc).
-      // GĐ 155: icon TRÒN full-khung + cache-bust ?v=3 — ép trình duyệt bỏ bản cache cũ.
       { rel: "icon", type: "image/png", href: "/icons/icon-192.png?v=3" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.json?v=3" },
@@ -46,6 +58,8 @@ export const Route = createRootRoute({
 });
 
 function Root() {
+  const [queryClient] = useState(() => getQueryClient());
+
   return (
     <html lang="vi" className="antialiased" suppressHydrationWarning>
       <head suppressHydrationWarning>
@@ -53,11 +67,13 @@ function Root() {
       </head>
       <body className="bg-bg text-ink" suppressHydrationWarning>
         <PreviewHostBridge />
-        <AuthProvider>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          </AuthProvider>
+        </QueryClientProvider>
         <Scripts />
       </body>
     </html>
