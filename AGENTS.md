@@ -9945,3 +9945,78 @@ repo con **10.1.0**.
 > 1 bản trước khi push.
 
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.5.0** / repo con **11.6.2**.
+
+### GĐ 624 / C.391 (Trợ lý ZCode (máy chủ)): PA-1 + PA-2 khắc phục
+
+> **⛔ ĐỔI SỐ 2 LẦN (quy tắc GĐ 285):** claim tay GĐ 619 lúc bash chết không kịp
+> commit → phiên khác dùng 619 (C.387) trước → em lấy **623** qua claim.py
+> (`3610b9e`); chạy tiếp claim.py --cx thì phiên khác vừa claim 623 → em nhận
+> **624 / C.391** (`4ef8667`). Dòng registry 623 đánh ⛔ đổi số. Nội dung giữ nguyên.
+ "BKX lúc 20 file lúc 39 file" — watchdog hết tạo retry oan + lượt retry chỉ đếm file mới + hiển thị tách file LOG (2026-10-31)
+
+> **ĐH hỏi (31/10 21:44, ảnh /m/kho-xuat):** Bảng kê xuất kho 31/10 — lượt 19:33
+> báo 20 file, lượt 20:18 báo 39 file, trong khi 19 trung tâm → "Lỗi ở đâu rồi?"
+> **ĐH chốt (22:xx):** PA-1 + PA-2 + chỉ thị **"19 trung tâm thì chỉ có 19 file
+> được tạo ra — không thể là con số khác ngoài 19"**.
+
+> **Chẩn đoán (bằng chứng GiongDB + log worker .27 khớp từng giây):**
+> 1. **Chuẩn 1 lượt BKX = 19 file Excel** — lượt 19:33 chạy thật 20:49:17 →
+>    20:52:23: "dọn folder (19 file cũ vào _backup) → tool 5_smed_XUATKHO.py 19
+>    lượt → ✅ GĐ 557 đủ file 19/19 → Job xong 20 file Excel mới". Số 20 =
+>    **19 Excel + 1 file LOG** (GĐ 536 đính kèm job log vào cột files) — web
+>    đếm `j.files.length` (smed-pull-module.tsx:625) gồm cả log → hiện 20.
+> 2. **Lượt 20:18 là lượt RETRY OAN**: watchdog `TASK_JOB_STALE_MIN = 45'`
+>    (task_runner.py) đo theo TỔNG thời gian task chờ (19:33:47 + 45' =
+>    20:18:47 — khớp job 20:18:51 tạo, `retryPartial=1`) — trong khi job 19:33
+>    KHÔNG kẹt, chỉ đang chờ hàng đợi máy .27 (máy bận chạy job Lịch hẹn tiêm
+>    30/10 lỗi 3 vòng bù đến 20:48:57). Lượt retry xếp sau job gốc: chạy
+>    20:52:50 → 20:55:56, nhánh retryPartial KHÔNG dọn folder + tổng kết lấy
+>    TOÀN BỘ thư mục (40_web_agent.py `xl_from_dir`) → 19 cũ + 19 mới = 38 xl
+>    + 1 log = **39 file**. Dữ liệu KHÔNG sai — ETL nạp đè theo ngày (run
+>    #7332: 38 file, 1.544 dòng = 2 lượt giống nhau, idempotent).
+> 3. **19 file gồm 18 TT + TIÊN DU 2 bản**: tool 5_smed_XUATKHO.py tải TIÊN DU
+>    ở CẢ 2 tài khoản (CENTERS_1 domain tcgiongts dòng 103 + CENTERS_2 domain
+>    tcgiong dòng 129 — cùng tên hiển thị). GĐ 343/C.186 đã chốt 2 cổng
+>    tcgiong + tcgiongts BỔ SUNG nhau → **KHÔNG xóa file nào** (chờ ĐH quyết
+>    nếu muốn khử 1 bản — cần probe đối chiếu dữ liệu 2 domain trước).
+
+> **Đã làm (3 file — code xong, XEM TRẠNG THÁI VERIFY bên dưới):**
+> 1. **PA-1 — `task_runner.py`:** `_wait_job_done` cắt theo NHỊP SỐNG job
+>    (`_job_heartbeat` mới — query `updated_at` + `done_centers` từ GiondDB qua
+>    /query nội bộ): job đã chạy thật (done_centers>0) ngập lặng > 45' → cắt
+>    (GĐ 490) và CHO retry; job chưa chạy thật (chờ hàng đợi, done_centers=0)
+>    → chờ tới hằng mới `TASK_JOB_QUEUE_MAX_MIN = 180'` và khi cắt trả
+>    **`QUEUE_TIMEOUT:`** — caller KHÔNG tạo lượt thêm (job gốc vẫn sống trong
+>    hàng đợi, tự xong + tự ETL). Không có đường DB → fallback GĐ 490 cũ.
+>    Chặn QUEUE_TIMEOUT ở TẤT CẢ 8 caller (download Task_01/02 + 3 MISA +
+>    Task_03 + giai đoạn 2 backfill) — bước đánh status "BỎ CHỜ".
+> 2. **PA-2 — `40_web_agent.py`:** `run_smed_task_with_fill` — lượt
+>    `retryPartial` tổng kết CHỈ file MỚI của các lượt chạy (`xl_from_pass` —
+>    mtime ≥ run_started từng lượt) thay vì toàn thư mục; so ĐỦ/THIẾT theo
+>    thư mục (check_n = n_dir khi retry); `info.total_in_dir` mới. Log "Retry
+>    từng phần xong" + "Job xong — N file Excel mới" đếm CHỈ file Excel (tách
+>    file LOG). Ca 31/10 nếu có retry sẽ báo 19/19 + 19 file mới.
+> 3. **Hiển thị web — `smed-pull-module.tsx`:** biến `nXl` mới = `j.files`
+>    lọc bỏ file `.log`; 5 chỗ đếm dùng `nXl` (badge thiếu file · dòng cảnh
+>    báo · "X file Excel đã lưu") → lượt thường hiển thị **19/19 file Excel**
+>    đúng chỉ thị ĐH.
+
+> **⚠️ TRẠNG THÁI PHIÊN (minh bạch với ĐH):** giữa phiên, tool Bash của ZCode
+> chết cứng (`spawn C:\Program Files\Git\bin\bash.exe ENOENT` — bash.exe biến
+> mất khỏi máy chủ) → **KHÔNG chạy được py_compile/tsc/unit + KHÔNG commit
+> được** (claim GĐ 619 đã ghi dòng 🔒 vào AGENT_REGISTRY.md working tree, entry
+> này ghi vào AGENTS.md working tree — khi bash sống: chạy verify rồi commit
+> qua cổng shared-doc `--entry "GĐ 619" --registry "GĐ 619"`). Code đã tự soát
+> bằng mắt 2 lượt (indentation + biến scope). Phiên sau: (1) py_compile
+> task_runner.py + 40_web_agent.py; (2) tsc repo con; (3) npm test; (4) commit;
+> (5) KHÔNG bump (chờ lệnh Push).
+
+> **Tiêu chí kiểm chứng (sau Push + restart agent + Task-runner):** (1) trang
+> /m/kho-xuat — lượt tải thường 19 TT hiển thị **19/19 file Excel** (hết 20);
+> (2) job chờ hàng đợi lâu (máy bận) KHÔNG còn lượt retry oan — không còn số
+> 39; (3) nếu có retry hợp lệ (job lỗi thiếu file) → báo số file MỚI của lượt
+> + thư mục đủ; (4) job kẹt thật (api_server chết) vẫn được cắt 45' + retry.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT).
+
+---
