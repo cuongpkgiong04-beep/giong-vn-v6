@@ -10025,3 +10025,41 @@ repo con **10.1.0**.
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT).
 
 ---
+
+### GĐ 625 / C.392 (Trợ lý ZCode (máy chủ)): Báo cáo cuối ngày Đối soát HĐ-XK — cột "Ghi chú" lưu theo kỳ + nút Lưu BC + Gửi ZL (máy chủ) + Task_08 17:05 (2026-11-01)
+
+> **Yêu cầu ĐH (01/11 sáng):** báo cáo /m/bc-cuoi-ngay — (1) cột "Ghi chú" bút
+> chì gõ tay cuối bảng + thu hẹp cột Số lượng; (2) 2 nút cạnh "Tải Excel":
+> "Lưu BC" (xem lại từ lịch sử không mất ghi chú) + "Gửi ZL" (ảnh toàn diện
+> qua Zalo); (3) Task riêng 17:05/ngày hoàn thiện báo cáo này.
+> **ĐH chốt 4 PA:** ghi chú BÁM THEO KỲ (bảng `bc_dsxk_notes` GiondDB) ·
+> Gửi ZL từ **máy chủ** (Zalo của anh ở máy chủ) · Task 17:05 tự đủ nguồn ·
+> chỉ áp RIÊNG báo cáo này (opt-in `noteColumn` — mọi báo cáo khác không đổi).
+
+> **Đã làm:** repo con code `77ae8c8` + entry `41fab21` (chi tiết đầy đủ ở entry
+> C.392 AGENTS.md repo con): report-result-table cột Ghi chú bút chì (key =
+> trung tâm, cột số ≤118px / Ghi chú 280px, Excel kèm ghi chú) · DB
+> `bc_dsxk_notes` + `bc_dsxk_saved` · server fn `-bc-dsxk.ts` (load/save note
+> từng ô + chốt bản + job 'bc-zalo' + poll status) · SqlDataModule passthrough
+> + badge Đã lưu + dialog Gửi ZL · agent `gd625_zalo.py` (Pillow vẽ PNG toàn
+> bảng từ result + notes → Zalo Web Chrome CDP 9222; nhánh `bc-zalo` trong
+> process_job; máy LAN nhóm 'smed' không claim) · task_runner `TASK_BCN_TIME
+> 17:05` + `_spawn_bcn_task`/`_maybe_spawn_bcn`/`_run_bcn_only` (TỰ ĐỦ NGUỒN:
+> thiếu → treo download dtthc/xuatkho/bkct-hdgtgt → chạy báo cáo) + seed
+> `Task_08 · Báo cáo cuối ngày` (đã INSERT DB + seedDefaultTasks + nhãn/mô tả
+> tasks-page).
+
+> **Verify:** tsc 0 · 11/11 unit web (chạy riêng) · gd625_zalo.test **12/12** ·
+> py_compile 3 file · task_runner_quick 46/46 · misa_order 28/28 · **ảnh vẽ từ
+> job thật kỳ 31/10 khớp từng đồng** (524 mũi · 418.815.000); 2 bảng DB đã
+> tạo; seed Task_08 có trong DB; **agent đã restart 09:48** (nạp code mới).
+
+> **⚠️ TỒN ĐỌNG:** Chrome CDP máy chủ chưa đăng nhập Zalo Web (probe
+> chat.zalo.me → id.zalo.me) — cần ĐH đăng nhập zalo.me 1 lần trong Chrome CDP
+> để nút Gửi ZL chạy thật; chưa đăng nhập thì job báo lỗi rõ hướng dẫn.
+> **SÓT PHIÊN KHÁC (không tự sửa):** `job-labels.test.ts` fail — thiếu nhãn
+> `dc-xuat-kho` + `dc-hoadon-banhang` (đuôi sót GĐ 588/C.375) — npm test đỏ;
+> đề nghị phiên GĐ 588 bổ sung 2 dòng.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 7.5.0 /
+> repo con 11.7.0.
