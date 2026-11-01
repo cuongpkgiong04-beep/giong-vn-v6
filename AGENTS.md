@@ -10149,3 +10149,32 @@ repo con **10.1.0**.
 > **Verify:** code compile, migration tạo được, UI render không lỗi type, API route đăng ký đúng.
 
 > **Version:** KHÔNG bump — chờ lệnh Push theo quy tắc ĐA AGENT. App tổng 7.6.0 / repo con 11.7.0.
+
+### GĐ 630 / C.394 (Trợ lý ZCode (máy chủ)): PA-1 thống nhất nguồn dữ liệu Báo cáo đối soát cuối ngày — đổi cột "Tổng số mũi tiêm bán ra (SMED)" từ stg_3DTTHC sang stg_4BKCCN (2026-11-01)
+
+> **Vấn đề Đại ca báo (01/11):** Trung tâm LB ngày 01/11/2026 — Báo cáo bán hàng hiển thị 85 mũi, nhưng Báo cáo đối soát cuối ngày (BKCCN) cột "Tổng số mũi tiêm bán ra (SMED)" hiển thị 86 mũi. Chênh 1 mũi.
+>
+> **Nguyên nhân (tra cứu đồ thị code + truy vấn GiongDB):**
+> - **Báo cáo bán hàng** (`/m/bc-banhang`, queryKey `dt-by-date`) dùng nguồn **stg_4BKCCN** (Tool 6: Bảng kê chung cuối ngày — dữ liệu **THEO NGÀY**).
+> - **Báo cáo đối soát cuối ngày** (`/m/bc-cuoi-ngay`, queryKey `dsxk-comparison`) dùng nguồn **stg_3DTTHC** (Tool 3: Thống kê DT tổng hợp Chuỗi — file **GỘP LŨY TÍCH** từ đầu kỳ).
+> → 2 nguồn SMED khác nhau, tính toán khác logic (ngày vs lũy tích) ⇒ số liệu chênh lệch.
+>
+> **Chốt PA-1 (Đại ca chọn):** Thống nhất dùng **stg_4BKCCN** cho cột B (bán ra SMED) trong `dsxk_comparison()` — đồng bộ với Báo cáo bán hàng, dữ liệu tính theo ngày đúng chuẩn đối soát.
+>
+> **Đã làm (2 file):**
+> 1. `giong-apps/apps/banhang/agent/etl/sql_reports.py`:
+>    - Hàm `dsxk_comparison()` (dòng ~2642): đổi query từ `stg_3DTTHC` (col2/col3/col5, map tên trung tâm qua `_center_code_from_name`) sang `stg_4BKCCN` (SUM col18 = Mũi tiêm, SUM col16*col18 = Doanh thu, group by center, lọc `report_date = từ ngày`).
+>    - Cập nhật docstring + meta.source ghi rõ PA-1 GĐ 630.
+>    - Cập nhật comment trong `QUERY_KEYS` whitelist (dòng ~72).
+> 2. Copy sang CLI worktree `giong-apps-cli/apps/banhang/agent/etl/sql_reports.py`.
+>
+> **Verify:**
+> - `python -m py_compile sql_reports.py` → **Syntax OK** cả 2 worktree.
+> - Logic mới: `stg_4BKCCN` là dữ liệu THEO NGÀY (không gộp lũy tích) — khớp nguồn Báo cáo bán hàng `dt-by-date`.
+> - Nguồn C (xuất kho BKX stg_6BKX) + E (HĐGTGT BKCT stg_11BKCT) đều dùng `report_date between ? and ?` theo ngày ⇒ giờ 3 nguồn đều **THEO NGÀY** ⇒ đối soát chính xác.
+>
+> **Tiêu chí kiểm chứng (sau Push):**
+> - Chạy lại Báo cáo đối soát cuối ngày (`/m/bc-cuoi-ngay`) kỳ 01/11/2026 → cột "Tổng số mũi tiêm bán ra (SMED)" trung tâm LB = **85** (khớp Báo cáo bán hàng).
+> - Tổng cộng toàn 19 trung tâm khớp Báo cáo bán hàng.
+>
+> **Version:** KHÔNG bump — chờ lệnh Push theo quy tắc ĐA AGENT. App tổng 7.6.0 / repo con 11.7.0.
