@@ -9977,8 +9977,13 @@ repo con **10.1.0**.
 > 3. **19 file gồm 18 TT + TIÊN DU 2 bản**: tool 5_smed_XUATKHO.py tải TIÊN DU
 >    ở CẢ 2 tài khoản (CENTERS_1 domain tcgiongts dòng 103 + CENTERS_2 domain
 >    tcgiong dòng 129 — cùng tên hiển thị). GĐ 343/C.186 đã chốt 2 cổng
->    tcgiong + tcgiongts BỔ SUNG nhau → **KHÔNG xóa file nào** (chờ ĐH quyết
->    nếu muốn khử 1 bản — cần probe đối chiếu dữ liệu 2 domain trước).
+>    tcgiong + tcgiongts BỔ SUNG nhau → **KHÔNG xóa file nào**.
+>    **Probe 01/11 — 2 file là 2 CƠ SỞ KHÁC THẬT** (file tcgiongts 10.879 B · 30 dòng ·
+>    tổng 36.115.741 · địa chỉ 'Đường đôi Dương Húc' vs file tcgiong 12.786 B · 60 dòng ·
+>    tổng 70.245.418 · địa chỉ 'Khu 7, Phố Yên, xã Mê Linh') → KHỬ TRÙNG là SAI.
+>    ⚠️ Phát hiện ngược: **ETL đang MẤT 1 cơ sở** — dedupe etl_import.py nhóm theo
+>    (report_date, center) — cả 2 file map cùng mã `TD` → giữ file mtime mới, xóa dòng
+>    file cũ → DB 31/10 chỉ còn 18 src_file/772 dòng (folder 19 file). 3 PA chờ ĐH.
 
 > **Đã làm (3 file — code xong, XEM TRẠNG THÁI VERIFY bên dưới):**
 > 1. **PA-1 — `task_runner.py`:** `_wait_job_done` cắt theo NHỊP SỐNG job
