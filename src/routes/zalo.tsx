@@ -132,7 +132,7 @@ function ZaloPage() {
             {groupsLoading ? (
               <p className="text-sm text-muted">Đang tải…</p>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-clip">
                 <table className="w-full text-sm">
                   <thead className="sticky top-16 z-10 bg-surface text-left text-muted shadow-[0_1px_0_0_var(--color-line)]">
                     <tr>
