@@ -448,3 +448,4 @@ hết trạng thái "phát hiện trùng rồi mới xử lý".
 | GĐ 629 / C.393 (Trợ lý ZCode máy chủ) | Trợ lý ZCode máy chủ | 🔒 PA-1 khởi tạo module Zalo quản trị nhóm — migration 0031 + UI + API server fn + agent skeleton zalo_sync.py | giong-vn-v6: migrations/0031_zalo_sync.sql, src/routes/api/zalo.ts, src/routes/zalo.tsx; giong-apps/agent/zalo_sync.py (skeleton) |
 | GĐ 632 / C.396 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | ✅ Task_08 tự động gửi Zalo sau khi chạy thành công (target My Documents để ĐH thử) + Push đợt 02/11 · ✅ HOÀN TẤT (commit `6dcc9d0`) |
 | GĐ 633 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | 🔒 Fix trang /m/up-hoadon-dauvao trắng: thêm QueryClientProvider toàn cục vào __root app con (PA-1 ĐH chốt) |
+| GĐ 634 / C.397 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | 🔒 Fix trang /m/up-hoadon-dauvao trắng: QueryClientProvider __root (PA-1) | apps/banhang/src/routes/__root.tsx |
