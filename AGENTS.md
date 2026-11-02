@@ -10481,5 +10481,15 @@ repo con **10.1.0**.
 > 3 báo cáo kho × 3 kỳ 9/9 OK (19 cột TT) · Task_08 self-heal + Zalo OK ·
 > restart GIONG_SMED_Agent (api_server + tunnel giữ nguyên).
 
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 7.7.0 /
-> repo con 11.9.0.
+> **PA Push GĐ 642 (lệnh ĐH "Push" 02/11 tối):** rà trùng lặp sạch (5 commit app tổng + 1
+> commit repo con đều của phiên này · nhánh phụ 0 commit · remote 0 commit mới · registry 0 🔒 dở —
+> Agent CLI có 3 file sửa dở CHƯA commit trong worktree riêng, không đụng). Env Vercel 2 app đủ
+> (DATABASE_URL · APP_JWT_SECRET cả 2 · TUNNEL_* · BETTER_AUTH_* · ZAI_API_KEY). KHÔNG bump version
+> (code 100% agent-side Python + docs — tiền lệ GĐ 422/638). Push: app tổng  (5
+> commit docs) · repo con  (C.403). Agent máy chủ KHÔNG cần restart thêm (đã
+> restart 19:49 nạp code — Task_08 chạy + gửi Zalo OK 19:54).
+>
+> **✅ Verify production 4/4 (GĐ 470):** curl app tổng = **7.7.0** · app con = **11.9.0** (version
+> web giữ nguyên — không đụng bundle) · login  → user Phạm Kiên Cường ✅ ·
+>  ✅ · SSO  → 302 về app con + Set-Cookie bh_session ✅ (APP_JWT_SECRET khớp 2
+> app) ·  → role SuperAdmin + 97 mod ✅.
