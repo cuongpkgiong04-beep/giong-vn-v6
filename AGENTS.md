@@ -10279,3 +10279,37 @@ repo con **10.1.0**.
 > → tin nhắn/file/tín hiệu giá đổ zalo_messages/zalo_files/zalo_price_signals → 2 tab sau có dữ liệu.
 
 > **Version:** KHÔNG bump (deploy CLI theo lệnh ĐH "Em làm tất cả đi" — fix lỗi production đang chờ dùng). App tổng 7.7.0 / repo con 11.8.0.
+
+### GĐ 637 / C.399 (Trợ lý ZCode (máy chủ)): PA Push đợt GĐ 634/C.397 fix QueryClientProvider — bump repo con 11.8.1 + LIVE production (2026-11-02)
+
+> **Lệnh "Push" của Đại Ca (02/11, sau GĐ 634/C.397).** Rà trùng lặp nguyên tắc 3:
+> fetch remote = 0 commit mới cả 2 repo · nhánh phụ `agent-cli`/`pipeline-work`/
+> `gd541-push-con` RỖNG · đợt này kèm công việc ĐÃ XONG của 2 phiên khác: **GĐ 635/
+> C.398** (Trợ lý ZCode máy chủ — zalo.tsx 3 tabs + api/zalo.ts + zalo_sync.py,
+> DATETIME2 fix ODBC -155, E2E 120 nhóm OK) + **GĐ 636/C.398 & GĐ 630** (Trợ lý
+> Freebuff — % hoàn thành Upload MISA Mua hàng/Xuất kho: header-jobs-bar +
+> sql-data-module) — **KHÔNG file nào trùng với mình** (mình chỉ đụng `__root.tsx`
+> app con). Working tree còn bài dở phiên khác (task_runner.py, _pa1_fetch.py,
+> AGENTS.md dở của phiên khác) — KHÔNG đụng.
+
+> **Verify env trước push (GĐ 470):** app tổng đủ 6 (DATABASE_URL · APP_JWT_SECRET ·
+> TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · BETTER_AUTH_SECRET · BETTER_AUTH_URL) ·
+> app con đủ 5 (+ZAI_API_KEY) — ✓ 100%.
+
+> **Bump (lúc Push):** repo con **11.8.0 → 11.8.1** (patch — fix nhỏ 1 file;
+> package.json + DEFAULT_VERSION, package-lock giữ nguyên lệch 5.9.4 từ trước —
+> lesson GĐ 328) · app tổng **giữ 7.7.0** (8 commit toàn docs + code zalo của phiên
+> khác — không có code app tổng của mình; tiền lệ GĐ 632). Push: repo con
+> `f85bbdb..0714909` · app tổng `324ab10..b72c510`.
+
+> **✅ Verify production (curl lần đầu — không ghim deployment cũ):** version app con
+> **11.8.1** · app tổng **7.7.0** · login app tổng ✓ (JSON user Phạm Kiên Cường) ·
+> session ✓ (hạn 09/11) · SSO app con **302 → giong-banhang + Set-Cookie bh_session**
+> (APP_JWT_SECRET khớp 2 app) · `/api/auth/me` ✓ (SuperAdmin + 14 nhóm + lá quyền).
+> **Trang lỗi gốc:** `https://giong-banhang.vercel.app/m/up-hoadon-dauvao` = HTTP 200,
+> KHÔNG còn "Something went wrong"/"No QueryClient", nội dung render đủ. Agent 0 code
+> builder đổi → không cần restart.
+
+> **Tiêu chí kiểm chứng của Đại Ca:** mở app con → UPLOAD Hóa đơn đầu vào → bảng hóa
+> đơn hiện (hết màn lỗi); nút Kiểm tra/Upload tạo job bình thường.
+> **Version:** app tổng **7.7.0** / repo con **11.8.1** — ĐÃ PUSH + ĐÃ LIVE.
