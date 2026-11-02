@@ -10313,3 +10313,38 @@ repo con **10.1.0**.
 > **Tiêu chí kiểm chứng của Đại Ca:** mở app con → UPLOAD Hóa đơn đầu vào → bảng hóa
 > đơn hiện (hết màn lỗi); nút Kiểm tra/Upload tạo job bình thường.
 > **Version:** app tổng **7.7.0** / repo con **11.8.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 638-639 (Trợ lý ZCode (máy chủ)): Điều tra Task_06 Upload chứng từ bán hàng lỗi "InvalidInvno" kỳ 01/11 + fix PA-1/PA-2 (2026-11-02)
+
+> **ĐH hỏi (02/11, 2 ảnh):** Task_06 · MISA bán hàng kỳ 01/11/2026 lỗi
+> "Tool thoát mã 1: InvalidInvno · TD/LB/HM/QO HD…: InvalidInvno" — nguyên
+> nhân và cách khắc phục?
+
+> **Điều tra (job GiondDB + MISA thật — 3 PA trình, ĐH chốt PA-1 + PA-2):**
+> Lượt 05:41 sáng tạo 484 phiếu + ghi sổ 484, chết 4 phiếu (3 × `Locator.fill`
+> — **SMED đổi UI trang login**; 1 × LB thiếu danh mục). Các lượt sau (05:59 ·
+> 12:43 · 13:00) quét đủ 658 phiếu SMED → gặp phiếu ĐÃ TẠO → MISA chặn
+> `InvalidInvno` → **137 phiếu bị đánh "lỗi thật" oan**. Bằng chứng: MISA đủ
+> **658/658 phiếu kỳ 01/11 đã tạo + ghi sổ** (658 unique refno khớp chính xác
+> 521 OK + 137 "lỗi" — khách/tổng/số HĐ/seri khớp từng dòng; post_ledger thử
+> 6 phiếu → "Chứng từ đã ghi sổ bởi người khác" = đã ghi sổ). Gốc: hàm
+> `find_existing_refno` (GĐ 491) lọc filter **property 3654 bỏ sót phiếu đã
+> tạo** (chạy trực tiếp với refno `06832611010749400803` → KHÔNG THẤY dù phiếu
+> có) + upsert ghi đè mất refid trong DB.
+
+> **Đã làm (PA-1 + PA-2 — repo con commit `68857a4`, C.400 — chi tiết ở
+> AGENTS.md repo con):** `find_existing_refno` bổ sung bước 2 ai_search
+> (mxi.tim_phieu_misa) + nhánh "đã tồn tại" không ghi đè refid + MERGE
+> `ISNULL(NULLIF(CAST(? AS NVARCHAR(64)),''), t.refid)` (test thật bắt bẫy
+> varchar(1)) + `smed_login_hddt` locator form mới "Tên Đăng Nhập" (fallback
+> form cũ).
+
+> **Verify:** py_compile OK · unit **86/86 PASS** · test upsert **4/4** ·
+> E2E **4/4** (phiếu đã có THẤY qua ai_search refid đúng · refno lạ → None ·
+> login SMED TD (ts) + PY (16) OK).
+
+> **Tiêu chí kiểm chứng (sau Push + restart agent máy .34):** Task_06 chạy lại
+> kỳ đã upload → hết ERROR oan (đánh "đã tồn tại (xác minh theo số chứng từ)")
+> · login TD/HM/QO domain ts không còn Locator.fill timeout.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 7.7.0 / repo con 11.8.0.
