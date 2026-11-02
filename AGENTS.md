@@ -10552,3 +10552,36 @@ repo con **10.1.0**.
 
 > **Verify:** DB GiondDB đối chứng COUNT (trên) · UI /zalo tab Tin nhắn + File đính kèm giờ có dữ liệu
 > (loadZaloMessages/loadZaloFiles qua tunnel — cùng nguồn). Version app tổng 7.7.0 / repo con 11.8.0 — KHÔNG bump.
+
+### GĐ 645 (Trợ lý ZCode (máy chủ)): Cố định IP CẢ 4 MÁY (máy chủ + 3 máy trạm) — DHCP router đã đổi IP máy trạm 2 lần (.27→.14 · .34→.11) (2026-11-02 tối)
+
+> **Chỉ thị của ĐH (02/11 tối):** máy .27 bị DHCP đổi thành 192.168.1.14 · máy .34 bị đổi thành
+> 192.168.1.11 — "cố định luôn IP của cả 3 máy LAN và máy chủ. Mục đích kết quả CẢ 4 MÁY đều
+> phải cố định IP". Kèm yêu cầu GĐ 644: ETL mới phải đồng bộ TẤT CẢ máy.
+
+> **Xác minh máy trạm đổi IP (SSH + hostname):** 192.168.1.14 = **PC-PKT-01** (máy .27 cũ — clone
+> riêng `C:\CUONG_2026\giong-vn-v6-agent-lan\giong-apps\apps\banhang\agent`, KHÔNG phải
+> giong-agent như .34/.245) · 192.168.1.11 = **THANH-PC** (máy .34 cũ — `C:\CUONG_2026\giong-agent`).
+
+> **BẢNG IP CỐ ĐỊNH (đã set 02/11):**
+> | Máy | Hostname | IP | DHCP | DNS | ETL mới (MD5 `1547667f`) |
+> |---|---|---|---|---|---|
+> | Máy chủ | GIONGPC | 192.168.1.250 | No (static sẵn) | (nguyên trạng) | ✅ nguồn |
+> | THANH-PC | THANH-PC | **192.168.1.11** | **No — mới set** | WARP 127.0.2.2/3 (resolve OK) | ✅ deploy 20:05 |
+> | GIANGKT | GIANGKT | 192.168.1.245 | No (static sẵn) | 8.8.8.8 | ✅ deploy 22:0x |
+> | PC-PKT-01 | PC-PKT-01 | **192.168.1.14** | **No — mới set** | 123.23.23.23 / 123.26.26.26 | ✅ deploy 23:0x + COMPILE-OK |
+
+> **Cách làm (PowerShell qua schtasks — SSH user không đủ quyền UAC, netsh qua SSH báo
+> "Invalid type parameter"):** đặt static GIỮ NGUYÊN IP hiện tại + gateway 192.168.1.1 —
+> `Set-NetIPInterface -Dhcp Disabled` (Windows tự giữ IP thành static) + `New-NetIPAddress`
+> nếu thiếu + DNS giữ nguyên từng máy; script chạy **detached qua schtasks /ru SYSTEM /rl
+> HIGHEST** (độc lập session SSH — không sợ đứt giữa chừng làm máy mất IP); verify ping +
+> SSH + nslookup từng máy.
+
+> **⚠️ Khuyến nghị ĐH (quan trọng):** static phía máy KHÔNG báo router biết — DHCP server
+> router (192.168.1.1) vẫn có thể cấp trùng .11/.14 cho thiết bị khác khi máy đó offline
+> (giống vụ đổi IP 02/11). **Nên đặt thêm DHCP Reservation trên router (gán MAC máy → IP)**
+> — MAC hiện tại: ghi từ ipconfig /all từng máy khi cần. Em không có quyền truy cập router
+> (192.168.1.1) nên phần này nhờ ĐH.
+
+> **Version:** KHÔNG bump (deploy máy + docs — không đụng code web). App tổng 7.7.0 / repo con 11.9.0.
