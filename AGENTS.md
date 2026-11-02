@@ -10254,3 +10254,28 @@ repo con **10.1.0**.
 > `/m/bc-xuat-kho` 200 không ảnh hưởng. Code repo con `26a157f` + entry `4eecb36`.
 > **KHÔNG bump (chờ lệnh Push)** — app tổng 7.7.0 / repo con 11.8.0. Lưu ý: claim dư
 > GĐ 633 (lệnh claim đầu thiếu `--cx`) đã unlock kèm ghi chú — việc thực tế = GĐ 634/C.397.
+
+### GĐ 635 / C.398 (Trợ lý ZCode máy chủ): Fix Production /zalo rỗng — DATETIMEOFFSET (ODBC -155) + khôi phục 2 file bị ghi đè (02/11/2026)
+
+> **ĐH báo 14:0x:** bấm "Làm mới" /zalo vẫn "Chưa có nhóm nào" dù DB GiondDB đã có 120 nhóm (crawl 13:28).
+
+> **2 nguyên nhân thật (probe từng tầng):**
+> 1. **`zalo.tsx` + `api/zalo.ts` bị phiên song song ghi đè về bản GĐ 629** (không 3 tabs, không
+>    loadZaloMessages/analyzeAI) — giống vụ zalo_sync.py bị thu gọn. Remote origin/main KHÔNG có
+>    code GĐ 630 file này (commit GĐ 630 chỉ chứa tabs.tsx + apply-zalo-migration.mjs + __root.tsx).
+>    → Đã viết lại đủ 2 file + commit `f1561a8` + deploy vercel --prod (74hrfes6u).
+> 2. **Root cause SQL thật:** bảng zalo_* khai cột thời gian **DATETIMEOFFSET** → pyodbc API Server
+>    (tunnel) không serialize được ODBC type **-155 (SQL_SS_TIMESTAMPOFFSET)** → query SELECT
+>    trả **HTTP 500** → React Query rơi empty state. COUNT/select-bỏ-cột-thời-gian OK (120 rows).
+>    → **Đã ALTER 7 cột → DATETIME2** (drop index + default constraint trước, alter, tạo lại:
+>    IX_zalo_messages_group_at / IX_zalo_messages_at / IX_zalo_price_signals_group_at /
+>    DF updated_at/created_at = GETDATE()). Bài học: **bảng mới trên GiondDB đọc qua tunnel API
+>    Server CẤM DATETIMEOFFSET — dùng DATETIME2**.
+
+> **Verify E2E thật (Chrome CDP máy chủ mở production /zalo):** version 7.7.0 · **120 dòng nhóm**
+> render · 3 tabs (Quản trị nhóm/Tin nhắn/File đính kèm) · query tunnel full-select trả 120 rows.
+
+> **Bước tiếp:** ĐH bật toggle "Cập nhật DB" cho nhóm cần → chạy `python zalo_sync.py messages`
+> → tin nhắn/file/tín hiệu giá đổ zalo_messages/zalo_files/zalo_price_signals → 2 tab sau có dữ liệu.
+
+> **Version:** KHÔNG bump (deploy CLI theo lệnh ĐH "Em làm tất cả đi" — fix lỗi production đang chờ dùng). App tổng 7.7.0 / repo con 11.8.0.
