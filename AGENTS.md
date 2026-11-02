@@ -10389,3 +10389,35 @@ repo con **10.1.0**.
 
 > **Verify:** tsc 0 · py_compile OK · build 0 · preview 8101 SSR 200 đủ tính năng mới,
 > không lỗi. **KHÔNG bump (chờ lệnh Push)** — app tổng 7.7.0 / repo con 11.8.1.
+
+### GĐ 636 / C.399 (Trợ lý ZCode máy chủ): 5 điểm điều chỉnh phân hệ Zalo theo yêu cầu ĐH (02/11/2026 tối)
+
+> **ĐH yêu cầu 5 điểm** (kèm ảnh /zalo): (1) cố định thanh tiêu đề bảng khi lăn · (2) dropdown
+> nhãn trong suốt, nhìn hạn chế · (3) nút Cập nhật DB không tick được · (4) phân quyền — ĐH
+> thử nghiệm trước, sau này nhân sự dùng Zalo CỦA HỌ + nút đăng nhập riêng · (5) hướng dẫn sử dụng.
+
+> **Root cause tìm ra (mục 3):** UI gọi mutation theo cú pháp `mutate({ id, ... })` — TanStack Start
+> fetcher yêu cầu **`mutate({ data: { id, ... } })`** (wrapper `data`). Mutation cũ POST đi NHƯNG
+> handler nhận sai payload → SQL params lệch → HTTP 500 im lặng → switch không tick. Đã sửa
+> TẤT CẢ 6 chỗ mutate/queryFn (update/suggest/analyze/loadMessages/loadFiles) — **bản GĐ 629
+> cũng sai cú pháp này từ đầu** (lỗi ẩn từ lúc sinh module).
+
+> **Đã làm (3 file, code `0bf9c48` + `42bd423`, deploy ixlin0712 → qef16s3pd):**
+> 1. **Sticky thead** — thead `sticky top-16 z-10 bg-surface` (dưới header app h-16) + wrapper
+>    bảng `overflow-x-auto` → **`overflow-x-clip`** (overflow-auto tạo scroll context phá sticky).
+> 2. **Dropdown đục** — select.tsx SelectContent: `bg-popover` (token KHÔNG tồn tại trong
+>    styles.css → trong suốt) → `bg-surface text-ink border-line shadow-lg`.
+> 3. **Fix mutate wrapper {data}** + viết lại updateZaloGroup: tách 3 UPDATE riêng (bỏ
+>    COALESCE multi-null-param), try/catch console.error; UI thêm dòng "Lỗi lưu: …" khi fail.
+> 4. **Verify E2E thật (Chrome CDP context mới, production):** thead top=64 khi scroll 900px ✅ ·
+>    dropdown bg rgb(251,252,251) ✅ · switch false→true và GIỮ sau reload (đọc lại từ DB) ✅ ·
+>    120 nhóm ✅ · version 7.7.0.
+> **Lưu ý cache:** tab cũ của ĐH có thể dính SW/cache cũ → chunk zalo 404 → trang "Something
+> went wrong". F5/Ctrl+F5 hoặc xoá cache giong-vn-static-v2 là hết.
+
+> **Mục 4 (phân quyền) — hiện trạng:** /zalo CHỈ Quản trị (Admin) thấy (PROJECT_INTERNAL_PATHS
+> + key `zalo` mặc định TẮT cho nhân viên) — ĐH thử nghiệm trước ĐÚNG như thiết kế. Kiến trúc
+> "Zalo của từng nhân sự + nút đăng nhập riêng" (mỗi người 1 phiên Chrome CDP riêng trên máy chủ,
+> đăng nhập QR riêng, crawl theo user) là việc lớn — trình PA chờ ĐH chốt, chưa code.
+
+> **Version:** KHÔNG bump (deploy CLI sửa lỗi production theo lệnh ĐH). App tổng 7.7.0 / repo con 11.8.0.
