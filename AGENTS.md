@@ -10421,3 +10421,37 @@ repo con **10.1.0**.
 > đăng nhập QR riêng, crawl theo user) là việc lớn — trình PA chờ ĐH chốt, chưa code.
 
 > **Version:** KHÔNG bump (deploy CLI sửa lỗi production theo lệnh ĐH). App tổng 7.7.0 / repo con 11.8.0.
+
+### GĐ 641 / C.402 (Trợ lý ZCode (máy chủ)): PA Push GĐ 640/C.401 — bump repo con 11.9.0 + LIVE + restart agent nạp SMED_ACTION (2026-11-02)
+
+> **Lệnh của Đại Ca (02/11):** "Em push và sau khi push xong thì restart agent (máy chủ)
+> sau Push để nạp SMED_ACTION + key job mới hddt-dauvao-nap".
+
+> **Rà trùng lặp:** remote 0 commit mới cả 2 repo · nhánh phụ RỖNG · app tổng 1 commit
+> docs (unlock GĐ 640) · repo con 2 commit của mình (code `b83e97a` + entry `66d99a2`)
+> · working tree còn bài dở phiên khác (task_runner.py, _pa1_fetch.py, AGENTS.md dở) —
+> KHÔNG đụng. **Verify env GĐ 470:** app tổng 6/6 · app con 5/5 biến ✓.
+
+> **Bump:** repo con **11.8.1 → 11.9.0** (minor — khung Nạp dữ liệu theo kỳ + lọc nhanh
+> 4 cột + hướng dẫn; package.json + DEFAULT_VERSION, package-lock giữ nguyên) · app tổng
+> **giữ 7.7.0** (commit chưa push chỉ docs). Push: repo con `68857a4..f7245ff` · app tổng
+> `0462b25..6aaa21b`.
+
+> **✅ Verify production (curl lần đầu — không ghim deployment cũ):** app con **11.9.0** ·
+> app tổng **7.7.0** · login ✓ · session ✓ (hạn 09/11) · SSO **302 → giong-banhang +
+> bh_session** ✓ · `/api/auth/me` SuperAdmin ✓. **Trang mới SSR production**:
+> `/m/up-hoadon-dauvao` 200 — có khung Nạp dữ liệu + Hướng dẫn + ô lọc nhanh, HẾT text
+> cứng 194/413 ✓.
+
+> **🔧 RESTART AGENT (máy chủ) sau Push:** log service 90 dòng gần nhất 100% "chưa có
+> job mới" (agent RẢNH) → dọn `__pycache__` 3 thư mục (agent/bang-gia/etl) →
+> `sc stop/start GIONG_SMED_Agent` (service NSSM trỏ đúng file mình sửa) → **RUNNING
+> 16:43:22, nạp đủ config**, poll bình thường; service_err chỉ KeyboardInterrupt lúc
+> dừng (bình thường). api_server KHÔNG restart → tunnel giữ URL
+> `strips-dimensional-dollars-informational` (health tunnel_ok: true) — chạy
+> `update-tunnel-env.py` đồng bộ `.env.local` 2 app với URL hiện hành (local trước đó
+> lệch URL cũ). **Lưu ý:** nút Upload lần đầu TIÊU THẬT qua job từ giờ — log job sẽ có
+> "⚙️ hddt-dauvao: SMED_ACTION=upload".
+
+> **Version:** app tổng **7.7.0** / repo con **11.9.0** — ĐÃ PUSH + ĐÃ LIVE + agent ĐÃ
+> RESTART nạp code.
