@@ -10343,8 +10343,23 @@ repo con **10.1.0**.
 > E2E **4/4** (phiếu đã có THẤY qua ai_search refid đúng · refno lạ → None ·
 > login SMED TD (ts) + PY (16) OK).
 
-> **Tiêu chí kiểm chứng (sau Push + restart agent máy .34):** Task_06 chạy lại
-> kỳ đã upload → hết ERROR oan (đánh "đã tồn tại (xác minh theo số chứng từ)")
-> · login TD/HM/QO domain ts không còn Locator.fill timeout.
+> **✅ VERIFY SAU PUSH (02/11 16:12):**
+> - **Push:** app tổng `eb1c37d..4e78354` (5 commit docs+claim) · repo con
+>   `0714909..68857a4` (C.400). KHÔNG bump version — tiền lệ GĐ 422: fix 100%
+>   agent-side python + docs, version web không phản ánh. Env Vercel 2 app đủ
+>   (GĐ 470 checklist ✓) · curl production **7.7.0 / 11.8.1** (HTTP 200) ·
+>   login app tổng ✅ (user + get-session) · SSO không tự ký được (env Sensitive
+>   GĐ 71 — code web không đổi trong đợt này, đã LIVE từ GĐ 634).
+> - **Deploy + restart agent .34:** ghi `misa_banhang_api.py` vào
+>   `C:\CUONG_2026\giong-agent` qua SSH admin-pc (hash khớp + py_compile OK,
+>   backup .bak-gd639) · service GIONG_SMED_Worker restart → Running.
+> - **Chạy lại Task_06 kỳ 01/11 (job E630A090, 15:51→16:12 — 21 phút):**
+>   status **done** · error **rỗng** · result `created 0 · posted 0 · skipped 658 ·
+>   failed 0` — **658 phiếu hết InvalidInvno, 0 lỗi**.
+> - **DB sm_banhang_phieu kỳ 01/11: 658/658 phiếu** err = "đã tồn tại trên MISA
+>   (xác minh theo số chứng từ)" · **refid đủ 658/658** (137 phiếu đã đồng bộ lại
+>   refid qua ai_search) · is_uploaded + is_posted đủ — cột "Trạng thái MISA" đúng.
+> - **Login SMED TD/HM/QO:** job chạy qua 19/19 trung tâm 0 lỗi → hết Locator.fill
+>   timeout (E2E trước push: TD ts + PY 16 OK).
 
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 7.7.0 / repo con 11.8.0.
+> **Version:** app tổng **7.7.0** / repo con **11.8.1** — ĐÃ PUSH + LIVE (không bump — agent-side + docs).
