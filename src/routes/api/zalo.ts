@@ -17,6 +17,8 @@ export type ZaloGroup = {
   updated_at: string;
 };
 
+export type ZaloAttachment = { name: string; url: string; type: string };
+
 export type ZaloMessage = {
   id: string;
   zalo_group_id: string;
@@ -25,7 +27,7 @@ export type ZaloMessage = {
   sender_zalo_id: string;
   text: string;
   at: string;
-  attachments: unknown[];
+  attachments: ZaloAttachment[];
   updated_at: string;
 };
 
@@ -53,15 +55,34 @@ export const loadZaloGroups = createServerFn({ method: "GET" })
 export const updateZaloGroup = createServerFn({ method: "POST" })
   .validator((data: { id: string; is_sync_enabled?: boolean; purpose_label?: string; ai_suggested_label?: string }) => data)
   .handler(async ({ data }) => {
+    // GĐ 635/C.398 (03/11): UPDATE TÁCH RIÊNG từng trường (không COALESCE
+    // nhiều-null-param — từng gây HTTP 500 im lặng qua API Server tunnel)
+    // + try/catch log rõ để lỗi hiện trên Vercel logs thay vì nuốt.
     const sql = await getSql();
-    await sql`
-      UPDATE zalo_groups SET
-        is_sync_enabled = COALESCE(${data.is_sync_enabled ?? null}, is_sync_enabled),
-        purpose_label = COALESCE(${data.purpose_label ?? null}, purpose_label),
-        ai_suggested_label = COALESCE(${data.ai_suggested_label ?? null}, ai_suggested_label),
-        updated_at = now()
-      WHERE id = ${data.id}
-    `;
+    try {
+      if (data.is_sync_enabled !== undefined) {
+        await sql`
+          UPDATE zalo_groups SET is_sync_enabled = ${data.is_sync_enabled}, updated_at = now()
+          WHERE id = ${data.id}
+        `;
+      }
+      if (data.purpose_label !== undefined) {
+        await sql`
+          UPDATE zalo_groups SET purpose_label = ${data.purpose_label}, updated_at = now()
+          WHERE id = ${data.id}
+        `;
+      }
+      if (data.ai_suggested_label !== undefined) {
+        await sql`
+          UPDATE zalo_groups SET ai_suggested_label = ${data.ai_suggested_label}, updated_at = now()
+          WHERE id = ${data.id}
+        `;
+      }
+      return { ok: true };
+    } catch (err) {
+      console.error("[zalo] updateZaloGroup lỗi:", err);
+      throw new Error(`Không cập nhật được nhóm: ${err instanceof Error ? err.message : String(err)}`);
+    }
   });
 
 /** Gợi ý nhãn THEO TÊN NHÓM (nhanh, không cần tin nhắn). */

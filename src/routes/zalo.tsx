@@ -39,36 +39,43 @@ function ZaloPage() {
     queryFn: () => loadZaloGroups(),
   });
 
+  const [saveError, setSaveError] = useState<string | null>(null);
   const updateMut = useMutation({
     mutationFn: updateZaloGroup,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["zalo-groups"] }),
+    onSuccess: () => {
+      setSaveError(null);
+      qc.invalidateQueries({ queryKey: ["zalo-groups"] });
+    },
+    onError: (e) => setSaveError(e instanceof Error ? e.message : String(e)),
   });
 
   const suggestMut = useMutation({
     mutationFn: suggestLabel,
     onSuccess: (res, vars) => {
-      const g = groups.find((x) => x.zalo_group_id === vars.zalo_group_id);
-      if (g) updateMut.mutate({ id: g.id, ai_suggested_label: res.suggested, purpose_label: res.suggested });
+      const gid = vars?.data?.zalo_group_id;
+      const g = groups.find((x) => x.zalo_group_id === gid);
+      if (g) updateMut.mutate({ data: { id: g.id, ai_suggested_label: res.suggested, purpose_label: res.suggested } });
     },
   });
 
   const analyzeMut = useMutation({
     mutationFn: analyzeGroupLabel,
     onSuccess: (res, vars) => {
-      const g = groups.find((x) => x.zalo_group_id === vars.zalo_group_id);
-      if (g) updateMut.mutate({ id: g.id, ai_suggested_label: res.suggested, purpose_label: res.suggested });
+      const gid = vars?.data?.zalo_group_id;
+      const g = groups.find((x) => x.zalo_group_id === gid);
+      if (g) updateMut.mutate({ data: { id: g.id, ai_suggested_label: res.suggested, purpose_label: res.suggested } });
     },
   });
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ["zalo-messages", selectedGroup, msgPage],
-    queryFn: () => loadZaloMessages({ group_id: selectedGroup!, limit: PAGE_SIZE, offset: msgPage * PAGE_SIZE }),
+    queryFn: () => loadZaloMessages({ data: { group_id: selectedGroup!, limit: PAGE_SIZE, offset: msgPage * PAGE_SIZE } }),
     enabled: !!selectedGroup && tab === "messages",
   });
 
   const { data: files = [], isLoading: filesLoading } = useQuery({
     queryKey: ["zalo-files", selectedGroup, filePage],
-    queryFn: () => loadZaloFiles({ group_id: selectedGroup!, limit: PAGE_SIZE, offset: filePage * PAGE_SIZE }),
+    queryFn: () => loadZaloFiles({ data: { group_id: selectedGroup!, limit: PAGE_SIZE, offset: filePage * PAGE_SIZE } }),
     enabled: !!selectedGroup && tab === "files",
   });
 
@@ -120,21 +127,22 @@ function ZaloPage() {
               <Button variant="outline" size="sm" onClick={() => refetchGroups()}>
                 <RefreshCw className="size-4 mr-1" /> Làm mới
               </Button>
+              {saveError && <span className="text-xs text-red-600 max-w-[420px] truncate" title={saveError}>Lỗi lưu: {saveError}</span>}
             </div>
             {groupsLoading ? (
               <p className="text-sm text-muted">Đang tải…</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="text-left text-muted">
+                  <thead className="sticky top-16 z-10 bg-surface text-left text-muted shadow-[0_1px_0_0_var(--color-line)]">
                     <tr>
-                      <th className="py-2 pr-4">Tên nhóm</th>
-                      <th className="py-2 pr-4">Cập nhật DB</th>
-                      <th className="py-2 pr-4">Nhãn mục đích</th>
-                      <th className="py-2 pr-4">Gợi ý AI (tên)</th>
-                      <th className="py-2 pr-4">Phân tích AI (20 tin)</th>
-                      <th className="py-2 pr-4">Last sync</th>
-                      <th className="py-2 pr-4">Xem tin nhắn</th>
+                      <th className="py-2 pr-4 bg-surface">Tên nhóm</th>
+                      <th className="py-2 pr-4 bg-surface">Cập nhật DB</th>
+                      <th className="py-2 pr-4 bg-surface">Nhãn mục đích</th>
+                      <th className="py-2 pr-4 bg-surface">Gợi ý AI (tên)</th>
+                      <th className="py-2 pr-4 bg-surface">Phân tích AI (20 tin)</th>
+                      <th className="py-2 pr-4 bg-surface">Last sync</th>
+                      <th className="py-2 pr-4 bg-surface">Xem tin nhắn</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,11 +154,11 @@ function ZaloPage() {
                         <td className="py-2 pr-4">
                           <Switch
                             checked={g.is_sync_enabled}
-                            onCheckedChange={(v) => updateMut.mutate({ id: g.id, is_sync_enabled: v })}
+                            onCheckedChange={(v) => updateMut.mutate({ data: { id: g.id, is_sync_enabled: v } })}
                           />
                         </td>
                         <td className="py-2 pr-4">
-                          <Select value={g.purpose_label} onValueChange={(v) => updateMut.mutate({ id: g.id, purpose_label: v })}>
+                          <Select value={g.purpose_label} onValueChange={(v) => updateMut.mutate({ data: { id: g.id, purpose_label: v } })}>
                             <SelectTrigger className="w-[170px]">
                               <SelectValue placeholder="Chọn nhãn" />
                             </SelectTrigger>
@@ -167,7 +175,7 @@ function ZaloPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => suggestMut.mutate({ zalo_group_id: g.zalo_group_id })}
+                            onClick={() => suggestMut.mutate({ data: { zalo_group_id: g.zalo_group_id } })}
                           >
                             <Wand2 className="size-4 mr-1" /> Gợi ý
                           </Button>
@@ -179,7 +187,7 @@ function ZaloPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => analyzeMut.mutate({ zalo_group_id: g.zalo_group_id })}
+                            onClick={() => analyzeMut.mutate({ data: { zalo_group_id: g.zalo_group_id } })}
                           >
                             <Sparkles className="size-4 mr-1" /> Phân tích
                           </Button>
