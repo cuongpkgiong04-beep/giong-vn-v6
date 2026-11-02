@@ -10232,3 +10232,25 @@ repo con **10.1.0**.
 
 > **Đổi người nhận chính thức:** `INSERT/UPDATE dbo.kv_settings k='bcn_zalo_target'`
 > = tên hội thoại Zalo — Task_08 đọc mỗi lần chạy.
+
+### GĐ 634 / C.397 (Trợ lý ZCode (máy chủ)): Fix trang /m/up-hoadon-dauvao trắng lần 2 — app con CHƯA TỪNG có QueryClientProvider (2026-11-02)
+
+> **ĐH báo (02/11, ảnh):** trang "UPLOAD Hóa đơn đầu vào" hiện "Something went wrong
+> — No QueryClient set, use QueryClientProvider to set one" (app con 11.8.0).
+> **Chẩn đoán:** trang up-hoadon-dauvao là DUY NHẤT app con dùng `useQuery` (TanStack
+> Query) nhưng `src/routes/__root.tsx` app con KHÔNG bọc `QueryClientProvider` ở bất
+> kỳ đâu (app tổng có từ đầu) → useQuery ném lỗi runtime khi mount. Fix C.388 (hàm
+> lồng 2 lần) đã lên LIVE làm component render được thì LỘ lỗi này (lỗi cũ che mờ);
+> tsc/build không bắt được vì là lỗi runtime context.
+
+> **PA-1 ĐH chốt (trên 3 PA: provider toàn cục / bọc riêng từng trang / bỏ TanStack
+> Query):** `__root.tsx` app con thêm `getQueryClient()` (staleTime 60s · retry 1 ·
+> refetchOnWindowFocus false — copy nguyên pattern app tổng) + client tạo trong
+> `useState(() => getQueryClient())` (an toàn SSR) + `<QueryClientProvider>` bọc
+> quanh `<AppShell>`. Chi tiết đầy đủ ở entry C.397 AGENTS.md repo con.
+
+> **Verify:** tsc EXIT 0 · build local EXIT 0 (9.51s) · preview 8101 fetch thật:
+> `/m/up-hoadon-dauvao` HTTP 200 KHÔNG còn lỗi, nội dung render đủ · `/` +
+> `/m/bc-xuat-kho` 200 không ảnh hưởng. Code repo con `26a157f` + entry `4eecb36`.
+> **KHÔNG bump (chờ lệnh Push)** — app tổng 7.7.0 / repo con 11.8.0. Lưu ý: claim dư
+> GĐ 633 (lệnh claim đầu thiếu `--cx`) đã unlock kèm ghi chú — việc thực tế = GĐ 634/C.397.
