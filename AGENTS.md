@@ -10485,11 +10485,11 @@ repo con **10.1.0**.
 > commit repo con đều của phiên này · nhánh phụ 0 commit · remote 0 commit mới · registry 0 🔒 dở —
 > Agent CLI có 3 file sửa dở CHƯA commit trong worktree riêng, không đụng). Env Vercel 2 app đủ
 > (DATABASE_URL · APP_JWT_SECRET cả 2 · TUNNEL_* · BETTER_AUTH_* · ZAI_API_KEY). KHÔNG bump version
-> (code 100% agent-side Python + docs — tiền lệ GĐ 422/638). Push: app tổng  (5
-> commit docs) · repo con  (C.403). Agent máy chủ KHÔNG cần restart thêm (đã
+> (code 100% agent-side Python + docs — tiền lệ GĐ 422/638). Push: app tổng `5907734..b015656` (5
+> commit docs) · repo con `f7245ff..a88b392` (C.403). Agent máy chủ KHÔNG cần restart thêm (đã
 > restart 19:49 nạp code — Task_08 chạy + gửi Zalo OK 19:54).
 >
 > **✅ Verify production 4/4 (GĐ 470):** curl app tổng = **7.7.0** · app con = **11.9.0** (version
-> web giữ nguyên — không đụng bundle) · login  → user Phạm Kiên Cường ✅ ·
->  ✅ · SSO  → 302 về app con + Set-Cookie bh_session ✅ (APP_JWT_SECRET khớp 2
-> app) ·  → role SuperAdmin + 97 mod ✅.
+> web giữ nguyên — không đụng bundle) · login `sign-in/email` → user Phạm Kiên Cường ✅ ·
+> `get-session` ✅ · SSO `?sso=` → 302 về app con + Set-Cookie bh_session ✅ (APP_JWT_SECRET khớp 2
+> app) · `/api/auth/me` → role SuperAdmin + 97 mod ✅.
