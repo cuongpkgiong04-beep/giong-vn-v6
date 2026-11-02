@@ -10493,3 +10493,34 @@ repo con **10.1.0**.
 > web giữ nguyên — không đụng bundle) · login `sign-in/email` → user Phạm Kiên Cường ✅ ·
 > `get-session` ✅ · SSO `?sso=` → 302 về app con + Set-Cookie bh_session ✅ (APP_JWT_SECRET khớp 2
 > app) · `/api/auth/me` → role SuperAdmin + 97 mod ✅.
+
+### GĐ 644 (bổ sung GĐ 642 — lệnh ĐH ngay sau Push): Đồng bộ ETL MỌI máy trạm + xác nhận cơ chế máy trạm "rảnh tự nhận job" (2026-11-02 tối)
+
+> **Chỉ thị của ĐH (02/11 tối):** "Khi có job mới các máy trạm (.27, .34, .245) phải chủ động
+> nhận job khi thấy mình đang rảnh" ⇒ **cài đặt ETL mới phải đồng bộ TẤT CẢ máy tính** —
+> nguyên tắc: "Luôn luôn đồng bộ cách làm, phương thức, ... cho nhau" (đã ghi memory + mục này).
+
+> **Trả lời câu hỏi ĐH (tra code thật — ĐÚNG ý anh, đã chạy đúng từ GĐ 621):** 3 máy trạm cùng
+> nhóm 'smed': worker poll `/agent/claim` mỗi 20s — **đang chạy job thì KHÔNG claim (tuần tự),
+> xong mới claim tiếp = chỉ rảnh mới nhận**; claim ATOMIC (UPDATE…UPDLOCK — 2 máy không trùng
+> job); ưu tiên **LPT — job nặng trước** (GĐ 621 "quét máy rảnh, giao việc hài hòa"), job nhẹ
+> tự rơi máy xong sớm. Job MISA chuyên biệt: .245 = mua hàng · .34 = bán hàng. Máy chủ 'core'
+> loại job chuyên biệt khỏi hàng đợi thường nhưng **CỨU HỘ job chờ >15'** (AGENT_RESCUE_MIN)
+> — máy trạm tắt thì máy chủ tự gánh, job không đói (bằng chứng 02/11: .27/.34 tắt máy → core
+> nhận thay 193 job, Task_02/08 không treo).
+
+> **Đồng bộ ETL đã làm (GĐ 642 — regex center_from_name mới):**
+> | Máy | Trạng thái |
+> |---|---|
+> | Máy chủ (repo gốc `a88b392`) | ✅ nguồn |
+> | .34 (C:\CUONG_2026\giong-agent) | ✅ deploy 20:05 — MD5 `1547667f` khớp + regex mới có |
+> | .245 (C:\CUONG_2026\giong-agent) | ✅ deploy 22:0x — MD5 khớp + py_compile OK (Python 3.12), backup `etl_import.py.bak642` |
+> | .27 | ⚠️ **MÁY TẮT** (ping + SSH timeout cả từ máy chủ lẫn .245) — **PENDING: deploy NGAY khi máy online, TRƯỚC khi .27 chạy job SMED** (phiên sau đọc memory `nguyen-tac-dong-bo-etl-va-may-tram-claim-job`) |
+
+> **Bẫy đã gặp (ghi để không lặp):** máy LAN không bật SFTP subsystem → `scp -O`; printf bash
+> ăn `\e` trong path (giong-agent\etl → ESC) → truyền file qua heredoc quoted + `more > file`
+> qua SSH stdin; verify bằng `certutil -hashfile MD5` + py_compile file check (python -c inline
+> qua SSH bị cmd cắt chuỗi). Worker LAN chạy ETL bằng **subprocess** mỗi lần → thay file có
+> hiệu lực ngay, KHÔNG cần restart service.
+
+> **Version:** KHÔNG bump (docs + deploy máy LAN — không đụng code web). App tổng 7.7.0 / repo con 11.9.0.
