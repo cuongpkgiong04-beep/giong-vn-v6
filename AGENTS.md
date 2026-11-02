@@ -10627,3 +10627,32 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.7.0** /
 > repo con **11.9.0**.
+
+### GĐ 648 / C.405 (Trợ lý ZCode (máy chủ)): Điều tra TOÀN PHÂN HỆ Upload hóa đơn đầu vào — fix 5 lỗi + E2E browser đầy đủ (2026-11-03)
+
+> **ĐH báo (02/11 22:38):** "kiểm tra phần nạp dữ liệu đã thấy báo lỗi không dùng
+> được" (alert "Lỗi nạp dữ liệu: Invalid character") + lệnh "kiểm tra toàn bộ chức
+> năng". **Kết quả: 5 lỗi thật, đã fix + verify E2E từng chức năng (chi tiết đầy đủ
+> entry C.405 repo con — code `b561b91` + `7f0af18` + entry `8b98d7d`):**
+> 1. "Invalid character" — 2 serverFn gọi fetch `localhost:8777` (không tồn tại trên
+>    Vercel) + `btoa` tên tiếng Việt → **đổi sang INSERT DB trực tiếp** (pattern
+>    createSmedJob).
+> 2. Engine `nap()` check NULL sai → nạp lại cùng kỳ trùng unique index → fix
+>    ISNULL NULL-safe (nạp lại thật: +24 dòng sót, 437 tổng).
+> 3. Agent crash `d,m,y = "".split("/")` khi job check/upload không kèm kỳ → mặc
+>    định hôm nay.
+> 4. Nút "Làm mới" không refetch stats → KPI/tiêu đề không cập nhật.
+> 5. Vòng bù GĐ 557 đòi file với tool DB-only → thêm 5 key hddt-dauvao-* vào
+>    MISA_UPLOAD_REPORTS (job check/upload/nap mới done được).
+
+> **E2E THẬT (browser + SSO local + agent máy chủ) — kiểm TỪNG chức năng:** dropdown
+> nền đục ✓ · lịch ngày ✓ · Nạp dữ liệu → job `E5988518` chạy `SMED_ACTION=nap` ✓ ·
+> bảng 437 dòng ✓ · lọc nhanh NCC 298 — **đối chứng SQL = 298 khớp từng dòng** ✓ ·
+> sticky header ✓ · KPI/tiêu đề động 201 HĐ/437 dòng ✓ · nút Kiểm tra NVL → job
+> `3112951f` "✅ Job xong" 8 giây ✓. **Upload thật (ghi MISA) KHÔNG tự bấm — chờ ĐH
+> dùng thật** (cùng đường ống với Kiểm tra, đã chứng minh).
+
+> **Vận hành:** agent restart 2 lần (chờ Task_03 xong 00:32 + Task_05 không tạo job
+> con mới restart — KHÔNG cắt upload MISA đang chạy). Bài học phụ: preview vite chạy
+> gộp lệnh trong sandbox thiếu env tunnel → UI "Chưa có dữ liệu" giả, không phải lỗi
+> code. **KHÔNG bump (chờ lệnh Push)** — app tổng 7.7.0 / repo con 11.9.0.
