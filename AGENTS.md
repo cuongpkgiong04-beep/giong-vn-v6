@@ -10524,3 +10524,31 @@ repo con **10.1.0**.
 > hiệu lực ngay, KHÔNG cần restart service.
 
 > **Version:** KHÔNG bump (docs + deploy máy LAN — không đụng code web). App tổng 7.7.0 / repo con 11.9.0.
+
+### GĐ 646 / C.400 (Trợ lý ZCode máy chủ): Switch màu xanh/trắng + bật 73 nhóm đã nhãn + CRAWL TIN NHẮN THẬT 1.588 tin (02/11/2026 tối)
+
+> **⛔ ĐỔI SỐ từ GĐ 637 → GĐ 646** (quy tắc GĐ 285): số 637 đã được phiên khác dùng
+> trước (PA Push đợt GĐ 634/C.397, commit `f6ee605`) — nội dung giữ nguyên.
+
+> **ĐH yêu cầu:** (1) Switch "Cập nhật DB" trắng khó nhìn → bật = XANH accent, tắt = trắng viền tối;
+> (2) ĐH đã dán nhãn một loạt nhóm → bật luôn Cập nhật DB cho nhóm đã có nhãn; (3) chạy crawl tin nhắn.
+
+> **Đã làm:**
+> 1. **Switch** (`switch.tsx`, commit `a2b1cc3`, deploy `f1hsv4ko4`): checked = `bg-accent` (#1c6b58)
+>    + thumb trắng; unchecked = `bg-white` + viền `#9fb2aa` + thumb xám #5a6b65. Chủ đạo xanh Gióng.
+> 2. **Bật nhóm theo nhãn** (data-only): UPDATE is_sync_enabled=1 cho 71 nhóm có `purpose_label`
+>    → **73/120 nhóm đang bật** (ĐH tự dán nhãn 73 nhóm: Bán hàng 26 · Mua hàng 12 · Tổng hợp 35).
+> 3. **CRAWL TIN NHẮN — 4 lượt thật trên máy chủ:**
+>    - Lượt 1: 426 tin · 369 file — nhưng **61/73 nhóm miss** (hội thoại ngoài viewport virtual list).
+>    - **Fix: search theo TÊN nhóm** (fallback khi click anim-data-id thất bại — trước search bằng ID
+>      kỹ thuật không bao giờ ra) → lượt 2: +973 tin · +877 file (còn 5 miss).
+>    - Lượt 3: +157 tin · +144 file. Lượt 4 (fix **NBSP** trong tên nhóm — \xa0 làm Zalo search miss,
+>      bài học 13.4): +35 tin · +35 file.
+>    - **TỔNG: 1.588 tin · 1.274 file · 39 tín hiệu giá · 68/73 nhóm có dữ liệu (93%).**
+> 4. **5 nhóm còn miss:** 'ĐẶT ĐƠN HÀNG GIÓNG - BIOVACCINE' · 'Hùng kế toán tiêm chủng Gióng' ·
+>    'THEO DÕI HỢP ĐỒNG GÓI GVN' · 'PGĐ Gióng_Hoàng Minh Châu' · 'Nhóm Gióng Việt Nam' — search
+>    tên vẫn không mở được hội thoại (nghi nằm ở danh sách PHÂN LOẠI riêng của Zalo, không trong
+>    list mặc định). Kế hoạch sau: probe tab Phân loại / mở hội thoại qua URL deep-link.
+
+> **Verify:** DB GiondDB đối chứng COUNT (trên) · UI /zalo tab Tin nhắn + File đính kèm giờ có dữ liệu
+> (loadZaloMessages/loadZaloFiles qua tunnel — cùng nguồn). Version app tổng 7.7.0 / repo con 11.8.0 — KHÔNG bump.
