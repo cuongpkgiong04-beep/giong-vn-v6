@@ -10455,3 +10455,31 @@ repo con **10.1.0**.
 
 > **Version:** app tổng **7.7.0** / repo con **11.9.0** — ĐÃ PUSH + ĐÃ LIVE + agent ĐÃ
 > RESTART nạp code.
+
+### GĐ 642 / C.403 (Trợ lý ZCode (máy chủ)): Fix 3 lỗi ĐH báo 02/11 — 3 báo cáo kho needsData (SMED đổi tên file NXT 6 chữ số) · Đối soát HĐ-XK sai 294 vs 195 (đếm SUM col18 gồm mũi gói) · Task_08 không gửi Zalo (guard chặn oan + thiếu bkccn) (2026-11-02)
+
+> **Đại Ca báo 02/11 tối 3 ảnh; chốt PA-1 cả 3 (chi tiết đầy đủ ở AGENTS.md repo
+> con C.403, code `a88b392`).** Tóm tắt:
+> 1. **SMED đổi tên file NXT Kế toán từ 31/10** (`_1793357818` 10 số → `_000000`
+>    6 số) — regex ETL `\d{7,}` fail → center NULL → 3 báo cáo kho needsData +
+>    19 file/ngày nạp đè còn 1 file (~65 dòng — TH_NXT/KPI tồn kho ngầm chỉ còn
+>    1/19 TT). Fix regex `\d{4,}` + nạp lại 31/10–02/11 trên .34 (xóa 171 dòng
+>    import_log ép rebuild) → 19 file/ngày · ~1.220 dòng · 0 center trống.
+> 2. **Đối soát HĐ-XK KHÔNG trùng lặp** (0 nhóm trùng trong DB) — GĐ 626 đổi
+>    nguồn B sang SUM(col18) BKCCN, col18 = số mũi lượt tiêm (gói nhiều mũi) →
+>    phồng 294 (thực tế 194-195: BKX PX- 194 dòng ×1 mũi · HĐGTGT 190). Fix
+>    cột B = COUNT(1) đếm LƯỢT BÁN → kỳ 02/11 **B=194 C=194 E=190** · kỳ
+>    01/11 B=841. Cột DT SMED giữ nguyên theo PA chốt.
+> 3. **Task_08 không spawn 17/05** — guard dự phòng đếm theo ngày tạo bị bản
+>    test 01:18 hôm nay chặn oan; + Task_08 thiếu tự tải bkccn (GĐ 626 đổi
+>    nguồn) → 01/11 17:05 ERROR không tới bước Zalo. Fix guard python-parse
+>    config.date (theo KỲ) + src_map +bkccn → **Task_08 kỳ 02/11 tự spawn
+>    19:50 → done 19:54 — gửi Zalo 'My Documents' OK 19:54:36** (ảnh kỳ
+>    02/11 đã tới ĐH).
+
+> **Verify:** compile 3 file · regex 6/6 PASS · dsxk thật 02/11/01/11 đúng số ·
+> 3 báo cáo kho × 3 kỳ 9/9 OK (19 cột TT) · Task_08 self-heal + Zalo OK ·
+> restart GIONG_SMED_Agent (api_server + tunnel giữ nguyên).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng 7.7.0 /
+> repo con 11.9.0.
