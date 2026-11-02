@@ -10363,3 +10363,29 @@ repo con **10.1.0**.
 >   timeout (E2E trước push: TD ts + PY 16 OK).
 
 > **Version:** app tổng **7.7.0** / repo con **11.8.1** — ĐÃ PUSH + LIVE (không bump — agent-side + docs).
+
+### GĐ 640 / C.401 (Trợ lý ZCode (máy chủ)): Điều chỉnh 6 điểm trang UPLOAD Hóa đơn đầu vào theo ĐH + fix bug SMED_ACTION dry-run (2026-11-02)
+
+> **ĐH yêu cầu (02/11, 3 ảnh):** (1) dropdown "kính trong" hạn chế tầm nhìn; (2) chọn
+> khoảng ngày kèm lịch; (3.1) cột NCC rộng gấp 2 + MST tách riêng; (3.2) bộ lọc tiêu đề +
+> header cố định + dữ liệu cuộn trong bảng; (3.3) cố định Hành động/Chú thích dưới;
+> (4) tiêu đề + KPI động theo kỳ; (5) khung chọn thời gian Nạp dữ liệu; (6) hướng dẫn
+> chi tiết. **ĐH chốt:** lọc PA-A 4 cột (NCC · MST · Số HĐ · Tên hàng) · Hành động/Chú
+> thích PA-A · duyệt fix SMED_ACTION · duyệt khung Nạp.
+
+> **Đã làm (repo con `b83e97a` + entry `66d99a2` — 4 file +364/−59):** SelectContent
+> `bg-popover`→`bg-surface` (GỐC: theme thiếu `--color-popover` → nền trong suốt) · 4 ô
+> ngày type=date (ISO→dd/mm chuẩn) · tách NCC (280px) + MST riêng · lọc 4 cột server-side
+> LIKE debounce 500ms · header sticky 2 hàng trên khung cuộn duy nhất max-h-70vh (bảng
+> thủ công — lồng 2 lớp overflow phá sticky) · phân trang luôn dưới khung · tiêu đề động
+> từ summary MIN/MAX kỳ (hết hardcode 194/413) · Card "Nạp dữ liệu từ MIA TOOL" + serverFn
+> `triggerHddtNap` (job `hddt-dauvao-nap` mode nap — engine đã có action nap sẵn) · khung
+> Hướng dẫn 7 bước gập/mở. Chi tiết đầy đủ entry C.401 repo con.
+
+> **⚠️ BUG PHÁT HIỆN + FIX (ĐH duyệt Câu 3):** `40_web_agent.py` không set `SMED_ACTION`
+> → engine mặc định dry-run ⇒ nút **Upload từ web CHƯA TỪNG ghi thật qua job**. Fix: set
+> `SMED_ACTION` theo mode + `SMED_LOAI` từ suffix report + REPORT_MAP thêm
+> `hddt-dauvao-nap`. **Cần restart agent sau Push.**
+
+> **Verify:** tsc 0 · py_compile OK · build 0 · preview 8101 SSR 200 đủ tính năng mới,
+> không lỗi. **KHÔNG bump (chờ lệnh Push)** — app tổng 7.7.0 / repo con 11.8.1.
