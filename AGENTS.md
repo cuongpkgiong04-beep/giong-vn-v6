@@ -10594,3 +10594,36 @@ repo con **10.1.0**.
 > **✅ Verify production 4/4:** app tổng **7.7.0** · app con **11.9.0** (giữ nguyên) · login
 > `sign-in/email` → Phạm Kiên Cường ✅ · `get-session` ✅ · SSO → 302 + bh_session ✅ ·
 > `/api/auth/me` → SuperAdmin + 97 mod ✅.
+
+### GĐ 647 / C.404 (Trợ lý ZCode (máy chủ)): Hộp KPI "XUẤT VẮC XIN" thành 3 TẦNG — Thống kê xuất kho theo trung tâm → Chi tiết xuất kho 1 trung tâm (2026-11-02)
+
+> **Yêu cầu của ĐH (02/11, kèm ảnh minh họa bước 1):** bấm hộp KPI "XUẤT VẮC XIN" →
+> (1) chi tiết theo loại phiếu GIỮ NGUYÊN ("là ổn rồi"); (2) bấm 1 DÒNG loại phiếu →
+> bảng **"Thống kê xuất kho theo trung tâm"** (STT · Ngày tháng · Trung tâm tên đầy
+> đủ dạng "Trung tâm TC Gióng Long Biên" · Số lượng Vắc xin xuất kho · Giá trị tiền
+> xuất kho); (3) bấm 1 DÒNG trung tâm → bảng **"Chi tiết xuất kho - Trung tâm…"**
+> (STT · Ngày tháng · Trung tâm viết tắt BH/CĐ/TT · Vắc xin xuất kho · Số tiền xuất
+> kho — "làm giống Bảng chi tiết lượt tiêm của hộp KPI LƯỢT TIÊM"). Mọi bảng: dòng
+> tiêu đề + dòng Tổng cộng CỐ ĐỊNH khi cuộn, KHÔNG được trong suốt, ĐỒNG NHẤT màu sắc.
+
+> **Đã làm (repo con code `8b38445` + entry `cd9c22c` — chi tiết đầy đủ ở AGENTS.md
+> repo con C.404):** 2 serverFn MỚI `loadOverviewXuatByCenter` (bước 2 — 1 dòng/trung
+> tâm tổng cả kỳ, tên đầy đủ từ `dbo.centers` pattern GĐ 222/469) +
+> `loadOverviewXuatCenterDetail` (bước 3 — 200 nhóm Ngày × Vắc xin mới nhất + tổng
+> toàn kỳ); điều kiện lọc ĐÚNG như tầng 1 nên TỔNG CỘNG khớp từng đồng với dòng loại
+> phiếu bước 1. UI: thay tầng 2 cũ (GĐ 493) bằng 2 tầng mới + nút quay lại từng tầng
+> (pattern Lượt tiêm GĐ 469: `bankSelected`/`shotsCenter`), reset cả 3 tầng khi đóng
+> dialog. Sticky/màu theo yêu cầu ĐH: thead + tfoot cùng nền ĐỤC `bg-surface-2`
+> (#e8eeeb) + `z-20`; `<th>` bỏ `whitespace-nowrap` + nới colgroup (2 tiêu đề dài
+> từng ĐÈ CHỮ lên nhau — bắt qua ảnh E2E rồi sửa).
+
+> **Verify:** tsc EXIT 0 · probe GiongDB kỳ 02/11: PX-SD 195 liều / 129.995.071 (tầng 1)
+> → LB 27 liều / 22.255.329 (bước 2) → bước 3 của LB 8 nhóm tổng 22.255.329 (khớp
+> bước 2), bước 2 TỔNG CỘNG 195 / 129.995.071 khớp tầng 1 từng đồng · E2E preview
+> local 8102 (phiên Admin): 3 tầng đúng cột + tên TT đầy đủ, nút quay lại từng tầng,
+> đóng/mở lại về bước 1; ảnh chụp xác nhận tiêu đề + TỔNG CỘNG cố định, nền đục đồng
+> nhất. Lưu ý: `job-labels.test.ts` FAIL SẴN (thiếu nhãn `dc-hoadon-banhang`,
+> `dc-xuat-kho` — code GĐ 588/C.375 phiên khác) — không liên quan GĐ 647.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.7.0** /
+> repo con **11.9.0**.
