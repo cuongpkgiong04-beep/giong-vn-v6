@@ -10584,4 +10584,13 @@ repo con **10.1.0**.
 > — MAC hiện tại: ghi từ ipconfig /all từng máy khi cần. Em không có quyền truy cập router
 > (192.168.1.1) nên phần này nhờ ĐH.
 
-> **Version:** KHÔNG bump (deploy máy + docs — không đụng code web). App tổng 7.7.0 / repo con 11.9.0.
+> **PA Push GĐ 645 (lệnh ĐH "Push" 02/11 tối):** rà trùng sạch — commit của phiên này (GĐ 645
+> claim+entry+unlock) + commit phiên Zalo đã XONG (GĐ 646/C.400 docs app tổng · GĐ 637/C.400
+> crawl lượt 2-4 `zalo_sync.py` repo con — agent-side, không đụng web) · file sửa dở của phiên
+> khác KHÔNG đụng (misa_hddt_dauvao.py / -hddt-dauvao.ts / task_runner.py worktree CLI...).
+> Env Vercel 2 app đủ 6/4 biến. **KHÔNG bump** — docs + agent-side Python (tiền lệ GĐ 422/638).
+> Push: app tổng `8951979..075b80d` (5 commit) · repo con `264ee38..b1f06aa`.
+>
+> **✅ Verify production 4/4:** app tổng **7.7.0** · app con **11.9.0** (giữ nguyên) · login
+> `sign-in/email` → Phạm Kiên Cường ✅ · `get-session` ✅ · SSO → 302 + bh_session ✅ ·
+> `/api/auth/me` → SuperAdmin + 97 mod ✅.
