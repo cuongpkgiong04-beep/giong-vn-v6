@@ -10813,6 +10813,31 @@ repo con **10.1.0**.
 > = RUNNING · worker .11 = RUNNING với env `MISA_SA_UPLOAD=excel` + file `misa_banhang_api.py`
 > MD5 khớp local `f971018b73e79b137de4c3e81954a555` (đã gồm lưới an toàn API).
 
+> **PHỤ LỤC 3 — PA-2 (ĐH chốt 03/11 chiều): BẢNG CHUẨN MISA cho 4 đường upload + xem theo
+> từng lượt.** Yêu cầu ĐH: sau download → DB → **tạo bảng chuẩn theo MISA AMIS** dùng cho
+> Upload + ghi sổ tự động; xem lại được từ khung **"Lịch sử upload MISA"**; **cả 2 cách chạy**
+> (thủ công theo báo cáo · tự động theo Task cuối ngày) đều phải có bảng để theo dõi.
+> ĐH chốt **PA-2** (mỗi đường 1 bảng riêng, cột = cột file Excel MISA) + kiểu xem **bấm 1
+> lượt → xem bảng dòng của lượt đó**.
+>
+> **Rà hiện trạng:** chỉ "Hóa đơn đầu vào" đã đúng mô hình (`misa_hddt_upload_line`);
+> 3 đường kia chỉ có bảng trạng thái MỨC PHIẾU — dòng hàng theo cột MISA không được lưu.
+>
+> **Đã làm (repo con `9f5c001` + entry `a7c26f2`):** 3 bảng mới `misa_pu_upload_line` ·
+> `misa_xk_upload_line` · `misa_sa_upload_line` (1 dòng hàng = 1 dòng: cột tra cứu +
+> `data_json` = cả dòng đúng thứ tự cột MISA + trạng thái `moi/da_upload/da_ghi_so/loi` +
+> refno/refid + **run_id** = mã lượt) + `run_id` cho bảng hddt; module dùng chung
+> `misa_upload_line.py` (MERGE giữ trạng thái); 3 builder ghi bảng ngay khi sinh Excel;
+> agent truyền `SMED_JOB_ID`; web app con thêm server fn `loadUploadLines` + nút
+> **"Xem bảng upload MISA"** trong khung lịch sử (bấm 1 lượt → bảng dòng của lượt đó).
+>
+> **Kiểm chứng:** ghi/đọc/cập nhật trạng thái 3 bảng bằng dữ liệu tổng hợp (29/45/26 cột)
+> rồi dọn sạch · test cũ 65+86+22+4 PASS · tsc EXIT 0 · build EXIT 0 · **deploy LAN 3 máy**
+> (.11 · .245 · .14) qua `scripts/_gd614_deploy_lan.py` — hash khớp, py_compile OK, service RUNNING.
+>
+> **Còn lại:** UI chỉ hiện trên production SAU khi Push (Vercel deploy); các lượt upload
+> TRƯỚC hôm nay không có dòng trong bảng chuẩn (bắt đầu ghi từ lượt kế tiếp).
+
 ### GĐ 650 (Trợ lý ZCode (máy chủ)): Chuyển 2 nhân sự (Nguyễn Thị Thúy + Hoàng Minh Châu) từ Admin → User trong GiongDB (2026-11-03)
 
 > **Yêu cầu của ĐH (03/11 — ảnh chụp trang /admin/permissions):** chuyển 2 nhân sự
