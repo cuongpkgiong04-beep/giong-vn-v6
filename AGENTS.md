@@ -10896,7 +10896,8 @@ repo con **10.1.0**.
 > → chạy kỳ 01/11→30/11 → cột **Trung tâm đủ mã TT** + có dòng **BCG-TCDV** (345
 > dòng) + nhãn "nguồn GiongDB · 3 ngày (01/11/2026→03/11/2026)".
 
-> **Còn lại (việc sau):** (a) `18_TH_Chietkhau.py` cũng đọc A1 lấy mã TT → với A1
-> mới ra mã sai "VN" (cần rà xem còn dùng không); (b) các builder đọc **FILE** khác
+> **Còn lại (việc sau):** (a) `18_TH_Chietkhau.py` (tool cũ, đọc mã TT từ A1) — ĐÃ RÀ:
+> KHÔNG còn được gọi ở đâu (không có trong REPORT_MAP/TOOLS của agent) → chỉ rủi ro nếu
+> chạy TAY; báo cáo chiết khấu hiện lấy `stg_8BCCK` qua ETL (center_from_name đã fix GĐ 642); (b) các builder đọc **FILE** khác
 > (blth/tkkh/gdtvx…) cũng có nguy cơ thiếu khi job chạy trên máy LAN (file không về
 > máy chủ) — nên rà + chuyển dần sang GiongDB; (c) ngày 03/11 thiếu 1 TT (ĐY) trong DB.
