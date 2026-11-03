@@ -10656,3 +10656,47 @@ repo con **10.1.0**.
 > con mới restart — KHÔNG cắt upload MISA đang chạy). Bài học phụ: preview vite chạy
 > gộp lệnh trong sandbox thiếu env tunnel → UI "Chưa có dữ liệu" giả, không phải lỗi
 > code. **KHÔNG bump (chờ lệnh Push)** — app tổng 7.7.0 / repo con 11.9.0.
+
+### GĐ 647 (PA Push — bổ sung): ĐÃ PUSH + LIVE — app tổng giữ **7.7.0** (docs-only) · repo con bump **12.0.0** (2026-11-03)
+
+> **Lệnh "Push" của ĐH (03/11).** Rà trùng lặp theo nguyên tắc 3: nhánh phụ
+> `main..agent-cli` + `main..pipeline-work` **RỖNG cả 2 repo** (0 commit chưa merge);
+> KHÔNG add file nào của phiên khác (working tree còn `_pa1_fetch.py` +
+> `mia_detail_cache.sqlite3` của việc khác — không đụng). Commit chờ push gồm công
+> việc của 2 PHIÊN nhưng **KHÁC FILE — không sửa đè**: phiên này = GĐ 647/C.404
+> (`overview-dashboard.tsx` + `src/routes/api/-overview.ts`); phiên song song =
+> GĐ 648/C.405 (`up-hoadon-dauvao.tsx`, `-hddt-dauvao.ts`, `misa_hddt_dauvao.py`,
+> `40_web_agent.py`).
+
+> **Verify env Vercel TRƯỚC push (GĐ 470 mục A):** app tổng đủ 6 biến
+> (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL · TUNNEL_GIST_ID ·
+> BETTER_AUTH_SECRET · BETTER_AUTH_URL) · app con đủ 5 biến (DATABASE_URL ·
+> APP_JWT_SECRET · TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · ZAI_API_KEY).
+
+> **Bump (chỉ làm lúc Push — quy tắc ĐA AGENT):** repo con có CODE WEB (feature
+> hộp KPI Xuất Vắc Xin 3 tầng + fix toàn phân hệ up-hoadon-dauvao) → MINOR
+> **11.9.0 → 12.0.0** (hệ 1 chữ số: minor 9 +1 nhớ sang MAJOR — KHÔNG phải 11.10.0)
+> — sửa `apps/banhang/package.json` + `DEFAULT_VERSION` app-shell.tsx, commit
+> `4fd9908`, tsc EXIT 0 sau bump. **App tổng giữ 7.7.0** — đợt này 100% docs
+> (entry/registry), tiền lệ GĐ 417/645.
+
+> **Push:** repo con `e45b92d..4fd9908` (6 commit: C.404 code `8b38445` + entry
+> `cd9c22c` · C.405 code `b561b91`/`7f0af18` + entry `8b98d7d` + bump `4fd9908`) ·
+> app tổng `80896cf..0f40884` (5 commit docs: GĐ 647 `d6b5758`/`eaee519` +
+> GĐ 648 ×3).
+
+> **✅ Verify production 4/4 (GĐ 470 mục B):** `curl --compressed` lần đầu app tổng
+> **7.7.0** · app con **12.0.0** (deploy mới, không ghim deployment cũ) · login app
+> tổng → `user: Phạm Kiên Cường` ✅ · get-session ✅ · **SSO luồng thật** (đăng nhập
+> app tổng → bấm "Bán hàng" ở sidebar → tab app con vào THẲNG dashboard với phiên
+> SuperAdmin · VP, KHÔNG hiện "Chưa đăng nhập") ✅ · `/api/auth/me` app con → HTTP
+> 200 + SuperAdmin ✅.
+
+> **✅ Test luôn tính năng mới trên production 12.0.0:** kỳ "Hôm qua" (02/11) → hộp
+> **XUẤT VẮC XIN** → bấm dòng "Xuất tiêm (PX-SD)" → bảng "Thống kê xuất kho theo
+> trung tâm" (TỔNG CỘNG 195 liều · 129.995.071 — khớp tầng 1 từng đồng) → bấm
+> "Trung tâm TC Gióng Long Biên" → bảng "Chi tiết xuất kho - Trung tâm TC Gióng
+> Long Biên" 8 dòng + TỔNG CỘNG **22.255.329** (khớp probe GiongDB) — 3 tầng chạy
+> đúng trên production.
+
+> **Version:** app tổng **7.7.0** / repo con **12.0.0** — ĐÃ PUSH + ĐÃ LIVE.
