@@ -10764,3 +10764,39 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.7.0** /
 > repo con **12.0.0**.
+
+### GĐ 650 (Trợ lý ZCode (máy chủ)): Chuyển 2 nhân sự (Nguyễn Thị Thúy + Hoàng Minh Châu) từ Admin → User trong GiongDB (2026-11-03)
+
+> **Yêu cầu của ĐH (03/11 — ảnh chụp trang /admin/permissions):** chuyển 2 nhân sự
+> Nguyễn Thị Thúy + Hoàng Minh Châu từ Admin thành User "để anh có thể phân quyền
+> xem dữ liệu như mọi người".
+
+> **Bối cảnh phát hiện (đúng lý do ĐH yêu cầu — cấu hình tắt sẵn đang BỊ VÔ HIỆU):**
+> 2 người ĐÃ có cấu hình phân quyền tắt sẵn trong bảng `module_access` (Thúy:
+> `banhang/bienbanhop/zalo=false` cập nhật 02/11 22:08; Châu: `banhang=false` từ
+> 22/09) nhưng KHÔNG có hiệu lực vì role Admin — `getDefaultModuleAccess`
+> (permissions.ts:266) cho Admin đủ MỌI quyền cứng và `getEffectiveModuleAccess`
+> (dòng 292) return true luôn cho Admin, bỏ qua override. Chuyển role → User thì
+> các cấu hình này mới có tác dụng.
+
+> **Đã làm (data-only — KHÔNG sửa code):**
+> `UPDATE dbo.employees SET role='User' WHERE email IN ('thuynvy218@gmail.com',
+> 'hoangminhchau2631960@gmail.com')` — 2 dòng affected. Giữ nguyên: Phạm Kiên Cường
+> SuperAdmin (e...003) · Phạm Cường Admin (e...004) · Nguyễn Thị Mỹ Hạnh Admin
+> (e...006).
+
+> **Verify (2 lớp bằng chứng):** (1) SQL trực tiếp GiongDB: đúng 2 dòng role='User',
+> 3 dòng admin còn lại nguyên trạng; (2) **production thật** — browser mở
+> giong-vn-v6.vercel.app → đăng nhập ĐH → /admin/permissions: hiện đúng
+> "Nguyễn Thị Thúy · Ban giám đốc · **User**" + "Hoàng Minh Châu · Ban giám đốc ·
+> **User**" (ảnh chụp màn hình lưu trong phiên). Nguồn role: bảng `employees` GiongDB
+> (Better Auth `user` KHÔNG có cột role — đã kiểm INFORMATION_SCHEMA; SSO JWT gửi
+> role này sang app con — sso-token.ts:91).
+
+> **Hệ quả cho ĐH biết:** sau khi thành User, 2 người vẫn mặc định đủ 12 module cơ
+> bản (tổng quan · chấm công · check-in · nhiệm vụ · đề nghị · nhân sự · trung tâm ·
+> hồ sơ · báo cáo · ghi chú · chat · hướng dẫn); Bán hàng / Zalo / Biên bản họp /
+> Preview Mobile TẮT theo override sẵn có. ĐH bật lại từng mục trong trang Phân quyền
+> khi cần. Họ không còn vào được 2 trang admin (Phân quyền / Duyệt đăng ký).
+
+> **Version:** KHÔNG bump (data-only). App tổng **7.7.0** / repo con **12.0.0**.
