@@ -10762,8 +10762,47 @@ repo con **10.1.0**.
 > thiếu — 3 phân hệ kia đã tự động ghi sổ); (4) sửa DB lệch trạng thái do job chết
 > ở bước dọn tab.
 
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.7.0** /
-> repo con **12.0.0**.
+ (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.7.0** / repo con **12.1.0**.
+>
+> **PHỤ LỤC 03/11 (chiều) — HOÀN TẤT 4 PHẦN ĐH DUYỆT (lệnh: "làm tất cả các phần
+> 1,2,3,4 sau đó Push và restart server, agents"):**
+>
+> **(3) GHI SỔ cho "Upload hóa đơn đầu vào" — code mới, kiểm chứng THẬT:** `misa_hddt_dauvao.py`
+> +`_detail_pu`/`_ghi_so_1_phieu` (đọc edit_version + reftype THẬT → ledger/post) +
+> `ghi_so(loai, dry-run)` idempotent (`da_upload` → `da_ghi_so`) + `upload()` tự ghi sổ khi
+> `MISA_AUTO_POST=1` (`40_web_agent.py` set cho job `hddt-dauvao-*`) + CLI `ghi-so`; lưu
+> `refno_misa` khi sinh Excel để tra đúng refid. **Bằng chứng:** ghi sổ phiếu mua vào TỒN
+> từ 28/10 (`PN-20261028113249` · GIGAMED · 10.385.207đ) → đọc lại `is_posted_finance=True`.
+> (3 dòng hóa đơn đầu vào ĐH đã hạch toán hiện bị MISA từ chối vì **mã hàng/kho chưa có
+> trong danh mục** — ĐH sửa mã rồi Upload.)
+>
+> **(4) SỬA DB LỆCH TRẠNG THÁI — script mới `gd649_fix_trang_thai.py`:** rà theo TỪNG NGÀY
+> (1 lần gọi danh sách MISA/ngày) → dòng MISA ĐÃ CÓ mà DB nói chưa → is_uploaded/is_posted/refid.
+> Chạy thật 01/10→03/11: **sửa 31 dòng** (gồm 8 phiếu TT TD 02/11 — job sáng nay chết ở khâu
+> dọn tab CDP nên DB thiếu; màn hình hết báo thiếu oan), giữ nguyên 474 dòng (chặn bởi dữ
+> liệu nguồn — xử lý tay).
+>
+> **(2) BẬT ĐƯỜNG EXCEL CHO PRODUCTION:** deploy `misa_banhang_api.py` +
+> `gd649_fix_trang_thai.py` sang máy bán hàng **THÀNH-PC (192.168.1.11)** — MD5 khớp
+> `f971018b73e79b137de4c3e81954a555` + py_compile OK; thêm `set MISA_SA_UPLOAD=excel` vào
+> `C:\CUONG_2026\giong-worker	hanhpc.env.bat`; đặt `MISA_SA_UPLOAD=excel` cho service
+> **`GIONG_SMED_Agent`** máy chủ (nhóm core cứu hộ — `nssm set AppEnvironmentExtra`, giữ đủ
+> 8 biến cũ); restart `GIONG_SMED_Worker` trên .11 → RUNNING. Kèm **LƯỚI AN TOÀN**: đường
+> Excel không ghi được → job TỰ ĐỘNG quay về đường API save_full.
+>
+> **(1) LƯỢT GHI THẬT ĐẦU TIÊN — CHƯA CHẠY ĐƯỢC 03/11 vì không có dữ liệu đủ điều kiện**
+> (đã rà từng nhóm, bằng chứng): mọi phiếu đẩy được đã lên MISA; phiếu tồn bị chặn bởi DỮ
+> LIỆU NGUỒN (5 phiếu TĐ 21/10 + 4 ĐX 27/10 + 1 QO 25/10: "Lịch sử gửi HĐ thiếu khối data";
+> 17–20/10 "Số HĐ BKCT trùng/miss" / "hàng không khớp MISA"; hôm nay chưa có số HĐ vì
+> BKCT/BKCCN về đêm). ⇒ **KHÔNG tạo chứng từ thử** trên sổ sách thật. **Lượt ghi thật đầu
+> tiên = Task_06 đêm nay (03/11)** (BKCT/BKCCN đã về) — kiểm chứng hôm sau: log job có
+> `📄 … import Excel …` + `✅ … Excel → MISA`, KHÔNG có `↩️` (fallback) = đường Excel chạy trơn.
+>
+> **Push đợt này:** app tổng (docs + bằng chứng) · repo con `41b8e2c`→`1985a02` (code + entry
+> + **bump 12.0.0 → 12.1.0**). Rà trùng lặp: remote 2 repo 0 commit mới; phiên khác đang làm
+> GĐ 650 (chỉ registry — khác phạm vi); file phiên khác trong working tree (`_pa1_fetch.py`,
+> cache sqlite) → KHÔNG add. **Restart:** GIONG_SMED_Agent (máy chủ) + api_server +
+> GIONG_SMED_Worker (.11).
 
 ### GĐ 650 (Trợ lý ZCode (máy chủ)): Chuyển 2 nhân sự (Nguyễn Thị Thúy + Hoàng Minh Châu) từ Admin → User trong GiongDB (2026-11-03)
 
