@@ -30,7 +30,11 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 REPO = Path(r"D:/DuLieuChung/CUONG_2026/giong-vn-v6")
 REPO_CON = REPO / "giong-apps"
 HEAD = ""          # trống = lấy HEAD hiện tại của repo con (GĐ 649 PA-2 deploy)
-COMMON = ["40_web_agent.py"]
+# GĐ 651 (03/11/2026): + gd348-build-lht-ds.py (builder bảng LHT — hook trong
+# 40_web_agent.py gọi build_rows_from_db; máy .11/.245 KHÔNG có file, .14 có bản
+# cũ ⇒ job lht-report rơi vào máy LAN sẽ vỡ) + etl/sql_reports.py (nguồn GiongDB
+# cho builder + bảng 'trả nợ theo lịch hẹn'; cả 3 máy đang cũ hơn HEAD).
+COMMON = ["40_web_agent.py", "gd348-build-lht-ds.py", "etl/sql_reports.py"]
 BY_MACHINE = {
     "14": ["smed_api.py", "_pa1_fetch.py"],
     "245": ["misa_muahang_api.py", "misa_xuatkho_import.py", "misa_xuatkho_api_run.py",
