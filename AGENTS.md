@@ -10801,8 +10801,17 @@ repo con **10.1.0**.
 > **Push đợt này:** app tổng (docs + bằng chứng) · repo con `41b8e2c`→`1985a02` (code + entry
 > + **bump 12.0.0 → 12.1.0**). Rà trùng lặp: remote 2 repo 0 commit mới; phiên khác đang làm
 > GĐ 650 (chỉ registry — khác phạm vi); file phiên khác trong working tree (`_pa1_fetch.py`,
-> cache sqlite) → KHÔNG add. **Restart:** GIONG_SMED_Agent (máy chủ) + api_server +
-> GIONG_SMED_Worker (.11).
+> **Restart:** GIONG_SMED_Agent (máy chủ — nạp env mới) + GIONG_API_Server + GIONG_SMED_Worker (.11 — env + code mới).
+>
+> **✅ VERIFY SAU PUSH/RESTART (03/11 16:2x):** app tổng HTTP 200 · **login thật OK** ·
+> get-session OK · app con **12.1.0** HTTP 200 · **SSO** ký JWT (iss/aud chuẩn) → 302 về
+> app con + Set-Cookie `bh_session` · `/api/auth/me` 200 (SuperAdmin + 14 nhóm quyền) ·
+> env Vercel 2 app ĐỦ (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL ·
+> BETTER_AUTH_SECRET/URL · ZAI_API_KEY) · **api_server restart → TUNNEL ĐỔI URL**
+> (smooth-restoration-fancy-movies.trycloudflare.com) — **gist tự cập nhật 16:12** ✓
+> (app đọc gist khi URL env chết) · service máy chủ `GIONG_SMED_Agent` + `GIONG_API_Server`
+> = RUNNING · worker .11 = RUNNING với env `MISA_SA_UPLOAD=excel` + file `misa_banhang_api.py`
+> MD5 khớp local `f971018b73e79b137de4c3e81954a555` (đã gồm lưới an toàn API).
 
 ### GĐ 650 (Trợ lý ZCode (máy chủ)): Chuyển 2 nhân sự (Nguyễn Thị Thúy + Hoàng Minh Châu) từ Admin → User trong GiongDB (2026-11-03)
 
