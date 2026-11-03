@@ -10835,8 +10835,24 @@ repo con **10.1.0**.
 > rồi dọn sạch · test cũ 65+86+22+4 PASS · tsc EXIT 0 · build EXIT 0 · **deploy LAN 3 máy**
 > (.11 · .245 · .14) qua `scripts/_gd614_deploy_lan.py` — hash khớp, py_compile OK, service RUNNING.
 >
-> **Còn lại:** UI chỉ hiện trên production SAU khi Push (Vercel deploy); các lượt upload
-> TRƯỚC hôm nay không có dòng trong bảng chuẩn (bắt đầu ghi từ lượt kế tiếp).
+> **Còn lại:** các lượt upload TRƯỚC hôm nay không có dòng trong bảng chuẩn (bắt đầu ghi
+> từ lượt kế tiếp). ĐH chốt 03/11: **CHƯA cần thêm Task cuối ngày cho phân hệ "Hóa đơn
+> đầu vào"** (vẫn chạy thủ công).
+>
+> **PA PUSH + RESTART (ĐH lệnh 03/11 tối):** rà trùng lặp — nhánh phụ 3 nhánh RỖNG cả 2
+> repo, remote 0 commit mới; đợt này gộp cả **GĐ 651/C.407 của phiên song song** (bảng
+> "Danh sách lịch hẹn tiêm" nguồn GiongDB — khác file, không sửa đè). File sửa dở của
+> phiên khác (AGENT_REGISTRY.md · `_gd556/_gd557_*.py` · cache sqlite · lan_tray.py) →
+> KHÔNG add. **Bump repo con 12.1.0 → 12.2.0** (minor). **Push:** repo con `1985a02..8db703c`
+> · app tổng `5f9fad3..0cdc571`. **KHÔNG bump app tổng** (đợt này app tổng chỉ docs +
+> script công cụ) — giữ **7.7.0**.
+>
+> **✅ VERIFY SAU PUSH/RESTART — PASS 4/4:** app con **12.2.0** LIVE · app tổng 7.7.0 HTTP 200 ·
+> **login thật OK** + get-session OK · **SSO** ký JWT → 302 về app con + `Set-Cookie: bh_session`
+> · `/api/auth/me` 200 (SuperAdmin + nhóm quyền). **Restart:** `GIONG_SMED_Agent` +
+> `GIONG_API_Server` (máy chủ) = RUNNING; 3 máy LAN (.11/.245/.14) worker đã restart ngay
+> trong lượt deploy = RUNNING. **Tunnel đổi URL** (consumers-drama-accompanied-membrane.
+> trycloudflare.com) — **gist tự cập nhật 22:14** ✓.
 
 ### GĐ 650 (Trợ lý ZCode (máy chủ)): Chuyển 2 nhân sự (Nguyễn Thị Thúy + Hoàng Minh Châu) từ Admin → User trong GiongDB (2026-11-03)
 
