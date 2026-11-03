@@ -10700,3 +10700,67 @@ repo con **10.1.0**.
 > đúng trên production.
 
 > **Version:** app tổng **7.7.0** / repo con **12.0.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 649 / C.406 (Trợ lý ZCode — máy chủ): PA-1 ĐH chốt 03/11 — Hóa đơn GTGT bán hàng chuyển sang UPLOAD BẰNG EXCEL (mẫu MISA "Bán hàng hóa" refType 3530) + đính chính kết luận GĐ 569 (2026-11-03)
+
+> **Yêu cầu của Đại ca (03/11):** nghiên cứu đồng nhất upload MISA cho 4 phân hệ;
+> ĐH xác nhận mua hàng/xuất kho dùng Excel, bán hàng đi đường khác, và **muốn bán
+> hàng cũng upload bằng file Excel cho 1 ngày hoặc chu kỳ** (3 bước: sinh Excel từ
+> DB → dùng công cụ nhập khẩu Excel của MISA → ghi sổ luôn). Em trình bày hiện trạng
+> 4 đường upload + 3 phương án ⇒ **ĐH chốt PA-1**.
+
+> **PHÁT HIỆN THEN CHỐT — đính chính GĐ 569 (bằng chứng thật, không suy đoán):**
+> MISA AMIS **CÓ** mẫu nhập khẩu Excel cho CHỨNG TỪ BÁN HÀNG:
+> `refType=3530 · tableName=sa_voucher` — dòng **"Bán hàng hóa"** trong
+> `GET /g2/api/import/v1/import/types` (124 loại; kèm 3570 Bán hàng dịch vụ ·
+> 3560 Hóa đơn bán hàng · 3540 trả lại · 3550 giảm giá). GĐ 569 kết luận "bán hàng
+> không có template" vì **tìm mã `353`** (enum `RefTypeCategory`, quét dải 300–360) —
+> **mã nhập khẩu là 4 chữ số 3530**, ngoài dải đã quét. Bằng chứng bundle giao diện
+> MISA (tải công khai từ CDN — CHỈ đọc, không đăng nhập): enum
+> `RefTypeCategory.SAVoucher:353` · wizard nhập khẩu có nhánh riêng cho SAVoucher
+> (`i18nSA.SAVoucher.SAVoucherImportTitle`, cross-sell "import-receipt") · endpoint
+> `/import/types` liệt kê loại khả dụng. Lưu tại **`artifacts/misa-nhap-khau-ban-hang/`**
+> (README + 3 chunk JS của MISA) để phiên sau kiểm chứng lại.
+
+> **CÔNG THỨC FILE EXCEL bán hàng — 29 cột, MISA GHÉP THEO TÊN CỘT (không theo vị trí),
+> đã kiểm chứng bằng step3 4/4 hợp lệ:** Hình thức bán hàng (để TRỐNG) · Phương thức
+> thanh toán ("Thu tiền ngay - Tiền mặt"/"... - Chuyển khoản"/"Chưa thu tiền") ·
+> Kiêm phiếu xuất kho = "Không" (GĐ 471 ĐH chốt) ⇒ Số phiếu xuất PHẢI trống ·
+> Lập kèm hóa đơn = "Có" · Ngày hạch toán · Ngày chứng từ · Số phiếu nhập (= số chứng
+> từ, ≤20) · Mã nhà cung cấp (→ Mã KH, để trống) · Tên nhà cung cấp (→ Tên KH) ·
+> Diễn giải · Ký hiệu HĐ · Số hóa đơn (phải KHÁC NHAU trong file) · Ngày hóa đơn ·
+> Trường mở rộng 1 · Mã hàng · Tên hàng · Kho · Vị trí · ĐVT · Số lượng · % thuế GTGT ·
+> Đơn giá · Thành tiền · Tỷ lệ CK (%) · Số lô · Hạn sử dụng · Đơn vị · Mã thống kê.
+> (Giá trị hợp lệ đọc trực tiếp từ trường `description` MISA công bố ở step2.)
+
+> **ĐÃ LÀM:** repo con **`41b8e2c`** — `misa_banhang_api.py` +270 dòng: chế độ excel
+> (`--excel` / env `MISA_SA_UPLOAD=excel`; **mặc định vẫn `api`** để không đổi
+> production khi chưa chạy thật) — dựng dòng Excel từ CHÍNH payload save_full (không
+> lệch nguồn) → 1 file/trung tâm/ngày → `import_excel(3530)` → tìm refid theo số CT →
+> kiểm chứng số dòng/tổng tiền → ghi tham chiếu hóa đơn → ghi sổ → cập nhật
+> `sm_banhang_phieu`; **bỏ qua phiếu đã có trên MISA** (idempotent); `--dry-run` vẫn
+> sinh file để kiểm chứng bằng step3 mà không ghi. Entry đầy đủ ở **C.406 AGENTS.md
+> repo con** (commit docs `9c68426`).
+
+> **KIỂM CHỨNG:** step2 → 29 cột ghép đúng · step3 file thử **4/4 hợp lệ** · file THẬT
+> (02/11 TT TD, 8 phiếu/8 dòng) → step3 **8/8 không lỗi nội dung** (chỉ "Số chứng từ đã
+> tồn tại" vì đã đẩy trước đó — đúng kỳ vọng) · chạy thật 27/10 ĐX + 25/10 QO: bỏ qua
+> toàn bộ phiếu đã có, KHÔNG tạo trùng. Lượt GHI thật đầu tiên chưa thực hiện được vì
+> hôm nay **không còn phiếu nào đủ điều kiện** (mọi phiếu upload được đã lên MISA;
+> phiếu tồn bị chặn bởi lỗi DỮ LIỆU NGUỒN SMED "Lịch sử gửi HĐ thiếu khối data").
+
+> **PHÁT HIỆN KÈM (cần ĐH biết):** 2 job bán hàng sáng nay (07:57 + 08:12, máy .34
+> thanh-pc) **đã tạo đủ dữ liệu 02/11 nhưng bị đánh ERROR** vì Chrome CDP chết ở khâu
+> đóng tab (`ECONNREFUSED ::1:9222` / WS timeout) ⇒ DB kịp ghi 148/156, 8 phiếu TT TD
+> còn `is_uploaded=0` dù **đã có thật trên MISA** (em đã đối chứng bằng danh sách MISA).
+> Hệ quả: màn hình báo "TT TD thiếu 8" oan. Cần script rà + sửa trạng thái các ngày
+> (02/11 TD 8 · 30/10 QO 1 · 29/10 LB 1…) và xử lý lỗi tab-guard khi job đã xong việc.
+
+> **VIỆC CÒN LẠI:** (1) chạy GHI THẬT đầu tiên khi có dữ liệu mới (đêm nay Task_06);
+> (2) deploy `misa_banhang_api.py` xuống .34 + đặt env `MISA_SA_UPLOAD=excel` để bật
+> cho production; (3) bổ sung **ghi sổ cho phân hệ "Upload hóa đơn đầu vào"** (đang
+> thiếu — 3 phân hệ kia đã tự động ghi sổ); (4) sửa DB lệch trạng thái do job chết
+> ở bước dọn tab.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.7.0** /
+> repo con **12.0.0**.
