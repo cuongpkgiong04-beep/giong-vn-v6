@@ -10848,3 +10848,55 @@ repo con **10.1.0**.
 > khi cần. Họ không còn vào được 2 trang admin (Phân quyền / Duyệt đăng ký).
 
 > **Version:** KHÔNG bump (data-only). App tổng **7.7.0** / repo con **12.0.0**.
+
+### GĐ 651 / C.407 (Trợ lý ZCode — máy chủ): PA-1 ĐH chốt 03/11 — bảng "Danh sách lịch hẹn tiêm" lấy nguồn **GiongDB** `stg_9LHT` theo kỳ (sửa 2 lỗi ĐH báo sau khi chạy báo cáo kỳ 11/2026) (2026-11-03)
+
+> **ĐH báo (03/11, 2 ảnh):** (1) cột **Trung tâm** của bảng "Danh sách lịch hẹn
+> tiêm" **mất sạch dữ liệu** (báo cáo lần trước có); (2) dữ liệu **KHÔNG đủ** —
+> không có vắc xin **BCG-TCDV** trong khi SMED có (ảnh tab Lịch hẹn tiêm 03/11).
+
+> **Chẩn đoán (probe thật trên máy chủ .250):**
+> 1. **SMED đổi mẫu export**: ô **A1** cả 19 file = `CÔNG TY CỔ PHẦN GIONG VIỆT
+>    NAM` (tên công ty) thay vì tên trung tâm → builder map mã TT **0/19** → cột
+>    Trung tâm rỗng. Folder cũ `2026-10-01` (báo cáo lần trước) A1 còn tên TT →
+>    đủ 19 mã. Tên trung tâm VẪN còn trong **TÊN FILE** (`DanhSachLichHenTiem_<TÊN
+>    TT>_0000NN.xlsx`).
+> 2. **Nguồn tải đổi CẢ KỲ → TỪNG NGÀY**: job 08/10 = kỳ 01/10→31/10 (1 folder
+>    chứa cả tháng: 19.989 dòng/31 ngày/436 dòng BCG); **từ 09/10** mọi job LHT
+>    `date_from = date_to` → folder `2026-11-01` = 1.155 dòng **toàn ngày 01/11**.
+>    Builder chỉ đọc **1 folder** (= ngày bắt đầu kỳ) → báo cáo kỳ 01/11→30/11 chỉ
+>    có 1.155 dòng gốc (1.726 sau tách), **0 dòng BCG-TCDV**; folder 02/11 bị bỏ qua.
+> 3. **GiongDB ĐÃ ĐỦ**: `stg_9LHT` 01/11 = 1.155 · 02/11 = 1.094 · **03/11 = 1.198
+>    (345 dòng BCG-TCDV**, 18/19 TT) — ETL nạp thẳng từ **máy LAN** (.34 thanh-pc,
+>    .27 lan-1…) nên DB đủ dù FILE không về máy chủ (job LAN ghi ổ C của máy đó).
+>    Đối chứng 8 khách trong ảnh SMED (Bế Vũ Minh Anh · Bùi Diệu Huyền · Đặng Gia
+>    Khôi · Đặng Khánh Duy · Ầu Ngọc Ánh · Đặng Thị Thanh Huyền · Bùi Hoàng Anh ·
+>    Đặng Thị Hoa — LB, hẹn 03/11) → **có ĐỦ từng người trong DB**.
+
+> **ĐH chốt PA-1** (nguồn GiongDB) sau khi em trình 3 phương án. Đã làm — repo con
+> `adb750b` (code) + `ea1d54f` (entry):
+> 1. `agent/gd348-build-lht-ds.py`: + `_center_from_filename()` (fallback mã TT từ
+>    TÊN FILE, `build_all` truyền vào) + **`build_rows_from_db(df, dt)`** đọc
+>    `dbo.stg_9LHT` theo `report_date` trong kỳ + `_db_rows_to_ds_rows()` (thuần,
+>    tái dùng `expand_row` tách nhiều vắc xin) + `db_label(meta)`.
+> 2. `agent/40_web_agent.py::run_lht_report_task`: **nguồn chính = GiongDB**, DB
+>    rỗng/lỗi → **fallback đường file** như trước (job không chết); meta thêm
+>    `source`; bảng "Danh sách trả nợ theo lịch hẹn tiêm" (C.249/C.254) chạy trên
+>    rows mới.
+> 3. `src/components/report-result-table.tsx`: `dataLoadedAt` bắt đầu "nguồn "
+>    hiển thị nguyên văn (bỏ tiền tố "nạp lúc") — nguồn file giữ như cũ.
+
+> **Verify (dữ liệu THẬT, gọi đúng hàm builder trên máy chủ):** kỳ 01/11→30/11 →
+> **3.447 dòng gốc · 5.045 dòng sau tách · 3 ngày (01→03/11) · 19 TT · 0 dòng
+> trống mã TT · 345 dòng BCG-TCDV** (khớp SQL đếm độc lập từng số) · bảng "Danh
+> sách trả nợ theo lịch hẹn tiêm" **26 dòng / 32 mũi / 28.364.000 đ** (trước 9
+> dòng vì lịch hẹn chỉ có 01/11) · unit **29/29 PASS** · tsc **EXIT 0**.
+
+> **Tiêu chí kiểm chứng (ĐH):** BÁO CÁO MARKETING → **5. Danh sách lịch hẹn tiêm**
+> → chạy kỳ 01/11→30/11 → cột **Trung tâm đủ mã TT** + có dòng **BCG-TCDV** (345
+> dòng) + nhãn "nguồn GiongDB · 3 ngày (01/11/2026→03/11/2026)".
+
+> **Còn lại (việc sau):** (a) `18_TH_Chietkhau.py` cũng đọc A1 lấy mã TT → với A1
+> mới ra mã sai "VN" (cần rà xem còn dùng không); (b) các builder đọc **FILE** khác
+> (blth/tkkh/gdtvx…) cũng có nguy cơ thiếu khi job chạy trên máy LAN (file không về
+> máy chủ) — nên rà + chuyển dần sang GiongDB; (c) ngày 03/11 thiếu 1 TT (ĐY) trong DB.
