@@ -10937,6 +10937,52 @@ repo con **10.1.0**.
 > → chạy kỳ 01/11→30/11 → cột **Trung tâm đủ mã TT** + có dòng **BCG-TCDV** (345
 > dòng) + nhãn "nguồn GiongDB · 3 ngày (01/11/2026→03/11/2026)".
 
+### GĐ 651 phụ lục (Trợ lý ZCode — máy chủ): PA Push 03/11 + 2 việc ĐH giao — tải bù LHT 03/11 (ĐY không có lịch hẹn) · rà báo cáo đọc file (đều dùng GiongDB) · deploy LAN 3 máy + verify production 5/5 (2026-11-03)
+
+> **ĐH giao 3 việc (03/11 tối):** (1) tải bù ngày 03/11 (thiếu TT ĐY) — "anh cần
+> đủ"; (2) rà các báo cáo còn đọc file (BLTH/TKKH/GDTVX…) cùng rủi ro như bảng
+> LHT; (3) Push + rà trùng lặp + bump + verify production.
+
+> **(1) Tải bù 03/11 — ĐÃ CHẠY; kết luận: không thiếu dữ liệu.** Job tải bù
+> `59EAB2CD` (hentiem 03/11→03/11, chạy trên .11) → 19/19 file OK; ETL nạp lại →
+> DB vẫn 18 TT vì **Đông Yên (ĐY) ngày 03/11 KHÔNG có lịch hẹn nào trên SMED**:
+> file export 5.021 bytes = mức "0 dòng", so với 5.232 / 5.199 / 5.444 bytes =
+> 1 / 1 / 3 dòng (khớp DB từng ngày). ĐY là trung tâm nhỏ — 7/15 ngày gần đây
+> cũng trống (21-23/10, 28-29/10, 31/10). ⇒ Báo cáo thiếu ĐY ngày 03/11 là ĐÚNG
+> thực tế, không phải lỗi tải.
+
+> **(2) Rà báo cáo đọc file — KHÔNG còn báo cáo nào phụ thuộc file OUTPUT.**
+> `etl/sql_reports.py` (mọi query_key + TXDS) thuần GiongDB (pyodbc — các nhắc
+> "OUTPUT\..." chỉ là ghi chú nguồn gốc ETL); `run_txds_task` → `etl/txds_report.py`
+> = pyodbc; các tool cũ `6_BC_TX-DS` / `12_KHO_KT_TH_NXT` / `13_MKT_TIEMHO` /
+> `18_TH_Chietkhau` / `21_DS_DT_XK` / `24_BCCNKhachDtruoc` chỉ còn là **tham chiếu
+> trong comment**, không nằm trong luồng job (REPORT_MAP/TOOLS). ⇒ Bảng "Danh sách
+> lịch hẹn tiêm" là báo cáo CUỐI CÙNG đọc file — đã chuyển nguồn GiongDB hôm nay.
+
+> **(3) Push + deploy LAN + verify.**
+> - ⚠️ **Phát hiện và xử lý: code LHT chưa đồng bộ xuống máy LAN** — hook mới đã
+>   có trên 3 máy (deploy 22:01) nhưng `gd348-build-lht-ds.py`: .11/.245 **KHÔNG
+>   có file**, .14 **bản cũ** ⇒ job `lht-report` rơi vào máy LAN sẽ vỡ. Đã thêm 2
+>   file vào `scripts/_gd614_deploy_lan.py` (COMMON: `gd348-build-lht-ds.py` +
+>   `etl/sql_reports.py`) và chạy deploy: **3/3 máy hash khớp HEAD · service
+>   RUNNING · py_compile OK** (commit `f696a21`).
+> - Push: repo con `8db703c` — phiên khác đã bump **12.1.0 → 12.2.0** cho đợt này
+>   (ghi rõ "fix bảng Danh sách lịch hẹn tiêm nguồn GiongDB") ⇒ **không bump lại**;
+>   app tổng `f696a21` (chore deploy) — app tổng giữ **7.7.0** (code nghiệp vụ nằm
+>   ở repo con; đợt app tổng chỉ có docs + script deploy).
+> - Rà trùng lặp (GĐ 607): 0 nhánh phụ có commit; remote 0 commit lạ; file sửa dở
+>   của phiên khác trong worktree (AGENT_REGISTRY.md + 5 script deploy LAN khác) —
+>   KHÔNG đụng.
+> - **✅ Verify production (quy trình GĐ 470):** env Vercel 2 app ĐỦ (DATABASE_URL ·
+>   APP_JWT_SECRET · TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · BETTER_AUTH_SECRET/URL ·
+>   ZAI_API_KEY) · version: app tổng **7.7.0** · app con **12.2.0** · **LOGIN thật
+>   ✅** · get-session ✅ · **SSO sang app con 302 + Set-Cookie `bh_session` ✅** ·
+>   `/api/auth/me` 200 (user + quyền) ✅ · trang `/m/bc-lich-hen` 200 ✅ — **5/5 PASS**.
+
+> **Tiêu chí kiểm chứng (ĐH):** mở app con → BÁO CÁO MARKETING → 5. Danh sách lịch
+> hẹn tiêm → chạy kỳ 01/11→30/11 → 5.045 dòng · cột Trung tâm đủ mã · có BCG-TCDV
+> (345 dòng) · nhãn "nguồn GiongDB · 3 ngày (01/11/2026→03/11/2026)".
+
 > **Còn lại (việc sau):** (a) `18_TH_Chietkhau.py` (tool cũ, đọc mã TT từ A1) — ĐÃ RÀ:
 > KHÔNG còn được gọi ở đâu (không có trong REPORT_MAP/TOOLS của agent) → chỉ rủi ro nếu
 > chạy TAY; báo cáo chiết khấu hiện lấy `stg_8BCCK` qua ETL (center_from_name đã fix GĐ 642); (b) các builder đọc **FILE** khác
