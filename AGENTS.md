@@ -11041,8 +11041,22 @@ repo con **10.1.0**.
 > (GĐ 603/648 thêm hddt-dauvao-* mà chưa cập nhật test đó — diff C.409 không
 > đụng 2 mục này, đối chứng grep diff = 0).
 
-> **Deploy:** 5 file xuống máy chủ + 3 máy LAN (MD5 khớp HEAD) + restart khi
-> rảnh — kết quả ghi bổ sung trong entry này.
+> **Deploy:** 6 file (mở rộng misa_muahang_api.py — fix SMED nhãn login
+> `34349be`) xuống máy chủ + 3 máy LAN — MD5 khớp HEAD · 4/4 service RUNNING
+> (.245/.14/11 + máy chủ; máy .34 deploy TỰ ĐỘNG khi rảnh qua --wait-idle).
+
+> **PHỤ LỤC KẾT QUẢ (04/11 chiều) — PA-3 bù kỳ 03/11 HOÀN TẤT 32/32 phiếu:**
+> khi bù phát hiện SMED đổi nhãn login ('Tên người dùng hoặc email' → 'Tên Đăng
+> Nhập') → fix fallback 2 nhãn trong builder mua hàng + deploy .245 → mua hàng
+> lượt 2: **19 phiếu tạo + ghi sổ 19/19** · 13 phiếu check 'invalid?' = MISA
+> hiển thị TRỄ (lượt 3 xác nhận 32/32 đã có) → đối chứng độc lập pu_list MISA
+> (19 ghi sổ/13 chưa) → **ghi sổ bù 13/13** → **verify cuối: 32/32 phiếu kỳ
+> 03/11 trên MISA đã ghi sổ, 0 chưa** (SMED stg_5BKN col4 = 32 phiếu — khớp).
+> Xuất kho 03/11: SMED 0 phiếu (hợp lệ) + phiên HTTP tự lấy lại từ Chrome OK.
+> ⚠️ Tồn đọng báo ĐH: (1) 29 file agent còn locator SMED cũ — chết dần khi
+> cookie hết hạn, cần làm lại đợt fix 03/11 (phiên riêng); (2) check sau import
+> báo oan 'invalid?' khi MISA hiển thị trễ → nên thêm chờ/retry; (3) 29 phiếu
+> xuất kho cũ chờ ghi sổ (nhóm A GĐ 563) cần rà riêng.
 
 > **PA-1 (phần ĐH):** đăng nhập lại MISA .245 1 lần (nhập mã SMS) + đổi kênh
 > OTP về EMAIL → keepalive tự giữ phiên như trước GĐ 587. **PA-3:** ĐH đăng
