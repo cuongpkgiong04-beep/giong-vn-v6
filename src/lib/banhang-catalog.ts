@@ -131,6 +131,8 @@ export const BH_GROUPS: BhGroup[] = [
     label: "DỮ LIỆU TỪ SMED - KHO",
     leaves: [
       { to: "/m/kho-nhap", label: "Bảng kê nhập kho" },
+      // GĐ 669/C.420 — Bảng kê nhập VTTH, CCDC (2 tài khoản văn phòng)
+      { to: "/m/kho-nhap-vtth", label: "Bảng kê nhập VTTH, CCDC" },
       { to: "/m/kho-xuat", label: "Bảng kê xuất kho" },
       { to: "/m/kho-xnt", label: "Báo cáo nhập xuất tồn - Kế toán" },
     ],
@@ -178,6 +180,8 @@ export const BH_GROUPS: BhGroup[] = [
       // GĐ C.68 (23/09/2026 — yêu cầu Đại ca): thứ tự 1→7 mới + 3 module mới
       // (ma trận nhập/xuất + kiểm kê cuối tháng) — ĐỒNG BỘ nav.ts repo con.
       { to: "/m/bc-nhap-kho", label: "Báo cáo nhập kho" },
+      // GĐ 669/C.420 — Báo cáo nhập kho VTTH-CCDC
+      { to: "/m/bc-nhap-vtth", label: "Báo cáo nhập kho VTTH-CCDC" },
       { to: "/m/bc-xuat-kho", label: "Báo cáo xuất kho" },
       { to: "/m/bc-xuat-huy", label: "Báo cáo xuất hủy" },
       { to: "/m/bc-tonkho-luong", label: "Báo cáo tồn kho theo lượng" },
@@ -223,6 +227,8 @@ export const BH_GROUPS: BhGroup[] = [
     leaves: [
       { to: "/m/up-hoadon-gtgt", label: "UPLOAD Hóa đơn GTGT bán hàng" },
       { to: "/m/up-nhap-kho", label: "UPLOAD Chứng từ mua hàng" },
+      // GĐ 669/C.420 — UPLOAD Chứng từ mua VTTH, CCDC
+      { to: "/m/up-mua-vtth", label: "UPLOAD Chứng từ mua VTTH, CCDC" },
       { to: "/m/up-xuat-kho", label: "UPLOAD Phiếu xuất kho" },
       { to: "/m/up-tecombank", label: "UPLOAD Ngân hàng TECOMBANK" },
       { to: "/m/up-tpbank", label: "UPLOAD Ngân hàng TPBANK" },
