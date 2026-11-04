@@ -11188,3 +11188,48 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump chờ lệnh Push (web đụng 3 file — component/lib/test
 > app con; builder agent-side). App tổng **7.7.0** / repo con **12.2.0**.
+
+### GĐ 660 / C.414 (Trợ lý ZCode (máy chủ)): Fix 2 lỗi ĐH báo 11:37 — chip vàng "chưa có dữ liệu kỳ này" OAN + bảng chính kiểm kê Nhập kho trống (2026-11-04)
+
+> **ĐH báo (04/11 11:37):** (1) dữ liệu đã tải đủ mà chip vẫn VÀNG "Báo cáo NXT -
+> Kế toán (SMED — kiểm kê cuối kỳ) — chưa có dữ liệu kỳ này"; đúng ra phải hiện
+> "dữ liệu được nạp lúc … giờ" (kiểm tra luôn các báo cáo khác); (2) bảng chính
+> "Chạy báo cáo kiểm kê từ dữ liệu SQL" cột **Nhập kho trống toàn bộ** + dòng
+> Tổng cộng cũng trống; (3) căn chỉnh Mã hàng/HSD/Nhận xét chưa thấy đổi.
+>
+> **Vấn đề 3 — KHÔNG phải lỗi code:** các thay đổi đó là code WEB (app con,
+> GĐ 658) — **chưa Push nên production chưa có**; Đơn giá đã hiện vì là builder
+> agent-side đã deploy. Cần lệnh "Push" của ĐH → deploy Vercel → mới thấy.
+>
+> **Vấn đề 1 — GỐC RỄ tìm bằng probe thật:** `loadSourceFreshness`
+> (src/routes/api/-smed.ts) nhánh FALLBACK (mọi báo cáo 1 nguồn đi nhánh này)
+> truyền params `[rc, d2, d1, d2]` nhưng SQL dùng `report_date >= $2 and <= $3`
+> → **khoảng ngày bị ĐẢO** (>= date_to AND <= date_from) → query rỗng → mx
+> null → client hiện chip vàng. Chứng minh bằng /query thật: params CŨ →
+> `mx: None`; params MỚI `[rc, d1, d2, d2]` → `mx: '2026-11-04 12:36:17'`.
+> Sửa: params `[rc,d1,d2,d2]` + nhánh union `hasRows(t, pn+1)` (sinh ($pn+2,
+> $pn+3) = (d1,d2) — bản cũ (d2,d1) đảo cho nguồn snap) + stale/tpbExported
+> dùng $4 (=date_to). **Probe 7 nguồn đại diện** (5BKN/6BKX/4BKCCN/7BCNXT/
+> 2DTTDT/1HDDT/GDTVX snap) → MỌI nguồn mx non-null + stale '0' → chip xanh
+> "nạp lúc HH:mm" cho toàn bộ báo cáo. Test canh hồi quy mới
+> `smed-freshness-params.test.ts` **7/7 PASS** (giữ cặp placeholder ↔ params).
+>
+> **Vấn đề 2 — builder bảng chính gom KỲ** (`kiem_ke_cuoi_ky`,
+> etl/sql_reports.py): trước đây bảng chính chỉ lấy SNAPSHOT NGÀY MỚI NHẤT của
+> lô → Nhập/Xuất = phát sinh 1 ngày cuối (≈0 → ẨN 0 → cột trống toàn bộ + tổng
+> trống). Sửa: tái dùng NGUYÊN `_kiem_ke_detail_rows` (gom kỳ — GĐ 658 có
+> price_ref) rồi map sang cột bảng chính → 2 bảng nhất quán tuyệt đối; chỉ hiện
+> lô còn tồn (giữ GĐ C.68). Cấu trúc cũ giữ nguyên — BN/bảng phụ không đổi tên
+> cột. gd591 **27/27** (T8 cập nhật: bảng phụ TD Đầu 40/Nhập 20/Xuất 8/Cuối 62).
+>
+> **Verify end-to-end (job thật e4f71531 13:5x 04/11, kỳ 01/10→31/10):** bảng
+> chính **1.205 dòng — 386 dòng có Nhập kho** + totals **Đầu 26.351 · Nhập
+> 13.543 · Xuất 8.955 · Cuối 30.939 · GT 13.411.219.864**; chi tiết **225 dòng
+> SL cuối = 0 VẪN có Đơn giá** (yêu cầu GĐ 658 #3). Đối chứng nguồn: Σ col8
+> toàn kỳ = 13.795 > 13.543 (bảng chính chỉ lô còn tồn — đúng logic).
+>
+> **Deploy:** builder `sql_reports.py` hash `180899533b1c41e6` xuống 3 máy LAN
+> (.14/.11/.245 — hash khớp, service Running) + máy chủ restart 13:5x ✓ (job
+> verify chạy bằng builder mới). **Web (-smed.ts + test) chờ lệnh Push.**
+>
+> **Version:** KHÔNG bump chờ lệnh Push. App tổng **7.7.0** / repo con **12.2.0**.
