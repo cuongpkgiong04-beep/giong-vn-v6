@@ -477,3 +477,4 @@ hết trạng thái "phát hiện trùng rồi mới xử lý".
 | GĐ 662 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | ⛔ CẤP THỪA — claim --cx cấp cả 2 dải cho cùng 1 việc, nội dung gộp vào GĐ 660 / C.414 (không có entry riêng) | giong-apps/AGENTS.md entry |
 | GĐ 664 / C.416 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | ✅ PA Push đợt 04/11 (lệnh ĐH): GĐ 654/656/658/660 — bump repo con 12.2.1 + push 2 repo + verify production | 2 repo + entry Push · ✅ HOÀN TẤT (commit `5043d2f`) |
 | GĐ 665 / C.417 (Trợ lý Freebuff) | Trợ lý Freebuff | ✅ Báo cáo nhập kho: thêm cột Số hóa đơn + bảng tổng hợp theo hóa đơn (PA-1) | agent/etl/sql_reports.py, apps/banhang/src/routes/m/bc-nhap-kho.tsx · ✅ HOÀN TẤT (commit `2be850b`) |
+| GĐ 666 / C.418 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | 🔒 Fix SMED locator cũ cho 29 file còn lại (Mục 1 GĐ 661) — helper dùng chung + script tự động thay + verify E2E | smed_resilient_helpers.py + 29 file tool SMED/MISA + test + deploy |
