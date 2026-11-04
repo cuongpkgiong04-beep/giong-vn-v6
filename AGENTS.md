@@ -11382,3 +11382,37 @@ repo con **10.1.0**.
 > 22:12. Chi tiết ở entry C.424 AGENTS.md repo con (commit `51a8016`).
 
 > **Version:** KHÔNG bump (agent-side). App tổng **7.8.0** / repo con **12.3.1**.
+
+### GĐ 669 / C.420 (Trợ lý Freebuff): Quy trình nhập kho VTTH-CCDC trọn bộ — Bảng kê nhập VTTH-CCDC (SMED 2 user VP) + Báo cáo + UPLOAD Chứng từ mua VTTH-CCDC (2026-11-04)
+
+> **Yêu cầu của ĐH (04/11) + chốt:** PA-1 tách 3 module riêng · kho MISA
+> "VP" · TK Nợ 152/153 · bảng kê có cột Số hóa đơn. Em probe chốt bằng
+> chứng thật: API thuần `theKho/GetAllBangKeNhapKho` + id CÔNG TY từ
+> `cosotiemchungInfo` (user_16 → 10699 · user_3 → 11030 — không hardcode);
+> 3 TT domain tcgiongts = TD/HM/QO; kỳ gộp user_16 65 dòng VTTH kho VP
+> 32.484.203, user_3 rỗng hợp lệ; `inventory_account` danh mục MISA =
+> TK gốc (VTTH 152_BH) → **TK kho VTTH = 152_VP/153_VP** tự động.
+
+> **Đã làm (app tổng `4c87105` · repo con `81fc085` — chi tiết đầy đủ ở
+> entry C.420 AGENTS.md repo con):** 3 module MỚI /m/kho-nhap-vtth (tool
+> `4_smed_NHAPKHO_VTTH.py` API thuần 2 user VP → 2 file OUTPUT/5.BKNV,
+> expected 2) · /m/bc-nhap-vtth (builders nkv-by-date + nkv-tonghop-hoadon
+> trên stg_5BKNV — bảng đã tạo GiondDB; ETL 5BKNV center 'VP'/'VP-TS',
+> nạp đè theo ngày thật) · /m/up-mua-vtth (tool
+> `misa_muahang_vtth_api(_run).py` — kho VP, TK 152_VP/153_VP, import HTTP
+> thuần, ghi sổ tự động, misa_pu_upload_line) + phân quyền 3 điểm đủ cả 2
+> repo + job-labels (bổ sung hộ 3 nhãn sót GĐ 665/588 — test GĐ 530 chặn).
+
+> **Verify:** chạy thật tool download kỳ 01/10→03/11 2/2 file (32.484.203
+> khớp từng đồng) · ETL + builder khớp nguồn · dry-run tool mua VTTH:
+> scrape phiếu thật + Excel kho=VP · TK kho=152_VP · TT 788.400 khớp ·
+> hàng "Cốc giấy dùng 1 lần" tự tạo MISA (ĐVT "Cái") · NCC "NHẬT VIỆT"
+> chưa có danh sách → phiếu bỏ đúng luồng (**CHỜ ĐH BỔ SUNG NCC**) ·
+> tsc 2 repo 0 · npm test PASS · deploy 3 máy LAN + restart agent máy chủ
+> (script `scripts/gd669_deploy_lan.py`) — KHÔNG restart api_server (giữ
+> tunnel; job VTTH tạm chạy core, phân vai .245 khi restart api_server
+> lúc rảnh). **Minh bạch:** GĐ 673 commit hộ 8 dòng VTTH của em trong
+> task_runner.py (51a8016 — nguyên trạng) · registry GĐ 668 ⛔ claim nhầm.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.8.0** / repo con
+> **12.3.1**.
