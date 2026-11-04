@@ -11287,7 +11287,7 @@ repo con **10.1.0**.
 > chứng từ và Tên hàng hóa; (2) bảng "Báo cáo nhập kho tổng hợp theo hóa đơn" đặt
 > BÊN TRÊN bảng chạy báo cáo — 12 cột. ĐH chốt PA-1 + PA-1a (Chi phí mua hàng /
 > Giá trị nhập kho = 0 tạm, ETL sau); Ngày hạch toán = ngày lập phiếu SMED (col3),
-> Ngày chứng từ = ngày hóa đơn (misa_phieu_status.inv_date).
+> **Đính chính (04/11 tối theo ĐH):** "Ngày hạch toán" + "Ngày chứng từ" = ngày chứng từ nhập SMED (col3); "Ngày hóa đơn" = ngày HĐ NCC (misa_phieu_status.inv_date — phiếu chưa đẩy MISA trống; bảng kê 5BKN không chép ngày HĐ); "Số hóa đơn" loại khỏi Subtotal (subtotalExcludeCols — chuỗi mã 0 đầu bị cộng oan 760.627). Commit fix `e4e5db9`.
 
 > **Bằng chứng:** 5BKN col5 = Số HĐ NCC; Σ col14 = MISA total_amount khớp từng đồng;
 > kỳ 10/2026: 362 HĐ ↔ 362 CT (1-1). **Fix 1 lần (ĐH báo không thấy bảng mới):**
