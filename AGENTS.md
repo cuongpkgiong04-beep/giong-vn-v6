@@ -10854,6 +10854,24 @@ repo con **10.1.0**.
 > trong lượt deploy = RUNNING. **Tunnel đổi URL** (consumers-drama-accompanied-membrane.
 > trycloudflare.com) — **gist tự cập nhật 22:14** ✓.
 
+> **PHỤ LỤC 5 — SỰ CỐ "bảng chuẩn không có dòng" (ĐH báo 04/11 sáng) + ĐÃ KHẮC PHỤC:**
+> **Nguyên nhân gốc (bằng chứng log job 01:19 trên .11):** dòng `set MISA_SA_UPLOAD=excel`
+> bị nối vào **SAU** dòng khởi động `worker_node.py` trong `thanhpc.env.bat` — worker chạy
+> vô hạn nên dòng set KHÔNG bao giờ thực thi ⇒ env không tới tool ⇒ bán hàng đêm chạy
+> đường API cũ ⇒ `misa_sa_upload_line` trống. **Đã sửa:** chuyển dòng set lên trước
+> (dòng 10, sau WORKER_GROUPS) + restart worker .11 + probe trên máy: `sa_upload_mode()
+> = excel ✓` (file `gd649_probe_mode.py`).
+> **Backfill 2 lượt gần nhất (đọc lại CHI TIẾT TỪ MISA — chỉ HTTP):**
+> `gd649_backfill_sa.py --date 03/11/2026 --run-id 11D59687-11D7-4875-8360-493733C30763
+> --date 02/11/2026 --run-id 64A70732-…` → **182 dòng (03/11) + 189 dòng (02/11) = 371
+> dòng 'Đã ghi sổ'**, đủ 29 cột MISA ⇒ bấm 2 lượt này trong "Lịch sử upload MISA" thấy
+> bảng ngay. Lượt cũ hơn vẫn không có (bảng bắt đầu ghi từ lượt kế tiếp).
+> **Hiện trạng đêm 03→04/11 (lỗi hạ tầng, KHÔNG phải bảng chuẩn):** mua hàng 03/11
+> (15 phiếu) + xuất kho đêm LỖI **"misa headers" / không lấy được phiên HTTP** — mất
+> phiên MISA/Chrome CDP trên máy LAN ban đêm ⇒ chưa đẩy; **cần chạy lại 03/11 mua hàng +
+> xuất kho** khi phiên ổn định (bảng chuẩn tự có dòng khi lượt upload thành công). hddt:
+> chưa upload (3 dòng bị chặn danh mục — chờ ĐH sửa mã hàng/kho).
+
 ### GĐ 650 (Trợ lý ZCode (máy chủ)): Chuyển 2 nhân sự (Nguyễn Thị Thúy + Hoàng Minh Châu) từ Admin → User trong GiongDB (2026-11-03)
 
 > **Yêu cầu của ĐH (03/11 — ảnh chụp trang /admin/permissions):** chuyển 2 nhân sự
