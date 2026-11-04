@@ -11280,3 +11280,24 @@ repo con **10.1.0**.
 > lại để có số mới).
 >
 > **Version:** app tổng **7.7.0** (giữ) / repo con **12.2.1** — ĐÃ PUSH + LIVE.
+
+### GĐ 665 / C.417 (Trợ lý Freebuff): Báo cáo nhập kho — cột Số hóa đơn + bảng tổng hợp theo hóa đơn (04/11/2026)
+
+> **Yêu cầu của Đại ca (04/11, ảnh /m/bc-nhap-kho):** (1) cột "Số hóa đơn" giữa Số
+> chứng từ và Tên hàng hóa; (2) bảng "Báo cáo nhập kho tổng hợp theo hóa đơn" đặt
+> BÊN TRÊN bảng chạy báo cáo — 12 cột. ĐH chốt PA-1 + PA-1a (Chi phí mua hàng /
+> Giá trị nhập kho = 0 tạm, ETL sau); Ngày hạch toán = ngày lập phiếu SMED (col3),
+> Ngày chứng từ = ngày hóa đơn (misa_phieu_status.inv_date).
+
+> **Bằng chứng:** 5BKN col5 = Số HĐ NCC; Σ col14 = MISA total_amount khớp từng đồng;
+> kỳ 10/2026: 362 HĐ ↔ 362 CT (1-1). **Fix 1 lần (ĐH báo không thấy bảng mới):**
+> bản đầu builder mới đứng rời (query key riêng) nhưng trang chỉ chạy job
+> nk-by-date → không job nào gọi key mới → bảng mới không hiện. Fix: trang 2
+> SqlDataModule độc lập (tổng hợp TRÊN + chi tiết DƯỚI) + STT ROW_NUMBER + 3 điểm
+> phân quyền web (SOURCES_BY_QUERY · QUERY_GROUP banhang-kho · QUERY_LEAF).
+
+> **Verify (kỳ 10/2026):** 362 dòng · STT 1→362 · tổng 6.844.823.708 = Σ col14
+> chi tiết khớp từng đồng · tsc 0 · build PASS. Chi tiết đầy đủ ở entry C.417
+> AGENTS.md repo con (commit `fa33008`).
+
+> **Version:** KHÔNG bump. App tổng **7.7.0** / repo con **12.2.1**.
