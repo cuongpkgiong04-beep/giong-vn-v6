@@ -11051,3 +11051,44 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (agent-side Python — không nằm trong bundle web,
 > precedent GĐ 422). App tổng **7.7.0** / repo con **12.2.0**.
+
+### GĐ 654 / C.410 (Trợ lý ZCode (máy chủ)): Điều tra + khôi phục báo cáo kiểm kê cuối tháng kỳ 10 kẹt "Chờ tải dữ liệu" ~70 phút (04/11/2026)
+
+> **ĐH báo 08:46:** báo cáo kiểm kê cuối tháng 01/10→31/10 chạy ~15 phút chưa xong,
+> máy .14 thấy "nhiều chấm xanh". Em tra job thật trong GiongDB:
+>
+> **Chuỗi sự cố (bằng chứng job + log thật):**
+> 1. ĐH bấm báo cáo kiểm kê tick "Tải dữ liệu mới nhất" 08:17 → hệ tạo job nguồn
+>    xnkt `1AB84945` (kỳ 01/10→31/10, máy thanh-pc/.11) + job chờ `91856E06`.
+> 2. Tool PA-1 `_pa1_fetch` (API SMED) tải THẬT đủ: log 2 lượt kết thúc
+>    "✅ PA-1 XONG: 589 file · 36.694 dòng · 0 trung tâm lỗi" — dữ liệu nạp
+>    GiongDB **stg_7BCNXT tháng 10 = 37.283 dòng · đủ 31 ngày · đủ 19 TT**.
+> 3. **GỐC RỄ:** file Excel bị tool ghi LỆCH CẤP THƯ MỤC — mọi ngày 02→30/10
+>    lồng trong `OUTPUT.BCNXT_KT6-10-016-10-XX\` (agent truyền
+>    day_dir = folder có ngày làm out_root → tool nhánh out_root_has_date ghi
+>    lồng) → agent đếm file ở chỗ của mình thấy **0/19**.
+> 4. Vòng bù GĐ 557 (FILL_MAX_ROUNDS=2) "chạy lại cả bộ" ×2 — mỗi lượt ~24 phút
+>    (589 lượt tải lại từ SMED vô ích) → 09:28 job nguồn error oan
+>    "THIẾU FILE sau 3 lần chạy: 0/19" → report_wake tự tạo lượt 4 (`618CFAA7`)
+>    chạy tiếp — vòng lặp sẽ còn ~50 phút nữa mới báo LỖI cho job kiểm kê.
+>
+> **Khôi phục (09:31–09:39, dữ liệu không đụng lại):** hủy lượt 4 (cancelRequested
+> qua heartbeat) → đánh 2 job nguồn `done` theo nguồn sự thật DB (đã đối chứng
+> stg_7BCNXT) → tạo job sqlreport `kiem-ke` chạy thẳng SQL từ GiongDB:
+> **`F1C02C29` DONE 7 giây — 1.205 dòng lô còn tồn · 18 TT** (1 TT hết tồn);
+> job chờ cũ `91856E06` → `cancelled` kèm lý do minh bạch trong lịch sử.
+> Job kích hoạt wake: `1837F233` (tonkho-niem-yet 03/11, 6 giây).
+>
+> **Máy .14 "nhiều chấm xanh":** 7 process tray Python chồng nhau
+> (2 lan_tray + 3 run_tray + 2 tray_launcher_final) — mỗi process 1 icon vòng
+> tròn xanh. Trên .14 có phiên ZCode khác đang thí nghiệm tray → em KHÔNG đụng,
+> chờ phiên đó tự dọn (đại biểu ghi bổ sung khi xử lý).
+>
+> **VIỆC SỬA GỐC CHỜ ĐH DUYỆT (chưa sửa code):**
+> - PA-1: fix `_pa1_fetch` nhánh out_dir khi out_root đã chứa ngày — ghi đúng
+>   folder mà agent đếm được (hết vòng lặp 24 phút).
+> - PA-2: vòng bù GĐ 557 với tool PA-1 chỉ tin exit code + dòng "✅ PA-1 XONG"
+>   (pattern GĐ 587 MISA_UPLOAD_REPORTS) thay vì đếm file OUTPUT.
+>
+> **Version:** KHÔNG bump (không sửa code — vận hành DB job + entry). App tổng
+> **7.7.0** / repo con **12.2.0**.
