@@ -11301,3 +11301,17 @@ repo con **10.1.0**.
 > AGENTS.md repo con (commit `fa33008`).
 
 > **Version:** KHÔNG bump. App tổng **7.7.0** / repo con **12.2.1**.
+
+### GĐ 671 / C.422 (Trợ lý Freebuff): Ngày hóa đơn NCC từ chi tiết phiếu SMED — không phụ thuộc MISA (04/11/2026)
+
+> **ĐH chốt (04/11 tối):** cột Ngày hóa đơn của bảng "Báo cáo nhập kho tổng hợp
+> theo hóa đơn" phải không phụ thuộc MISA. Điều tra: 5BKN không chép ngày HĐ ·
+> grid SMED không có · MIA khớp thấp (46/362) → chi tiết phiếu SMED là nguồn duy
+> nhất đầy đủ. **Làm:** script `sm_nhapkho_sync.py` quét chi tiết phiếu SMED
+> (login từng TT — helper GĐ 661; headless=False — SMED chặn headless) → bảng
+> `sm_nhapkho_phieu` (khóa ma_phieu+center) · builder lấy COALESCE(SMED, MISA).
+> **Verify kỳ 04/11:** sync 9/9 phiếu · PN-20261104153951 → 03/11/2026 khớp ảnh
+> ĐH · builder 9/9 dòng có ngày HĐ. Chi tiết ở entry C.422 AGENTS.md repo con
+> (commit `ea2d092`).
+
+> **Version:** KHÔNG bump (agent-side). App tổng **7.8.0** / repo con **12.3.1**.
