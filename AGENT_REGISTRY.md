@@ -480,3 +480,4 @@ hết trạng thái "phát hiện trùng rồi mới xử lý".
 | GĐ 666 / C.418 (Trợ lý ZCode (máy chủ)) | Trợ lý ZCode (máy chủ) | ✅ Fix SMED locator cũ cho 29 file còn lại (Mục 1 GĐ 661) — helper dùng chung + script tự động thay + verify E2E | smed_resilient_helpers.py + 29 file tool SMED/MISA + test + deploy · ✅ HOÀN TẤT (commit `9d06116`) |
 | GĐ 667 (Trợ lý Freebuff) | Trợ lý Freebuff | ✅ PA-1 Config-driven Sức khỏe dữ liệu mở rộng MIA/MISA/BANK | src/lib/data-health-config.ts, src/routes/api/-data-health.ts, src/routes/m/suc-khoe-du-lieu.tsx · ✅ HOÀN TẤT (commit `5610314`) |
 | GĐ 668 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Quy trình nhập kho VTTH-CCDC: Bảng kê nhập VTTH-CCDC (download SMED 2 user VP) + Báo cáo nhập kho VTTH-CCDC + Upload MISA chứng từ mua VTTH-CCDC |
+| GĐ 669 / C.420 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Repo con: 3 phần VTTH-CCDC (tool download BKN user VP + ETL + builder + trang web + tool upload MISA mua VTTH) |
