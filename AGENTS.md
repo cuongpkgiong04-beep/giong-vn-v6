@@ -11364,7 +11364,8 @@ repo con **10.1.0**.
 > dùng làm chứng cứ phi env (nên đổi thành URL_BASE khi đụng file); (3) NSSM
 > AppEnvironmentExtra có thể KHÔNG truyền tới con — wrapper bat là chắc chắn.
 
-> **⚠️ Báo ĐH:** Cloudflare WARP trên .11 đang bật (không rõ ai bật/mục đích — claim
-> 8777 LAN không cần WARP; nếu không dùng em tắt giúp).
+> **✅ Đã tắt WARP .11 theo lệnh ĐH (04/11 tối):** warp-cli disconnect (Success) +
+> service CloudflareWARP Stopped/Disabled + kill GUI — IP internet .11 về ISP bình
+> thường, không còn qua Cloudflare. App WARP vẫn cài — dùng lại chỉ cần bật service.
 
 > **Version:** KHÔNG bump (vận hành + log chẩn đoán). App tổng **7.8.0** / repo con **12.3.1**.
