@@ -11092,3 +11092,47 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (không sửa code — vận hành DB job + entry). App tổng
 > **7.7.0** / repo con **12.2.0**.
+
+### GĐ 656 / C.411 (Trợ lý ZCode (máy chủ)): PA-1 + PA-2 fix gốc vòng bù lặp — Kết thúc sự cố kiểm kê GĐ 654 (04/11/2026)
+
+> **ĐH duyệt PA-1 + PA-2** (sau báo cáo điều tra GĐ 654). Code repo con
+> `e71fda1` (4 file +192/−21):
+>
+> **PA-1 — `_pa1_fetch.py`:** trích helper `out_dir_for(out_root, has_date,
+> module_folder, day, multi)` dùng chung 2 nhánh (MODULES + 10GDTVX):
+> kỳ 1 ngày giữ nguyên GĐ 632 (dùng thẳng folder ngày); **kỳ NHIỀU ngày →
+> subfolder NGÀY con** `out_root/<ngày>/` (ETL `parse_file` lấy ngày từ folder
+> chứa file — `path.parent.name`, DATE_COL 7BCNXT=None) — bản GĐ 632 dồn mọi
+> ngày vào folder ngày-từ là SAI ngày cho kỳ dài; manual batch (root OUTPUT)
+> giữ `module/ngày` cũ.
+>
+> **PA-1b — `40_web_agent.py` đếm THẤY file lồng:** `_count_xl_files` +
+> 5 chỗ glob khác (scan retry · trả files · xóa file TT thiếu · dời _backup —
+> tên backup kèm relative path chống đè · thu file mới) đổi `glob` → `rglob`.
+> rglob với file top-level (kỳ 1 ngày) cho kết quả y cũ — an toàn mọi phân hệ.
+>
+> **PA-2 — vòng bù TIN TOOL PA-1:** `run_smed_task` trả 5-tuple (thêm
+> `tool_tail` = 30 dòng cuối stdout); `run_smed_task_with_fill` nhận diện
+> "✅ PA-1 XONG … 0 trung tâm lỗi" (exit 0) → `pa1_full` → **bỏ vòng bù theo
+> file** (pattern GĐ 587 MISA_UPLOAD_REPORTS). Có trung tâm lỗi / tool lỗi cứng
+> → vẫn fill như cũ (rglob giờ đếm đúng → bù đúng TT thiếu, không "chạy lại cả bộ").
+>
+> **Verify:** test mới `gd656-pa1-pa2.test.py` **12/12 PASS** (luật out_dir 4
+> nhánh · rglob đếm file lồng bỏ ~$/log · nhận diện marker 3 ca · code có luồng
+> skip) · gd591_kiem_ke **27/27** · 40_web_agent.test **4/4** ·
+> gd557-fill **34/36** (2 FAIL CÓ SẴN từ GĐ 603/648 — mock đã cập nhật 5-tuple) ·
+> py_compile 3 file OK.
+>
+> **Deploy (mô hình GĐ 625 — chỉ khi rảnh):** máy .14 ✓ (hash khớp HEAD
+> c8decd9e/410b4922, service Running) · máy .11 ✓ (hash khớp, Running) ·
+> **máy .245 ĐANG BẬN job mua hàng 10:22 → bỏ qua — chờ rảnh chạy lại
+> `python scripts/gd656_deploy_lan.py --machine 245`** · máy chủ: file nằm
+> working tree repo con (service chạy trực tiếp) — restart GIONG_SMED_Agent
+> 10:48 ✓ `/health` tunnel_ok (URL giữ nguyên — GĐ 579).
+>
+> **Hiệu lực:** lần sau chạy báo cáo nguồn NXT kế toán kỳ NHIỀU NGÀY (kiểm kê
+> cuối tháng…): tool tải ~24 phút LẦN DUY NHẤT → agent tin "PA-1 XONG" → job
+> done ngay, hết vòng lặp 3 lượt + "THIẾU FILE" oan.
+>
+> **Version:** KHÔNG bump (agent-side Python — precedent GĐ 422). App tổng
+> **7.7.0** / repo con **12.2.0**.
