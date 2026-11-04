@@ -11336,6 +11336,8 @@ repo con **10.1.0**.
 
 > **Version:** KHÔNG bump (agent-side). App tổng **7.8.0** / repo con **12.3.1**.
 
+> **Phụ lục (05/11 05:00):** Backfill kỳ 10/2026 hoàn tất — **362/362 dòng có Ngày hóa đơn (100%)** (361 SMED + 1 fallback MISA). Deploy đủ 4/4 máy.
+
 ### GĐ 672 / C.423 (Trợ lý Freebuff): PA-2 bắt TẬN GỐC thằng ma (UTF-8 BOM worker.env.bat .11) + chuẩn hóa NSSM máy chủ + PA-3 dọn .14 (2026-11-04)
 
 > **Tiếp GĐ 670** (ĐH duyệt "em phân tích và xử lý"). Kết quả đầy đủ ở entry GĐ 672
