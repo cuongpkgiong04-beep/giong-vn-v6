@@ -11006,3 +11006,48 @@ repo con **10.1.0**.
 > chạy TAY; báo cáo chiết khấu hiện lấy `stg_8BCCK` qua ETL (center_from_name đã fix GĐ 642); (b) các builder đọc **FILE** khác
 > (blth/tkkh/gdtvx…) cũng có nguy cơ thiếu khi job chạy trên máy LAN (file không về
 > máy chủ) — nên rà + chuyển dần sang GiongDB; (c) ngày 03/11 thiếu 1 TT (ĐY) trong DB.
+
+### GĐ 653 / C.409 (Trợ lý ZCode (máy chủ)): PA-2 ĐH chốt 04/11 — Task_05/Task_07 lỗi đêm 03→04/11 do PHIÊN MISA .245 chết từ sáng 03/11: builder dừng sớm + tự cảnh báo Zalo + bỏ retry vô ích (2026-11-04)
+
+> **ĐH hỏi (04/11):** "Hôm qua phần Task_05 và Task_07 lỗi? Tìm hiểu nguyên
+> nhân và cách khắc phục để không còn bị lỗi như trên." → **ĐH chốt PA-1 +
+> PA-2 + PA-3 làm cả ba.**
+
+> **Chẩn đoán (bằng chứng job thật + log .245):** phiên MISA AMIS máy .245
+> (giangkt) còn sống đến 03/11 00:32, **chết từ 03/11 ~08:20** (2 job 08:20/
+> 08:21 bắt đầu lỗi "misa headers") — không ai đăng nhập lại từ đó. Đêm
+> 03→04/11: Task_05 mua hàng 15/15 TT lỗi "misa headers" ×2 lượt (00:45–01:06);
+> Task_07 xuất kho dừng sớm 0 phiếu ×2 lượt (01:30–01:32); Task_06 bán hàng
+> (.34) phiên còn → 143 phiếu OK. Watchdog CDP 00:45 tự mở lại Chrome đúng
+> thiết kế nhưng Chrome mới mở không có phiên MISA. Keepalive 30' vẫn chạy
+> đều nhưng **exit 1** — OTP giờ qua SMS (GĐ 587) nên misa_auto_login không tự
+> nhập được; tab MISA CDP .245 hiện vẫn nằm màn Login. Lỗi thứ cấp: task
+> runner retry ≤2 chạy lại y hệt (~50 phút vô ích) + khối hướng dẫn xuất kho
+> in nhầm "CDP không kết nối được" (Chrome còn sống).
+
+> **Đã làm (repo con code `3eab2cf` + docs `58098c9` — chi tiết entry C.409):**
+> (1) `misa_muahang_api_run.py` — 2 TT LIÊN TIẾP chết "misa headers" → DỪNG SỚM
+> + MARKER "⛔ PHIÊN MISA ĐÃ ĐĂNG XUẤT" (2 TT chống nhiễu oan); (2)
+> `misa_xuatkho_api_run.py` — MARKER + tách khối phiên chết ≠ CDP chết; (3)
+> `gd625_zalo.py` — `send_text_via_zalo_web` + nhánh `alertText` trong
+> `run_bc_zalo_task`; (4) `40_web_agent.py` — `_enqueue_zalo_session_alert`
+> (job lỗi có MARKER → tự INSERT job 'bc-zalo' gửi tin nhắn Zalo cho ĐH ngay
+> trong đêm, throttle 30', đích kv `bcn_zalo_target`); (5) `task_runner.py` —
+> 3 hàm `_run_misa_*` bỏ retry khi MARKER.
+
+> **Verify:** test mới `gd653_misa_session_alert.test.py` **17/17 PASS** ·
+> py_compile 5 file OK · test cũ: task_runner_misa_order 28/28 ·
+> misa_tab_guard 62/62 · misa_xuatkho_import 65/65 · gd557-fill 2 FAIL CÓ SẴN
+> (GĐ 603/648 thêm hddt-dauvao-* mà chưa cập nhật test đó — diff C.409 không
+> đụng 2 mục này, đối chứng grep diff = 0).
+
+> **Deploy:** 5 file xuống máy chủ + 3 máy LAN (MD5 khớp HEAD) + restart khi
+> rảnh — kết quả ghi bổ sung trong entry này.
+
+> **PA-1 (phần ĐH):** đăng nhập lại MISA .245 1 lần (nhập mã SMS) + đổi kênh
+> OTP về EMAIL → keepalive tự giữ phiên như trước GĐ 587. **PA-3:** ĐH đăng
+> nhập xong → chạy lại Task_05/07 kỳ 03/11 (job cũ 0 phiếu → an toàn) + đối
+> chứng số với nguồn SMED.
+
+> **Version:** KHÔNG bump (agent-side Python — không nằm trong bundle web,
+> precedent GĐ 422). App tổng **7.7.0** / repo con **12.2.0**.
