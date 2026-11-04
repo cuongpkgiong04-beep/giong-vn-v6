@@ -11136,3 +11136,41 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (agent-side Python — precedent GĐ 422). App tổng
 > **7.7.0** / repo con **12.2.0**.
+
+### GĐ 658 / C.412 (Trợ lý ZCode (máy chủ)): 4 điểm thể hiện "Bảng chi tiết kiểm kê theo trung tâm" — ĐH chốt 04/11 (2026-11-04)
+
+> **Yêu cầu của ĐH (04/11, 2 ảnh bản in + bảng trên app).** Code repo con
+> `a5021df` (5 file +67/−11):
+>
+> 1. **Bản in — HSD đủ 1 dòng:** `PRINT_WIDTH_MM["HSD"]` 17→**22mm** (trước
+>    đây "28/02/2027" xuống 2 dòng "28/02/2 / 027").
+> 2. **Bản in — Nhận xét hẹp lại:** 31→**24mm** + tiêu đề "Nhận xét chất lượng
+>    cảm quan" chữ nhỏ **7pt** (nội dung ô vẫn "Đạt" 1 dòng).
+> 3. **Đơn giá có giá KỂ CẢ SL tồn = 0** (builder `_kiem_ke_detail_rows`,
+>    `etl/sql_reports.py`): trước đây Đơn giá = Giá trị/SL cuối kỳ → SL = 0
+>    bị rỗng. Giờ: lô SL cuối = 0 → lấy **giá lô từ NGÀY GẦN NHẤT trong kỳ
+>    còn tồn** (`price_ref` = col17/col16 — chính là giá nhập của lô, đúng
+>    nghiệp vụ kiểm kê); lô cả kỳ không có ngày nào còn tồn (hiếm) → rỗng.
+>    SL > 0 giữ nguyên số cũ.
+> 4. **Trên APP — cột "Mã hàng" hẹp lại:** bọc nội dung td trong
+>    `<span class="block max-w-[240px] truncate">` (max-width trên td bị bỏ
+>    qua trong table auto-layout) — tên dài "Measles, Mumps and Rubella
+>    Vaccine Live, Attenuated (Freeze-Dried)" bị ẪN "…" không tràn sang cột
+>    Tên hàng; hover vẫn xem đủ (title). **Bản in KHÔNG đụng.**
+>
+> **Verify:** gd591_kiem_ke **27/27** (T13b mới — lô SL=0 ra Đơn giá 200 =
+> 1000/5) · test TS `kiem-ke-chi-tiet` **22 PASS** (T8 285→283mm + T8b) ·
+> `tsc --noEmit` EXIT 0.
+>
+> **Deploy (khi rảnh — script `scripts/gd658_deploy_lan.py`):** etl/
+> `sql_reports.py` hash `6ba3d604f8375228` khớp cả 3 máy LAN (.14/.11/.245)
+> + restart worker từng máy khi rảnh ✓; máy chủ restart GIONG_SMED_Agent ✓
+> (`/health` tunnel_ok — 40_web_agent import sql_reports có cache sys.modules
+> nên phải restart để nạp builder mới).
+>
+> ⚠️ **Job kiểm kê CŨ không tự cập nhật** (job = snapshot thời điểm tính):
+> ĐH **bấm Chạy lại** báo cáo kiểm kê (không cần tick tải — stg_7BCNXT đã đủ)
+> → bảng chi tiết mới có Đơn giá cả lô SL=0.
+>
+> **Version:** KHÔNG bump chờ lệnh Push (web đụng 3 file — component/lib/test
+> app con; builder agent-side). App tổng **7.7.0** / repo con **12.2.0**.
