@@ -481,3 +481,4 @@ hết trạng thái "phát hiện trùng rồi mới xử lý".
 | GĐ 667 (Trợ lý Freebuff) | Trợ lý Freebuff | ✅ PA-1 Config-driven Sức khỏe dữ liệu mở rộng MIA/MISA/BANK | src/lib/data-health-config.ts, src/routes/api/-data-health.ts, src/routes/m/suc-khoe-du-lieu.tsx · ✅ HOÀN TẤT (commit `5610314`) |
 | GĐ 668 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Quy trình nhập kho VTTH-CCDC: Bảng kê nhập VTTH-CCDC (download SMED 2 user VP) + Báo cáo nhập kho VTTH-CCDC + Upload MISA chứng từ mua VTTH-CCDC |
 | GĐ 669 / C.420 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Repo con: 3 phần VTTH-CCDC (tool download BKN user VP + ETL + builder + trang web + tool upload MISA mua VTTH) |
+| GĐ 670 / C.421 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 PA-1 chặn claim qua Vercel /api/agent/claim — thằng ma 14 báo cáo lỗi 08001 04/11 | giong-apps/apps/banhang/src/routes/api/agent/claim.ts |
