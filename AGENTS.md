@@ -11369,3 +11369,16 @@ repo con **10.1.0**.
 > thường, không còn qua Cloudflare. App WARP vẫn cài — dùng lại chỉ cần bật service.
 
 > **Version:** KHÔNG bump (vận hành + log chẩn đoán). App tổng **7.8.0** / repo con **12.3.1**.
+
+### GĐ 673 / C.424 (Trợ lý Freebuff): PA-1 auto-sync ngày hóa đơn SMED vào Task_02 (04/11/2026)
+
+> **ĐH chốt PA-1** (04/11 tối): sau khi Task_02 (Báo cáo nhanh cuối ngày 17:15)
+> tải 5BKN xong → tự spawn `sm_nhapkho_sync.py` nền (Popen CREATE_NO_WINDOW,
+> KHÔNG chờ — không chặn chuỗi task) quét chi tiết phiếu SMED ngày run_date →
+> bảng `sm_nhapkho_phieu`. Script chuyển sang Chrome CDP 9222 + tab guard
+> tg.SMED (SMED chặn headless + job Task_02 claim rải 3 máy). 1 điểm nối duy
+> nhất trong task_runner.py — 0 đổi logic task; lỗi spawn chỉ log. Deploy
+> .14/.245/.11 (SHA256 + py_compile PASS, service Running) + restart máy chủ
+> 22:12. Chi tiết ở entry C.424 AGENTS.md repo con (commit `51a8016`).
+
+> **Version:** KHÔNG bump (agent-side). App tổng **7.8.0** / repo con **12.3.1**.
