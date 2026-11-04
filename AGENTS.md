@@ -11233,3 +11233,50 @@ repo con **10.1.0**.
 > verify chạy bằng builder mới). **Web (-smed.ts + test) chờ lệnh Push.**
 >
 > **Version:** KHÔNG bump chờ lệnh Push. App tổng **7.7.0** / repo con **12.2.0**.
+
+### GĐ 664 / C.416 (Trợ lý ZCode (máy chủ)): PA Push đợt 04/11 — bump repo con 12.2.1 + LIVE (2026-11-04)
+
+> **Lệnh "Push" của ĐH** (sau GĐ 658 + 660). Rà trùng lặp 2 repo (nguyên tắc 3
+> ĐA AGENT + hook tự động): **0 nhánh phụ** (agent-cli/gd541-push/pipeline-work
+> đều 0 commit so main, cả 2 repo) · app tổng 28 commit chưa push · repo con 12
+> commit chưa push · **cảnh báo có sẵn (không phải của đợt này):**
+> - worktree `giong-vn-v6` (app tổng): 8 file sửa dở của phiên khác
+>   (AGENTS.md/AGENT_REGISTRY.md + 6 scripts/_gd5xx) — KHÔNG add.
+> - worktree `giong-apps` (repo con): 17 file `agent/*.py` sửa dở của phiên
+>   khác (GĐ 661 — SMED đổi UI login 29 file, smed_resilient_helpers) — KHÔNG
+>   add, KHÔNG trùng file với đợt này.
+> - ⚠️ **worktree `giong-apps-cli` (Agent CLI): `-smed.ts` bản CŨ chưa có fix
+>   GĐ 660** (còn `[rc, d2, d1, d2]` gốc) + `task_runner.py` (140 dòng lệch) +
+>   `bc-cuoi-ngay.tsx` — ĐÃ CẢNH BÁO ĐH: khi Agent CLI commit/merge sẽ có nguy
+>   cơ GHI ĐÈ fix freshness GĐ 660 — cần phiên CLI rebase/merge từ main TRƯỚC
+>   khi commit.
+>
+> **Bump (lúc Push — quy tắc ĐA AGENT):** repo con **12.2.0 → 12.2.1** (patch —
+> đợt fix: GĐ 658 4 điểm thể hiện + GĐ 660 freshness/bảng chính) — package.json
+> + DEFAULT_VERSION (app-shell.tsx). App tổng **KHÔNG bump** (0 code runtime —
+> chỉ docs + 2 script deploy công cụ; tiền lệ docs-only GĐ 416/417) giữ 7.7.0.
+> *Errata: commit bump ghi "C.415 / GĐ 663" (cấp thừa trước khi claim — số
+> chính thức đợt này là GĐ 664 / C.416).*
+>
+> **Push:** app tổng `36dbdd8..f344bc1` (28 commit: GĐ 654/656/658/660 + docs +
+> 2 script deploy) · repo con `67cf541..5043d2f` (12 commit: GĐ 654/656/658/660
+> code + docs + bump).
+>
+> **✅ Verify production (GĐ 470 — login THẬT, không tin "Ready"):**
+> app tổng `giong-vn-v6.vercel.app` = **7.7.0** HTTP 200 · app con
+> `giong-banhang.vercel.app` = **12.2.1** HTTP 200 (không ghim deployment cũ) ·
+> sign-in thật (JSON user ✓) · get-session ✓ · SSO ký JWT (iss/aud) → app con:
+> **302 → / + Set-Cookie bh_session** (APP_JWT_SECRET 2 app CÙNG giá trị) ·
+> `/api/auth/me` app con trả user e003 SuperAdmin ✓. Env Vercel 2 app đủ
+> (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL + TUNNEL_GIST_ID ·
+> BETTER_AUTH_SECRET/URL · ZAI_API_KEY · CLOUDINARY).
+>
+> **Tiêu chí kiểm chứng của ĐH:** (1) trang kiểm kê — chip nguồn hết VÀNG, hiện
+> XANH "nạp lúc HH:mm" cho mọi báo cáo; (2) bảng "Chạy báo cáo kiểm kê từ dữ
+> liệu SQL": cột **Nhập kho + dòng Tổng cộng có số** (job mới — bấm job 13:55
+> hoặc chạy lại); (3) cột **Mã hàng** trên app gọn (tên Measles… ẩn "…", hover
+> xem đủ); (4) **In biên bản A4**: HSD "28/02/2027" 1 dòng + cột Nhận xét cảm
+> quan hẹp/chữ nhỏ; (5) lô tồn = 0 vẫn có **Đơn giá** (nếu xem job cũ — chạy
+> lại để có số mới).
+>
+> **Version:** app tổng **7.7.0** (giữ) / repo con **12.2.1** — ĐÃ PUSH + LIVE.
