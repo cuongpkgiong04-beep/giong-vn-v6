@@ -11125,8 +11125,8 @@ repo con **10.1.0**.
 >
 > **Deploy (mô hình GĐ 625 — chỉ khi rảnh):** máy .14 ✓ (hash khớp HEAD
 > c8decd9e/410b4922, service Running) · máy .11 ✓ (hash khớp, Running) ·
-> **máy .245 ĐANG BẬN job mua hàng 10:22 → bỏ qua — chờ rảnh chạy lại
-> `python scripts/gd656_deploy_lan.py --machine 245`** · máy chủ: file nằm
+> **máy .245: bận job mua hàng lúc 10:22 → deploy lại 10:57 khi rảnh ✓ (hash khớp,
+> COMPILE_OK, service Running) — ĐỦ 4 MÁY chạy bản GĐ 656.** · máy chủ: file nằm
 > working tree repo con (service chạy trực tiếp) — restart GIONG_SMED_Agent
 > 10:48 ✓ `/health` tunnel_ok (URL giữ nguyên — GĐ 579).
 >
