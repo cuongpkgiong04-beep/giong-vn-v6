@@ -11041,22 +11041,8 @@ repo con **10.1.0**.
 > (GĐ 603/648 thêm hddt-dauvao-* mà chưa cập nhật test đó — diff C.409 không
 > đụng 2 mục này, đối chứng grep diff = 0).
 
-> **Deploy:** 6 file (mở rộng misa_muahang_api.py — fix SMED nhãn login
-> `34349be`) xuống máy chủ + 3 máy LAN — MD5 khớp HEAD · 4/4 service RUNNING
-> (.245/.14/11 + máy chủ; máy .34 deploy TỰ ĐỘNG khi rảnh qua --wait-idle).
-
-> **PHỤ LỤC KẾT QUẢ (04/11 chiều) — PA-3 bù kỳ 03/11 HOÀN TẤT 32/32 phiếu:**
-> khi bù phát hiện SMED đổi nhãn login ('Tên người dùng hoặc email' → 'Tên Đăng
-> Nhập') → fix fallback 2 nhãn trong builder mua hàng + deploy .245 → mua hàng
-> lượt 2: **19 phiếu tạo + ghi sổ 19/19** · 13 phiếu check 'invalid?' = MISA
-> hiển thị TRỄ (lượt 3 xác nhận 32/32 đã có) → đối chứng độc lập pu_list MISA
-> (19 ghi sổ/13 chưa) → **ghi sổ bù 13/13** → **verify cuối: 32/32 phiếu kỳ
-> 03/11 trên MISA đã ghi sổ, 0 chưa** (SMED stg_5BKN col4 = 32 phiếu — khớp).
-> Xuất kho 03/11: SMED 0 phiếu (hợp lệ) + phiên HTTP tự lấy lại từ Chrome OK.
-> ⚠️ Tồn đọng báo ĐH: (1) 29 file agent còn locator SMED cũ — chết dần khi
-> cookie hết hạn, cần làm lại đợt fix 03/11 (phiên riêng); (2) check sau import
-> báo oan 'invalid?' khi MISA hiển thị trễ → nên thêm chờ/retry; (3) 29 phiếu
-> xuất kho cũ chờ ghi sổ (nhóm A GĐ 563) cần rà riêng.
+> **Deploy:** 5 file xuống máy chủ + 3 máy LAN (MD5 khớp HEAD) + restart khi
+> rảnh — kết quả ghi bổ sung trong entry này.
 
 > **PA-1 (phần ĐH):** đăng nhập lại MISA .245 1 lần (nhập mã SMS) + đổi kênh
 > OTP về EMAIL → keepalive tự giữ phiên như trước GĐ 587. **PA-3:** ĐH đăng
@@ -11139,8 +11125,8 @@ repo con **10.1.0**.
 >
 > **Deploy (mô hình GĐ 625 — chỉ khi rảnh):** máy .14 ✓ (hash khớp HEAD
 > c8decd9e/410b4922, service Running) · máy .11 ✓ (hash khớp, Running) ·
-> **máy .245: bận job mua hàng lúc 10:22 → deploy lại 10:57 khi rảnh ✓ (hash khớp,
-> COMPILE_OK, service Running) — ĐỦ 4 MÁY chạy bản GĐ 656.** · máy chủ: file nằm
+> **máy .245 ĐANG BẬN job mua hàng 10:22 → bỏ qua — chờ rảnh chạy lại
+> `python scripts/gd656_deploy_lan.py --machine 245`** · máy chủ: file nằm
 > working tree repo con (service chạy trực tiếp) — restart GIONG_SMED_Agent
 > 10:48 ✓ `/health` tunnel_ok (URL giữ nguyên — GĐ 579).
 >
@@ -11150,6 +11136,8 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (agent-side Python — precedent GĐ 422). App tổng
 > **7.7.0** / repo con **12.2.0**.
+
+---
 
 ### GĐ 658 / C.412 (Trợ lý ZCode (máy chủ)): 4 điểm thể hiện "Bảng chi tiết kiểm kê theo trung tâm" — ĐH chốt 04/11 (2026-11-04)
 
@@ -11188,6 +11176,36 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump chờ lệnh Push (web đụng 3 file — component/lib/test
 > app con; builder agent-side). App tổng **7.7.0** / repo con **12.2.0**.
+
+
+### GĐ 653 phụ lục (Trợ lý ZCode (máy chủ)): fix SMED đổi nhãn login + PA-3 bù kỳ 03/11 HOÀN TẤT — 32/32 phiếu MISA ghi sổ (2026-11-04)
+
+> **Phát sinh khi bù PA-3:** SMED đổi nhãn ô đăng nhập 'Tên người dùng hoặc email'
+> → **'Tên Đăng Nhập'** → job bù đầu chết 19 TT (TimeoutError 30s/TT). Đợt fix UI
+> 03/11 của phiên khác **đã MẤT hoàn toàn** (không có ở repo con/CLI/pipeline/
+> .11/.245 — memory ghi "bash chết giữa phiên → CHƯA commit").
+
+> **Đã làm:** `_smed_fill_user()` trong `misa_muahang_api.py` (repo con `34349be`)
+> — thử nhãn MỚI trước, hụt → nhãn CŨ; deploy .245 (script `gd653_deploy_lan.py`
+> mở rộng 6 file, `--wait-idle`). Chỉ builder mua hàng (đủ cho PA-3).
+
+> **PA-3 kết quả (đối chứng từng bước):** xuất kho 03/11 = SMED 0 phiếu (hợp lệ;
+> phiên HTTP tự lấy lại từ Chrome OK — PA-1 đăng nhập có hiệu lực) · mua hàng
+> lượt 2 = **19 phiếu tạo + ghi sổ 19/19** + 13 phiếu "invalid?" (MISA hiển thị
+> TRỄ — lượt 3 xác nhận **32/32 đã có trên MISA**) · đối chứng độc lập
+> (`gd653_check_posted.py` đọc pu_list): 32/32 phiếu · 19 ghi sổ · 13 chưa →
+> **ghi sổ bù 13/13** (`gd653_ghi_so_13.py --apply`) → **verify cuối 32/32 đã ghi
+> sổ, 0 chưa**. Số phiếu SMED kỳ 03/11 (stg_5BKN col4) = 32 — khớp tuyệt đối.
+
+> **⚠️ Tồn đọng báo ĐH:** (1) **29 file agent còn locator SMED cũ** — tool
+> download/báo cáo SMED sẽ chết dần khi cookie hết hạn → cần làm lại đợt fix
+> 03/11 (nên phiên riêng); (2) builder check sau import báo oan "invalid?" khi
+> MISA hiển thị trễ → nên thêm chờ/retry; (3) 29 phiếu xuất kho cũ chờ ghi sổ
+> (nhóm A GĐ 563) cần rà riêng.
+
+> **Version:** KHÔNG bump. App tổng **7.7.0** / repo con **12.2.0**.
+
+---
 
 ### GĐ 660 / C.414 (Trợ lý ZCode (máy chủ)): Fix 2 lỗi ĐH báo 11:37 — chip vàng "chưa có dữ liệu kỳ này" OAN + bảng chính kiểm kê Nhập kho trống (2026-11-04)
 
@@ -11233,6 +11251,8 @@ repo con **10.1.0**.
 > verify chạy bằng builder mới). **Web (-smed.ts + test) chờ lệnh Push.**
 >
 > **Version:** KHÔNG bump chờ lệnh Push. App tổng **7.7.0** / repo con **12.2.0**.
+
+---
 
 ### GĐ 664 / C.416 (Trợ lý ZCode (máy chủ)): PA Push đợt 04/11 — bump repo con 12.2.1 + LIVE (2026-11-04)
 
@@ -11287,7 +11307,7 @@ repo con **10.1.0**.
 > chứng từ và Tên hàng hóa; (2) bảng "Báo cáo nhập kho tổng hợp theo hóa đơn" đặt
 > BÊN TRÊN bảng chạy báo cáo — 12 cột. ĐH chốt PA-1 + PA-1a (Chi phí mua hàng /
 > Giá trị nhập kho = 0 tạm, ETL sau); Ngày hạch toán = ngày lập phiếu SMED (col3),
-> **Đính chính (04/11 tối theo ĐH):** "Ngày hạch toán" + "Ngày chứng từ" = ngày chứng từ nhập SMED (col3); "Ngày hóa đơn" = ngày HĐ NCC (misa_phieu_status.inv_date — phiếu chưa đẩy MISA trống; bảng kê 5BKN không chép ngày HĐ); "Số hóa đơn" loại khỏi Subtotal (subtotalExcludeCols — chuỗi mã 0 đầu bị cộng oan 760.627). Commit fix `e4e5db9`.
+> Ngày chứng từ = ngày hóa đơn (misa_phieu_status.inv_date).
 
 > **Bằng chứng:** 5BKN col5 = Số HĐ NCC; Σ col14 = MISA total_amount khớp từng đồng;
 > kỳ 10/2026: 362 HĐ ↔ 362 CT (1-1). **Fix 1 lần (ĐH báo không thấy bảng mới):**
@@ -11315,3 +11335,36 @@ repo con **10.1.0**.
 > (commit `ea2d092`).
 
 > **Version:** KHÔNG bump (agent-side). App tổng **7.8.0** / repo con **12.3.1**.
+
+### GĐ 672 / C.423 (Trợ lý Freebuff): PA-2 bắt TẬN GỐC thằng ma (UTF-8 BOM worker.env.bat .11) + chuẩn hóa NSSM máy chủ + PA-3 dọn .14 (2026-11-04)
+
+> **Tiếp GĐ 670** (ĐH duyệt "em phân tích và xử lý"). Kết quả đầy đủ ở entry GĐ 672
+> AGENTS.md **repo con**. Tóm tắt:
+> - **Bắt bằng IP:** `claim.ts` thêm log `x-forwarded-for` (repo con `157bc6c`) → Vercel
+>   logs lộ ma poll từ **IP Cloudflare (WARP 1.1.1.1) 104.28.254.75/104.28.222.73** →
+>   **.11 (THANH-PC) đang chạy WARP** → worker_node 9092 (start 16:19) claim Vercel.
+> - **GỐC RỄ:** `C:\CUONG_2026\giong-agent\worker.env.bat` (.11) có **UTF-8 BOM chèn
+>   ở ĐẦU DÒNG 2** (file ghép 16:18 hôm nay) → cmd đọc thành biến tên rác →
+>   SMED_INTERNAL_API_URL KHÔNG set → claim Vercel → nhận job sqlreport → builder
+>   `.\SQLEXPRESS` trên .11 → 14 job lỗi 08001 17:08-17:40 + job mồi 19:03/19:13/19:20.
+> - **Đã xử lý .11:** xóa BOM + restart service worker → PID 7700 poll 8777 chuẩn.
+>   **Verify: Vercel logs POST /api/agent/claim CUỐI 21:27:32 rồi HẾT hẳn.**
+> - **Chuẩn hóa NSSM máy chủ** (GIONG_SMED_Agent): chạy qua wrapper bat
+>   `.secrets/agent.env.bat` (pattern GĐ 546 — env đầy đủ TOKEN + 8777 +
+>   AGENT_SQL_CONN giong_worker local); verify job test 21:08 claim core qua 8777 →
+>   done 6s. Script `scripts/gd670-fix-nssm-env-agent.ps1`.
+> - **PA-3 dọn .14: 196 → 2 python** (worker 21304 con service + 1 tray chuẩn); kill
+>   ~180 tray rác + 8 file C:\test_*.py + worker thừa PID 240; DISABLE 9 task test
+>   GIONG_LAN_TRAY_* + GIONG_Tray + GIONG_Worker_LAN1. Script
+>   `scripts/gd672-don-rac-lan14.ps1` + `scripts/gd672-fix-bom-lan11.ps1`.
+>
+> **Bài học (ghi cho phiên sau):** (1) file `.env.bat` DO SCRIPT sinh ra phải ANSI
+> (không BOM) — BOM chèn giữa file khiến biến ĐẦU DÒNG biến tên rác KHÔNG báo lỗi;
+> (2) log "Agent khởi động — poll {WEB_URL}" in TĨNH URL Vercel (dòng 2158) — KHÔNG
+> dùng làm chứng cứ phi env (nên đổi thành URL_BASE khi đụng file); (3) NSSM
+> AppEnvironmentExtra có thể KHÔNG truyền tới con — wrapper bat là chắc chắn.
+
+> **⚠️ Báo ĐH:** Cloudflare WARP trên .11 đang bật (không rõ ai bật/mục đích — claim
+> 8777 LAN không cần WARP; nếu không dùng em tắt giúp).
+
+> **Version:** KHÔNG bump (vận hành + log chẩn đoán). App tổng **7.8.0** / repo con **12.3.1**.
