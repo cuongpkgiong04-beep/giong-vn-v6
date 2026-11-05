@@ -907,6 +907,24 @@ chuyển `_lan`/`_lan_accounts.txt` (mật khẩu LAN — tránh tạo bản th�
 
 ### GĐ 411 / C.247 (Trợ lý Freebuff): Bccn thêm bảng CUỐI trang "Tổng hợp công nợ theo Gói và Đặt trước" — ghép cn-goi + cn-dt (2026-10-13)
 
+<!-- SHARED-BLOCK:GDDATPICKER-QUY-TAC-UI START -->
+## 18. QUY TẮC UI — CHỌN NGÀY PHẢI CÓ LỊCH (Đại ca chốt 05/11/2026 — hiệu lực vĩnh viễn)
+
+> **Chỉ thị của Đại ca (05/11/2026):** Từ bây giờ trở về sau, MỌI ô chọn
+> ngày tháng trên UI (cả app tổng lẫn app con) PHẢI dùng **bộ chọn lịch bấm
+> hiện lên** — `input type="date"` (hiển thị dd/mm/yyyy + icon 📅, bấm mở
+> lịch pop-up chọn ngày, có Xóa/Hôm nay — mẫu: trang "Sao kê ngân hàng TPB")
+> — **KHÔNG bắt người dùng gõ tay ngày tháng.**
+>
+> - Giá trị native = `yyyy-mm-dd` — server/validator nhận CẢ `yyyy-mm-dd` lẫn
+>   `dd/mm/yyyy` (engine `_parse_date` vốn hỗ trợ cả 2); hiển thị đọc được
+>   thì `formatDate()` về dd/mm/yyyy.
+> - **Áp dụng NGAY với TPBANK** (`/m/up-tpbank` — đang chuẩn bị triển khai:
+>   bỏ date picker này vào; ĐH nhắc riêng 05/11: "nhắn nó không nó lại quên").
+> - Trang mới nào có ô chọn ngày (báo cáo, module upload, job...) → theo quy
+>   tắc này; khi đụng trang CŨ còn ô gõ tay ngày → đổi sang lịch ngay chỗ đó.
+<!-- SHARED-BLOCK:GDDATPICKER-QUY-TAC-UI END -->
+
 > **Yêu cầu của Đại ca (13/10, sau GĐ 405):** thêm 1 bảng ở cuối trang sau
 > "Ma trận chưa tiêm theo trung tâm và dịch vụ_CN", tên **"Tổng hợp công nợ
 > theo Gói và Đặt trước"** — ghép 2 bảng cn-goi + cn-dt, 9 cột: STT (đánh
