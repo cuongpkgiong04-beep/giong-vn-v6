@@ -11915,3 +11915,44 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.8.0** / repo con **12.6.1**.
+
+### GĐ 686 (Trợ lý ZCode máy chủ): PA Push đợt 05/11 tối (lệnh ĐH) — GĐ 685/C.432 badge "Máy chạy" + GĐ 684/C.431 Freebuff · bump 8.0.0/12.7.0 · LIVE (2026-11-05)
+
+> **Lệnh "Push" của Đại ca (05/11 tối).** Rà trùng lặp (nguyên tắc 3): nhánh phụ
+> `agent-cli`/`gd541-push`/`pipeline-work` = **0 commit cả 2 repo** · worktree khác
+> (`giong-apps-cli`) 3 file sửa dở = phiên khác — KHÔNG đụng · file sửa dở tại worktree
+> này (AGENT_REGISTRY.md bản WIP, scripts/_gd55x_deploy_lan.py, attachments/*.zip) =
+> phiên khác — không add.
+
+> **Push:** app tổng `c5818df..6dbb71f` (10 commit: GĐ 685/C.432 đầy đủ code+entry+script
+> E2E+ảnh+unlock+đổi số C.432 + claim/unlock GĐ 684 của Freebuff + bump) · repo con
+> `4e7a852..a934c1e` (7 commit: C.432 badge + đổi số + khôi phục, C.431 GĐ 684 bán hàng
+> của Freebuff, bump).
+
+> **Bump (chỉ lúc Push — quy tắc ĐA AGENT):** app tổng **7.9.0 → 8.0.0** (minor; minor=9
+> → nhớ sang major theo hệ 1 chữ số) — package.json + package-lock.json (2 chỗ — đang
+> lệch 7.6.0, đồng bộ luôn) + DEFAULT_VERSION; repo con **12.6.1 → 12.7.0** —
+> package.json + DEFAULT_VERSION. Checklist GĐ 138 ✓ (8.0.0 · 12.7.0 mọi thành phần 1
+> chữ số).
+
+> **Verify env Vercel TRƯỚC push:** app tổng đủ DATABASE_URL · APP_JWT_SECRET ·
+> TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · BETTER_AUTH_SECRET/URL; app con đủ DATABASE_URL
+> · APP_JWT_SECRET · TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · ZAI_API_KEY ✓
+
+> **✅ Verify production SAU push:** app tổng **8.0.0** (curl grep lần đầu + UI "VERSION
+> 8.0.0") · app con **12.7.0** · login thật app tổng (curl + browser) · **SSO browser
+> thật: bấm "Bán hàng" → app con nhận phiên** (tên user hiện + `/api/auth/me` = 200
+> SuperAdmin) · **badge "Máy chạy" LIVE: 47 badge đủ 4 nhãn GIANGKT (.245) · PC-PKT-01
+> (.14) · THANH-PC (.11) · Máy chủ (.250)** — ảnh `screenshots/gd686-prod-badge-may.png`
+> + script `scripts/_gd686_verify_prod.mjs`.
+
+> **⚠️ Bẫy đo thật (ghi để phiên sau khỏi mất thời gian):** form login app tổng phải chờ
+> ~4 giây sau khi load rồi mới điền (fill sớm React chưa hydrate → giá trị KHÔNG vào
+> state → submit rỗng, login fail IM LẶNG, ở lại /login); và app con hydrate chậm ~9-12
+> giây mới hiện tên user (kiểm chứng sớm hơn = báo oan "chưa đăng nhập").
+
+> **Tiêu chí kiểm chứng của Đại ca:** mở `giong-banhang.vercel.app` (góc trái 12.7.0) →
+> trang có lịch sử job → badge tên máy hiện trên từng dòng; chạy 1 lệnh bất kỳ → ~20
+> giây sau thanh tiến trình hiện "GIANGKT (.245)" / "Máy chủ (.250)".
+
+> **Version:** app tổng **8.0.0** / repo con **12.7.0** — ĐÃ PUSH + ĐÃ LIVE.
