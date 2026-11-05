@@ -11730,3 +11730,56 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.8.0** / repo con **12.5.1**.
+
+### GĐ 683 / C.430 (Trợ lý Freebuff): PA Push đợt 05/11 — fix upload MISA + bảng Upload MISA 13 dòng + TPBank, bump repo con 12.6.1 + LIVE verify 4/4 (2026-11-05)
+
+> **Lệnh "Push" của Đại ca (05/11, sau GĐ 679).** Rà trùng lặp nguyên tắc 3:
+> app tổng 7 commit thuần DOCS (3 GĐ 679 của em + 4 GĐ 680/681/682 TPBank của
+> phiên song song) · nhánh phụ agent-cli/gd541-push/pipeline-work **RỖNG** cả 2
+> repo · repo con 0 commit chưa push lúc rà (đã push 12.5.1 sáng) — **nhưng
+> trong lúc chuẩn bị, phiên song song commit 2 commit C.430** (engine
+> `misa_tpb_saoke.py` 726 dòng + trang /m/up-tpbank + wiring + test 7/7) →
+> push đợt này mang theo cả 2 commit đó. File dở KHÔNG đụng: `lan_tray.py` +
+> sqlite (.245) · `40_web_agent.py`/`job-labels.ts`/`up-tpbank.tsx` (.11).
+
+> **Bump (lúc Push — quy tắc ĐA AGENT):** app tổng **docs-only → giữ 7.8.0**
+> (tiền lệ GĐ 416/417); repo con **12.5.1 → 12.6.0** (minor — module TPBank
+> C.430 + fix upload MISA GĐ 679/C.428) rồi **→ 12.6.1** (patch — 2 sửa nhanh
+> phát hiện khi verify: dòng Tổng cộng loại cột MÃ + Excel kèm dòng tổng).
+> Checklist GĐ 138 ✓ (12.6.1 mọi thành phần 1 chữ số).
+
+> **Env Vercel trước push: ĐỦ cả 2 app** (DATABASE_URL · APP_JWT_SECRET ·
+> TUNNEL_API_BASE_URL + GIST · BETTER_AUTH ×2 · ZAI_API_KEY).
+
+> **Push:** app tổng `6244f07..2fc5b27` (7 commit docs) · repo con
+> `606cd8a..5f62faf` (2 commit C.430 TPBank của phiên song song) → `0ba1526`
+> (bump 12.6.0) → `2ee790f..4b12fa5` (fix tổng cộng + bump 12.6.1) →
+> `4e7a852` (giữ cột Số lượng).
+
+> **✅ Verify production (curl + browser thật — quy tắc GĐ 470):** app tổng
+> **7.8.0** · login thật cuongpk.giong04 → JSON user + get-session OK · bấm
+> "Bán hàng" ở sidebar (browser thật) → **tab app con mở THẲNG trang chủ**
+> (không /login) → **SSO OK, APP_JWT_SECRET 2 app KHỚP** · app con hiển thị
+> "Phạm Kiên Cường · SuperAdmin · VP" · app con **12.6.1** (curl lần đầu,
+> không ghim deployment).
+> **Nghiệm thu bảng Upload MISA trên production** (browser thật, trang
+> /m/up-nhap-kho): job 11:03 mở → nút **Tải Excel** + header "Bảng chuẩn MISA ·
+> 5 dòng · mã lượt" + bảng dữ liệu thật + **dòng Tổng cộng sticky**: sau 2 sửa
+> nhanh = `Tổng cộng 90 (Số lượng) · 53.040.948 (Thành tiền)` — KHÔNG còn cộng
+> oan Số hóa đơn (305.415)/Mã NCC (400.438.796)/TK công nợ (1.655)/Đơn giá.
+
+> **Tiêu chí kiểm chứng của ĐH:** app con 12.6.1 → trang UPLOAD Chứng từ mua
+> hàng → Lịch sử upload MISA → bấm tên lượt (vd 11:03) → "Xem bảng upload
+> MISA": bảng cao vừa 13 dòng cuộn, tiêu đề + Tổng cộng dính, nút Tải Excel
+> (file có dòng TỔNG CỘNG + cột Đơn giá để trống). Ghi chú vàng "bản cũ trước
+> GĐ 649" đã hết ở các lượt chạy lại. Trang /m/up-tpbank (12.6.1) có bộ chọn
+> lịch (C.429).
+
+> **⚠️ Phát hiện khi verify (đã xử lý):** (1) token SSO test ký bằng
+> APP_JWT_SECRET trong `.env.local` bị app con từ chối → secret file local CŨ
+> so production (KHÔNG phải lệch 2 app — browser thật chứng minh luồng đúng);
+> (2) dòng Tổng cộng v1 cộng oan cột mã số (Số hóa đơn/Mã NCC/TK) — sửa trong
+> cùng đợt push.
+
+> **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.6.1** —
+> ĐÃ PUSH + ĐÃ LIVE.
