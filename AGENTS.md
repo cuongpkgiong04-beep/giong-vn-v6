@@ -11418,3 +11418,40 @@ repo con **10.1.0**.
 >
 > **Version:** KHÔNG bump (chờ lệnh Push). App tổng **7.8.0** / repo con
 > **12.3.1**.
+
+### GĐ 678 (Trợ lý Freebuff): PA Push đợt GĐ 676/C.427 — fix Sức khỏe dữ liệu, bump repo con 12.4.1 + LIVE (2026-11-05)
+
+> **Lệnh "Push" của Đại ca (05/11, sau PA-3 GĐ 676).** Rà trùng lặp nguyên tắc
+> 3 (hook GĐ 607 tự quét + xem tay): nhánh phụ agent-cli / gd541-push /
+> pipeline-work **0 commit lệch** cả 2 repo; app tổng 3 commit docs/registry
+> (claim GĐ 677/678 + unlock 676) — không đụng code; repo con 2 commit GĐ 676
+> (code `332edca` + entry `c859572`); file modified còn lại là bài dở phiên
+> khác (lan_tray.py · routeTree.gen.ts · scripts/_gd5xx · AGENTS.md) KHÔNG đụng.
+
+**Bump:** repo con **12.4.0 → 12.4.1** (patch — fix bug: 4 khai sai config Sức
+khỏe dữ liệu + bọc an toàn API + test đối soát) — package.json +
+DEFAULT_VERSION; package-lock không lưu version chính (tiền lệ GĐ 418). App
+tổng **KHÔNG bump** (docs/registry-only — tiền lệ GĐ 416/417), giữ 7.8.0.
+
+**Push:** app tổng `13698a0..3915541` (4 commit docs/registry) · repo con
+`ba361b9..46291d7` (3 commit: code + entry + bump).
+
+**✅ Verify production (GĐ 470-A + B):** env Vercel đủ **6/6** (tổng) +
+**5/5** (con) · curl lần đầu: app con **12.4.1** + app tổng **7.8.0** · login
+thật app tổng OK (JSON user) · **SSO luồng thật bằng trình duyệt: bấm "Bán
+hàng" → app con nhận phiên "Phạm Kiên Cường · SuperAdmin · VP"** (secret 2 app
+đồng bộ). Phụ chú: ký tay JWT bằng secret **local** `.env.local` FAIL — secret
+local đã lệch với Vercel (không ảnh hưởng production; phiên sau test E2E
+local SSO cần lấy secret mới — nhờ Đại ca cung cấp hoặc cập nhật .env.local).
+
+**✅ Trang Sức khỏe dữ liệu (việc gốc GĐ 676):** /m/suc-khoe-du-lieu trên
+12.4.1 — **HẾT banner đỏ** "Invalid object name 'dbo.mia_muavao_hd'"; tab
+SMED(12) đủ 97 · thiếu/lỗi 0; tab **MIA(2) MUA/BÁN đủ 2 số khớp probe từng
+dòng** (MUA 04/11: 1/1 · 7 — BÁN: 1/1 · 192 — 03/11: 21/153 — 02/11: 50/161);
+tab MISA(2) · **BANK(3)**. Test đối soát 19/19 khớp GiongDB.
+
+**Tiêu chí kiểm chứng của Đại ca:** trang Sức khỏe dữ liệu mọi ô đủ 2 số
+(file/chuẩn + số dòng GiongDB); tab BANK còn 3; nút "Tải lại" ô MIA tạo job
+`mia-muavao-tongquan` (agent nhận và chạy).
+
+**Version:** app tổng **7.8.0** / repo con **12.4.1** — ĐÃ PUSH + ĐÃ LIVE.
