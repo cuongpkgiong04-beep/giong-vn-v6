@@ -11646,8 +11646,12 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 >   158) · **bảng chuẩn misa_sa_upload_line 219 dòng** (trước 0 — hết ghi chú vàng).
 > - **Task_07 xuất kho:** job **done** 11:25 · **188/188 phiếu** (trước 0) ·
 >   **bảng chuẩn misa_xk_upload_line 221 dòng** (165 đã ghi sổ + 56 đã upload).
-> - **Bù kỳ thiếu:** kích chạy bù xuất kho 02+03/11 + mua hàng 02/11 (3 job
->   pending, created_by GD679-bu-ky) — kết quả chốt ở entry kế.
+> - **Bù kỳ thiếu (đã xong 12:1x):** xuất kho 02/11 **122/122 phiếu · 155
+>   dòng bảng chuẩn** · xuất kho 03/11 **147/147 · 174 dòng** · mua hàng 02/11
+>   done (**15 dòng ghi sổ**). **Thử lại 4 phiếu mua hàng 04/11 lỗi scrape:**
+>   tạo thêm **3 phiếu + ghi sổ 3/3** (QO/PY/ML) → mua hàng 04/11 tổng **8/9
+>   ghi sổ**; còn 1 phiếu SĐ lỗi 'không scrape được SMED sau 3 lần' (login
+>   user TT timeout — lỗi tạm thời phía SMED, bấm Chạy lại lượt sau).
 
 > **⚠️ Minh bạch sự cố commit (quy tắc ĐA AGENT):** commit `bcc2a12` (script
 > deploy) **vô tình mang theo AGENTS.md đang staged sẵn của phiên khác** (entry
