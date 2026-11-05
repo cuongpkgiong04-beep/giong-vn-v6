@@ -11956,3 +11956,51 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > giây sau thanh tiến trình hiện "GIANGKT (.245)" / "Máy chủ (.250)".
 
 > **Version:** app tổng **8.0.0** / repo con **12.7.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 687 / C.433 (Trợ lý Freebuff): File Excel bán hàng theo ĐÚNG mẫu 72 cột Đại ca kiểm tra (UPMISA 03/11) — TK Nợ/Có + KCT + Mục thu/chi (2026-11-05)
+
+> **Chỉ thị của Đại ca (05/11 tối):** *"Hôm ngày 03/11/2026 chạy theo cơ chế từng
+> phiếu thì đạt kết quả rất tốt… ngày 04/11 chạy theo đường nhập dữ liệu bằng
+> file Excel thì lỗi tùm lum. Em hãy dùng kết quả của ngày 03/11 để tham khảo
+> và thực hiện tạo file excel cho đúng"* + gửi file
+> `UPMISA_PS_HDBH_03.11.2026.xlsx` (72 cột, 182 dòng, sheet Check 4 TT "KHỚP").
+
+> **TK Nợ vướng ở đâu (trả lời trực tiếp):** file Excel app sinh (GĐ 649) chỉ
+> **29 cột, TÊN CỘT SAI** so mẫu MISA ⇒ thiếu hẳn 2 cột BẮT BUỘC
+> **"TK Tiền/Chi phí/Nợ (*)"** + **"TK Doanh thu/Có (*)"** ⇒ phiếu tạo ra không
+> có TK Nợ/Có ⇒ MISA từ chối ghi sổ *"<TK Nợ, TK Có> không được để trống"*
+> (ca thật 21:08 05/11, loạt 190 phiếu 04/11). 03/11 không dính vì tạo qua
+> đường API (payload có TK) — 04/11 chuyển sang đường Excel thì lộ.
+
+> **Đã làm (repo con `2795dce`):**
+> 1. `SA_COLS` = **72 cột COPY NGUYÊN VĂN tên từ file chuẩn** (kể cả "(*)" và
+>    "Diễn giải/Lý do nộp") — script verify **KHỚP 72/72 tên cột** với file ĐH.
+> 2. `sa_rows_from_payload` dựng đúng 72 giá trị theo mẫu:
+>    - **TK Tiền/Chi phí/Nợ (*)** = `map_debit_account` — CK `1121_<TT>` · TM
+>      `1111_<TT>` · **Chưa thu tiền `131`** (SỬA: trước mặc định 1121 — mẫu có
+>      5 dòng 131);
+>    - **TK Doanh thu/Có (*)** = `5113_<TT>`;
+>    - "Hình thức bán hàng"="Bán hàng hóa trong nước" · "Đã lập hóa đơn"="Đã lập"
+>      · "Mẫu số HĐ"=1 · "Nộp vào TK"=1475018888 + "Tên ngân hàng"=VCB (mẫu
+>      182/182) · "% thuế GTGT"="**KCT**" (vắc xin — cũ ghi "0") · "Mã kho/Mã
+>      địa điểm KD/Vị trí/Mã đơn vị/Mã thống kê"=`<TT>` · "Mục thu/chi"=100 ·
+>      "Số chứng từ (*)"=refno (bỏ HD1 — khớp mẫu cột 8 từng dòng).
+> 3. Bảng chuẩn MISA (`sinh_excel_sa`) map theo tên cột mới.
+> 4. Test `misa_banhang_api.test` **87/87 PASS** (cập nhật 2 test map TK theo
+>    chuẩn mới) · deploy 3 máy LAN verify hash PASS.
+
+> **Test THẬT (NL kỳ 01/11 — kỳ chưa từng upload, chạy tay trên .11 với env
+> worker.env):** nhận diện đúng **8 phiếu "đã có trên MISA — ĐÃ GHI SỔ TRƯỚC
+> ĐÓ"** (cơ chế ghi-sổ-bù GĐ 684 hoạt động — skip êm không báo lỗi oan);
+> 4 phiếu mới bị MISA chặn *"Số hóa đơn đã tồn tại trong dữ liệu"* + cảnh báo
+> *"Tài khoản <KCT> không có trong danh mục"* → 2 điểm soi tiếp vòng sau.
+
+> **⚠️ CHỜ ĐẠI CA CHỐT — 190 phiếu bán hàng 04/11 ĐÃ TẠO bằng file cũ (29 cột)
+> trên MISA có DATA thiếu TK Nợ/Có ⇒ mọi đường ghi sổ đều bị MISA chặn.** Hai PA:
+> **PA-1 (khuyến nghị — giống tiền lệ GĐ 563 + cách 03/11):** xóa 190 phiếu
+> 04/11 trên MISA → chạy lại bằng file chuẩn 72 cột → tạo mới đủ TK → ghi sổ
+> SẠCH. **PA-2:** cập nhật từng phiếu qua API (điền TK) — giữ số CT nhưng 190
+> request. Xóa là thao tác phá hủy — em KHÔNG tự làm, chờ ĐH chốt.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.8.0** / repo con **12.6.1**.
