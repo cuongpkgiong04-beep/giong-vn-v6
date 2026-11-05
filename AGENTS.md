@@ -11670,8 +11670,23 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > tổng (không cộng cột Đơn giá); ghi chú vàng "bản cũ trước GĐ 649" biến mất ở
 > các lượt mới. Dialog Task_03 có nút "Chọn tất cả (cả 2 khối)".
 
-> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
-> **7.8.0** / repo con **12.5.1**.
+> **PA Push (lệnh ĐH "Push" 05/11 13:29):** ⚠️ Phiên song song (cùng tên Trợ lý
+> Freebuff) đã nhận CÙNG lệnh Push — đã push trước: app tổng tới `2fc5b27` (entry
+> GĐ 681 + unlock + entry GĐ 679/C.428) và repo con tới `0ba1526` (code C.430
+> `1e3ecae` + entry + **bump repo con 12.5.1 → 12.6.0** kèm C.428). Em không lặp —
+> chỉ làm phần còn thiếu: push nốt `7761543` (unlock C.430) + **bump app tổng
+> 7.8.0 → 7.9.0** (`225130f`) + push `2fc5b27..225130f`. Env Vercel đủ 2 app trước
+> push (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL + GIST_ID ·
+> BETTER_AUTH_* · ZAI_API_KEY). **Deploy máy chủ:** service GIONG_SMED_Agent chạy
+> TRỰC TIẾP worktree giong-apps/apps/banhang/agent → xoá __pycache__ + sc restart
+> 13:36 → web_agent mới poll OK — REPORT_MAP `misa-tcb-saoke` + `misa-tpb-saoke`
+> đã nạp (job TCB lỗi 11:07 của ĐH giờ chạy được).
+> **✅ Verify production (curl lần đầu):** app tổng **7.9.0** · app con **12.6.0** ·
+> login app tổng 200 (user "Phạm Kiên Cường") · SSO 302 → app con + Set-Cookie
+> bh_session 7 ngày (APP_JWT_SECRET 2 app CÙNG giá trị) · /api/auth/me SuperAdmin
+> + đủ nhóm (bh-upload-misa-amis trong mods).
+>
+> **Version:** app tổng **7.9.0** / repo con **12.6.0** — ĐÃ PUSH + ĐÃ LIVE (05/11).
 
 ### GĐ 681 / C.430 (Trợ lý Freebuff): UPLOAD Ngân hàng TPBANK lên MISA — PA-1 clone TCB, 5/5 kỳ khớp từng đồng (2026-11-05)
 
