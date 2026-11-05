@@ -11672,3 +11672,46 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.8.0** / repo con **12.5.1**.
+
+### GĐ 681 / C.430 (Trợ lý Freebuff): UPLOAD Ngân hàng TPBANK lên MISA — PA-1 clone TCB, 5/5 kỳ khớp từng đồng (2026-11-05)
+
+> **Yêu cầu của ĐH (05/11):** triển khai module Upload MISA TPBank — "làm tương
+> tự phần MISA AMIS của Techcombank". **ĐH chốt PA-1**: engine riêng
+> `misa_tpb_saoke.py`; hạch toán mặc định như TCB (Nợ 331/Có 1121 chi ·
+> 1121/131 thu — chỉnh qua `misa_tpb_saoke_config`); kỳ = 1 file/ngày = 1 kỳ
+> MISA. ĐH dặn riêng (C.429): "TPbank chuẩn bị làm đấy nhắn nó không nó lại
+> quên" quy tắc bộ chọn lịch → đã áp dụng `input type="date"`.
+
+> **Bằng chứng điều tra trước khi làm:** probe wizard MISA "Thêm kỳ sao kê"
+> NHẬN file TPB gốc (TK 11698866789 "Ngân hàng TMCP Tiên Phong" có sẵn) —
+> KHÔNG tạo gì trong probe (ảnh artifacts/gd-up-tpbank/). Job
+> `misa-tcb-saoke` ĐH bấm 11:07 hôm nay đang error vì script chưa deploy
+> (chờ Push — đúng dự kiến GĐ 675; sau Push đợt này deploy CẢ 2 engine TCB +
+> TPB + restart GIONG_SMED_Agent là hết).
+
+> **Đã làm (chi tiết + 3 bài học kỳ/-modal/dòng kỳ ở entry C.430 AGENTS.md
+> repo con — code `1e3ecae` repo con):** engine `agent/misa_tpb_saoke.py`
+> (nap/lap-ct/thong-ke — wizard "Thêm kỳ sao kê" TK 11698866789, đối chứng số
+> GD + số dư đầu/cuối TRỰC TIẾP từ 4 dòng tổng file TPB) + wiring
+> `40_web_agent.py` (REPORT_MAP `misa-tpb-saoke` + MISA_UPLOAD_REPORTS +
+> SMED_ACTION) + `/m/up-tpbank` (bộ chọn lịch C.429) + API `-tpb-saoke.ts` +
+> job-labels + test 7/7 PASS.
+
+> **Bằng chứng chạy thật — 5/5 kỳ TPB nạp lên MISA + đối chứng KHỚP TỪNG ĐỒNG
+> (25 GD, tổng thu 1.565.801.591 · chi 1.997.837.000):** 08/09 (15 GD · dư
+> 55.342.817 → 2.475.817) · 25/09 (1 · 2.475.817 → 2.476.210) · 09/10 (1 ·
+> 382.617.210 → 482.617.210) · 10/10 (7 · 482.617.210 → 3.447.210) · 25/10 (1 ·
+> 3.447.210 → 3.450.408). Verify: tsc EXIT 0 · build OK · unit 7/7.
+
+> **⚠️ THIẾU SÓT download:** OUTPUT 17.BANK_TPB không có file ngày 26/09→08/10
+> → số dư giữa kỳ 25/09 và 09/10 nhảy ~380 triệu (tiền về TK thật không có file
+> GD). Cần tải bù tool 42_tpb_saoke.py kỳ dài các ngày thiếu rồi nạp tiếp —
+> việc download, không phải lỗi upload.
+
+> **Tiêu chí kiểm chứng (sau Push):** trang /m/up-tpbank app con → bộ chọn
+> lịch → Nạp sao kê lên MISA → job done + bảng web dòng nap_ok; 5 kỳ đã nạp
+> hiện trên MISA (Tiền gửi → Hạch toán từ sao kê ngân hàng, TK
+> 11698866789); Lập CT cần chạy thật kèm ĐH lần đầu.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.8.0** / repo con **12.5.1**.
