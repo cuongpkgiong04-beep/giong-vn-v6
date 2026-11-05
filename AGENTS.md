@@ -11784,7 +11784,11 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.6.1** —
 > ĐÃ PUSH + ĐÃ LIVE.
 
-### GĐ 685 / C.431 (Trợ lý ZCode máy chủ): Badge "Máy chạy" trên web — biết ngay máy trạm nào đang chạy từng lệnh (PA-1 Đại ca chốt 05/11) (2026-11-05)
+### GĐ 685 / C.432 (Trợ lý ZCode máy chủ): Badge "Máy chạy" trên web — biết ngay máy trạm nào đang chạy từng lệnh (PA-1 Đại ca chốt 05/11) (2026-11-05)
+
+> **⚠️ Trùng số (minh bạch 05/11):** phiên Freebuff claim C.431 lúc 18:45 (commit `7cc3ef6` repo con,
+> GĐ 684) TRƯỚC em (19:07) → theo quy tắc GĐ 285, **số ĐÚNG là C.432**; các commit của em đã tạo vẫn
+> mang chuỗi "C.431" trong message (lịch sử chỉ đi tới — KHÔNG amend). Dải GĐ không trùng (685 duy nhất).
 
 > **Yêu cầu của Đại ca (05/11, kèm ảnh thanh tiến trình):** "Anh muốn biết máy nào
 > đang nhận việc và tiến trình chạy thế nào thì nhìn vào đâu... phân bổ job chạy là
