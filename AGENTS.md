@@ -11830,3 +11830,88 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.9.0**
 > / repo con **12.6.1**.
+
+### GĐ 684 / C.431 (Trợ lý Freebuff): Kiểm 3 việc Đại ca + fix bán hàng (Vị trí/HSD/ghi-sổ-bù) + xuất kho bù 277 phiếu + điều tra mua hàng SĐ + bảng 13 dòng mọi module (2026-11-05)
+
+> **Nguyên tắc MỚI Đại ca chốt (05/11 — bắt buộc vào bộ nhớ):** (1) xưng hô
+> **"Đại ca"** — KHÔNG dùng "ĐH"; (2) **TRƯỚC khi kết thúc nhiệm vụ phải đọc
+> lại đề bài, kiểm không bỏ quên mục nào** (lý do: nhiều lần em báo xong nhưng
+> sót yêu cầu gốc). Đã lưu memory `nguyen-tac-dai-ca-va-doc-lai-yeu-cau`.
+
+> **VIỆC 1 — phiếu mua hàng SĐ PN-20261104153951 (HĐ 00004213, Biovaccine):
+> KHÔNG THỂ TẠO — PHIẾU ĐÃ BỊ XÓA TRÊN SMED.** Bằng chứng 4 lớp: (a) job bù
+> 3 lượt "không scrape được SMED" — log chi tiết "không thấy phiếu trong grid";
+> (b) probe trực tiếp tài khoản SĐ: login OK (welcome + header đúng user) +
+> filter 30 ngày + search mã → **"0 Không có dữ liệu"**; (c) cùng tài khoản
+> search PN-20261102142528 (02/11) → THẤY; search số HĐ 00004213 → thấy phiếu
+> **PN-20261103142112 ngày 03/11** (user SĐ nhập TRÙNG HĐ cùng số 00004213 ngày
+> 04/11 rồi xóa phiếu 04/11 — phiếu 04/11 từng scrape được lúc 22:05:17 04/11
+> trong sm_nhapkho_phieu); (d) phiếu 03/11 cùng số HĐ trên MISA bị chặn
+> "import xong nhưng không thấy (invalid?)". → **Cần Đại ca xác nhận với TT SĐ**:
+> nếu phiếu 04/11 xóa là ĐÚNG thì báo cáo nguồn (file 5.BKN 04/11) cần làm mới
+> — dữ liệu cũ còn trong stg; nếu cần giữ → nhập lại phiếu trên SMED rồi chạy
+> lại Tool. KHÔNG phải lỗi hệ thống (tài khoản SĐ hoạt động tốt).
+
+> **VIỆC 2 — xuất kho "232 dòng vs 188 MISA": 232 là DÒNG HÀNG, không phải
+> phiếu** (stg_6BKX 04/11: 232 dòng / 198 số CT). MISA 188 + file BKX thiếu
+> phiếu so SMED thật. **Chạy lại builder xuất kho 04/11 → done: 277 phiếu
+> (277/277 lên MISA, không trùng — 265 đã ghi sổ + 62 đã upload) + bảng chuẩn
+> 327 dòng.** Builder quét SMED API trực tiếp ĐỦ hơn file BKX tải 23:00
+> (guard "kỳ API sai" + tool chết giữa chừng đã fix GĐ 679) → bù hết phiếu thiếu.
+
+> **VIỆC 3 — bán hàng: 3 lỗi thật, đã fix + deploy:**
+> - **"234 dòng" = 234 dòng hàng / 192 hóa đơn** (không phải 234 HĐ); App tạo
+>   190 phiếu / MISA 189 → chênh 2 chưa xử lý (chờ vòng sau).
+> - **"Mã địa điểm KD" trong chi tiết:** kiểm chứng bằng detail_full MISA phiếu
+>   app tạo (2e88b9ee…): `inventory_location_code='HM'` + id + tên **CÓ dữ liệu**
+>   → ảnh Đại ca xem là phiếu khác (mã 09952611041642059246 — cần mã cụ thể để
+>   soi). Riêng code có bug tiềm ẩn ĐÃ SỬA: bán hàng lấy location từ `it` (hàng
+>   hóa — luôn None) thay vì `cid` như mua hàng/xuất kho → giờ đồng bộ 3 builder.
+> - **"Hạn sử dụng" trống 100%:** XÁC NHẬN — `_hsd_cell` chỉ parse dd/mm/yyyy
+>   nhưng `_dmy_to_iso` trả ISO+07:00 ⇒ luôn None (kiểm file
+>   sa_20261104_TT.xlsx: cả 5 dòng HSD None) → sửa parse ISO; unit-check 3 dạng
+>   PASS. Nguồn HSD (BKCCN col15) có đủ — nay lên được.
+> - **"Chưa ghi sổ": Đại ca ĐÚNG** — detail_full: `is_posted_finance=False` cả
+>   loạt (189/190). Gốc: phiếu đã tồn tại bị SKIP hoàn toàn ở lượt sau ⇒ không
+>   bao giờ tới bước ghi sổ. Đã thêm **GHI SỔ BÙ** ở 3 nhánh (skip "đã có" ·
+>   InvalidRefno · InvalidInvno + `_chot_sa_sau_import`) + fallback mã biến thể
+>   (MISA lưu refno_finance bỏ tiền tố 'HD1': DB 'HD108842611040850537889' ↔
+>   MISA '08842611040850537889' — nguyên nhân 86 phiếu "import xong nhưng không
+>   thấy") + fallback reftype 3530/3531/3537 + suy is_posted từ
+>   `is_posted_finance`/`posted_date`. Deploy 3 máy + chạy lại job bù (đang chạy).
+> - **"Phiếu tạo thủ công 12/10 có bị không?"** — tra MISA ngày 12/10/2026:
+>   **0 phiếu** (không thấy phiếu nào để so). Đại ca cho mã phiếu cụ thể em soi
+>   tiếp. Về nguyên tắc: phiếu nhập TAY trên MISA thì trường nào người nhập
+>   không điền sẽ TRỐNG (MISA không tự bịa) + ghi sổ do người bấm.
+> - Fix thêm phát hiện trong log: máy .11 thiếu `misa_http_bootstrap.py` mới
+>   (AttributeError ensure_ready_session_async, 20 lần/lượt) → deploy cả 3 máy.
+
+> **VIỆC 4 — bảng 13 dòng + cố định tiêu đề/tổng cộng cho MỌI module Upload
+> MISA:** bảng "Xem bảng upload MISA" (per-lượt) ĐÃ có 13 dòng cuộn + sticky
+> thead/tfoot + Tổng cộng (trừ Đơn giá/cột mã) + Tải Excel — LIVE 12.6.1 (GĐ
+> 679, Đại ca bấm Xem bảng ở lượt mới là thấy; cần F5 để nạp bundle mới).
+> **Bổ sung hôm nay:** bảng BÁO CÁO chính (ReportResultTable — dùng chung mọi
+> module Upload MISA + báo cáo thường) chỉnh khung cuộn 530px (~16 dòng) →
+> **500px = đúng 13 dòng + 2 dòng cố định**; thead/tfoot sticky đã có sẵn
+> (dòng 783/918). tsc 0.
+
+> **Code:** repo con `7cc3ef6` (misa_banhang_api: 3 fix) + `3c098f7` (fallback mã
+> biến thể) + report-result-table max-h 500px · app tổng `scripts/gd684_deploy_lan.py`.
+> Deploy 3 máy LAN verify hash PASS; unit `misa_banhang_api.test` **86/86 PASS**;
+> tsc 0.
+
+
+> **⚠️ PHÁT HIỆN CUỐI (chặn ghi sổ — nguyên nhân gốc thứ 4):** job ghi sổ bù chạy
+> 21:0x — cơ chế bù HOẠT ĐỘNG ("khớp MISA qua mã bỏ 1 ký tự đầu" + gọi ghi sổ)
+> nhưng MISA từ chối: **"<TK Nợ, TK Có> không được để trống"** → phiếu app tạo
+> (đường IMPORT EXCEL, GĐ 649 PA-1) THIẾU TK Nợ: file `sa_*.xlsx` chỉ 29 cột,
+> **KHÔNG có cột tài khoản nợ/có** (kiểm trực tiếp file sa_20261104_TT.xlsx +
+> ảnh phiếu MISA "Nợ vào TK" trống) — mẫu MISA 3530 có 73 cột (log step2);
+> mua hàng/xuất kho có cột TK nên ghi sổ được. **KẾ HOẠCH vòng sau:** lấy danh
+> sách 73 trường mẫu SA (từ wizard step2 hoặc file mẫu gốc), thêm cột TK Nợ/Có
+> vào SA_COLS (1111_TT/1121_TT theo HTTT — đã có sẵn `map_debit_account`) →
+> chạy lại job bán hàng → ghi sổ bù hoàn tất. Đây là nguyên nhân CHÍNH khiến
+> "toàn bộ phiếu bán hàng chưa ghi sổ" (không phải chỉ nhánh skip).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.8.0** / repo con **12.6.1**.
