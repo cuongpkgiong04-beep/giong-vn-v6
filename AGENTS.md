@@ -11489,5 +11489,28 @@ REPORT_MAP mới). **Tiêu chí kiểm chứng (sau Push):** /m/up-tecombank ch�
 → nạp → MISA hiện kỳ mới + bảng web nap_ok; Lập CT cần ĐH cấu hình hạch toán
 rồi chạy thử 1 kỳ nhỏ.
 
-**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
-**7.8.0** / repo con **12.4.1**.
+**PA Push (lệnh ĐH Push 05/11) — rà trùng lặp nguyên tắc 3:** nhánh phụ
+agent-cli + pipeline-work RỖNG cả 2 repo; chưa push = app tổng 4 commit (2
+docs GĐ 678 phiên khác + 2 GĐ 675 em) · repo con 3 commit GĐ 675 em; file dở
+phiên khác (repo con 9 file lan_tray/misa_*_api/task_runner + sqlite) KHÔNG
+đụng. **Bump:** repo con **12.4.1 → 12.5.0** (minor — module upload mới:
+package.json + DEFAULT_VERSION 2 nơi); app tổng **docs-only giữ 7.8.0**
+(tiền lệ GĐ 416/417). **Env Vercel trước push: ĐỦ cả 2 app** (DATABASE_URL ·
+APP_JWT_SECRET · TUNNEL_API_BASE_URL + GIST · BETTER_AUTH 2 · ZAI_API_KEY).
+**Push:** app tổng 3915541..376eaa2 · repo con 46291d7..214e012.
+
+**✅ Verify production (curl lần đầu):** app tổng **7.8.0** · app con
+**12.5.0** — không ghim deployment · login app tổng HTTP 200 + get-session
+Phạm Kiên Cường · SSO /api/auth/sso **302 → giong-banhang.vercel.app +
+Set-Cookie bh_session** (đúng luồng) · /api/auth/me trả user Phạm Kiên
+Cường (nhóm 0 — payload test không có mods; luồng thật đi từ sidebar app
+tổng). **Agent:** restart GIONG_SMED_Agent 10:46 (xóa __pycache__ 3 thư mục +
+sc stop/start) — log mới web_agent_051126_104616 poll bình thường →
+REPORT_MAP misa-tcb-saoke đã nạp.
+
+**Tiêu chí kiểm chứng của ĐH:** mở /m/up-tecombank (app con 12.5.0) → chọn kỳ
+→ Nạp sao kê lên MISA → job chạy + bảng kỳ nap_ok; MISA Tiền gửi hiện kỳ
+mới. Lập CT cần cấu hình hạch toán rồi thử 1 kỳ nhỏ.
+
+**Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.5.0** —
+ĐÃ PUSH + ĐÃ LIVE.
