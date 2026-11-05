@@ -11565,3 +11565,106 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.5.1** —
 ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 679 / C.428 (Trợ lý Freebuff): Fix 3 lỗi upload MISA đêm 04→05/11 (Task_05/06/07) + Task_03 tự đủ mục chi tiết + bảng Upload MISA 13 dòng sticky (2026-11-05)
+
+> **Yêu cầu của Đại ca (05/11, 4 ảnh):** (1) Task_03 lựa chọn tất cả các mục chi
+> tiết có trong đó; (2) Task 5,6,7 lỗi chạy upload ngày hôm qua — lý do + hướng
+> khắc phục + chạy thủ công có lỗi không; Task_05/07 ghi chú vàng "Lượt này chưa
+> ghi dòng nào vào bảng chuẩn MISA (bản cũ trước GĐ 649)"; (3) Task_06: bảng
+> Upload MISA để hẹp — cho 13 dòng dữ liệu + 2 dòng cố định (tiêu đề + tổng
+> cộng), thêm nút "Tải Excel", cố định dòng tiêu đề + dòng tổng cộng — ÁP DỤNG
+> MỌI module Upload MISA.
+
+> **CHẨN ĐOÁN (đọc log đầy đủ trên .245 + probe thật, KHÔNG đoán):**
+> - **Task_05 mua hàng** (job 00:16+00:17, "Lỗi: 8 · QO/PY/ML/TP/SĐ/TĐ/TA/ĐX:
+>   không có danh mục"): log thật `⚠️ Tra danh mục MISA lỗi: JSONDecodeError:
+>   Expecting value: line 1 column 1 (char 0)` cho CẢ 8/8 TT — probe trên .245
+>   xác nhận MISA trả **HTTP 401 + body RỖNG (len=0)** khi phiên hết giá trị
+>   dù file session ghi "còn 8.10 giờ" → `json.loads("")` → tra danh mục rỗng.
+>   **Danh mục KHÔNG thiếu** — 8 TT này đã ghi sổ thành công kỳ 03/11 (đối
+>   chiếu misa_pu_upload_line); thông báo cũ "không có danh mục" SAI cảm giác.
+> - **Task_06 bán hàng** (00:18+00:42, `ModuleNotFoundError: No module named
+>   'misa_sa_detail_sync'` 13 TT): file `misa_sa_detail_sync.py` (mới từ GĐ
+>   649) **CHƯA TỪNG có trong danh sách deploy** → máy THANH-PC (.11) thiếu
+>   (SSH Test-Path = False). Phiếu bán hàng đã import xong trên MISA nhưng
+>   bước chót (_chot_sa_sau_import) chết ngay dòng import module.
+> - **Task_07 xuất kho** (00:53+01:01, `JSONDecodeError` ở tra_hang_hoa): CÙNG
+>   gốc body rỗng, nhưng chỗ `tra_hang_hoa` không bọc try → **chết cả tool**
+>   dù đã quét được 82 phiếu (0 phiếu tạo, bảng chuẩn trống). Thêm chặn 2: 9/19
+>   TT "kỳ API sai — phiếu đều KHÔNG thuộc ngày 04/11 (vd PX-SD-2026114164843)"
+>   — mã điều chuyển SMED dùng ngày **KHÔNG đệm 0** ("2026114" = 04/11/2026),
+>   guard cũ chỉ khớp d_diso "20261104" → chết oan.
+> - **Ghi chú vàng "bản cũ trước GĐ 649"** = ĐÚNG logic (job lỗi sớm → 0 dòng
+>   bảng chuẩn); KHÔNG phải bug — sau chạy lại thành công tự hết.
+
+> **Đã làm (repo con code `4c16db0` · app tổng script `bcc2a12`):**
+> 1. `misa_http_api.MisaHttp.call` — body rỗng (bất kể status) → tự lấy lại
+>    phiên MISA từ Chrome + thử lại 1 lần; lần 2 vẫn rỗng → **raise LỖI RÕ**
+>    ("MISA trả HTTP {status} body RỖNG sau khi lấy lại phiên…") — hết JSONDecodeError mơ hồ.
+> 2. `misa_xuatkho_api.tra_hang_hoa` — bọc JSON → trả None + log rõ (điểm gọi
+>    sẵn có `if not it → bỏ phiếu, continue` — 1 mặt hàng lỗi không chết tool).
+> 3. Guard kỳ sai (`misa_xuatkho_import` 2 chỗ) — nhận thêm d_alt = YYYY M D
+>    không đệm (đúng chuẩn mã PX-SD; mã PH- đầy đủ vẫn khớp d_iso) — vẫn CHẶT:
+>    mã phải chứa đúng ngày của kỳ.
+> 4. `misa_muahang_api.run` — center_map RỖNG TOÀN BỘ → báo đúng nguyên nhân
+>    "không tra được danh mục MISA (API trả rỗng — phiên MISA hết giá trị?)";
+>    `misa_muahang_api_run` dead_streak nhận thêm lỗi phiên mới (dừng sớm).
+> 5. `misa_banhang_api._chot_sa_sau_import` — thiếu module → chỉ BỎ QUA kiểm
+>    chứng chi tiết, tham chiếu + ghi sổ + bảng chuẩn VẪN chạy + log cảnh báo deploy.
+> 6. `task_runner._selected_reports(include_all)` + qkeys — nhiệm vụ TẢI DỮ
+>    LIỆU HÀNG NGÀY (kind daily) LUÔN đủ mọi phân hệ/báo cáo hiện hành (config
+>    nguồn 24/09 thiếu tkkh/bank/MIA + thiếu báo cáo tiem-ho/tonkho-niem-yet —
+>    "Task_03 lựa chọn tất cả các mục chi tiết có trong đó"); TRỪ bank-vcb
+>    (loại có chủ đích GĐ 436 — VCB 23:00 trả rỗng); quick/backfill giữ nguyên.
+> 7. Web `sql-data-module.tsx` — bảng "Xem bảng upload MISA": header riêng
+>    (số dòng + mã lượt + **nút Tải Excel**), vùng cuộn **cao vừa 13 dòng dữ
+>    liệu** (max-h 400px), **dòng tiêu đề STICKY trên + dòng Tổng cộng STICKY
+>    dưới** (tổng theo cột số, **TRỪ cột Đơn giá** — nguyên tắc định dạng số 3;
+>    `isUnitPriceColumn` export dùng chung) — 1 component dùng chung → MỌI
+>    module Upload MISA (mua/bán/xuất/VTTH/HĐ đầu vào) tự hưởng.
+> 8. Web `tasks-page.tsx` — dialog cấu hình thêm nút "Chọn tất cả (cả 2 khối)".
+
+> **Verify:** test mới `gd677_misa_resilience.test.py` **7/7 PASS** (body rỗng
+> lần 1 tự hồi · lần 2 raise rõ · tra_hang_hoa None · guard mã không-đệm-0
+> KHÔNG chết oan · mã sai kỳ VẪN chết) · các bộ cũ PASS (http_fetcher 6 ·
+> bootstrap 13 · login 23 · muahang 2 bộ · gd536_xk 72) · tsc app con **0 lỗi**
+> · npm test PASS · py_compile 7 file OK.
+
+> **Deploy + CHẠY LẠI THẬT (kỳ 04/11 — bằng chứng đối chứng):**
+> - Deploy 9 file (kèm `misa_sa_detail_sync.py` + `misa_upload_line.py`) ra
+>   **3 máy LAN** (.14/.245/.11) qua `scripts/gd677_deploy_lan.py` — verify
+>   hash + py_compile **PASS**, worker restart; **máy chủ** restart
+>   GIONG_SMED_Agent 10:59 (nạp task_runner mới).
+> - **Task_05 mua hàng:** TRƯỚC 0 tạo/0 ghi sổ/8 lỗi "không có danh mục" →
+>   SAU **tạo 5 · ghi sổ 5/5** (bảng chuẩn misa_pu_upload_line 5 dòng
+>   da_ghi_so); log mới: "phiên HTTP đã hết hạn → lấy lại từ Chrome" → Chrome
+>   không có phiên → tự chuyển đường Chrome (GĐ 587) → tra danh mục QO
+>   THÀNH CÔNG. 4 phiếu còn lại (QO/PY/ML/SĐ) lỗi **scrape SMED** sau 3 lần
+>   (lỗi tạm thời phía SMED — sẽ tự bù lượt sau).
+> - **Task_06 bán hàng:** job **done** 11:12 · 189/190 phiếu đã upload (trước
+>   158) · **bảng chuẩn misa_sa_upload_line 219 dòng** (trước 0 — hết ghi chú vàng).
+> - **Task_07 xuất kho:** job **done** 11:25 · **188/188 phiếu** (trước 0) ·
+>   **bảng chuẩn misa_xk_upload_line 221 dòng** (165 đã ghi sổ + 56 đã upload).
+> - **Bù kỳ thiếu:** kích chạy bù xuất kho 02+03/11 + mua hàng 02/11 (3 job
+>   pending, created_by GD679-bu-ky) — kết quả chốt ở entry kế.
+
+> **⚠️ Minh bạch sự cố commit (quy tắc ĐA AGENT):** commit `bcc2a12` (script
+> deploy) **vô tình mang theo AGENTS.md đang staged sẵn của phiên khác** (entry
+> GĐ 678 PA Push hoàn chỉnh — KHÔNG mất nội dung, chỉ sai commit message).
+> File dở `lan_tray.py` + sqlite của phiên khác KHÔNG bị đụng (git status vẫn
+> modified). Cổng shared-doc GĐ 495 cần rà thêm ca "index có sẵn file dùng
+> chung của phiên khác khi mình commit file thường". Đã báo ĐH.
+
+> **Lưu ý Task_03:** cấu hình nhiệm vụ hàng ngày (hàng daily cũ nhất) đang
+> 22 phân hệ/28 báo cáo — code mới TỰ BÙ đủ khi chạy; dialog hiển thị sẽ đủ
+> sau lượt spawn kế (23:00 hôm nay).
+
+> **Tiêu chí kiểm chứng của ĐH:** trang UPLOAD Mua hàng/Bán hàng/Xuất kho →
+> Lịch sử upload MISA lượt mới nhất → bấm "Xem bảng upload MISA": bảng cao vừa
+> 13 dòng, cuộn thấy tiêu đề + Tổng cộng DÍNH; nút Tải Excel tải file có dòng
+> tổng (không cộng cột Đơn giá); ghi chú vàng "bản cũ trước GĐ 649" biến mất ở
+> các lượt mới. Dialog Task_03 có nút "Chọn tất cả (cả 2 khối)".
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.8.0** / repo con **12.5.1**.
