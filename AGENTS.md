@@ -11532,3 +11532,36 @@ mới. Lập CT cần cấu hình hạch toán rồi thử 1 kỳ nhỏ.
 
 **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.5.0** —
 ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 680 / C.429 (Trợ lý Freebuff): Quy tắc MỚI ĐH chốt — ô chọn ngày PHẢI có lịch (date picker) + sửa trang up-tecombank + PA Push (2026-11-05)
+
+> **Chỉ thị ĐH (05/11):** Từ giờ MỌI ô chọn ngày trên UI phải có bộ chọn lịch
+> hiện lên (`input type="date"` — icon 📅, lịch pop-up, Xóa/Hôm nay — mẫu
+> trang Sao kê TPB) — KHÔNG bắt gõ tay. ĐH nhắc riêng: "TPbank chuẩn bị làm
+> đấy nhắn nó không nó lại quên". Quy tắc ghi thành **mục 18 AGENTS.md**
+> (SHARED-BLOCK `GDDATPICKER-QUY-TAC-UI`) — phiên làm TPBANK BẮT BUỘC áp dụng.
+
+**Đã làm:** (1) mục 18 quy tắc; (2) repo con `f9d9060` — /m/up-tecombank 2 ô
+ngày đổi `<Input type="date">` + validator triggerTcb nhận cả yyyy-mm-dd lẫn
+dd/mm/yyyy (engine `_parse_date` vốn hỗ trợ 2) — tsc EXIT 0; entry C.429
+repo con.
+
+**PA Push (lệnh ĐH Push 05/11) — rà trùng lặp nguyên tắc 3 (hook GĐ 607):**
+nhánh phụ rỗng cả 2 repo; repo con chưa push 2 commit GĐ 680; app tổng 5
+commit (3 GĐ 680 em + 2 GĐ 679 phiên khác — script deploy LAN
+gd677_deploy_lan.py, chạy local không đụng code web build — đẩy kèm, minh
+bạch); file dở phiên khác (worktree) KHÔNG nằm trong commit — không đụng.
+**Bump:** repo con **12.5.0 → 12.5.1** (patch — sửa UI date picker, 2 nơi);
+app tổng **docs-only giữ 7.8.0**. Env Vercel trước push: ĐỦ cả 2 app.
+
+**Push:** app tổng `376eaa2..3db6851` · repo con `ba923cc..606cd8a`.
+
+**✅ Verify production (curl lần đầu):** app tổng **7.8.0** · app con
+**12.5.1** · login HTTP 200 + get-session "Phạm Kiên Cường" · SSO 302 →
+giong-banhang + Set-Cookie bh_session.
+
+**Tiêu chí kiểm chứng của ĐH:** mở /m/up-tecombank (app con 12.5.1) → bấm ô
+Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp job vẫn chạy đúng.
+
+**Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.5.1** —
+ĐÃ PUSH + ĐÃ LIVE.
