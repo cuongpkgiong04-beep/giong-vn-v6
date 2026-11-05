@@ -491,3 +491,4 @@ hết trạng thái "phát hiện trùng rồi mới xử lý".
 | GĐ 677 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Task_03 chọn tất cả mục chi tiết + chẩn đoán lỗi Task_05/06/07 upload MISA 04/11 + bảng Upload MISA 13 dòng sticky header tổng cộng Tải Excel cho mọi module Upload | repo con web upload MISA + agent python |
 | GĐ 678 (Trợ lý Freebuff) | Trợ lý Freebuff | ✅ PA Push đợt GĐ 676/C.427 — push repo con fix Sức khỏe dữ liệu + docs, bump repo con patch · ✅ HOÀN TẤT (commit `25d5b21`) |
 | GĐ 679 / C.428 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Fix upload MISA 3 Task_05/06/07 (HTTP rỗng + thiếu module + guard ngày SMED) + Task_03 tự đủ mục + bảng Upload MISA 13 dòng sticky tổng cộng Tải Excel |
+| GĐ 680 / C.429 (Trợ lý Freebuff) | Trợ lý Freebuff | 🔒 Quy tac UI chon ngay bang lich (date picker) + sua trang up-tecombank theo quy tac | giong-apps/apps/banhang: src/routes/m/up-tecombank.tsx + src/routes/api/-tcb-saoke.ts; AGENTS.md app tong (khoi quy tac) |
