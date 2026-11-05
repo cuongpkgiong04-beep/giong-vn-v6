@@ -11455,3 +11455,39 @@ tab MISA(2) · **BANK(3)**. Test đối soát 19/19 khớp GiongDB.
 `mia-muavao-tongquan` (agent nhận và chạy).
 
 **Version:** app tổng **7.8.0** / repo con **12.4.1** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 675 / C.426 (Trợ lý Freebuff): UPLOAD Ngân hàng TECOMBANK — nạp sao kê TCB lên MISA Amis (2026-11-05)
+
+> **PA-1 ĐH chốt (05/11):** triển khai module /m/up-tecombank — dùng tính năng
+> MISA chính chủ "Tiền gửi → Hạch toán từ sao kê ngân hàng"
+> (`/app/BA/BAStatementAccounting`): wizard "Thêm kỳ sao kê" nhận FILE SAO KÊ
+> CHUẨN NGÂN HÀNG (xls/xlsx ≤5MB, KHÔNG template — AVA tự đọc). Chi tiết đầy
+> đủ ở AGENTS.md repo con C.426 (code repo con `57dc1b2`).
+
+**Bằng chứng thử nghiệm thật (artifacts/gd-up-tecombank/):** kỳ 24/10 (5 GD) —
+MISA đọc đúng file TRANSACTION_HISTORY TCB gốc, tổng Chi 271.275.007 / Thu
+273.000.000 khớp từng đồng + tự phân loại Chi/Thu + số dư đầu/cuối đúng; kỳ
+05/10 (43 GD) — nạp tự động + đối chứng khớp (số dư đầu 1.244.964 → cuối
+71.351.298 = 922.000.000 − 851.893.666). Wizard "Lập CT chi hàng loạt" → 1
+GD chi = 1 phiếu Ủy nhiệm chi (MISA điền sẵn đầu đề, còn thiếu TK Nợ/Có +
+đối tượng — điền bằng AVA / quy tắc / bảng config).
+
+**Đã làm:** engine `misa_tcb_saoke.py` (nap — wizard tự động + đối chứng số
+GD/số dư → `misa_tcb_saoke_ky`, kỳ đã nạp bỏ qua không nạp đè; lap-ct — lập
+CT hàng loạt theo config `misa_tcb_saoke_config`; thong-ke) + wiring
+40_web_agent.py (REPORT_MAP + MISA_UPLOAD_REPORTS + SMED_ACTION) + web
+/m/up-tecombank (chọn kỳ + 2 nút job + bảng kỳ auto-refresh) + API
+-tcb-saoke.ts + job-labels. Test 5/5 · tsc 0 · build OK.
+
+**Bài học:** grid MISA tách cells bằng `\n`; chọn "số GD" phải chặn độ dài
+tránh nhầm TK 11 số → overflow; tab mới đôi khi dừng callback AMIS → vào
+/app trước rồi goto phân hệ; balance TCB = số dư SAU GD + file sắp giảm dần
+theo giờ; job_id smed_pull_jobs để NVARCHAR (dạng `manual-<giờ>`).
+
+**KHÔNG restart agent** (chưa push — sau Push restart GIONG_SMED_Agent nạp
+REPORT_MAP mới). **Tiêu chí kiểm chứng (sau Push):** /m/up-tecombank chọn kỳ
+→ nạp → MISA hiện kỳ mới + bảng web nap_ok; Lập CT cần ĐH cấu hình hạch toán
+rồi chạy thử 1 kỳ nhỏ.
+
+**Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+**7.8.0** / repo con **12.4.1**.
