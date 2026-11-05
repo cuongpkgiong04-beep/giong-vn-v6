@@ -11783,3 +11783,46 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.6.1** —
 > ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 685 / C.431 (Trợ lý ZCode máy chủ): Badge "Máy chạy" trên web — biết ngay máy trạm nào đang chạy từng lệnh (PA-1 Đại ca chốt 05/11) (2026-11-05)
+
+> **Yêu cầu của Đại ca (05/11, kèm ảnh thanh tiến trình):** "Anh muốn biết máy nào
+> đang nhận việc và tiến trình chạy thế nào thì nhìn vào đâu... phân bổ job chạy là
+> hoàn toàn ngẫu nhiên đúng không? Máy nào rảnh thì tự nhận Job về để chạy đúng
+> không? Giải thích + đề xuất giải pháp để nhìn thấy và theo dõi tiến trình nhận
+> job của các máy tính."
+
+> **Khảo sát (bằng chứng thật):** phân bổ KHÔNG ngẫu nhiên — (1) worker poll
+> api_server 20 giây tự KÉO job theo NHÓM khai báo `WORKER_GROUPS` (core/smed/
+> misa-muahang/misa-banhang); (2) thứ tự LPT — job nặng trước, cùng độ nặng FIFO
+> (GĐ 621/C.389 `_claim_order_sql`); (3) claim ATOMIC 1 câu UPDATE ... UPDLOCK
+> (không bao giờ trùng) + thu hồi job mất heartbeat; (4) máy chủ `core` cứu hộ job
+> chuyên biệt chờ >15'. 24h qua: core 110 job · giangkt 22 · lan-1 7 · thanh-pc 3.
+> **Chẩn đoán "không thấy máy":** cột `claimed_by` CÓ trong GiongDB nhưng web
+> KHÔNG đọc ra (type SmedJob + SELECT đều thiếu) → 3 PA trình ĐH, **ĐH chốt PA-1**.
+
+> **Đã làm (repo con `7f3eaa3` — 9 file, +197/-3):** `-smed.ts` thêm `claimed_by`
+> vào SELECT (2 nhánh) + mapJob + type `SmedJob.claimedBy` · lib mới
+> `src/lib/machine-names.ts` — MỘT nguồn map mã worker → tên máy: `core` → Máy chủ
+> (.250) · `giangkt` → GIANGKT (.245) · `thanh-pc` → THANH-PC (.11) · `lan-1` →
+> PC-PKT-01 (.14); mã lạ hiện mã thô (không giấu thông tin) + test mới 20/20 ·
+> component `src/components/machine-badge.tsx` (có máy → badge xanh "GIANGKT (.245)"
+> + tooltip đầy đủ; pending chưa nhận → hổ phách "Chưa máy nào nhận"; job cũ trước
+> GĐ 534 không mã máy → ẩn) · chèn 5 điểm: thanh tiến trình (header-jobs-bar) +
+> Lịch sử chạy báo cáo (sql-data-module + sql-report-module) + Lịch sử upload MISA
+> (sql-data-module) + Lịch sử lấy dữ liệu (smed-pull-module).
+
+> **Verify:** tsc EXIT 0 · npm test 12/12 file PASS (machine-names 20/20) · build
+> EXIT 0 · **E2E browser thật local** (preview 8101 + SSO tự ký, script
+> `scripts/_gd685_verify_badge.mjs`): /m/bc-nhap-kho 27 badge "Máy chủ (.250)" ·
+> **/m/kho-xuat 47 badge ĐỦ 4 nhãn: GIANGKT (.245) · PC-PKT-01 (.14) · THANH-PC
+> (.11) · Máy chủ (.250)** — ảnh `screenshots/gd685-badge-may-kho-xuat.png`.
+> (Thanh tiến trình lúc verify 0 job chạy → bar ẩn — cùng component/field, sẽ hiện
+> khi có lệnh.)
+
+> **Tiêu chí kiểm chứng (sau Push):** mở app con → mỗi dòng lệnh trên thanh tiến
+> trình + mọi khung lịch sử hiện tên máy chạy; job mới tạo → trong ~20 giây hiện
+> tên máy nhận; đối chiếu chéo `python scripts/monitor_4_machines.py` trên máy chủ.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.9.0**
+> / repo con **12.6.1**.
