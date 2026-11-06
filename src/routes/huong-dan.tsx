@@ -113,7 +113,7 @@ function BackupRestoreGuideCard() {
           <BookOpenCheck className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-ink">Hướng dẫn đọc file backup & khôi phục dữ liệu</h2>
+          <h2 className="font-semibold text-ink">Hướng dẫn đọc file backup &amp; khôi phục dữ liệu</h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
             Mỗi lần backup tạo 1 CẶP file trong thư mục <b>GIONG-VN-Backup</b> trên Drive:
           </p>
