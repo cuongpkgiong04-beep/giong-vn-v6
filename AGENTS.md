@@ -12436,3 +12436,39 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > phần "đã trả trước" và "Chênh lệch cần kiểm tra" TRỐNG (không còn gì phải soi).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 697 / C.442 (Trợ lý ZCode (máy chủ) #2): PA-1 ĐH chốt 06/11 — bật ỨNG DỤNG XÁC THỰC (TOTP) cho 3 tài khoản MISA, hết phụ thuộc kênh gửi mã (email/Zalo/SMS) (2026-11-06)
+
+> **Yêu cầu của ĐH:** kênh OTP về email đã sửa 3 lần nhưng vẫn tự quay về Zalo — "hãy cố
+> định 1 cách…" ⇒ ĐH chốt **PA-1**: dùng Ứng dụng xác thực, mã do MÁY sinh, không gửi đi đâu.
+
+> **Gốc rễ (bằng chứng):** kênh gửi mã là **cấu hình tài khoản MISA**, không phải code mình —
+> `Account/login` trả 4 cờ `UseEmail · UsePhoneNumber · UseAppAuthenticator · UseTrustedDevice`.
+> Đêm 05→06/11 phiên .245 hết hạn mà không kênh nào đọc được mã (thư OTP Gmail cuối **04/11
+> 01:22** — MISA đã đổi kênh; probe IMAP vẫn OK) ⇒ job mua hàng 0/10 phiếu, phải dừng sớm.
+> Trang cấu hình: **MISA ID → Bảo mật → Xác thực 2 yếu tố** (id.misa.vn/security/two-factor-authen)
+> — sau khi thiết lập Ứng dụng xác thực, MISA đặt nó làm **MẶC ĐỊNH**.
+
+> **Đã làm (repo con `91438ee` code + `a802ff1` code + `366470b` entry C.442):**
+> `misa_totp.py` mới (TOTP RFC 6238 thuần Python: sinh mã, đọc khoá base32/otpauth URI, lưu
+> `.secrets/misa_totp*.txt`) + `misa_totp.test.py` **16/16 PASS** (6 vector chuẩn RFC) +
+> `misa_http_login.py` ưu tiên TOTP (fallback Gmail) + `misa_http_bootstrap.py`
+> `try_totp_relogin()` **tự đăng nhập lại KHÔNG cần Chrome/người** + sửa 3 câu thông báo
+> "OTP giờ qua SMS" đã lỗi thời. Script bật tự động: `scripts/gd697_enroll_totp.py`.
+
+> **Đã bật + verify THẬT cả 3 tài khoản:** máy chủ `cuongpk.giong01` (NV_0174) · .245
+> `mrhungtm3` (NV_0111) · .11 `thuygiongvn290790` (NV_0175) → `Account/login` trả
+> **`UseAppAuthenticator=True · UseEmail=False · UsePhoneNumber=False`**; `misa_http_login --force`
+> trên cả 3 máy: `mã TOTP … OTP OK → token 24.0 giờ`; .245 `ensure_ready_session(force=True)`
+> tự đăng nhập + phiên mới gọi thật `stock_get` HTTP 200. Khoá sao lưu ngoài git:
+> `D:\DuLieuChung\CUONG_2026\_secrets-misa-totp\` (mất khoá = mất đường tự động; MISA vẫn còn
+> Email dự phòng để vào tay).
+
+> **Deploy:** 6 file → 2 máy LAN (SHA256 khớp; test 16/16 PASS trên .245). Máy chủ chạy trực
+> tiếp từ repo — **chưa restart GIONG_SMED_Agent** (file chạy ở tiến trình con mỗi job đã ăn
+> bản mới; câu cảnh báo Zalo ăn sau lần restart tới).
+
+> **Còn tồn (ngoài phạm vi GĐ này):** 05/11 bán hàng 176 phiếu + mua hàng 10 phiếu chưa chạy
+> lại; xuất kho 05/11 còn 40 phiếu chờ ghi sổ.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
