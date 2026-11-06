@@ -12208,3 +12208,34 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > **Tiêu chí kiểm chứng của Đại ca:** 17:05 hôm nay Task_08 không còn LỖI needsData.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 694 / C.439 (Trợ lý ZCode (máy chủ)): Sửa GỐC sinh worker trùng máy LAN (guard + file env-only) + chốt việc ETL 08001 lẻ tẻ — kèm kiểm chứng LIVE Task_08 17:05 = done (2026-11-06)
+
+> **Đại ca chốt:** "Sửa gốc sinh worker trùng theo hướng an toàn và hiệu quả nhất" +
+> việc ETL `08001` "làm theo những gì nhận định là đủ và đúng nhất". Chi tiết + bằng chứng:
+> **AGENTS.md repo con C.439**, code repo con `ef9cd8c`.
+
+> **Gốc:** `worker.env.bat` / `*.env.bat` **vừa set env vừa chạy worker ở dòng cuối** ⇒ ai
+> `call` để LẤY ENV cũng sinh thêm 1 worker VĨNH VIỄN (.245 từng 5 · .11 từng 2). Mỗi máy một
+> kiểu file (`.14` dùng `worker-lan1\worker-lan1.env.bat`; máy chủ `.secrets\agent.env.bat` chạy
+> `40_web_agent.py`); thêm **file rác `giong-worker$P.env.bat`** (script cũ lỗi biến `$P`, 27/10).
+
+> **Đã làm (repo con `ef9cd8c` — 3 file):** `worker_guard.py` MỚI (exit 1 nếu đã có process
+> khớp pattern · fail-open · trừ chính nó · không in secret; test 13/13 PASS) ·
+> `worker-install.bat` sinh kèm `worker.env.only.bat` (CHỈ env — an toàn khi call) + chèn guard
+> trước dòng Chrome/chạy worker (lần cài sau không tái sinh bẫy) · áp lên 4 máy (backup
+> `.bak-gd694`, guard dùng đường dẫn TUYỆT ĐỐI, khối ASCII không dấu cho cmd).
+
+> **Verify thật:** gọi lại file env → trả về **0,1–1,3s** (trước đây TREO SSH) + in thông báo
+> guard + **worker KHÔNG tăng (1→1)** cả 3 máy LAN; máy chủ không tạo `40_web_agent` thứ 2 ·
+> `*.env.only.bat` nạp đủ env trong 0,1s không sinh worker · service 4 máy **Running + 1 worker**.
+
+> **Việc ETL 08001 — GIỮ NGUYÊN (đối chứng đủ/đúng):** dữ liệu các kỳ đó CÓ trong GiongDB
+> (BKCCN 04/11 225 dòng · 05/11 220 dòng) → phiên lỗi không mất dòng nào; file còn trên máy +
+> auto-ETL 60' nạp lại (import_log có lượt nạp thành công sau mốc lỗi); tần suất 2 phiên/ngày.
+
+> **🎁 Kiểm chứng LIVE fix GĐ 688 (không cần chờ gì thêm):** Task_08 **06/11 17:05:16 → done
+> 17:10:27** — bước 1 giờ tải **`bkccn` OK** (nguồn trước đây bị bỏ sót, không còn tải `dtthc`
+> thừa), báo cáo `dsxk-comparison` **OK**, gửi Zalo OK ⇒ **hết hẳn needsData**.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
