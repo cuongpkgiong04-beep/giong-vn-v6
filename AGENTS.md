@@ -12405,3 +12405,34 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
 > **Còn CHỜ ĐH:** lệnh **Push** (bảng "Chưa vào tiêm" GĐ 693 + sửa tách ngày GĐ 696 nằm ở web —
 > chưa push thì production chưa có; phần ETL + dữ liệu + agent thì đã LIVE ngay).
+
+### GĐ 698 / C.441 (Trợ lý ZCode (máy chủ)): "Đối soát HĐ-XK" tách phần ĐÃ TRẢ TRƯỚC (gói/đặt trước) — 3 cột mới (PA-1 Đại ca chốt); giải oan "download lệch số" (2026-11-06)
+
+> **Đại ca báo 06/11:** LM khách Trần Nguyễn Minh Khang — SMED "Thống kê doanh thu" ghi **0**,
+> file tải về ghi **1.156.400** → nghi download sai (tương tự ML 2.850.000). Chi tiết + bằng
+> chứng: **AGENTS.md repo con C.441**, code `65581a9`.
+
+> **Kết luận điều tra — download ĐÚNG, 2 báo cáo SMED đo 2 thứ khác nhau:** màn hình Đại ca xem
+> = **Thống kê doanh thu** (`2.DTTDT` · tiền THU trong ngày) vs cột "DT SMED" của Đối soát =
+> **Bảng kê chung cuối ngày** (`4.BKCCN col16` · **giá dịch vụ** của lượt tiêm). Cột cuối màn
+> hình SMED là GHI CHÚ: dòng lệch ghi `LM-05-2026` / `Vắc xin đặt trước` / `TO-02-2025` ⇒ khách
+> **mua gói/đặt trước** (trả tiền 1 lần, mũi sau không thu tiền, hóa đơn đã xuất ở kỳ thu gói).
+> **53 dòng / 50.706.700 trong 25/10→06/11 — 100% khách có trong bảng gói/đặt trước.**
+
+> **Đã làm (PA-1):** builder `dsxk_comparison` thêm 3 cột — **"Mũi đã trả trước (gói/ĐT)"** ·
+> **"DT đã trả trước (gói/ĐT)"** · **"Chênh lệch cần kiểm tra"** (= chênh lệch tiền − phần trả
+> trước không có hóa đơn, chỉ trừ giới hạn chênh lệch dương — chặn âm oan) + helper chuẩn hóa
+> tên (bỏ dấu, Đ→D) + gom tên khách gói/ĐT (fail-safe). Điều kiện "khách có trong bảng gói/ĐT"
+> để dòng thu ngân QUÊN nhập tiền không bị coi là trả trước.
+
+> **Verify:** unit mới 14/14 + hồi quy 45/36/bccn/55/46/11 + builder thật 13 kỳ (kỳ 05/11: LM
+> 1.156.400→cần kiểm tra 0 · ML 2.850.000→0 · TO 780.000 đã có HĐ→0; TỔNG chênh 4.006.400 giải
+> thích HẾT) + **E2E production job thật = done 45s, 13 cột đúng số**.
+
+> **Deploy:** máy chủ restart GIONG_SMED_Agent 20:35:21 · 3 máy LAN sha256 KHỚP HEAD. Trang web
+> không cần sửa (render động theo cột của job).
+
+> **Tiêu chí kiểm chứng của Đại ca:** chạy lại báo cáo Đối soát kỳ 05/11 → 3 cột mới; LM/ML hiện
+> phần "đã trả trước" và "Chênh lệch cần kiểm tra" TRỐNG (không còn gì phải soi).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
