@@ -12472,3 +12472,51 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > lại; xuất kho 05/11 còn 40 phiếu chờ ghi sổ.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 703 (Trợ lý ZCode (máy chủ) #2): PA Push đợt 06/11 tối (lệnh ĐH "Push tất cả") — 2 repo LIVE, bump 8.1.0 / 12.8.0, verify production 4/4 (2026-11-06)
+
+> **Lệnh của ĐH (06/11 tối):** "Push tất cả cho anh để phục vụ báo cáo ngày hôm nay."
+
+> **Rà trùng lặp (nguyên tắc 3) TRƯỚC khi push:** nhánh phụ `agent-cli` + `pipeline-work`
+> = **0 commit chưa merge** (cả 2 repo) · worktree repo con còn file dở của phiên khác
+> (`sql_reports.py`, `lan_tray.py`, `misa_hddt_dauvao.py`, cache sqlite, AGENTS.md) →
+> **KHÔNG đụng, KHÔNG add** · 4 file version (`package.json`/`package-lock.json`/
+> `app-shell.tsx` 2 app) đều sạch nên bump an toàn · các phiên khác đang giữ 🔒 GĐ
+> 699/700/701 (mới claim, chưa có code) → đợt push này KHÔNG gồm việc của họ (đúng).
+
+> **Env Vercel kiểm TRƯỚC khi push (GĐ 470):** app tổng đủ `DATABASE_URL` ·
+> `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID` · `BETTER_AUTH_SECRET` ·
+> `BETTER_AUTH_URL`; app con đủ `DATABASE_URL` · `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` ·
+> `TUNNEL_GIST_ID` · `ZAI_API_KEY`. ⇒ ĐỦ, không dừng.
+
+> **Bump (lúc Push — quy tắc ĐA AGENT):** app tổng **8.0.0 → 8.1.0** (`9adb66b` — minor:
+> TOTP MISA GĐ 697, giám sát máy trạm GĐ 689/C.436, lịch sử lệnh theo máy GĐ 695/C.440,
+> tải theo từng ngày GĐ 696, báo cáo bán hàng "chưa vào tiêm" GĐ 693, đối soát HĐ-XK tách
+> trả trước GĐ 698/C.441) · repo con **12.7.1 → 12.8.0** (`88e9bae`). Checklist GĐ 138 ✓
+> (8.1.0 · 12.8.0 — mọi thành phần 1 chữ số). package-lock chỉ đổi 2 dòng (root + packages[""]).
+
+> **Push:** repo con `ba35a9f..88e9bae` (17 commit) · app tổng `f304ab6..9adb66b` (28 commit:
+> GĐ 693-701 của nhiều phiên + GĐ 697/C.442 của em + 2 commit bump/claim).
+
+> **✅ Verify production (4/4 — không tin chữ "Ready"):**
+> 1. `curl --compressed` app tổng = **8.1.0** · app con = **12.8.0** (ngay lần curl đầu —
+>    không ghim deployment cũ).
+> 2. **Login thật app tổng** (`/api/auth/sign-in/email`) → JSON có `user` (Phạm Kiên Cường)
+>    + `/api/auth/get-session` đọc được session (hạn 13/11).
+> 3. **SSO browser thật** (Chrome CDP máy chủ): login → **bấm nút "Bán hàng"** (đi thẳng URL
+>    KHÔNG đủ — phải BẤM để handler ký handoff) → tab app con KHÔNG hiện "Chưa đăng nhập".
+> 4. `/api/auth/me` trên app con = **200** + `user.role = SuperAdmin` + đủ nhóm quyền
+>    (banhang-misa, banhang-banhang, banhang-kho, banhang-marketing, banhang-bank,
+>    bh-bao-cao-ke-toan, bh-bao-cao-kho, …) ⇒ SSO thông, khoá `APP_JWT_SECRET` 2 app KHỚP.
+
+> **Agent/service:** 2 máy LAN đã có đủ file mới (`worker_guard.py`, `task_runner.py`,
+> `misa_totp.py` — kiểm bằng `dir`). Máy chủ **CHƯA restart GIONG_SMED_Agent** vì đang chạy
+> Task_02 23:00 (chuỗi download — job `tkkh` running lúc 23:14) ⇒ **restart khi rảnh** (sáng
+> mai) để nạp câu cảnh báo Zalo mới; các file tool chạy ở tiến trình con mỗi job nên đã ăn
+> bản mới ngay.
+
+> **Điểm đáng nhớ cho phiên sau (bài học verify SSO):** `page.goto(<link sidebar>)` cho
+> kết quả SAI (`/api/auth/me` → `{"user":null}`) dù app thật vẫn tốt — **phải CLICK nút**
+> như người dùng vì handoff SSO do handler JS sinh (kèm token), không nằm trong `href`.
+
+> **Version:** app tổng **8.1.0** / repo con **12.8.0** — ĐÃ PUSH + ĐÃ LIVE.
