@@ -12364,3 +12364,44 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con
 > **12.7.1**.
+
+### GĐ 696 / C.442 (Trợ lý ZCode (máy chủ)): PA-1 ĐH chốt — TẢI THEO TỪNG NGÀY, kỳ nhiều ngày TÁCH thành N job 1 ngày (2026-11-06)
+
+> **ĐH chốt PA-1** cho Việc B của GĐ 693: *"Download theo từng ngày bỏ vào từng Folder ngày
+> cụ thể → ETL vào DB → báo cáo theo khoảng thời gian truy xuất DB."* Nguồn gốc yêu cầu: sự cố
+> GĐ 693 — job tải bù ghi file vào thư mục **lồng** `6.BKX\2026-10-01\<ngày>\` trong khi ngày
+> 30/10 còn 19 file ở thư mục **phẳng** `6.BKX\2026-10-30\` ⇒ 2 thư mục TRÙNG TÊN NGÀY.
+
+> **Luật mới (lib dùng chung `src/lib/smed-expected.ts` — `expandDownloadRanges`):** phân hệ
+> **TẢI-THEO-NGÀY** (13 mã: hddt · dtdt · dtthc · bkccn · nhapkho · xuatkho · xnkt · chietkhau ·
+> hentiem · dattruoc · blth · tkkh · bank-vcb) + kỳ nhiều ngày ⇒ **N job 1 ngày**, mỗi job ghi
+> đúng 1 thư mục `OUTPUT\<phân hệ>\<YYYY-MM-DD>\` (agent đã tạo sẵn theo TỪ NGÀY của job — GĐ 656
+> `out_dir_for(multi=False)` ⇒ hết tầng `<từ ngày>`). **GIỮ NGUYÊN 1 job** cho nhóm bản chất
+> 1-file/cả-kỳ: `bank-tcb`/`bank-tpb` (tool 41/42 trả đủ lịch sử 1 lượt) · `mia-*` (1 Excel/kỳ) ·
+> `bkct-hdgtgt`/`bkth-hdgtgt` (1 file/công ty/kỳ) · `nhapkho-vtth` (2 file/kỳ) · **`tkgvvxdt`**
+> (snapshot GỘP KỲ 01/01/2018→nay — tách ra sẽ tải lặp file rút gọn) — cộng job báo cáo
+> (`sqlreport`/`txds`/`lht-report`) + job upload (`misa-*`). **Trần an toàn 400 ngày**: kỳ dài hơn
+> → giữ 1 job (không tạo hàng nghìn job).
+
+> **Áp ở 2 đường tạo job ĐH hay dùng:** `createSmedJob` (-smed.ts — trả thêm `ids`/`count`, UI chỉ
+> đọc `ok` nên không vỡ) + "Tải nhanh" ở **Tổng quan** (-overview.ts). Job tải từ Nhiệm vụ
+> (Task_02/08) vốn đã 1 ngày/job nên không cần đụng.
+
+> **Verify:** test mới `src/lib/smed-per-day.test.ts` **35/35 PASS** (kỳ 1 ngày · kỳ đảo · 3 ngày
+> liền kề + qua mốc tháng · 12 mã 1-file/cả-kỳ giữ nguyên · trần 400 ngày · bất biến mọi mã
+> tải-theo-ngày phải có trong `ALL_DOWNLOAD_REPORTS`) · `npm test` **EXIT 0** · tsc **0 lỗi**.
+
+> **✅ E2E THẬT (2 job xuatkho 1-ngày: 03/11 + 04/11, tạo trực tiếp vào GiongDB như createSmedJob):**
+> 2 job **done 19/19 trung tâm**, chạy **song song trên 2 máy LAN** (`lan-1` = .14 và `giangkt` =
+> .245, 40 giây cho cả 2 — nhanh hơn hẳn 1 job kỳ vì trước đây phải tuần tự); file đích **đúng
+> thư mục ngày PHẲNG** — `OUTPUT\6.BKX\2026-11-03\` = **19 file** (.14) · `OUTPUT\6.BKX\2026-11-04\`
+> = **19 file** (.245), **KHÔNG** sinh thư mục lồng; ETL nạp lại xong dữ liệu `stg_6BKX` 2 ngày
+> **KHÔNG ĐỔI** (03/11: 194 dòng/183 PX-SD · 04/11: 232 dòng/224 PX-SD — đúng nguồn, idempotent).
+
+> **Tồn đọng (không phải lỗi):** trong `OUTPUT` còn ~vài trăm **thư mục ngày đã RỖNG** (di sản
+> layout cũ, gồm cả `6.BKX\2026-10-01\`) — vô hại (ETL nhóm theo đường dẫn đầy đủ từ GĐ 693 nên
+> không ảnh hưởng số liệu), chỉ là rác thư mục; dọn lúc rảnh.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+> **Còn CHỜ ĐH:** lệnh **Push** (bảng "Chưa vào tiêm" GĐ 693 + sửa tách ngày GĐ 696 nằm ở web —
+> chưa push thì production chưa có; phần ETL + dữ liệu + agent thì đã LIVE ngay).
