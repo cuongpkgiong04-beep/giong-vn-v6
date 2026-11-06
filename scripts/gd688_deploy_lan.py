@@ -24,7 +24,9 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
-FILES = ["etl/sql_reports.py"]          # đường dẫn trong apps/banhang/agent/
+# đường dẫn trong apps/banhang/agent/ — GĐ 688: sql_reports.py; GĐ 690: thêm
+# task_runner.py (truyền qua --files). Mặc định giữ nguyên bộ GĐ 688.
+FILES = ["etl/sql_reports.py"]
 BAK = ".bak-gd688"
 
 
@@ -36,9 +38,9 @@ def load_gd653():
     return mod
 
 
-def stage(repo_con: Path) -> dict:
+def stage(repo_con: Path, files=None) -> dict:
     out = {}
-    for f in FILES:
+    for f in (files or FILES):
         blob = subprocess.run(["git", "-C", str(repo_con), "show",
                                f"HEAD:apps/banhang/agent/{f}"], capture_output=True)
         if blob.returncode != 0:
@@ -52,8 +54,14 @@ def main():
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--machine", default="all")
     ap.add_argument("--wait-idle", type=int, default=0)
+    ap.add_argument("--files", default="", help="danh sách cách nhau dấu phẩy (mặc định bộ GĐ 688)")
+    ap.add_argument("--restart", action="store_true",
+                    help="restart GIONG_SMED_Worker sau khi ghi (cần khi file được import TRONG process worker)")
     a = ap.parse_args()
 
+    global FILES
+    if a.files:
+        FILES = [x.strip() for x in a.files.split(",") if x.strip()]
     g = load_gd653()
     targets = g.MACHINES if a.machine == "all" else {a.machine: g.MACHINES[a.machine]}
     blobs = stage(g.REPO_CON)
@@ -102,17 +110,34 @@ def main():
             t = f"{m['agentdir']}\\{f.replace('/', chr(92))}"
             ps.append(f"$h=(Get-FileHash '{t}' -Algorithm SHA256).Hash.ToLower()")
             ps.append(f"if ($h -ne '{want}') {{ Write-Output 'HASH_SAI {f}' }}")
-        etl = f"{m['agentdir']}\\etl"
-        ps.append(f"cd '{etl}'")
-        ps.append("python -m py_compile 'sql_reports.py' 2>&1 | ForEach-Object "
-                  "{ Write-Output ('PYERR ' + $_) }")
+        for f in blobs:                       # py_compile từng file TẠI THƯ MỤC CỦA NÓ
+            sub = "\\".join(f.replace("/", "\\").split("\\")[:-1])
+            base = f.replace("/", "\\").split("\\")[-1]
+            ps.append(f"cd '{m['agentdir']}" + (f"\\{sub}'" if sub else "'"))
+            ps.append(f"python -m py_compile '{base}' 2>&1 | ForEach-Object "
+                      "{ Write-Output ('PYERR ' + $_) }")
         ps.append("Write-Output 'VERIFY_XONG'")
         rc, out = g.ssh(m, "\n".join(ps) + "\n", timeout=300)
-        okv = "VERIFY_XONG" in out and "HASH_SAI" not in out and "PYERR" not in out
+        # SyntaxWarning (invalid escape '\S') có sẵn trong file → KHÔNG tính là lỗi
+        py_err = [l for l in out.splitlines() if "PYERR" in l and "SyntaxWarning" not in l]
+        okv = "VERIFY_XONG" in out and "HASH_SAI" not in out and not py_err
         print("  verify (sha256 + py_compile):", "PASS" if okv else "XEM LẠI")
         if not okv:
             print("   ", out.strip()[:600].replace("\n", "\n    "))
-        print("  (không cần restart worker — job sqlreport chỉ máy chủ nhận)")
+
+        if a.restart:
+            ps2 = ["$s = Get-Service GIONG_SMED_Worker -ErrorAction SilentlyContinue",
+                   "if ($s) { Write-Output ('TRUOC=' + $s.Status); "
+                   "Restart-Service GIONG_SMED_Worker -Force; Start-Sleep -Seconds 8; "
+                   "Write-Output ('SAU=' + (Get-Service GIONG_SMED_Worker).Status) } "
+                   "else { Write-Output 'KHONG_CO_SERVICE' }",
+                   "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' "
+                   "-and $_.CommandLine -like '*worker_node*' } | "
+                   "ForEach-Object { Write-Output ('WORKER PID ' + $_.ProcessId) }"]
+            rc, out = g.ssh(m, "\n".join(ps2) + "\n", timeout=200)
+            print("  restart worker:", out.strip().replace("\n", " | ")[:260])
+        else:
+            print("  (không restart — thêm --restart khi file được import trong process worker)")
 
 
 if __name__ == "__main__":
