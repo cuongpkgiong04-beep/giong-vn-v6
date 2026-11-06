@@ -12084,3 +12084,36 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.8.0** / repo con **12.6.1**.
+
+### GĐ 692 / C.436 (Trợ lý Freebuff): PA Push đợt 06/11 — file 72 cột bán hàng + vá index KCT + PA-1, bump repo con 12.7.1 + LIVE verify 4/4 (2026-11-06)
+
+> **Lệnh "Push" của Đại ca (06/11, sau PA-1).** Rà trùng lặp nguyên tắc 3: app
+> tổng 12 commit thuần DOCS + 1 script (`gd688_deploy_lan.py` của phiên máy chủ)
+> · nhánh phụ RỖNG cả 2 repo · **repo con 4 commit**: 2 của em
+> (`7602e7c` script xóa PA-1 + `b775d03` vá lệch index 3 cột KCT) + 2 của phiên
+> máy chủ (`8e97b0b` fix Task_08 needsData + nhân đôi doanh thu sql_reports +
+> entry) — **đẩy chung 1 đợt**. File dở phiên khác (nav.ts/smed-auth.ts/
+> routeTree/api_server/lan_tray) KHÔNG đụng.
+
+> **Bump (lúc Push):** app tổng **docs-only giữ 7.8.0**; repo con **12.7.0 →
+> 12.7.1** (patch — phát hiện lúc push: 12.7.0 đã LIVE từ đợt push phiên máy
+> chủ TRƯỚC đó (commit 72 cột `2795dce` — bản có LỖI LỆCH INDEX còn trên
+> production), đợt này vá). Checklist GĐ 138 ✓ (12.7.1).
+
+> **Env Vercel trước push: ĐỦ cả 2 app.**
+
+> **Push:** app tổng `eaa60aa..260aa65` (12 commit docs+script) · repo con
+> `2795dce..ba35a9f` (5 commit: 4 code + bump 12.7.1).
+
+> **✅ Verify production (curl + login thật + SSO browser thật):** app con
+> **12.7.1** (curl lần đầu) · app tổng 7.8.0 · đăng nhập thật
+> cuongpk.giong04 → JSON user + get-session OK · bấm "Bán hàng" ở sidebar
+> (browser thật) → **tab app con mở THẲNG trang chủ** (không /login) → SSO OK.
+
+> **Tiêu chí kiểm chứng của ĐH:** MISA Bán hàng 04/11 — 265 phiếu (189 hệ
+> thống mới có TK Nợ/ghi sổ + 76 kế toán); đêm nay job bán hàng chạy bằng file
+> 72 cột đã vá index → tạo + ghi sổ ngay từ đầu. Còn 1 phiếu SĐ
+> `10312611040930201371` lỗi nghiệp vụ "Số HĐ BKCT trùng/miss" — soi tay.
+
+> **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.7.1** —
+> ĐÃ PUSH + ĐÃ LIVE.
