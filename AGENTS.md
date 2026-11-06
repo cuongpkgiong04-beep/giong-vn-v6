@@ -12004,3 +12004,44 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
 > **7.8.0** / repo con **12.6.1**.
+
+### GĐ 688 / C.435 (Trợ lý ZCode (máy chủ)): Task_08 hết LỖI needsData (khai báo nguồn dsxk-comparison → stg_4BKCCN) + bảng "Đối soát HĐ-XK" hết nhân đôi doanh thu (PA-1 + PA-A Đại ca chốt) (2026-11-06)
+
+> **Đại ca báo (05/11 tối, 2 ảnh):** (1) Task_08 "Báo cáo cuối ngày — Đối soát HĐ-XK"
+> LỖI `needsData` dù 3 bước Download OK — Đại ca nghi do "download một máy, báo cáo máy
+> khác nên ETL chưa về DB"; (2) cột "Tổng Doanh thu (SMED)" gấp lên — Bích Hòa 12 mũi =
+> 8.315.000 nhưng bảng hiện 13.260.000. Chi tiết đầy đủ + bằng chứng: **AGENTS.md repo
+> con C.435**, code repo con `8e97b0b`.
+
+> **Kết luận điều tra (probe GiongDB):**
+> - **KHÔNG phải do chia máy** — chia máy có thật (tải `bkccn` ở máy LAN, chạy `sqlreport`
+>   ở máy chủ `core`) nhưng ETL chạy trên máy tải và ghi vào **GiongDB dùng chung** (đủ
+>   dữ liệu). **Nguyên nhân gốc: khai báo nguồn LỆCH builder** —
+>   `REPORT_SOURCE_TABLES["dsxk-comparison"]` còn ghi `dtthc`/`stg_3DTTHC` trong khi
+>   builder đọc `stg_4BKCCN` từ GĐ 626 ⇒ Task_08 (17:05) không biết thiếu BKCCN nên không
+>   tải, mà BKCCN chỉ có sau Task_02 (17:15/17:26) ⇒ needsData (job result ghi rõ
+>   `missing: bkccn`; BKCCN nạp 17:27 → chạy lại 17:39 = done). Riêng 04/11 là lỗi khác:
+>   SQL Server máy chủ không kết nối được ~30 phút (loạt `sqlreport` fail `08001`).
+> - **col16 BKCCN "Giá" đã là THÀNH TIỀN của dòng** (không phải đơn giá), col18 "Mũi tiêm"
+>   không phải hệ số nhân tiền ⇒ `SUM(col16*col18)` phồng ~1,55×. Đối chứng 05/11: 16/18
+>   trung tâm khớp tổng HĐGTGT TỪNG ĐỒNG; 12 ngày gần nhất lệch ±0,2–3%.
+
+> **Đã sửa (chỉ 1 file agent-side `agent/etl/sql_reports.py`, +16/−4):** nguồn B
+> dsxk-comparison → `bkccn`/`stg_4BKCCN` (checkCol col10) · builder `SUM(col16*col18)` →
+> `SUM(col16)`.
+
+> **Verify:** unit 6 bộ 229/229 + `sql_reports_bccn` PASS · builder thật kỳ 05/11: Bích Hòa
+> **8.315.000** = HĐGTGT từng đồng · TỔNG **182.391.400** (trước 283.676.400) vs HĐGTGT
+> 178.385.000 → CL +2,2% · **E2E production**: tạo job thật qua `/task/create-job` → core
+> chạy **done 40 giây** → result đúng số trên · `check_source_data` kỳ chưa tải báo thiếu
+> bkccn (Task_08 sẽ tự tải — BKCCN thật chỉ 28–58 giây/lượt).
+
+> **Deploy:** máy chủ — xoá `__pycache__` + restart **GIONG_SMED_Agent** 09:39:24 (agent
+> chạy trực tiếp từ repo; không đụng `GIONG_API_Server` để tunnel URL giữ nguyên) ·
+> 3 máy LAN (.14 / .245 / .11) — `scripts/gd688_deploy_lan.py` sha256+py_compile: KHỚP hash
+> HEAD · không cần restart worker (job `sqlreport` chỉ máy chủ nhận).
+
+> **Tiêu chí kiểm chứng của Đại ca:** 17:05 hôm nay Task_08 chạy không còn LỖI; bảng Đối
+> soát HĐ-XK kỳ 05/11 hiện Bích Hòa 8.315.000 · TỔNG ≈ 182.391.400.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
