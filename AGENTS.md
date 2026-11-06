@@ -12168,3 +12168,43 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con
 > **12.7.1**.
+
+### GĐ 690 / C.437 (Trợ lý ZCode (máy chủ)): Hoàn thiện việc GĐ 688 — báo cáo hết needsData oan (chờ ETL nạp nguồn) + `sql_reports` dùng env kết nối (GỐC 08001 04/11) + dọn worker trùng máy LAN (2026-11-06)
+
+> **Lệnh Đại ca (06/11):** "còn việc gì dở dang em thực hiện cho hoàn thiện đi" — Việc 3
+> của GĐ 688 + điều tra sự cố 04/11. Chi tiết đầy đủ + bằng chứng: **AGENTS.md repo con
+> C.437**, code repo con `cbfe0aa`.
+
+> **Điều tra 04/11 (đính chính nhận định ban đầu):** máy chủ KHÔNG mất SQL ~30 phút — cùng
+> lúc đó máy chủ vẫn chạy 11 báo cáo OK; các job fail `08001` chạy ở MÁY KHÁC (log thanh-pc
+> .11 17:09–17:28 `Job SQL lỗi: 08001`, khớp job `claimed_by` RỖNG trong DB). **GỐC:
+> `etl/sql_reports.py` kết nối CỨNG `Server=.\SQLEXPRESS` + Trusted_Connection** — module
+> cuối cùng còn hardcode; máy không có SQL Server cục bộ → 08001 (kèm `build_tra_no` bảng
+> "trả nợ LHT" chết im lặng trên máy LAN), và máy có SQLEXPRESS riêng sẽ ĐỌC NHẦM DB. Phiên
+> ma poll Vercel đã hết (GĐ 670/672 đã chặn).
+
+> **Đã làm — 1 commit repo con `cbfe0aa` (3 file):**
+> 1. `sql_reports.py`: `CONN_STR` = env `AGENT_SQL_CONN` → `ETL_SQL_CONN` → fallback cục bộ.
+> 2. `task_runner.py`: `_wait_sources_ready()` — chờ nguồn vào GiongDB (ETL) trước khi tạo
+>    job báo cáo, áp ở Task_08 (`_run_bcn_only`) + giai đoạn 2 Task_02/04 (`_run_task`);
+>    ngưỡng `TASK_SOURCE_WAIT_SEC`=180s, hết hạn vẫn chạy như cũ.
+> 3. Test mới `gd690-wait-nguon.test.py`.
+> Kèm dọn **worker trùng máy LAN** (mỗi lần `call worker.env.bat` sinh thêm 1 worker vĩnh
+> viễn): .245 có 5 → còn 1 · .11 có 2 → còn 1 · .14 sạch (script
+> `artifacts/gd_task08_probe/clean_dup_workers.py`, nhận diện worker service bằng duyệt
+> ngược chuỗi cha lên PID nssm).
+
+> **Verify:** unit mới **11/11** + hồi quy task_runner_quick 46/46 · sql_reports 45+36 ·
+> gd588-hd 55 · zalo 15 · integration thật (2 chuỗi kết nối cho CÙNG số 182.391.400) ·
+> **E2E production sau deploy: job dsxk-comparison kỳ 05/11 = done, Bích Hòa 8.315.000**.
+
+> **Deploy:** máy chủ — xoá `__pycache__` + restart GIONG_SMED_Agent 13:46:31 · 3 máy LAN —
+> sha256 KHỚP HEAD cả 2 file + còn đúng 1 worker/máy, service Running.
+
+> **CÒN LẠI chờ Đại ca:** (1) tách `worker.env.bat` thành env-only để hết sinh worker trùng
+> (rủi ro 2 worker cùng máy nhận 2 job song song — đụng phiên MISA); (2) theo dõi vài phiên
+> ETL 08001 lẻ tẻ trên máy LAN (nghi mạng LAN→SQL tạm thời, chưa cần sửa).
+
+> **Tiêu chí kiểm chứng của Đại ca:** 17:05 hôm nay Task_08 không còn LỖI needsData.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
