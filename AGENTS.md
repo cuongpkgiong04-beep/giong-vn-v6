@@ -4358,3 +4358,24 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 >
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.9.0** /
 > repo con **12.8.0**.
+
+### GĐ 702 (Trợ lý ZCode (máy chủ)): PA-1+2+3 dọn kho tri thức — tách archive lần 3 + PROJECT_MAP + PLAYBOOK + cắt MEMORY.md (2026-11-06)
+
+> **Yêu cầu ĐH (06/11):** "Nghiên cứu để em tự học và truy xuất dữ liệu nhanh + đúng — em làm chậm quá." Em khảo sát bằng chứng (AGENTS.md 12.432 dòng · MEMORY.md 80KB/24KB · index degraded) → trình 4 PA → **ĐH chốt PA-1+2+3 ngay, PA-4 tuần sau.**
+
+> **PA-1 dọn kho (code `e260a4a`):**
+> - Tách 171 entry GĐ 411-599 (kèm GĐ 408 lặp) xuống AGENTS_ARCHIVE.md **nguyên văn byte** (verify md5 từng khối so backup) — **AGENTS.md 12.555 → 4.333 dòng**; archive đủ GĐ 1→599; mục 12 cập nhật mốc (entry từ GĐ 600).
+> - Gom 3 khối quy tắc chen giữa entry về khu quy tắc: mục 18 (giá niêm yết) · mục 19 (entire-graph — vá marker GD602 về ngay trước heading) · date picker đổi số `## 18` → `## 20`.
+> - **MEMORY.md (bộ nhớ tự động ngoài repo) 81.850 → 20.275 bytes** (178 dòng ≤115 bytes, giữ từ khóa tra cứu; backup `artifacts/gd702/MEMORY.md.bak`) — hết bị cắt khi nạp đầu phiên.
+> - Kèm hợp nhất bài dở ổn định của phiên #2 trong cùng file AGENTS.md (dời khối date picker, phụ lục GĐ 673, WARP note) — minh bạch trong commit message; AGENT_REGISTRY.md bài dở phiên #2 KHÔNG đụng.
+> - Hook pre-commit chặn commit tách (LOST check chạy trước GIONG_SHARED_OK) → dùng `git commit --no-verify` đúng hướng dẫn hook sau khi verify đủ nguyên văn + snapshot tự động.
+
+> **PA-2 bản đồ + playbook (code `0444027`):** `docs/PROJECT_MAP.md` — kiến trúc 6 tầng (nguồn → agent 4 máy .14/.245/.11/.250 → api_server/tunnel → GiongDB → web Vercel → ĐH) + luồng Download→ETL→Báo Cáo + lệnh tra cứu chuẩn + cấu trúc repo. `docs/PLAYBOOK.md` — ~30 triệu chứng → fix chuẩn → link GĐ (5 nhóm: Đăng nhập/Deploy · Agent/Service · Dữ liệu/ETL/GiongDB · Đa Agent/Git · UI/E2E). **Quy tắc duy trì: GĐ có bài học mới → sửa/thêm 1 dòng playbook.**
+
+> **PA-3 nâng cấp truy xuất:** entire-graph index mới (292 file · 2.839 symbol · 9.227 relation, health ok) + fix `huong-dan.tsx` `&` → `&` (dòng 116 — sạch E_PARSE_ERROR đồ thị, render không đổi, tsc EXIT 0, code `223fcf5`) + ADR 5 quyết định kiến trúc ghi vào CBM manage_adr. CBM index_repository 2 lần abort (phiên khác đang sửa file khi index) → **VIỆC TREO: chạy lại khi repo yên tĩnh** (mục 14.2).
+
+> **PA-4 (chờ tuần sau theo ĐH):** đo thời gian từng GĐ + audit tuần — việc lặp → quy tắc; bước tốn nhiều phút nhất → làm công cụ.
+
+> **Verify:** tsc EXIT 0 · 7 phép thử nguyên văn byte PASS · entire-graph health ok · verify script `artifacts/gd702/`.
+> **Tiêu chí kiểm chứng (sau Push):** phiên mới nạp AGENTS.md nhẹ (4.3k dòng) · tra bài học 1 cú qua docs/PLAYBOOK.md · entire-graph hết parse error.
+> **Version:** KHÔNG bump (docs + 1 ký tự JSX — tiền lệ GĐ 416/417). KHÔNG push — chờ lệnh ĐH. App tổng **8.1.0** / repo con giữ nguyên.
