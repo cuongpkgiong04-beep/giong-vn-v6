@@ -12045,3 +12045,42 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > soát HĐ-XK kỳ 05/11 hiện Bích Hòa 8.315.000 · TỔNG ≈ 182.391.400.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 691 / C.434 (Trợ lý Freebuff): PA-1 Đại ca chốt — XÓA 113 phiếu bán hàng 04/11 cũ + chạy lại file chuẩn 72 cột → 189/190 TẠO MỚI + ĐÃ GHI SỔ (2026-11-06)
+
+> **Đại ca chốt PA-1 (06/11):** "xóa 190 phiếu 04/11 trên MISA → chạy lại bằng
+> file chuẩn 72 cột → tạo mới đủ TK → ghi sổ sạch".
+
+> **Đã làm:**
+> 1. **Script `gd688_xoa_bh_0411.py`** (repo con `ae7cfc3`… xem log — commit
+>    `b0e2eda`?): GUARD chỉ xóa phiếu có refno_finance ∈ DB 04/11 (76 phiếu kế
+>    toán PT0003xx GIỮ NGUYÊN) + backup JSON `LOG/gd688_ds_xoa_0411.json` +
+>    unpost theo lô + delete theo lô + đọc lại. **Kết quả: unpost 113/113 OK ·
+>    xóa 113/113 OK · MISA còn đúng 76 phiếu kế toán.**
+> 2. **PHÁT HIỆN + VÁ LỆCH INDEX 3 CỘT** (job 08:56 import "hợp lệ 0" — wizard
+>    báo *"Tài khoản \<KCT\> không có trong danh mục"*): bản 72 cột đầu đặt
+>     `r72[45]=KCT` trong khi SA_COLS[45] = "TK thuế xuất khẩu" (KCT phải ở
+>    **[46]**); Tiền/TK thuế GTGT 47/48→**48/49**; Mã thống kê 59→**58**
+>    (59="Số khế ước cho vay"). Verify **22/22 điểm cột PASS** + test
+>    `misa_banhang_api.test` **87/87** (repo con `b775d03`).
+> 3. **Chrome CDP 9222 trên .11 treo/chết giữa job** (Timeout 180s → sau đó
+>    ECONNREFUSED) — xử lý theo quy trình GĐ có sẵn: kill toàn bộ chrome +
+>    `schtasks /run /tn GIONG_ChromeMISA` + verify /json/version OK.
+> 4. **Chạy lại lần 3 (job GD688-lan3) — DONE 10:58:** import "hợp lệ N/N ·
+>    không hợp lệ 0" mọi TT · **189/190 phiếu ĐÃ UPLOAD + 189/190 ĐÃ GHI SỔ**.
+> 5. **Đối chứng cuối (MISA vs DB):** MISA 04/11 = 265 phiếu = **189 phiếu hệ
+>    thống (khớp đúng DB)** + 76 phiếu kế toán giữ nguyên; refno DB còn thiếu
+>    đúng 1: `10312611040930201371` (SĐ — lỗi nghiệp vụ "Số HĐ BKCT trùng/miss
+>    — cần soi tay", không phải lỗi hệ thống).
+> 6. **Verify phiếu mới (detail_full MISA):** `is_posted_finance=True` ·
+>    `debit_account=1121_TT` (TK Nợ) · `credit_account=5113_TT` · Vị trí `TT` ·
+>    `lot_no` + **`expiry_date` có giá trị** → cả 4 vấn đề Đại ca nêu (TK Nợ ·
+>    Vị trí · HSD · ghi sổ) ĐÃ GIẢI QUYẾT.
+
+> **Tiêu chí kiểm chứng của Đại ca:** mở MISA → Bán hàng kỳ 04/11 → phiếu mới
+> có TK Nợ (Nợ vào TK = 1121_TT/1111_TT/131) + ngày ghi sổ hiện + chi tiết có
+> "Mã địa điểm KD" = mã TT + "Hạn sử dụng" đầy đủ; tổng 189 phiếu hệ thống +
+> 76 phiếu kế toán = 265.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng
+> **7.8.0** / repo con **12.6.1**.
