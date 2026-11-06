@@ -12557,3 +12557,29 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > −2.260.000 · 30/10 −990.000 · 29/10 −1.400.000 (3 ca kế toán cần xử lý).
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 700 / C.444 (Trợ lý ZCode (máy chủ)): Trang UPLOAD Hóa đơn đầu vào — tách Nạp Tổng quan/Chi tiết từ 2 file Excel MiaTool + bảng Tổng quan phân loại 5 nhóm + Tạo bảng kê upload misa (2026-11-06)
+
+> **ĐH yêu cầu (06/11, kèm ảnh) + vòng hỏi-đáp chốt PA-1:** nạp TỔNG QUAN từ file
+> "Mua vào - Tổng quan (MiaTool)" + CHI TIẾT từ file "Mua vào - Chi tiết (MiaTool)"
+> (đọc trực tiếp 2 file Excel trên máy chủ — PA-1); bảng TỔNG QUAN 1 dòng/HĐ đúng
+> bảng download + cột "Hàng hóa" (tối đa 3 mặt hàng đầu, dấu phẩy) + cột "Phân loại"
+> (VTTH/CCDC/TSCĐ/DV1L/DVPB — lưu DB vĩnh viễn, VTTH ≡ NVL); cảnh báo "dữ liệu chưa
+> đủ, đề nghị nạp lại dữ liệu"; hộp "Tạo bảng kê upload misa" (5 nút nhóm) sinh
+> bảng kê chi tiết kết cấu 100% bảng chi tiết mua vào; **TK Nợ mặc định 152_VP /
+> 153_VP / 211_VP / 642_VP / 242_VP** (TK Có 331, Kho VP); nút Upload lên MISA +
+> hướng dẫn sử dụng chi tiết. Chi tiết đầy đủ ở entry **C.444 AGENTS.md repo con**
+> (code `4e0489d` + docs `3e400cd`).
+
+> **Đã làm:** 2 bảng DB mới `misa_mua_tq`/`misa_mua_ct` (DDL idempotent, nạp đè theo
+> kỳ, GIỮ phân loại đã chọn) · engine nap_tong_quan/nap_chi_tiet/sinh_bang_ke (CLI +
+> SMED_ACTION nap-tq/nap-ct/sinh) · web agent +7 REPORT_MAP/MISA_UPLOAD_REPORTS key ·
+> API loadMuaTq/setPhanLoai/triggerHddtNapTq/napCt/sinhBangKe · trang tái thiết 7 bước
+> + hướng dẫn 8 bước. Bẫy CẶP FILE cùng lần tải (`_find_mua_vao_pair` mtime lệch ≤120s).
+>
+> **Verify:** đối chứng chéo kỳ 9 từng đồng 5.009.500.321 = 5.009.500.321 ✓ · unit
+> python 46/46 · tsc EXIT 0 · npm test 348 PASS · sinh VTTH thử 2 HĐ (đã dọn nguyên
+> trạng) · restart GIONG_SMED_Agent sau commit.
+>
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **7.9.0** /
+> repo con **12.8.0**.
