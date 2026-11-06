@@ -12117,3 +12117,54 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 
 > **Version:** app tổng **7.8.0** (giữ — docs-only) / repo con **12.7.1** —
 > ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 689 / C.436 (Trợ lý ZCode (máy chủ)): Trang "Giám sát máy trạm" + nhịp tim 4 máy + sửa 2 lỗi công cụ monitor (PA-2 Đại ca chốt) (2026-11-06)
+
+> **Yêu cầu của Đại ca (06/11):** "làm luôn cho anh trang Giám sát máy trạm và sửa 2 lỗi
+> của công cụ trên máy chủ" (tiếp mạch GĐ 685 badge "Máy chạy").
+
+> **Thiết kế chốt:** NHỊP TIM tận dụng chính request claim sẵn có — worker đã poll
+> `/agent/claim` **20 giây/lần kể cả khi rảnh**, nên api_server ghi 1 nhịp mỗi lần poll vào
+> bảng mới `dbo.worker_heartbeat` (worker_id PK · groups · ip · first_seen · last_seen ·
+> last_job_id/report — **DATETIME2**, tránh bẫy DATETIMEOFFSET qua tunnel). Nhờ vậy phân biệt
+> được **máy đang bật nhưng rảnh** với **máy tắt service** — trước đây nhìn web không phân
+> biệt được. KHÔNG cần sửa/deploy worker ở 4 máy LAN.
+
+> **Đã làm:** `api_server.py` +helper `touch_worker_heartbeat` (bọc try/except — lỗi nhịp tim
+> không bao giờ làm hỏng claim; gọi 1 chỗ trước `if not rows`) · web app con: server function
+> `-worker-monitor.ts` (3 query nhẹ, liệt kê cột, không đụng result) + trang
+> `/m/giam-sat-may` (bảng 4 máy: nhóm việc · trạng thái 🟢đang chạy/🔵rảnh/🔴mất kết nối/⚪chưa
+> có nhịp tim · lệnh đang chạy · 24h tổng/xong/lỗi · hoạt động cuối; bảng lệnh đang chạy & đang
+> chờ — waitdownload/needsData chỉ lấy 48h để không rác hàng trăm job cũ; tự làm mới 15 giây) ·
+> phân quyền **3 điểm**: nav.ts + ROUTE_TO_GROUP (smed-auth) + BH_GROUPS (banhang-catalog app
+> tổng), lá nằm trong nhóm **SỨC KHOẺ DỮ LIỆU** — audit tự động 3 nguồn **85/85 route khớp** ·
+> `scripts/monitor_4_machines.py` (app tổng) sửa **2 lỗi**: (1) máy chủ báo UNKNOWN vì hỏi sai
+> tên service → nay mỗi máy có `service_name` (máy chủ = `GIONG_SMED_Agent`), (2) job in
+> "532/19 2800%" → kẹp 0-100% + nêu rõ số thô; thêm cột **NHỊP TIM** · tạo
+> `scripts/giam-sat-4-may.bat` + **shortcut Desktop** `Giam sat 4 may tram.lnk` (Desktop máy
+> chủ nằm ở `D:\Libraries\Desktop` — không phải ổ C).
+
+> **⚠️ Restart api_server (bắt buộc để nạp code nhịp tim):** đã kiểm tra pipeline RẢNH (0 job
+> chạy/chờ, 0 job trong 10 phút) → xoá `__pycache__` → `sc stop/start GIONG_API_Server`.
+> **Tunnel URL ĐỔI** (`fisheries-…` → `audio-boards-care-still.trycloudflare.com`) đúng như
+> thiết kế: api_server tự publish URL mới lên **Gist**, 2 app đọc Gist khi URL cũ fail →
+> **KHÔNG cần sửa env Vercel + redeploy** (đã verify production sau đó: login/SSO/`/api/auth/me`
+> + 48 badge "Máy chạy" vẫn OK). Chạy `scripts/update-tunnel-env.py` đồng bộ `.env.local` 2 app.
+
+> **Verify:** py_compile 0 · tsc app con + app tổng 0 · npm test 12/12 file PASS · audit 3 nguồn
+> phân quyền 85/85 · E2E browser thật local **11/11 PASS** (ảnh
+> `screenshots/gd689-giam-sat-may-tram.png`) · **nhịp tim thật 4 máy** (đọc sau restart 45
+> giây): `core` (máy chủ) nhóm `core` · `giangkt` (.245) nhóm `misa-muahang` · `thanh-pc` (.11)
+> nhóm `misa-banhang` · `lan-1` (.14) nhóm `smed` · monitor script chạy thật: 4/4 máy RUNNING
+> (hết UNKNOWN) + cột nhịp tim hiện.
+
+> **⚠️ Trùng số (minh bạch):** commit message bump `ba35a9f` của phiên Freebuff (11:58) cũng
+> ghi "C.436" nhưng **commit SAU** mốc claim của em (09:30) và KHÔNG khai dòng registry/entry
+> nào → theo quy tắc GĐ 285 (ai commit trước giữ số) **em giữ C.436**; registry chỉ 1 dòng.
+
+> **Tiêu chí kiểm chứng của Đại ca (sau Push):** sidebar app con → **SỨC KHOẺ DỮ LIỆU → Giám
+> sát máy trạm** → thấy 4 máy + máy nào đang chạy/rảnh/mất kết nối; trên máy chủ bấm shortcut
+> **"Giam sat 4 may tram"** ở Desktop → bảng 4 máy tự làm mới 30 giây (cột NHỊP TIM).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con
+> **12.7.1**.
