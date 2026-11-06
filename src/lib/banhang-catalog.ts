@@ -291,6 +291,9 @@ export const BH_GROUPS: BhGroup[] = [
     label: "SỨC KHOẺ DỮ LIỆU",
     leaves: [
       { to: "/m/suc-khoe-du-lieu", label: "Sức khoẻ dữ liệu" },
+      // GĐ 689/C.436 (06/11/2026 — PA-2 ĐH chốt): Giám sát máy trạm (máy nào
+      // đang nhận việc / rảnh / mất kết nối + tiến trình từng lệnh).
+      { to: "/m/giam-sat-may", label: "Giám sát máy trạm" },
     ],
   },
 ];
