@@ -12313,3 +12313,52 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > chỗ truyền `SMED_OUTPUT_DIR`); **PA-3** giữ nguyên cách chạy, chỉ dọn/thống nhất layout định kỳ.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 695 / C.440 (Trợ lý ZCode (máy chủ)): Giám sát máy trạm phần 2 — (a) bấm tên máy xem lịch sử lệnh + (b) cảnh báo Zalo khi máy mất kết nối (2026-11-06)
+
+> **Yêu cầu của Đại ca (06/11):** "…(a) bấm vào tên máy để xem lịch sử lệnh của riêng máy
+> đó + (b) cảnh báo tự động khi một máy mất kết nối quá lâu (gửi Zalo)".
+
+> **(a) Lịch sử lệnh theo máy:** server function mới `loadWorkerHistory({workerId, hours})`
+> trong `-worker-monitor.ts` (7 ngày, top 60, liệt kê cột — không `result`) + UI: **bấm tên
+> máy** ở bảng "Máy trạm" → mở khối lịch sử riêng (lệnh · kỳ · trạng thái · **thời lượng
+> chạy (phút)** · xong lúc · người tạo), bấm lần nữa để đóng. E2E browser thật PASS
+> (ảnh `screenshots/gd695-lich-su-theo-may.png`).
+
+> **(b) Cảnh báo Zalo máy mất kết nối:** vòng kiểm mới trong `task_runner.py` (MÁY CHỦ,
+> 5 phút/lần) đọc bảng nhịp tim `worker_heartbeat` → tạo job `bc-zalo` (cfg `alertText` —
+> **DÙNG LẠI đúng cơ chế GĐ 653**, agent máy chủ gửi tin qua Zalo Web CDP). Chống spam 2
+> lớp: cột mới `alerted_at` (mỗi ĐỢT mất kết nối chỉ 1 tin; máy sống lại → tin "đã KẾT NỐI
+> LẠI" rồi mở đợt mới) + khung giờ 6–22h (ngoài giờ chỉ cảnh báo khi có lệnh chờ > 15' —
+> đúng ca job đêm Task_05/07 cần máy). Cấu hình qua `kv_settings`: `worker_alert_enabled`
+> ('0'=tắt) · `worker_alert_minutes` (mặc định 20) · `worker_alert_hours` (VD '6-22').
+
+> **⚠️ BẢN VÁ QUAN TRỌNG phát hiện ngay trong ngày (17:24):** máy ĐANG CHẠY JOB dài KHÔNG
+> poll `/agent/claim` → nhịp tim cũ (đo thật: máy chủ chạy bank-vcb nhịp **123 giây**) ⇒
+> suýt bị báo "mất kết nối" OAN. Sửa 2 lớp: (1) `check_worker_offline_alerts` **bỏ qua máy
+> đang có job running** (`busy`), (2) api_server ghi nhịp **cả ở `/agent/report`** — agent
+> gửi report mỗi **30 giây trong lúc chạy job** (thread heartbeat GĐ C.19) → nhịp tim phản
+> ánh đúng máy còn sống; MERGE đổi `groups/ip` sang `coalesce` để nhịp không kèm thông tin
+> không xoá dữ liệu cũ. Unit test offline `gd695_worker_alert.test.py` **21/21 PASS** (gồm ca
+> "máy đang chạy job → không cảnh báo").
+
+> **Verify:** py_compile 0 (task_runner + api_server) · tsc app con 0 · E2E lịch sử theo máy
+> PASS · SQL thật: SELECT nhịp tim + INSERT job bc-zalo + `UPDATE ... WHERE worker_id =
+> ANY($1::text[])` chạy đúng (chỉ set đúng máy trong mảng) · nhịp tim 4 máy tươi sau restart ·
+> **production verify PASS sau khi tunnel đổi** (login/SSO/me + 48 badge máy).
+
+> **⚠️ Đã restart 2 service máy chủ** (đều kiểm tra pipeline RẢNH trước; Task_04 17:15 đã
+> XONG 23/23 bước OK lúc 17:40): `GIONG_API_Server` (tunnel URL đổi LẦN 2 →
+> `speeds-amounts-inherited-curious…`; api_server **tự cập nhật Gist + tự đăng ký URL mới với
+> Vercel — HTTP 200 cả 2** ⇒ production không cần sửa env) + `GIONG_SMED_Agent` (nạp
+> task_runner; tunnel GIỮ NGUYÊN — chỉ api_server sở hữu cloudflared). Đồng bộ `.env.local`
+> 2 app (script `update-tunnel-env.py` lỗi SSL chứng chỉ Gist hôm nay → cập nhật tay đúng
+> giá trị Gist).
+
+> **Tiêu chí kiểm chứng của Đại ca:** (1) trang Giám sát máy trạm → bấm tên máy → thấy lịch
+> sử lệnh + thời lượng; (2) tắt 1 máy trạm > 20 phút trong giờ làm việc → nhận tin Zalo cảnh
+> báo (bật lại máy → nhận tin "đã kết nối lại"); muốn tắt/thử ngưỡng khác → sửa
+> `kv_settings.worker_alert_*`.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con
+> **12.7.1**.
