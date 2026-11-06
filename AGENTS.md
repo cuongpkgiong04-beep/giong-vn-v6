@@ -12345,7 +12345,9 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > **Verify:** py_compile 0 (task_runner + api_server) · tsc app con 0 · E2E lịch sử theo máy
 > PASS · SQL thật: SELECT nhịp tim + INSERT job bc-zalo + `UPDATE ... WHERE worker_id =
 > ANY($1::text[])` chạy đúng (chỉ set đúng máy trong mảng) · nhịp tim 4 máy tươi sau restart ·
-> **production verify PASS sau khi tunnel đổi** (login/SSO/me + 48 badge máy).
+> **production verify PASS sau khi tunnel đổi** (login/SSO/me + 48 badge máy) · **chạy TRỰC TIẾP
+> `check_worker_offline_alerts()` trên máy chủ với DB thật** (env service thật): đọc đúng nhịp 4 máy
+> (8–14 giây) → không cảnh báo oan, không lỗi.
 
 > **⚠️ Đã restart 2 service máy chủ** (đều kiểm tra pipeline RẢNH trước; Task_04 17:15 đã
 > XONG 23/23 bước OK lúc 17:40): `GIONG_API_Server` (tunnel URL đổi LẦN 2 →
