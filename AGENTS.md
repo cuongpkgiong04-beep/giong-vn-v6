@@ -12239,3 +12239,77 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > thừa), báo cáo `dsxk-comparison` **OK**, gửi Zalo OK ⇒ **hết hẳn needsData**.
 
 > **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
+
+### GĐ 693 / C.439 (Trợ lý ZCode (máy chủ)): Fix hộp KPI "Xuất Vắc Xin" T10/2026 mất 647 mũi — ETL gộp 2 thư mục ngày TRÙNG TÊN; + khôi phục dữ liệu; + bảng "Chưa vào tiêm" trong Báo cáo bán hàng (2026-11-06)
+
+> **ĐH báo (06/11):** "hộp KPI lượt tiêm và xuất kho tháng 10/2026 lệch số — lần trước
+> đã đúng, lần này thấy sai." **Kết luận điều tra:** hộp **Lượt tiêm ĐÚNG** (10.769 mũi —
+> khớp 2 nguồn độc lập), hộp **Xuất Vắc Xin THIẾU 647 mũi** (30/10: 9/173 · 31/10: 41/524),
+> và 50 dòng còn lại đều `center = NULL` trong khi mọi ngày khác đủ 18 trung tâm.
+
+> **NGUYÊN NHÂN GỐC (3 mắt xích — có bằng chứng + tái hiện sống):**
+> 1. **Lượt tải bù 05/11 15:07** (job `9F487F1C`, 6.BKX cả kỳ 01/10→31/10, 590 file) ghi file
+>    vào thư mục **lồng** `6.BKX\2026-10-01\<ngày>\` — trong khi 30/10 và 31/10 vẫn còn 19 file
+>    cũ ở thư mục **phẳng** `6.BKX\2026-10-30\` ⇒ **2 thư mục KHÁC NHAU nhưng TRÙNG TÊN NGÀY**.
+> 2. `etl_import.py center_order_map()` gom nhóm theo `f.parent.name` (chỉ tên thư mục ngày) ⇒
+>    gộp 2 thư mục thành **1 nhóm 38 file**; chỉ 19 file mtime cũ (file phẳng) được gán mã trung
+>    tâm, 19 file mtime mới (file tải bù) rơi ngoài dải 19 mã ⇒ **center = None** (dòng 674-675).
+>    **Tái hiện sống:** chạy chính hàm đó trên OUTPUT hiện tại → đúng 19 file trong
+>    `6.BKX\2026-11-01` (thư mục 38 file) bị trả None; bản CŨ 19 file None / bản MỚI 0 file None.
+> 3. ETL xoá theo ngày (dòng 723) ⇒ 19 file cũ mất sạch; cuối lượt `dedupe_multiload()` (dòng 510,
+>    `GROUP BY report_date, center`) coi 19 file "cùng ngày, cùng KHÔNG có trung tâm" là trùng lặp
+>    ⇒ **dọn còn 1 file mới nhất** = file ĐỒNG XUÂN ⇒ còn đúng 9 dòng (30/10) / 41 dòng (31/10).
+> **Vì sao "lần trước đúng":** trước 05/11 mỗi ngày chỉ có 19 file phẳng (nạp 30/10 17:56 ·
+> 31/10 18:20 → đủ dữ liệu). Các ngày khác không dính vì thư mục phẳng cũ đã được dọn trước đó.
+
+> **ĐÃ LÀM (PA-3 ĐH chốt) — Việc A · khôi phục:**
+> - Backup 50 dòng lỗi: `artifacts/gd_kpi_t10/backup_stg_6BKX_30-31_10.json` + bảng
+>   `dbo.stg_6BKX_backup_gd693` (rollback được).
+> - Ép mtime 19 file/ngày theo **ĐÚNG mã trung tâm đọc từ HEADER trong file Excel** (tên file
+>   phẳng bị cắt cụt: `GIÓNG_ĐỒNG` / `GIÓNG_M` / `GIÓNG_BÍ` …) → xoá 38 dòng `import_log` của
+>   2 ngày → chạy `etl_import.py --only-dir 6.BKX` ⇒ 38 file / 1.083 dòng.
+> - **Verify: 30/10 = 311 dòng (PX-SD 173) · 31/10 = 772 dòng (PX-SD 524), 0 center NULL, KHỚP
+>   18/18 TRUNG TÂM + từng con số với BKCCN.** Cả kỳ T10: **0 ngày lệch · 10.769 = 10.769**;
+>   tiền xuất kho 6.257.193.993 → **6.676.964.033 đ** (theo đúng bộ lọc KPI).
+
+> **ĐÃ LÀM — Việc A · sửa GỐC (repo con `821cb1c`, test `12/12 PASS`):**
+> `center_order_map` gom nhóm theo **ĐƯỜNG DẪN THƯ MỤC ĐẦY ĐỦ** (`f.parent`) thay vì tên thư mục
+> ⇒ hết gộp 2 thư mục trùng tên ngày; thư mục **>19 file** thì lấy **tên trung tâm TRONG FILE**
+> (`center_from_header` — ô chứa "GIÓNG", chuẩn thật) làm căn cứ, không đọc được mới gán vòng
+> `NEW_NAMES[i % 19]`, **LUÔN cảnh báo — không trả None im lặng**. Test mới tái hiện đúng sự cố
+> 30/10 (2 thư mục trùng tên ngày · 38 file/1 thư mục lượt-2-đảo-thứ-tự · fallback vòng).
+> **Đã deploy `etl_import.py` + `etl_import.test.py` ra 3 máy LAN (.14/.245/.11) — sha256 +
+> py_compile PASS** (máy chủ đã có sẵn). Không cần restart worker (ETL chạy tiến trình con).
+
+> **ĐÃ LÀM — Việc C (ĐH yêu cầu) · bảng "CHƯA vào tiêm" (repo con `19e2a8f`):**
+> Bảng CUỐI trang **Báo cáo bán hàng** (`/m/bc-banhang`) — cùng 22 cột + kết cấu bảng
+> "Chạy báo cáo bán hàng (DT) từ dữ liệu SQL (GiongDB)", CHỈ lọc dòng TRỐNG "Giờ tiêm"
+> (`isnull(col11,'')=''` — bù trừ CHÍNH XÁC với `col11 <> ''` của dt-by-date). Builder
+> `dt_chua_tiem` (sql_reports.py) + QUERY_KEYS/dispatcher/REPORT_SOURCE_TABLES + phân quyền
+> 3 điểm (`-smed.ts`: nhóm `banhang-banhang` · lá `/m/bc-banhang`) + nhãn job 2 nơi
+> (`job-labels.ts` ↔ `task_runner.py` QUERY_KEY_LABELS — test `job-labels.test.ts` bắt buộc khớp).
+> **Verify:** builder chạy thật kỳ T10 = **ĐÚNG 103 dòng** (103 + 10.769 = 10.872 = tổng BKCCN) ·
+> `npm test` 12/12 PASS · tsc EXIT 0 · **E2E THẬT qua API nội bộ** (`/task/create-job`,
+> queryKey=dt-chua-tiem, kỳ 01/10→31/10) → job `180a5e4a` **done trên máy `core`**, kết quả
+> **103 dòng / 22 cột**. Đã xoá `__pycache__` 3 thư mục + **restart `GIONG_SMED_Agent`**
+> (KHÔNG đụng `GIONG_API_Server` — giữ nguyên tunnel URL) + deploy `sql_reports.py`/`task_runner.py`
+> ra 3 máy LAN.
+
+> **Quan sát kèm theo (không phải lỗi, đã kiểm):** `stg_6BKX` có **380 dòng `col1=''`**
+> (dòng "Tổng cộng" cuối mỗi file — 20 ngày × 19 file) mang tiền; bộ lọc KPI (`col1 <> ''`) và
+> builder `xk-by-date` (`col1 <> '' and col3 <> ''`) đều loại đúng ⇒ không lẫn vào báo cáo.
+
+> **⏳ Việc B (ĐH yêu cầu chuẩn hoá Download theo khoảng thời gian) — ĐÃ KHẢO SÁT, CHỜ ĐH CHỐT:**
+> Hiện trạng thật của `OUTPUT` (script `artifacts/gd_kpi_t10/survey_layout.py`): **đại đa số đã
+> đúng chuẩn 1-folder-ngày** — 10.486 file ở `<phân hệ>\<YYYY-MM-DD>\`; ngoài ra tồn 480 file ở
+> thư mục `DD-MM-YYYY` (02-10-2026 · 08-10-2026), 227 file ở thư mục kỳ dài `2018-01-01`/
+> `2025-01-01` (56 MB) và **các thư mục lồng `<từ ngày>\<ngày>\` nay đã RỖNG**. Luật hiện hành:
+> agent luôn tạo `OUTPUT\<phân hệ>\<TỪ NGÀY của job>\` rồi xoá file cũ trong đó (GĐ C.10); tool
+> PA-1 khi job NHIỀU NGÀY ghi thêm tầng ngày con (`out_dir_for` — GĐ 656) ⇒ sinh tầng
+> `<từ ngày>\<ngày>`; tool cũ ghi thẳng vào folder ngày-từ và ETL suy ngày TỪNG DÒNG theo cột ngày.
+> **3 phương án chờ ĐH chốt** (chưa viết code): **PA-1** tách mỗi kỳ thành N job 1-ngày (đúng câu
+> chữ "download theo từng ngày", nhưng 31 job/tháng + tăng tải hệ thống); **PA-2** giữ 1 job/kỳ
+> nhưng cho ghi THẲNG vào `OUTPUT\<phân hệ>\<ngày>\` (bỏ tầng `<từ ngày>`, sửa `out_dir_for` +
+> chỗ truyền `SMED_OUTPUT_DIR`); **PA-3** giữ nguyên cách chạy, chỉ dọn/thống nhất layout định kỳ.
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
