@@ -12520,3 +12520,40 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > như người dùng vì handoff SSO do handler JS sinh (kèm token), không nằm trong `href`.
 
 > **Version:** app tổng **8.1.0** / repo con **12.8.0** — ĐÃ PUSH + ĐÃ LIVE.
+
+### GĐ 699 / C.443 (Trợ lý ZCode (máy chủ)): Đối soát HĐ-XK loại nhóm GÓI/ĐT cả 2 CHIỀU + cột "Chênh lệch do gói/ĐT" (PA-A Đại ca chốt) — tổng thể tiêm → xuất kho → hóa đơn (2026-11-06)
+
+> **Đại ca giao:** điều tra nhóm chênh lệch **ÂM** (hóa đơn > bán ra) cho cái nhìn tổng thể
+> bán hàng (tiêm) → xuất kho → phát hành hóa đơn. Chi tiết + bằng chứng: **AGENTS.md repo con
+> C.443**, code `297123f` (nối tiếp GĐ 698/C.441 — chiều DƯƠNG).
+
+> **Kết luận điều tra:** nhóm ÂM gần như toàn bộ là **chiều ngược lại của cùng cơ chế gói/đặt
+> trước** — khách **mua gói trong ngày** → hóa đơn xuất cho **CẢ GÓI** trong khi bảng kê cuối
+> ngày chỉ ghi **các mũi đã tiêm**. Ca đo được: **TĐ 30/10** HĐ "Gói số: TĐ-13-2026 theo hợp
+> đồng" = 19.894.000 vs BKCCN 1.842.400 (dòng tên gói trong BKCCN có Giá = 0) ⇒ −18.051.600.
+> Định lượng 8 kỳ âm: 27/10 −2.717.000 · 28/10 −840.000 · 02/11 −260.000 **100% do gói/ĐT**.
+> *Tầng xuất kho SẠCH* (Chênh lệch Bán-Xuất = 0 gần hết trung tâm).
+
+> **3 ca THẬT cần kế toán/trung tâm xử lý:** ① **SĐ 04/11 — hóa đơn XUẤT TRÙNG 2 lần** (Trần
+> Minh Tú: 3 dịch vụ × 2 = 4.520.000 vs thực tiêm 2.260.000) · ② **LM 30/10 — Bùi Khánh My:**
+> HĐ 2 dịch vụ nhưng chỉ 1 mũi (khách không có trong bảng gói/ĐT) · ③ **NL 29/10 — toàn bộ
+> −5.600.000 là hóa đơn KHÔNG có tên khách** (1 HĐ bán 15 liều = 5.250.000).
+
+> **Đã làm (PA-A):** cột MỚI **"Chênh lệch do gói/ĐT"** = tổng theo TỪNG KHÁCH gói/ĐT của
+> (BKCCN − HĐGTGT) — đúng cả 2 chiều; **"Chênh lệch cần kiểm tra" = CL − phần gói/ĐT**; bảng
+> **tự kiểm chứng**: `Chênh lệch` = `do gói/ĐT` + `cần kiểm tra` (PASS 13 kỳ). Thay bản 1-chiều
+> của GĐ 698, không để 2 công thức song song.
+
+> **Verify:** unit mới 14/14 + hồi quy (gd698 14 · tiemho 45 · niemyet 36 · bccn · gd588-hd 55 ·
+> gd588-xk 32 · task_runner_quick 46 · gd690 11 · worker_guard 13) + builder thật 13 kỳ (05/11 →
+> 0; 27/10·28/10·02/11 → 0; 04/11 còn −2.260.000 = ca hóa đơn trùng; 30/10 −990.000; 29/10
+> −1.400.000) + **E2E production** (job thật kỳ 05/11) = done 70s, 14 cột, đẳng thức đúng mọi dòng.
+
+> **Deploy:** máy chủ restart GIONG_SMED_Agent 23:19:35 · 3 máy LAN sha256 khớp HEAD (máy đang
+> chạy job được tự động bỏ qua trong lượt đầu — an toàn — deploy bù khi rảnh).
+
+> **Tiêu chí kiểm chứng của Đại ca:** bảng hiện cột "Chênh lệch do gói/ĐT"; `Chênh lệch` =
+> `do gói/ĐT` + `cần kiểm tra`; kỳ 05/11 + 27/10·28/10·02/11 cần kiểm tra TRỐNG; kỳ 04/11 còn
+> −2.260.000 · 30/10 −990.000 · 29/10 −1.400.000 (3 ca kế toán cần xử lý).
+
+> **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.0.0** / repo con **12.7.0**.
