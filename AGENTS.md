@@ -4513,3 +4513,43 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 >    upload — đúng bảng kê); HĐ 'đã bị thay thế' 00004195 vẫn còn nguyên trên MeInvoice.
 >    **Version:** KHÔNG bump. App tổng **8.1.2** / repo con **12.9.0**. Registry: GĐ 707
 >    (claim `46cacce`).
+
+### GĐ 709 (Trợ lý ZCode (máy chủ)): PA Push đợt 07/11 tối (lệnh ĐH "push và restart" sau GĐ 707) — 2 repo LIVE 8.1.3/13.0.1 + restart agent nạp code + verify production 6/6 (2026-11-07)
+
+> **Lệnh ĐH (07/11 ~18:20):** *"push và restart"* — sau khi PA-2 GĐ 707 chạy xong
+> (MISA 04/11 khớp tuyệt đối 190 CT/175.125.000).
+
+> **Đã làm:**
+> 1. **Rà trùng lặp (nguyên tắc 3):** nhánh phụ 2 repo RỖNG vs main (0 file đổi);
+>    worktree có file sửa dở của phiên KHÁC (app tổng 10 file: AGENT_REGISTRY.md +
+>    scripts cũ; repo con: lan_tray.py + cache sqlite; worktree CLI 3 file) →
+>    **KHÔNG add, KHÔNG đụng** — không trùng phạm vi push (hook push-guard xác nhận).
+> 2. **Verify env Vercel TRƯỚC push (mục A GĐ 470):** app tổng đủ 6 biến
+>    (`DATABASE_URL` · `APP_JWT_SECRET` · `TUNNEL_API_BASE_URL` · `TUNNEL_GIST_ID` ·
+>    `BETTER_AUTH_SECRET` · `BETTER_AUTH_URL`) + app con đủ 6 (`+ ZAI_API_KEY` ·
+>    `SMED_AGENT_TOKEN`); `APP_JWT_SECRET` 2 app cùng ngày cập nhật (6d — đồng bộ).
+> 3. **Bump version:** app tổng **8.1.2 → 8.1.3** · repo con **13.0.0 → 13.0.1**
+>    (cả 2 patch — fix nhỏ; checklist 1 chữ số ✓). Nơi bump: package.json +
+>    DEFAULT_VERSION (app-shell.tsx) mỗi app — grep xác nhận đủ 4 chỗ.
+> 4. **Push:** app tổng `0ebf46d..c3e41a2` (8 commit — GĐ 707 điều tra + PA-2 +
+>    verify + bump) · repo con `d1841ea..8f7953c` (4 commit — GĐ 707 builder + xóa
+>    76 phiếu + GĐ 708 fix VCB của phiên trước + bump).
+> 5. **Restart agent khi rảnh (`gd652_restart_agent_when_idle.py`):** chờ
+>    **6/6 lần liên tiếp 0 job** (3 phút yên tĩnh) → xóa `__pycache__` (agent +
+>    api_server + etl) → `sc stop`/`sc start` GIONG_SMED_Agent → **18:46:29
+>    RUNNING** — nạp code builder GĐ 707 (rule số HĐ bản thay thế). **api_server
+>    GIỮ NGUYÊN** — tunnel URL không đổi, không cần cập nhật env Vercel (GĐ 579).
+
+> **✅ Verify production (GĐ 470 — curl + login THẬT + SSO):** app tổng
+> `giong-vn-v6.vercel.app` = **8.1.3** · app con `giong-banhang.vercel.app` =
+> **13.0.1** (curl lần đầu) · login `cuongpk.giong04@gmail.com` HTTP 200 + user ·
+> `get-session` = "Phạm Kiên Cường" · **SSO** ký JWT (`iss=giong-vn-v6`,
+> `aud=giong-banhang`) → **302 về giong-banhang + `Set-Cookie: bh_session`** (⇒
+> `APP_JWT_SECRET` 2 app KHỚP) · `/api/auth/me` HTTP 200. E2E browser
+> (`scripts/_gd686_verify_prod.mjs`): login thật + SSO + badge "Máy chạy" + nhãn
+> tên máy OK (badge version UI đọc 8.0.0 = **localStorage cache của headless
+> browser** — app-shell fallback localStorage khi không có VITE_APP_VERSION;
+> Vercel KHÔNG set biến này, deploy thật = 8.1.3 theo HTML/curl).
+
+> **Version:** app tổng **8.1.3** / repo con **13.0.1** — ĐÃ PUSH + LIVE.
+> **Registry:** GĐ 709 (claim `8dc7cee`).
