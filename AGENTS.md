@@ -4379,3 +4379,17 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > **Verify:** tsc EXIT 0 · 7 phép thử nguyên văn byte PASS · entire-graph health ok · verify script `artifacts/gd702/`.
 > **Tiêu chí kiểm chứng (sau Push):** phiên mới nạp AGENTS.md nhẹ (4.3k dòng) · tra bài học 1 cú qua docs/PLAYBOOK.md · entire-graph hết parse error.
 > **Version:** KHÔNG bump (docs + 1 ký tự JSX — tiền lệ GĐ 416/417). KHÔNG push — chờ lệnh ĐH. App tổng **8.1.0** / repo con giữ nguyên.
+
+### GĐ 704 (Trợ lý ZCode (máy chủ)): PA Push đợt 07/11 (lệnh ĐH sau GĐ 702) — bump 8.1.1 / 12.9.0 + push hộ C.444 + verify production (2026-11-07)
+
+> **Rà trùng lặp (nguyên tắc 3, hook GĐ 607):** phiên #2 ĐÃ push xong đợt GĐ 703 (origin/main `4aa4ac6` — LIVE 8.1.0/12.8.0) → 8 commit chưa push = 5 commit GĐ 702 của em + 3 commit docs GĐ 700 của phiên #2. Repo con còn 2 commit chưa push của phiên #2: `4e0489d` (feat C.444 — tách Nạp TQ/CT từ 2 file MiaTool) + `3e400cd` (docs) → **em push hộ, minh bạch trong commit bump**. File sửa dở của phiên khác (9 file app tổng · lan_tray.py repo con) KHÔNG add, KHÔNG đụng.
+
+> **Verify env Vercel TRƯỚC push (mục A GĐ 470):** app tổng 6/6 (DATABASE_URL · APP_JWT_SECRET · TUNNEL_API_BASE_URL · TUNNEL_GIST_ID · BETTER_AUTH_SECRET/URL) · app con 5/5 — đủ.
+
+> **Bump (checklist GĐ 138 ✓ — mọi thành phần 1 chữ số):** app tổng 8.1.0 → **8.1.1** (patch — docs GĐ 702 + fix 1 ký tự JSX) · repo con 12.8.0 → **12.9.0** (minor — C.444 feature) — 2+2 nơi grep đối chiếu khớp.
+
+> **Push:** app tổng `4aa4ac6..c4dd0fd` (10 commit) · repo con `b20d472..49bd9d6` (3 commit).
+
+> **✅ Verify production (curl lần đầu — domain không ghim deployment cũ):** app tổng **8.1.1** + app con **12.9.0** · login thật `cuongpk.giong04@gmail.com` HTTP 200 + user "Phạm Kiên Cường" · get-session HTTP 200. SSO giữ nguyên (không đổi env nào đợt này — GĐ 703 vừa verify SSO browser 4/4).
+
+> **Version:** app tổng **8.1.1** / repo con **12.9.0** — ĐÃ PUSH + LIVE.
