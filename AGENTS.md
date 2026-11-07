@@ -4490,7 +4490,26 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > sẵn cho lệnh xóa + `misa_0411.json`). Script xóa mẫu: `gd688_xoa_bh_0411.py` (unpost lô →
 > xóa lô → đọc lại xác nhận, GĐ 489/511).
 >
-> **3 PA CHỜ ĐH CHỐT (chưa xóa gì):** PA-1 xóa 76 phiếu trùng B (khuyến nghị — guard refid
-> + chưa ghi sổ) · PA-2 PA-1 + upload nốt phiếu còn thiếu 2.260.000 (cần HĐ đã phát hành)
-> · PA-3 xuất Excel 76 phiếu giao kế toán xóa tay. **Version:** KHÔNG bump. App tổng
-> **8.1.2** / repo con **12.9.0**. Registry: GĐ 707 (claim `46cacce`).
+> **ĐH CHỐT PA-2 — ĐÃ THỰC THI XONG + VERIFY (07/11 chiều, cùng ngày):**
+> 1. **Xóa 76 phiếu trùng B:** guard 3 điều (refid danh sách · chưa ghi sổ · đúng
+>    inv_no/tiền) → unpost 76/76 ok → xóa 76/76 ok → đọc lại = 0 (script
+>    `gd707_xoa_76_phieu_trung.py`; MISA xóa bất đồng bộ — chạy lượt 2 tự bỏ qua).
+>    MISA còn 189 CT/172.865.000 khớp bảng kê 189 phiếu đã upload.
+> 2. **Upload phiếu còn thiếu (TRẦN MINH TÚ · SĐ · 2.260.000):** GỐC RỄ = BKCT MeInvoice
+>    có 2 HĐ giống nhau từng đồng — **00004195 'Hóa đơn đã bị thay thế'** (bản cũ) +
+>    **00004201 'Hoá đơn thay thế'** (bản hiện hành) → tool cũ không dám gán (nguyên tắc
+>    'trùng → bỏ') → phiếu bị bỏ qua từ lúc build. Tải lại BKCT 04/11 (tool 30) + ETL
+>    rebuild-ngày (auto-ETL nạp file mới 234 dòng) → **vá `build_bkct_invno_map` GĐ 707:**
+>    nhóm trùng mà col27 xác định đúng 1 bản 'Hoá đơn thay thế' → chọn nó (bẫy `strip_vn`
+>    không đổi 'đ'→'d' — đã fix). Test unit **93/93 PASS** (thêm `test_gd707_thay_the`).
+>    Chạy runner `misa_banhang_api_run.py` kỳ 04/11 `MISA_ONLY_CENTERS=SĐ` `MISA_AUTO_POST=1`:
+>    **tạo 1 phiếu + ghi sổ 1/1** với số HĐ 00004201 · 5 phiếu SĐ còn lại tool xác minh
+>    'đã tồn tại MISA' → bỏ qua an toàn.
+> 3. **Verify cuối (API MISA thật + DB):** MISA 04/11 = **190 CT / 175.125.000, ghi sổ
+>    190/190** · bảng kê DB 190/190 is_uploaded+is_posted, phiếu C so_hd=00004201 ·
+>    đối chiếu từng đồng: **0 thiếu · 0 thừa · 0 trùng · 0 lệch tiền — KHỚP TUYỆT ĐỐI**.
+> 4. **Nêu ĐH quyết (ngoài bảng kê 190):** HĐ 00004951 TRẦN NHẬT NAM (1C26MAM, 4.529.400,
+>    'Hoá đơn thay thế') KHÔNG có phiếu SMED 04/11 → không thuộc luồng upload (không
+>    upload — đúng bảng kê); HĐ 'đã bị thay thế' 00004195 vẫn còn nguyên trên MeInvoice.
+>    **Version:** KHÔNG bump. App tổng **8.1.2** / repo con **12.9.0**. Registry: GĐ 707
+>    (claim `46cacce`).
