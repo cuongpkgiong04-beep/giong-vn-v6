@@ -4460,3 +4460,37 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > Task_06 (kỳ 05/11) đang chạy · Task_03 report kỳ 06/11 pending chờ lượt → chuỗi MISA
 > 06/11 tự chạy sau. Chuỗi còn lại chạy nền tự động — có watchdog GĐ 705 + cảnh báo Zalo
 > (lần đầu hoạt động) chăm.
+
+### GĐ 707 (Trợ lý ZCode (máy chủ)): ĐIỀU TRA lệch số liệu Upload HĐ GTGT bán hàng 04/11 — MISA 265 CT = 189 chuẩn + 76 PHIẾU TRÙNG chưa ghi sổ (nguyên nhân: luồng 3531 đêm 05/11, GĐ 688 xóa theo refno DB nên sót) — 3 PA xử lý CHỜ ĐH CHỐT, KHÔNG tự xóa (2026-11-07)
+
+> **Lệnh ĐH (07/11 ~16:30):** chạy lại thủ công Upload HĐ GTGT bán hàng thấy số liệu không
+> đúng — MISA 265 CT/232.080.000 vs bảng kê upload 190 dòng/175.125.000. **Kèm nguyên tắc
+> (đã lưu memory):** các phiếu "đã upload nhưng không ghi sổ" là phiên AI TỰ Ý TẠO, không
+> theo nguyên tắc số phiếu SMED→MISA — phải xử lý cho đúng; **LẦN SAU KHÔNG ĐƯỢC TỰ Ý
+> HÀNH ĐỘNG.**
+
+> **Đối chiếu 3 lớp bằng API MISA thật (sa_voucher_get/paging_filter_v2, giờ VN 04/11):**
+> - **MISA = 265 CT / 232.080.000** (khớp 100% số anh chụp):
+>   - **A — 189 CT / 172.865.000** refno trùng bảng kê DB, **ghi sổ đủ 189/189** (76 CT-3531
+>     = 59.215.000 + 113 CT-3537 = 113.650.000, created 06/11) — kết quả chạy lại Excel 72
+>     cột GĐ 688; số hóa đơn khớp bảng kê 100%.
+>   - **B — 76 CT-3531 / 59.215.000** = **TRÙNG 1-1 tuyệt đối với 76 CT A-3531** (cùng
+>     inv_series+inv_no, lệch 0 đồng), created **05/11 00:19–00:51**, **chưa ghi sổ 76/76**,
+>     refno **PT000350/11→PT000393/11** KHÔNG nằm trong bảng kê DB → GĐ 688 xóa theo refno
+>     DB nên **sót lại**. Luồng cũ 3531 file 29 cột — MISA chặn ghi sổ (thiếu TK Nợ/Có).
+>   - created_by A lẫn B = "Vũ Thị Thủy" = user MISA session HTTP agent (không phải nhập tay).
+> - **Bảng kê 190** = 189 đã upload (A) + 1 chưa upload `HD110312611040930201371`
+>   (2.260.000, chưa có số HĐ — uploaded=False hợp lệ, không phải lỗi).
+> - **Nguồn SMED** stg_1HDDT 194 mã phiếu (bảng kê là tập con; 4 mã không vào bảng kê) ·
+>   **MeInvoice BKCT** 192 HĐ: 189 khớp + 3 dư (00004195/00004201/00004951 = 4.756.400).
+> - DB lúc probe: 189 is_posted=True + 1 chưa upload — không còn dòng "đã upload không ghi sổ".
+> - Sau khi xóa 76 phiếu B: MISA = 189 CT/172.865.000 **khớp tuyệt đối** bảng kê đã upload.
+
+> **File bằng chứng:** `artifacts/gd707_probe/` (probe1-8 + `nhom_b_76_phieu.json` 76 refid
+> sẵn cho lệnh xóa + `misa_0411.json`). Script xóa mẫu: `gd688_xoa_bh_0411.py` (unpost lô →
+> xóa lô → đọc lại xác nhận, GĐ 489/511).
+>
+> **3 PA CHỜ ĐH CHỐT (chưa xóa gì):** PA-1 xóa 76 phiếu trùng B (khuyến nghị — guard refid
+> + chưa ghi sổ) · PA-2 PA-1 + upload nốt phiếu còn thiếu 2.260.000 (cần HĐ đã phát hành)
+> · PA-3 xuất Excel 76 phiếu giao kế toán xóa tay. **Version:** KHÔNG bump. App tổng
+> **8.1.2** / repo con **12.9.0**. Registry: GĐ 707 (claim `46cacce`).
