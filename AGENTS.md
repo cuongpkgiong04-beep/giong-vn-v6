@@ -4393,3 +4393,46 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > **✅ Verify production (curl lần đầu — domain không ghim deployment cũ):** app tổng **8.1.1** + app con **12.9.0** · login thật `cuongpk.giong04@gmail.com` HTTP 200 + user "Phạm Kiên Cường" · get-session HTTP 200. SSO giữ nguyên (không đổi env nào đợt này — GĐ 703 vừa verify SSO browser 4/4).
 
 > **Version:** app tổng **8.1.1** / repo con **12.9.0** — ĐÃ PUSH + LIVE.
+
+### GĐ 705 (Trợ lý ZCode (máy chủ)): PA-2 ĐH chốt 07/11 — điều tra Task_03 kẹt 40% + Giám sát máy trạm không thấy job → SỬA 4 LỖ HỔNG (2026-11-07)
+
+> **ĐH báo 07/11 14:35:** Task_03 kỳ 23:00 06/11 kẹt "[15/21] Thống kê khách hàng — 40%" từ
+> 23:14:35 · Giám sát máy trạm 4 máy "Rảnh" không thấy job nào hoạt động. Em điều tra theo
+> skill dieu-tra-job-loi — **ĐH chốt PA-2 = PA-1 + tự bù kỳ** (trình 3 PA cùng lượt).
+
+> **Nguyên nhân gốc — 4 lỗi (bằng chứng: log NSSM + DB + Event Log):**
+> 1. **Service bị STOP/START 23:19:25 + 23:47:55 đêm 06/11** (restart nạp code phiên C.444 —
+>    chỉ đếm job smed_pull_jobs, KHÔNG đếm task 'running') khi Task_03 đang chạy bước 15/21
+>    → thread task chết → task kẹt 'running' VĨNH VIỄN (claim chỉ nhặt 'pending' + guard
+>    spawn theo name/ngày). Job tkkh ĐÃ DONE 23:45:17 19/19 (dữ liệu bước 15 đủ). Kỳ 06/11
+>    thiếu 6 phân hệ cuối: bank-tcb, bank-tpb, 4 MiaTool.
+> 2. **Watchdog GĐ 490 chỉ dọn 1 LẦN lúc khởi động** + nuốt lỗi im: máy chủ sập nguồn 08:05
+>    07/11 (Kernel-Power 41) → boot 08:59 → SQL Express không truy cập được lúc agent start
+>    09:00/10:03 → watchdog không dọn được → task ma sống sót qua mọi lần restart.
+> 3. **Kênh cảnh báo Zalo GĐ 695 KHÔNG BAO GIỜ hoạt động được** (lỗi code thật):
+>    `_worker_alert_enqueue` INSERT quên ghi biến cfg vào output_dir → job bc-zalo cfg rỗng →
+>    handler rẽ nhánh ảnh → `_load_source_result('')` → SQL 8169 'Conversion failed
+>    uniqueidentifier'. 2 cảnh báo lan-1 mất kết nối 09:06 + 09:46 KHÔNG tới được ĐH.
+> 4. **Trang giám sát sai trạng thái:** `isoVN` (-worker-monitor.ts) gắn 'Z' (UTC) vào giờ DB
+>    vốn là giờ VN (UTC+7) → nhịp tim +7h "tương lai" → máy chết <7 tiếng vẫn "Rảnh — máy
+>    đang bật" (PC-PKT-01 chết 08:37 vẫn xanh lúc 14:35) + mọi mốc giờ lệch +7h.
+>    Phát hiện thêm: job ma "Báo cáo cuối ngày — đối soát HD-XK" trên giám sát = sqlreport
+>    kỳ 05/11 needsData từ 17:09 05/11 (ca GĐ 628) chưa dọn.
+
+> **Đã làm (app tổng `4ecd9f6` + repo con `6686e45` — chi tiết entry C.445):**
+> 1. **`scripts/gd652_restart_agent_when_idle.py`:** busy() đếm CẢ scheduled_tasks
+>    running/pending — restart-khi-rảnh không bao giờ giết task đang chạy nữa.
+> 2. Repo con — sweep NHIỆM VỤ MA định kỳ 10' (task 'running' >45' không còn thread sống →
+>    error; so set `_ACTIVE_TASK_IDS` chống dọn oan) + **TỰ BÙ KỲ (PA-2):** kind daily →
+>    tự spawn bản bù cùng kỳ (name "— bù kỳ <dd/mm/yyyy>", NOT EXISTS chặn lặp 1 lượt/kỳ,
+>    chỉ bù kỳ ≤ 7 ngày) · bc-zalo INSERT đủ cfg · guard sourceJobId rỗng · isoVN +07:00.
+> 3. **Dọn hiện trạng:** task ma 06/11 (c7428419) + job ma 05/11 (D1102AB8) → 'error'.
+
+> **Verify bằng chứng thật (07/11):** test offline **gd705 19/19 PASS** · gd695 21/21 ·
+> tsc EXIT 0 · **restart agent 15:27 → vòng đầu sweep TỰ dọn task ma + TỰ spawn bản bù
+> 'Task_02 · 23:00 — bù kỳ 06/11/2026' → task-runner nhặt chạy ngay 15:27:11** (21 phân hệ
+> — 7 job đầu done 19/19, dự kiến xong ~16:20) · **job bc-zalo TEST → done '✅ đã gửi Zalo
+> tới My Documents'** (ĐH nhận 1 tin TEST — kênh cảnh báo lần đầu hoạt động thật).
+> **Registry:** GĐ 706 do claim 2 lần cho cùng 1 việc → **⛔ GỘP vào GĐ 705** (tiền lệ
+> GĐ 598). **Version:** KHÔNG bump (chờ lệnh Push — quy tắc ĐA AGENT). App tổng **8.1.1** /
+> repo con **12.9.0**. isoVN chỉ LIVE khi Push.
