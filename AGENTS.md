@@ -4438,8 +4438,8 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 >
 > **✅ PUSH + VERIFY PRODUCTION (07/11 ~16:00 — lệnh Push ĐH):** app tổng **8.1.2** (patch) ·
 > repo con **13.0.0** (minor 9 nhớ major) — curl lần đầu: app tổng live 8.1.2 · app con live
-> 13.0.0 · login  HTTP 200 + user ✓ · get-session ✓ · SSO 302 về
-> app con +  ✓ (APP_JWT_SECRET 2 app khớp). Verify env Vercel TRƯỚC
+> 13.0.0 · login cuongpk.giong04@gmail.com HTTP 200 + user ✓ · get-session ✓ ·
+> SSO 302 về app con + Set-Cookie: bh_session ✓ (APP_JWT_SECRET 2 app khớp). Verify env Vercel TRƯỚC
 > push đủ 6+5 biến cả 2 app. Rà trùng lặp: các "sửa dở" worktree -cli = bản stale cũ
 > (nhánh đứng GĐ C.89) — KHÔNG trùng thật.
 >
