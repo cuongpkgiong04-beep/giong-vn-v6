@@ -4451,3 +4451,12 @@ Từ/Đến ngày → lịch pop-up hiện lên chọn được ngày → nạp 
 > tạo 16:06; (c) bản bù daily kỳ 06/11 xong → hệ thống TỰ spawn Task_03 (report) kỳ 06/11
 > (điều kiện _maybe_spawn_task04 — name 'Task_02%' khớp bản bù) → xong TỰ spawn chuỗi MISA
 > 05→06→07 kỳ 06/11 — KHÔNG cần tạo tay.
+>
+> **KẾT QUẢ CHẠY NỐT (07/11 chiều):** bản bù **DONE 21/21 bước download OK** — đủ 6 phân hệ
+> thiếu (bank-tcb, bank-tpb, mia-muavao/banra tongquan+chitiet — tất cả done 19/19) · VCB
+> 06/11 file + DB **87 giao dịch đã nạp** (job VCB 16:06 status error là tool Playwright
+> chết ở bước SAU khi file đủ — lỗi tool riêng, không mất số liệu; cần điều tra riêng) ·
+> **Task_05 (kỳ 05/11) DONE 16:33** (phiên MISA sống lại — chứng từ mua hàng + ghi sổ) ·
+> Task_06 (kỳ 05/11) đang chạy · Task_03 report kỳ 06/11 pending chờ lượt → chuỗi MISA
+> 06/11 tự chạy sau. Chuỗi còn lại chạy nền tự động — có watchdog GĐ 705 + cảnh báo Zalo
+> (lần đầu hoạt động) chăm.
